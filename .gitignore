@@ -20,6 +20,3 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-src/repos/tokenAddressMapping.json
-src/utils/uniswapv3/tokenImageURI.json
