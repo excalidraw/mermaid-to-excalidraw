@@ -30,6 +30,7 @@ flowDiagrams.forEach((diagramDefinition, i) => {
 // TODO: how to connect label with edge since label have no id attached.
 //    sol1: get graph data from parser (didn't find public function for this yet)
 //    sol2: check position overlapping
+// TODO: how to identify arrow head
 
 // implement the parser
 flowDiagrams.forEach((diagramDefinition, i) => {

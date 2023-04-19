@@ -65,9 +65,12 @@ export const parseNode = (node) => {
 };
 
 export const parseEdge = (node) => {
+  const edgeType = node.classList[1];
+
   return {
     id: node.id,
     type: "edge",
+    edgeType,
     // start: "",
     // end: "",
   };
