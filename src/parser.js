@@ -1,3 +1,5 @@
+// TODO: transform dimention, create elements relationship e.g. node, arrow, cluster
+
 export const parseRoot = (node) => {
   const clusters = [...node.querySelector(".clusters").childNodes].map(
     parseCluster

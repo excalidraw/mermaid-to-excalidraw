@@ -26,11 +26,13 @@ flowDiagrams.forEach((diagramDefinition, i) => {
   container.append(div);
 });
 
-// TODO: how to handle element type like database, hexagon, etc. (how to transform into other type?)
 // TODO: how to connect label with edge since label have no id attached.
 //    sol1: get graph data from parser (didn't find public function for this yet)
 //    sol2: check position overlapping
+// TODO: how to handle element type like database, hexagon, etc. (how to transform into other type?)
 // TODO: how to identify arrow head
+// TODO: how to render arrow curve in Excalidraw
+//    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
 
 // implement the parser
 flowDiagrams.forEach((diagramDefinition, i) => {
@@ -38,12 +40,10 @@ flowDiagrams.forEach((diagramDefinition, i) => {
 
   const div = document.querySelector(`#diagram-container-${i}`);
   const p = div.querySelector(`#parsed-${i}`);
-  // 1. extract relevant info from SVG
+
+  // parse relevant info from SVG
   const root = parseRoot(div);
 
-  // 2. transform to Excalidraw markup (JSON)
-  // TODO: transform dimention, create elements relationship e.g. node, arrow, cluster
-
-  // 3. markup to Excalidraw Element
+  // parsed data to Excalidraw element
   p.innerHTML = JSON.stringify(root, null, 2);
 });
