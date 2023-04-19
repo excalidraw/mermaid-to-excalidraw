@@ -1,27 +1,44 @@
 import { parseEdge, parseNode } from "./parser";
 import "./styles.css";
 const mermaid = window.mermaid;
-const ele = document.getElementById("dg");
-const p = document.getElementById("json");
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: true });
-// define the diagram
-var diagramDefinition = "graph TD;\n  Hello-->World;\n";
+const container = document.getElementById("diagrams");
 
-// render the diagram
-const svg = mermaid.mermaidAPI.render("diagram", diagramDefinition);
-ele.innerHTML = svg;
+// diagrams
+const diagrams = [
+  `flowchart TD
+    Hello --> World`,
+  `flowchart LR
+    id1([This is the text in the box])`,
+];
 
-// 1. extract elements info from SVG
-// TODO: try out flowchart in different ways (from simple to complex)
-const nodes = [...ele.querySelector(".nodes").childNodes].map(parseNode);
-const edgePaths = [...ele.querySelector(".edgePaths").childNodes].map(
-  parseEdge
-);
+diagrams.forEach((diagramDefinition, i) => {
+  const div = document.createElement("div");
+  div.id = `diagram-container-${i}`;
+  div.innerHTML = `<h1>Test #${
+    i + 1
+  }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre>`;
+  const dg = div.querySelector(`#diagram-${i}`);
+  const p = div.querySelector(`#parsed-${i}`);
 
-// 2. transform to Excalidraw markup (JSON)
-// TODO: transform dimention, create elements relationship e.g. node, arrow
+  // render the diagram
+  const svg = mermaid.mermaidAPI.render(`diagram-${i}`, diagramDefinition);
+  dg.innerHTML = svg;
 
-// 3. markup to Excalidraw Element
-p.innerHTML = JSON.stringify({ nodes, edgePaths }, null, 2);
+  // 1. extract elements info from SVG
+  // TODO: try out flowchart in different ways (from simple to complex)
+  const nodes = [...div.querySelector(".nodes").childNodes].map(parseNode);
+  const edgePaths = [...div.querySelector(".edgePaths").childNodes].map(
+    parseEdge
+  );
+
+  // 2. transform to Excalidraw markup (JSON)
+  // TODO: transform dimention, create elements relationship e.g. node, arrow
+
+  // 3. markup to Excalidraw Element
+  p.innerHTML = JSON.stringify({ nodes, edgePaths }, null, 2);
+
+  container.append(div);
+});
