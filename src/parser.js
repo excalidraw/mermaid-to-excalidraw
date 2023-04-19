@@ -1,3 +1,16 @@
+export const parseCluster = (node) => {
+  const rect = node.querySelector("rect");
+
+  return {
+    id: node.id,
+    type: "cluster",
+    width: +(rect.getAttribute("width") || 0),
+    height: +(rect.getAttribute("height") || 0),
+    x: +(rect.getAttribute("x") || 0),
+    y: +(rect.getAttribute("y") || 0),
+  };
+};
+
 export const parseNode = (node) => {
   const style = getComputedStyle(node);
   const matrix = new DOMMatrixReadOnly(style.transform);
