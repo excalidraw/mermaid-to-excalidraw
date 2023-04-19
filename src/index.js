@@ -1,6 +1,5 @@
 import { parseNode } from "./parser";
 import "./styles.css";
-import * as xml from "xml-js";
 const mermaid = window.mermaid;
 const ele = document.getElementById("dg");
 const p = document.getElementById("json");
@@ -14,9 +13,13 @@ var diagramDefinition = "graph TD;\n  Hello-->World;\n";
 const svg = mermaid.mermaidAPI.render("diagram", diagramDefinition);
 ele.innerHTML = svg;
 
-// extract elements info from SVG
+// 1. extract elements info from SVG
+// TODO: try out flowchart in different ways (from simple to complex)
 const nodes = [...ele.querySelector(".nodes").childNodes].map(parseNode);
 console.log("nodes", nodes);
 
-var svgAsJson = xml.xml2json(svg, { compact: true, spaces: 2 });
-p.innerHTML = svgAsJson;
+// 2. transform to Excalidraw markup (JSON)
+// TODO: transform dimention, create elements relationship e.g. node, arrow
+
+// 3. markup to Excalidraw Element
+p.innerHTML = JSON.stringify({ nodes }, null, 2);
