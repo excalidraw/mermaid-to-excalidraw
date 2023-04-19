@@ -1,3 +1,4 @@
+import { flowDiagrams } from "./flowDiagrams";
 import { parseEdge, parseNode } from "./parser";
 import "./styles.css";
 const mermaid = window.mermaid;
@@ -6,15 +7,8 @@ const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: true });
 const container = document.getElementById("diagrams");
 
-// diagrams
-const diagrams = [
-  `flowchart TD
-    Hello --> World`,
-  `flowchart LR
-    id1([This is the text in the box])`,
-];
-
-diagrams.forEach((diagramDefinition, i) => {
+// render the diagram
+flowDiagrams.forEach((diagramDefinition, i) => {
   const div = document.createElement("div");
   div.id = `diagram-container-${i}`;
   div.innerHTML = `<h1>Test #${
@@ -22,17 +16,16 @@ diagrams.forEach((diagramDefinition, i) => {
   }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre>`;
   const dg = div.querySelector(`#diagram-${i}`);
 
-  // render the diagram
   const svg = mermaid.mermaidAPI.render(`diagram-${i}`, diagramDefinition);
   dg.innerHTML = svg;
   container.append(div);
 });
 
-diagrams.forEach((diagramDefinition, i) => {
+// implement the parser
+flowDiagrams.forEach((diagramDefinition, i) => {
   const div = document.querySelector(`#diagram-container-${i}`);
   const p = div.querySelector(`#parsed-${i}`);
   // 1. extract elements info from SVG
-  // TODO: try out flowchart in different ways (from simple to complex)
   const nodes = [...div.querySelector(".nodes").childNodes].map(parseNode);
   const edgePaths = [...div.querySelector(".edgePaths").childNodes].map(
     parseEdge
