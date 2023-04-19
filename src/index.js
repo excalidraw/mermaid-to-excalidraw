@@ -7,8 +7,13 @@ const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: true });
 const container = document.getElementById("diagrams");
 
+// skips some diagrams #n
+const SKIPS = [39, 40];
+
 // render the diagram
 flowDiagrams.forEach((diagramDefinition, i) => {
+  if (SKIPS.includes(i + 1)) return;
+
   const div = document.createElement("div");
   div.id = `diagram-container-${i}`;
   div.innerHTML = `<h1>Test #${
@@ -27,6 +32,8 @@ flowDiagrams.forEach((diagramDefinition, i) => {
 
 // implement the parser
 flowDiagrams.forEach((diagramDefinition, i) => {
+  if (SKIPS.includes(i + 1)) return;
+
   const div = document.querySelector(`#diagram-container-${i}`);
   const p = div.querySelector(`#parsed-${i}`);
   // 1. extract relevant info from SVG
@@ -37,9 +44,9 @@ flowDiagrams.forEach((diagramDefinition, i) => {
   const edgePaths = [...div.querySelector(".edgePaths").childNodes].map(
     parseEdge
   );
-  const edgeLabels = [...div.querySelector(".edgeLabels").childNodes].map(
-    parseLabel
-  );
+  const edgeLabels = [...div.querySelector(".edgeLabels").childNodes]
+    .map(parseLabel)
+    .filter((label) => label.textContent.length !== 0);
 
   // 2. transform to Excalidraw markup (JSON)
   // TODO: transform dimention, create elements relationship e.g. node, arrow

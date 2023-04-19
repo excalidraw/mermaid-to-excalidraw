@@ -21,10 +21,18 @@ export const parseNode = (node) => {
   if (node.querySelector("circle")) nodeType = "circle";
   if (node.querySelector("polygon")) nodeType = "polygon";
 
+  let link;
+  if (node.tagName.toLowerCase() === "a")
+    link = node.getAttribute("xlink:href");
+
+  let id = node.id;
+  if (node.tagName.toLowerCase() === "a") id = node.childNodes[0].id;
+
   return {
-    id: node.id,
+    id,
     type: "node",
     nodeType,
+    link,
     x: matrix.m41,
     y: matrix.m42,
     width: rect.width,
