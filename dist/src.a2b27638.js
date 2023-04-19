@@ -117,7 +117,29 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+})({"src/parser.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.parseNode = void 0;
+var parseNode = function parseNode(node) {
+  var style = getComputedStyle(node);
+  var matrix = new DOMMatrixReadOnly(style.transform);
+  var rect = node.getBoundingClientRect();
+  return {
+    id: node.id,
+    type: "node",
+    x: matrix.m41,
+    y: matrix.m42,
+    width: rect.width,
+    height: rect.height,
+    textContent: node.textContent
+  };
+};
+exports.parseNode = parseNode;
+},{}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 function getBundleURLCached() {
   if (!bundleURL) {
@@ -8509,10 +8531,17 @@ module.exports = {
 },{"./xml2js":"node_modules/xml-js/lib/xml2js.js","./xml2json":"node_modules/xml-js/lib/xml2json.js","./js2xml":"node_modules/xml-js/lib/js2xml.js","./json2xml":"node_modules/xml-js/lib/json2xml.js"}],"src/index.js":[function(require,module,exports) {
 "use strict";
 
+var _parser = require("./parser");
 require("./styles.css");
 var xml = _interopRequireWildcard(require("xml-js"));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 var mermaid = window.mermaid;
 var ele = document.getElementById("dg");
 var p = document.getElementById("json");
@@ -8523,15 +8552,20 @@ mermaid.initialize({
 });
 // define the diagram
 var diagramDefinition = "graph TD;\n  Hello-->World;\n";
+
 // render the diagram
 var svg = mermaid.mermaidAPI.render("diagram", diagramDefinition);
 ele.innerHTML = svg;
+
+// extract elements info from SVG
+var nodes = _toConsumableArray(ele.querySelector(".nodes").childNodes).map(_parser.parseNode);
+console.log("nodes", nodes);
 var svgAsJson = xml.xml2json(svg, {
   compact: true,
   spaces: 2
 });
 p.innerHTML = svgAsJson;
-},{"./styles.css":"src/styles.css","xml-js":"node_modules/xml-js/lib/index.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./parser":"src/parser.js","./styles.css":"src/styles.css","xml-js":"node_modules/xml-js/lib/index.js"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -8556,7 +8590,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55630" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61786" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
