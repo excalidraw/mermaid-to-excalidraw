@@ -21,12 +21,16 @@ diagrams.forEach((diagramDefinition, i) => {
     i + 1
   }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre>`;
   const dg = div.querySelector(`#diagram-${i}`);
-  const p = div.querySelector(`#parsed-${i}`);
 
   // render the diagram
   const svg = mermaid.mermaidAPI.render(`diagram-${i}`, diagramDefinition);
   dg.innerHTML = svg;
+  container.append(div);
+});
 
+diagrams.forEach((diagramDefinition, i) => {
+  const div = document.querySelector(`#diagram-container-${i}`);
+  const p = div.querySelector(`#parsed-${i}`);
   // 1. extract elements info from SVG
   // TODO: try out flowchart in different ways (from simple to complex)
   const nodes = [...div.querySelector(".nodes").childNodes].map(parseNode);
@@ -39,6 +43,4 @@ diagrams.forEach((diagramDefinition, i) => {
 
   // 3. markup to Excalidraw Element
   p.innerHTML = JSON.stringify({ nodes, edgePaths }, null, 2);
-
-  container.append(div);
 });
