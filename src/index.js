@@ -3,6 +3,13 @@ import { parseRoot } from "./parser";
 import "./styles.css";
 const mermaid = window.mermaid;
 
+import m from "mermaid";
+
+(async () => {
+  const d = await m.mermaidAPI.getDiagramFromText(flowDiagrams[0]);
+  console.log(d);
+})();
+
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: true });
 const container = document.getElementById("diagrams");
