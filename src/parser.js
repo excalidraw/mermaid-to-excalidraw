@@ -1,3 +1,24 @@
+export const parseRoot = (node) => {
+  const clusters = [...node.querySelector(".clusters").childNodes].map(
+    parseCluster
+  );
+  const nodes = [...node.querySelector(".nodes").childNodes].map(parseNode);
+  const edgePaths = [...node.querySelector(".edgePaths").childNodes].map(
+    parseEdge
+  );
+  const edgeLabels = [...node.querySelector(".edgeLabels").childNodes]
+    .map(parseLabel)
+    .filter((label) => label.textContent.length !== 0);
+
+  return {
+    type: "root",
+    clusters,
+    nodes,
+    edgePaths,
+    edgeLabels,
+  };
+};
+
 export const parseCluster = (node) => {
   const rect = node.querySelector("rect");
 
@@ -12,6 +33,8 @@ export const parseCluster = (node) => {
 };
 
 export const parseNode = (node) => {
+  if (node.classList.contains("root")) return parseRoot(node);
+
   const style = getComputedStyle(node);
   const matrix = new DOMMatrixReadOnly(style.transform);
   const rect = node.getBoundingClientRect();
