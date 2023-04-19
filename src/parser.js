@@ -13,3 +13,12 @@ export const parseNode = (node) => {
     textContent: node.textContent,
   };
 };
+
+export const parseEdge = (node) => {
+  return {
+    id: node.id,
+    type: "edge",
+    // start: "",
+    // end: "",
+  };
+};

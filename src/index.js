@@ -1,4 +1,4 @@
-import { parseNode } from "./parser";
+import { parseEdge, parseNode } from "./parser";
 import "./styles.css";
 const mermaid = window.mermaid;
 const ele = document.getElementById("dg");
@@ -16,10 +16,12 @@ ele.innerHTML = svg;
 // 1. extract elements info from SVG
 // TODO: try out flowchart in different ways (from simple to complex)
 const nodes = [...ele.querySelector(".nodes").childNodes].map(parseNode);
-console.log("nodes", nodes);
+const edgePaths = [...ele.querySelector(".edgePaths").childNodes].map(
+  parseEdge
+);
 
 // 2. transform to Excalidraw markup (JSON)
 // TODO: transform dimention, create elements relationship e.g. node, arrow
 
 // 3. markup to Excalidraw Element
-p.innerHTML = JSON.stringify({ nodes }, null, 2);
+p.innerHTML = JSON.stringify({ nodes, edgePaths }, null, 2);
