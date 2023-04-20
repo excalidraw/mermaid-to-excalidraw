@@ -18,8 +18,9 @@ const container = document.getElementById("diagrams");
 const SKIPS = [6, 9, 27, 28, 29, 39, 40, 42, 43];
 
 // render the diagram
-flowDiagrams.forEach(async (diagramDefinition, i) => {
+flowDiagrams.forEach(async (_diagramDefinition, i) => {
   if (SKIPS.includes(i + 1)) return;
+  const diagramDefinition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${_diagramDefinition}`;
 
   const div = document.createElement("div");
   div.id = `diagram-container-${i}`;

@@ -148,8 +148,7 @@ end
 A --> TOP --> B
 B1 --> B2
 `,
-  `%%{init: {"flowchart": {"htmlLabels": false}} }%%
-flowchart LR
+  `flowchart LR
 subgraph "One"
 a("\`The **cat**
 in the hat\`") -- "edge label" --> b{{"\`The **dog** in the hog\`"}}
