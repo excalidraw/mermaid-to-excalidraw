@@ -8,7 +8,6 @@ import mermaid from "mermaid";
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
 
-// TODO: parse cluster dimention
 // TODO: transform dimention
 
 // initialize Mermaid

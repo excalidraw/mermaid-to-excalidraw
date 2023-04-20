@@ -28,6 +28,23 @@ export const parseRoot = (graph, containerEl) => {
 export const parseCluster = (node, containerEl) => {
   const el = containerEl.querySelector("#" + node.id);
 
+  let dimention;
+  const root = el.parentElement.parentElement;
+  if (root.classList.value === "root" && root.hasAttribute("transform")) {
+    const style = getComputedStyle(root);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    dimention = {
+      x: matrix.m41,
+      y: matrix.m42,
+    };
+  } else {
+    const rect = el.querySelector("rect");
+    dimention = {
+      x: +(rect.getAttribute("x") || 0),
+      y: +(rect.getAttribute("y") || 0),
+    };
+  }
+
   // const style = getComputedStyle(el);
   // const matrix = new DOMMatrixReadOnly(style.transform);
   const rect = el.getBoundingClientRect();
@@ -43,8 +60,7 @@ export const parseCluster = (node, containerEl) => {
     nodes,
     classes: undefined,
     dir: undefined,
-    // x: matrix.m41,
-    // y: matrix.m42,
+    ...dimention,
     width: rect.width,
     height: rect.height,
   };
