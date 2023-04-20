@@ -1,4 +1,3 @@
-// TODO: transform dimention, create elements relationship e.g. node, arrow, cluster
 export const parseRoot = (graph, containerEl) => {
   const vertices = graph.getVertices();
   Object.keys(vertices).forEach((id) => {

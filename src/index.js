@@ -3,13 +3,14 @@ import { parseRoot } from "./parser";
 import "./styles.css";
 import mermaid from "mermaid";
 
-// TODO: how to connect label with edge since label have no id attached.
-//    sol1: get graph data from parser (didn't find public function for this yet)
-//    sol2: check position overlapping
 // TODO: how to handle element type like database, hexagon, etc. (how to transform into other type?)
 // TODO: how to identify arrow head
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
+
+// TODO: parse cluster dimention
+// TODO: transform dimention
+// TODO: ignore advanced testcases for poc
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
@@ -58,15 +59,4 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
 
   const root = parseRoot(graph, dg);
   p.innerHTML = JSON.stringify(root, null, 2);
-
-  if (i + 1 === 37) {
-    console.log(
-      i + 1,
-      graph
-      // graph.getEdges(),
-      // graph.getVertices(),
-      // graph.getSubGraphs()
-    );
-    window.g = graph;
-  }
 });
