@@ -32,9 +32,16 @@ export const parseCluster = (node, containerEl) => {
   // const style = getComputedStyle(el);
   // const matrix = new DOMMatrixReadOnly(style.transform);
   const rect = el.getBoundingClientRect();
+  const nodes = node.nodes.map((n) => {
+    if (n.startsWith("flowchart-")) {
+      return n.split("-")[1];
+    }
+    return n;
+  });
 
   return {
     ...node,
+    nodes,
     classes: undefined,
     dir: undefined,
     // x: matrix.m41,
