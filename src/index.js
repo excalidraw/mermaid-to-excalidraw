@@ -3,12 +3,16 @@ import { parseRoot } from "./parser";
 import "./styles.css";
 import mermaid from "mermaid";
 
+// Research Backlog
 // TODO: how to handle element type like database, hexagon, etc. (how to transform into other type?)
 // TODO: how to identify arrow head
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
 
-// TODO: transform dimention
+// Tasks
+// TODO: Integrate Excalidraw (30m)
+// TODO: Add a button to run excalidraw on each testcases (30m)
+// TODO: Try to render the diagram & passes all testcases (4h++)
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
