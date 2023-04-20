@@ -4,6 +4,9 @@ export const parseRoot = (graph, containerEl) => {
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertice(vertices[id], containerEl);
   });
+
+  const edges = graph.getEdges().map(parseEdge);
+
   // const clusters = [...node.querySelector(".clusters").childNodes].map(
   //   parseCluster
   // );
@@ -16,6 +19,7 @@ export const parseRoot = (graph, containerEl) => {
 
   return {
     vertices,
+    edges,
     // clusters,
     // edgePaths,
     // edgeLabels,
@@ -59,12 +63,21 @@ export const parseVertice = (v, containerEl) => {
   const el = containerEl.querySelector(`[id*="flowchart-${v.id}"]`);
 
   let link;
-  if (el.parentElement.tagName.toLowerCase() === "a")
+  if (el && el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
-  const style = getComputedStyle(el);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-  const rect = el.getBoundingClientRect();
+  let coords = {};
+  if (el) {
+    const style = getComputedStyle(el);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    const rect = el.getBoundingClientRect();
+    coords = {
+      x: matrix.m41,
+      y: matrix.m42,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
 
   return {
     id: v.id,
@@ -72,37 +85,20 @@ export const parseVertice = (v, containerEl) => {
     text: v.text,
     type: v.type,
     link,
-    x: matrix.m41,
-    y: matrix.m42,
-    width: rect.width,
-    height: rect.height,
+    ...coords,
   };
 };
 
+// {
+//   "start": "A",
+//   "end": "B",
+//   "type": "arrow_point",
+//   "text": "text",
+//   "labelType": "text",
+//   "stroke": "thick",
+//   "length": 1
+// }
 export const parseEdge = (node) => {
-  const edgeType = node.classList[1];
-
-  return {
-    id: node.id,
-    type: "edge",
-    edgeType,
-    // start: "",
-    // end: "",
-  };
-};
-
-export const parseLabel = (node) => {
-  const style = getComputedStyle(node);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-  const rect = node.getBoundingClientRect();
-
-  return {
-    id: node.id,
-    type: "label",
-    // x: matrix.m41,
-    // y: matrix.m42,
-    // width: rect.width,
-    // height: rect.height,
-    textContent: node.textContent,
-  };
+  node.length = undefined;
+  return node;
 };
