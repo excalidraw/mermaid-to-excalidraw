@@ -10,14 +10,13 @@ import mermaid from "mermaid";
 
 // TODO: parse cluster dimention
 // TODO: transform dimention
-// TODO: ignore advanced testcases for poc
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 const container = document.getElementById("diagrams");
 
 // skips some diagrams #n
-const SKIPS = [39, 40];
+const SKIPS = [6, 9, 27, 28, 29, 39, 40, 42, 43];
 
 // render the diagram
 flowDiagrams.forEach(async (diagramDefinition, i) => {
