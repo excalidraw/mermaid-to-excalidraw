@@ -31,6 +31,14 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   const dg = div.querySelector(`#diagram-${i}`);
   const { svg } = await mermaid.render(`diagram-${i}`, diagramDefinition);
 
+  // get parsed data
+  const diagram = await mermaid.mermaidAPI.getDiagramFromText(
+    diagramDefinition
+  );
+  diagram.parse(diagramDefinition);
+  const { getDirection, getEdges, getVertices } = diagram.parser.yy;
+  console.log(i + 1, getDirection(), getEdges(), getVertices());
+
   dg.innerHTML = svg;
   container.append(div);
 });
