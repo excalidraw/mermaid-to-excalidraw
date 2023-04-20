@@ -1,23 +1,24 @@
 // TODO: transform dimention, create elements relationship e.g. node, arrow, cluster
-
-export const parseRoot = (node) => {
-  const clusters = [...node.querySelector(".clusters").childNodes].map(
-    parseCluster
-  );
-  const nodes = [...node.querySelector(".nodes").childNodes].map(parseNode);
-  const edgePaths = [...node.querySelector(".edgePaths").childNodes].map(
-    parseEdge
-  );
-  const edgeLabels = [...node.querySelector(".edgeLabels").childNodes]
-    .map(parseLabel)
-    .filter((label) => label.textContent.length !== 0);
+export const parseRoot = (graph, containerEl) => {
+  const vertices = graph.getVertices();
+  Object.keys(vertices).forEach((id) => {
+    vertices[id] = parseVertice(vertices[id], containerEl);
+  });
+  // const clusters = [...node.querySelector(".clusters").childNodes].map(
+  //   parseCluster
+  // );
+  // const edgePaths = [...node.querySelector(".edgePaths").childNodes].map(
+  //   parseEdge
+  // );
+  // const edgeLabels = [...node.querySelector(".edgeLabels").childNodes]
+  //   .map(parseLabel)
+  //   .filter((label) => label.textContent.length !== 0);
 
   return {
-    type: "root",
-    clusters,
-    nodes,
-    edgePaths,
-    edgeLabels,
+    vertices,
+    // clusters,
+    // edgePaths,
+    // edgeLabels,
   };
 };
 
@@ -34,35 +35,47 @@ export const parseCluster = (node) => {
   };
 };
 
-export const parseNode = (node) => {
-  if (node.classList.contains("root")) return parseRoot(node);
-
-  const style = getComputedStyle(node);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-  const rect = node.getBoundingClientRect();
-
-  let nodeType;
-  if (node.querySelector("rect")) nodeType = "rect";
-  if (node.querySelector("circle")) nodeType = "circle";
-  if (node.querySelector("polygon")) nodeType = "polygon";
+// "vertices": {
+//   "Start": {
+//     "id": "Start",
+//     "labelType": "text",
+//     "domId": "flowchart-Start-14",
+//     "styles": [],
+//     "classes": [],
+//     "text": "Start",
+//     "props": {}
+//   },
+//   "Stop": {
+//     "id": "Stop",
+//     "labelType": "text",
+//     "domId": "flowchart-Stop-15",
+//     "styles": [],
+//     "classes": [],
+//     "text": "Stop",
+//     "props": {}
+//   }
+// }
+export const parseVertice = (v, containerEl) => {
+  const el = containerEl.querySelector(`[id*="flowchart-${v.id}"]`);
 
   let link;
-  if (node.tagName.toLowerCase() === "a")
-    link = node.getAttribute("xlink:href");
+  if (el.parentElement.tagName.toLowerCase() === "a")
+    link = el.parentElement.getAttribute("xlink:href");
 
-  let id = node.id;
-  if (node.tagName.toLowerCase() === "a") id = node.childNodes[0].id;
+  const style = getComputedStyle(el);
+  const matrix = new DOMMatrixReadOnly(style.transform);
+  const rect = el.getBoundingClientRect();
 
   return {
-    id,
-    type: "node",
-    nodeType,
+    id: v.id,
+    labelType: v.labelType, // text, markdown
+    text: v.text,
+    type: v.type,
     link,
     x: matrix.m41,
     y: matrix.m42,
     width: rect.width,
     height: rect.height,
-    textContent: node.textContent,
   };
 };
 

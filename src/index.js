@@ -31,34 +31,16 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   const dg = div.querySelector(`#diagram-${i}`);
   const { svg } = await mermaid.render(`diagram-${i}`, diagramDefinition);
 
+  dg.innerHTML = svg;
+  container.append(div);
+
   // get parsed data
+  const p = div.querySelector(`#parsed-${i}`);
+
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(
     diagramDefinition
   );
   diagram.parse(diagramDefinition);
-  const { getDirection, getEdges, getVertices } = diagram.parser.yy;
-  console.log(i + 1, getDirection(), getEdges(), getVertices());
-
-  dg.innerHTML = svg;
-  container.append(div);
-});
-
-// implement the parser
-// import m from "mermaid";
-// m.initialize({ startOnLoad: false });
-// let diagram;
-flowDiagrams.forEach(async (diagramDefinition, i) => {
-  if (SKIPS.includes(i + 1)) return;
-  // if (!diagram) {
-  //   diagram = await m.mermaidAPI.getDiagramFromText("flowchart");
-  //   console.log("...");
-  // }
-
-  // const div = document.querySelector(`#diagram-container-${i}`);
-  // const p = div.querySelector(`#parsed-${i}`);
-
-  // m.mermaidAPI.render(`diagram-${i}`, diagramDefinition);
-
   // const {
   //   getAccDescription,
   //   getAccTitle,
@@ -70,16 +52,21 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   //   getSubGraphs,
   //   getTooltip,
   //   getVertices,
-  // } = diagram.parser.yy;
+  // } = graph;
+  const graph = diagram.parser.yy;
+  console.log(i + 1, diagram, graph.getVertices());
 
-  // console.log(diagram, m);
-  // console.log(i + 1, getAccDescription(), getAccTitle(), getVertices());
+  const root = parseRoot(graph, dg);
+  p.innerHTML = JSON.stringify(root, null, 2);
 
-  // parse relevant info from SVG
-  // const root = parseRoot(div);
-
-  // parsed data to Excalidraw element
-  // p.innerHTML = JSON.stringify(root, null, 2);
-
-  // diagram.parser.yy.clear();
+  if (i + 1 === 37) {
+    console.log(
+      i + 1,
+      graph
+      // graph.getEdges(),
+      // graph.getVertices(),
+      // graph.getSubGraphs()
+    );
+    window.g = graph;
+  }
 });
