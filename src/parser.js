@@ -4,38 +4,43 @@ export const parseRoot = (graph, containerEl) => {
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertice(vertices[id], containerEl);
   });
-
   const edges = graph.getEdges().map(parseEdge);
-
-  // const clusters = [...node.querySelector(".clusters").childNodes].map(
-  //   parseCluster
-  // );
-  // const edgePaths = [...node.querySelector(".edgePaths").childNodes].map(
-  //   parseEdge
-  // );
-  // const edgeLabels = [...node.querySelector(".edgeLabels").childNodes]
-  //   .map(parseLabel)
-  //   .filter((label) => label.textContent.length !== 0);
+  const clusters = graph
+    .getSubGraphs()
+    .map((c) => parseCluster(c, containerEl));
 
   return {
+    clusters,
     vertices,
     edges,
-    // clusters,
-    // edgePaths,
-    // edgeLabels,
   };
 };
 
-export const parseCluster = (node) => {
-  const rect = node.querySelector("rect");
+// {
+//   "id": "B1",
+//   "nodes": [
+//     "flowchart-f1-506",
+//     "flowchart-i1-505"
+//   ],
+//   "title": "B1",
+//   "dir": "RL",
+//   "labelType": "text"
+// },
+export const parseCluster = (node, containerEl) => {
+  const el = containerEl.querySelector("#" + node.id);
+
+  // const style = getComputedStyle(el);
+  // const matrix = new DOMMatrixReadOnly(style.transform);
+  const rect = el.getBoundingClientRect();
 
   return {
-    id: node.id,
-    type: "cluster",
-    width: +(rect.getAttribute("width") || 0),
-    height: +(rect.getAttribute("height") || 0),
-    x: +(rect.getAttribute("x") || 0),
-    y: +(rect.getAttribute("y") || 0),
+    ...node,
+    classes: undefined,
+    dir: undefined,
+    // x: matrix.m41,
+    // y: matrix.m42,
+    width: rect.width,
+    height: rect.height,
   };
 };
 
@@ -61,23 +66,16 @@ export const parseCluster = (node) => {
 // }
 export const parseVertice = (v, containerEl) => {
   const el = containerEl.querySelector(`[id*="flowchart-${v.id}"]`);
+  // if element not found (mean el = cluster), ignore
+  if (!el) return;
 
   let link;
-  if (el && el.parentElement.tagName.toLowerCase() === "a")
+  if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
-  let coords = {};
-  if (el) {
-    const style = getComputedStyle(el);
-    const matrix = new DOMMatrixReadOnly(style.transform);
-    const rect = el.getBoundingClientRect();
-    coords = {
-      x: matrix.m41,
-      y: matrix.m42,
-      width: rect.width,
-      height: rect.height,
-    };
-  }
+  const style = getComputedStyle(link ? el.parentElement : el);
+  const matrix = new DOMMatrixReadOnly(style.transform);
+  const rect = el.getBoundingClientRect();
 
   return {
     id: v.id,
@@ -85,7 +83,10 @@ export const parseVertice = (v, containerEl) => {
     text: v.text,
     type: v.type,
     link,
-    ...coords,
+    x: matrix.m41,
+    y: matrix.m42,
+    width: rect.width,
+    height: rect.height,
   };
 };
 
