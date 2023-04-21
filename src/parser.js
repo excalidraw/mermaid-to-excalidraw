@@ -125,3 +125,114 @@ export const parseEdge = (node) => {
   node.length = undefined;
   return node;
 };
+
+// Excalidraw
+export function jsonToExcalidraw(json) {
+  const elements = [];
+
+  // json.clusters.forEach((cluster) => {
+  //   elements.push({
+  //     type: "rectangle",
+  //     id: cluster.id,
+  //     x: cluster.x,
+  //     y: cluster.y,
+  //     width: cluster.width,
+  //     height: cluster.height,
+  //     strokeColor: "black",
+  //     backgroundColor: "transparent",
+  //     strokeWidth: 2,
+  //     roughness: 1,
+  //     opacity: 100,
+  //   });
+
+  //   elements.push({
+  //     type: "text",
+  //     id: `${cluster.id}_title`,
+  //     x: cluster.x + cluster.width / 2,
+  //     y: cluster.y + 10,
+  //     text: cluster.title,
+  //     fontSize: 20,
+  //     fontFamily: 1,
+  //     textAlign: "center",
+  //     verticalAlign: "top",
+  //     strokeColor: "black",
+  //     backgroundColor: "transparent",
+  //     strokeWidth: 1,
+  //     roughness: 0,
+  //     opacity: 100,
+  //   });
+  // });
+
+  Object.values(json.vertices).forEach((vertex) => {
+    const textElement = {
+      id: `${vertex.id}_text`,
+      type: "text",
+      strokeColor: "black",
+      backgroundColor: "transparent",
+      text: vertex.text,
+      originalText: vertex.text,
+      width: 60,
+      height: 35,
+      fontSize: 14,
+      fontFamily: 1,
+      textAlign: "center",
+      verticalAlign: "center",
+      containerId: vertex.id,
+      x: vertex.x + vertex.width / 2,
+      y: vertex.y + 10,
+      opacity: 100,
+    };
+
+    const containerElement = {
+      type: "rectangle",
+      id: vertex.id,
+      x: vertex.x,
+      y: vertex.y,
+      width: vertex.width,
+      height: vertex.height,
+      strokeColor: "black",
+      backgroundColor: "transparent",
+      strokeWidth: 2,
+      roughness: 1,
+      opacity: 100,
+      boundElements: [
+        {
+          type: "text",
+          id: textElement.id,
+        },
+      ],
+    };
+
+    elements.push(containerElement);
+    elements.push(textElement);
+  });
+
+  // json.edges.forEach((edge) => {
+  //   const startX = json.vertices[edge.start].x;
+  //   const startY = json.vertices[edge.start].y;
+  //   const endX = json.vertices[edge.end].x;
+  //   const endY = json.vertices[edge.end].y;
+
+  //   elements.push({
+  //     type: "arrow",
+  //     id: `${edge.start}_${edge.end}`,
+  //     x: startX,
+  //     y: startY,
+  //     x2: endX,
+  //     y2: endY,
+  //     strokeColor: "black",
+  //     backgroundColor: "transparent",
+  //     strokeWidth: 2,
+  //     roughness: 1,
+  //     opacity: 100,
+  //     strokeLinejoin: "round",
+  //     strokeLinecap: "round",
+  //     points: [
+  //       [0, 0],
+  //       [endX - startX, endY - startY],
+  //     ],
+  //   });
+  // });
+
+  return ExcalidrawLib.restoreElements(elements, null);
+}

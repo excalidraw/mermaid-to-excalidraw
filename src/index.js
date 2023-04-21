@@ -1,6 +1,6 @@
 import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
-import { parseRoot } from "./parser";
+import { jsonToExcalidraw, parseRoot } from "./parser";
 import "./styles.css";
 import mermaid from "mermaid";
 
@@ -9,11 +9,6 @@ import mermaid from "mermaid";
 // TODO: how to identify arrow head
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
-
-// Tasks
-// TODO: Integrate Excalidraw (30m)
-// TODO: Add a button to run excalidraw on each testcases (30m)
-// TODO: Try to render the diagram & passes all testcases (4h++)
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
@@ -31,7 +26,7 @@ flowDiagrams.forEach(async (_diagramDefinition, i) => {
   div.id = `diagram-container-${i}`;
   div.innerHTML = `<h1>Test #${
     i + 1
-  }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre>`;
+  }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre><button onclick="renderExcalidraw(document.getElementById('parsed-${i}').innerText)">Render to Excalidraw</button>`;
 
   const dg = div.querySelector(`#diagram-${i}`);
   const { svg } = await mermaid.render(`diagram-${i}`, diagramDefinition);
@@ -65,7 +60,25 @@ flowDiagrams.forEach(async (_diagramDefinition, i) => {
   p.innerHTML = JSON.stringify(root, null, 2);
 });
 
-// render excalidraw
+// render default excalidraw
 const excalidrawWrapper = document.getElementById("excalidraw");
-const root = ReactDOM.createRoot(excalidrawWrapper);
+let root = ReactDOM.createRoot(excalidrawWrapper);
 root.render(React.createElement(Excalidraw));
+
+// Render to Excalidraw
+function renderExcalidraw(mermaidDataString) {
+  const data = JSON.parse(mermaidDataString);
+  const elements = jsonToExcalidraw(data);
+
+  console.log(elements);
+
+  root.unmount();
+  root = ReactDOM.createRoot(excalidrawWrapper);
+  root.render(
+    React.createElement(Excalidraw, {
+      elements,
+    })
+  );
+}
+
+window.renderExcalidraw = renderExcalidraw;
