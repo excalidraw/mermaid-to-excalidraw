@@ -217,10 +217,31 @@ export function jsonToExcalidraw(json) {
     const startY = json.vertices[edge.start].y;
     const endX = json.vertices[edge.end].x;
     const endY = json.vertices[edge.end].y;
+    const arrowId = `${edge.start}_${edge.end}`;
 
-    elements.push({
+    const textElement = {
+      id: `${arrowId}_text`,
+      type: "text",
+      strokeColor: "black",
+      backgroundColor: "transparent",
+      text: edge.text,
+      originalText: edge.text,
+      width: 5 * edge.text.length,
+      height: 18,
+      fontSize: 14,
+      fontFamily: 1,
+      lineHeight: 1.25,
+      textAlign: "center",
+      verticalAlign: "center",
+      containerId: arrowId,
+      x: startX + (endX - startX) / 2,
+      y: startY + (endY - startY) / 2,
+      opacity: 100,
+    };
+
+    const containerElement = {
       type: "arrow",
-      id: `${edge.start}_${edge.end}`,
+      id: arrowId,
       x: startX,
       y: startY,
       x2: endX,
@@ -236,7 +257,16 @@ export function jsonToExcalidraw(json) {
         [0, 0],
         [endX - startX, endY - startY],
       ],
-    });
+      boundElements: [
+        {
+          type: "text",
+          id: textElement.id,
+        },
+      ],
+    };
+
+    elements.push(containerElement);
+    elements.push(textElement);
   });
 
   return ExcalidrawLib.restoreElements(elements, null);
