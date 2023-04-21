@@ -3,13 +3,18 @@
   <head>
     <title>Mermaid to Excalidraw</title>
     <meta charset="UTF-8" />
-    <!-- Excalidraw: https://codesandbox.io/s/excalidraw-in-browser-forked-lb8j2r -->
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/@excalidraw/excalidraw/dist/excalidraw.development.js"
+    ></script>
+    <link rel="stylesheet" href="src/styles.css" />
   </head>
 
   <body>
     <div id="diagrams"></div>
-    <p>
-      <script src="src/index.js"></script>
-    </p>
+    <div id="excalidraw"></div>
+    <script src="src/index.js"></script>
   </body>
 </html>

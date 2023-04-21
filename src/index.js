@@ -1,3 +1,4 @@
+import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
 import { parseRoot } from "./parser";
 import "./styles.css";
@@ -63,3 +64,8 @@ flowDiagrams.forEach(async (_diagramDefinition, i) => {
   const root = parseRoot(graph, dg);
   p.innerHTML = JSON.stringify(root, null, 2);
 });
+
+// render excalidraw
+const excalidrawWrapper = document.getElementById("excalidraw");
+const root = ReactDOM.createRoot(excalidrawWrapper);
+root.render(React.createElement(Excalidraw));

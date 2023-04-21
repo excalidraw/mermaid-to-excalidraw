@@ -1,7 +1,14 @@
 body {
   font-family: sans-serif;
 }
-#diagram {
-  width: 300px;
-  height: 200px;
+#excalidraw {
+  width: 550px;
+  height: 550px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  border: 1px solid #ccc;
+}
+.excalidraw-wrapper {
+  height: 100%;
 }
