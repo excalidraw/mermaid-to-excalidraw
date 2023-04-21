@@ -219,25 +219,28 @@ export function jsonToExcalidraw(json) {
     const endY = json.vertices[edge.end].y;
     const arrowId = `${edge.start}_${edge.end}`;
 
-    const textElement = {
-      id: `${arrowId}_text`,
-      type: "text",
-      strokeColor: "black",
-      backgroundColor: "transparent",
-      text: edge.text,
-      originalText: edge.text,
-      width: 5 * edge.text.length,
-      height: 18,
-      fontSize: 14,
-      fontFamily: 1,
-      lineHeight: 1.25,
-      textAlign: "center",
-      verticalAlign: "center",
-      containerId: arrowId,
-      x: startX + (endX - startX) / 2,
-      y: startY + (endY - startY) / 2,
-      opacity: 100,
-    };
+    let textElement;
+    if (edge.text) {
+      textElement = {
+        id: `${arrowId}_text`,
+        type: "text",
+        strokeColor: "black",
+        backgroundColor: "transparent",
+        text: edge.text,
+        originalText: edge.text,
+        width: 5 * edge.text.length,
+        height: 18,
+        fontSize: 14,
+        fontFamily: 1,
+        lineHeight: 1.25,
+        textAlign: "center",
+        verticalAlign: "center",
+        containerId: arrowId,
+        x: startX + (endX - startX) / 2,
+        y: startY + (endY - startY) / 2,
+        opacity: 100,
+      };
+    }
 
     const containerElement = {
       type: "arrow",
@@ -257,16 +260,13 @@ export function jsonToExcalidraw(json) {
         [0, 0],
         [endX - startX, endY - startY],
       ],
-      boundElements: [
-        {
-          type: "text",
-          id: textElement.id,
-        },
-      ],
+      ...(textElement
+        ? { boundElements: [{ type: "text", id: textElement.id }] }
+        : {}),
     };
 
     elements.push(containerElement);
-    elements.push(textElement);
+    if (textElement) elements.push(textElement);
   });
 
   return ExcalidrawLib.restoreElements(elements, null);
