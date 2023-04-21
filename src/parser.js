@@ -145,12 +145,31 @@ export const parseEdge = (node, containerEl) => {
       .substring(1)
       .split(",")
       .map((coord) => parseFloat(coord));
+    const reflectionPoints = commands
+      .map((command) => {
+        const coords = command
+          .substring(1)
+          .split(",")
+          .map((coord) => parseFloat(coord));
+        return { x: coords[0], y: coords[1] };
+      })
+      .filter((point, index, array) => {
+        if (index === array.length - 1) {
+          return true;
+        }
+
+        const prevPoint = array[index - 1];
+        return (
+          index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
+        );
+      });
 
     return {
       startX: startPosition[0],
       startY: startPosition[1],
       endX: endPosition[0],
       endY: endPosition[1],
+      reflectionPoints,
     };
   }
 
@@ -258,6 +277,11 @@ export function jsonToExcalidraw(json) {
     const endX = edge.endX + vEnd.width / 2;
     const endY = edge.endY + vEnd.height / 2;
     const arrowId = `${edge.start}_${edge.end}`;
+    // calculate reflection point
+    const points = edge.reflectionPoints.map((point) => [
+      point.x - edge.reflectionPoints[0].x,
+      point.y - edge.reflectionPoints[0].y,
+    ]);
 
     let textElement;
     if (edge.text) {
@@ -296,10 +320,10 @@ export function jsonToExcalidraw(json) {
       opacity: 100,
       strokeLinejoin: "round",
       strokeLinecap: "round",
-      points: [
-        [0, 0],
-        [endX - startX, endY - startY],
-      ],
+      points: points,
+      roundness: {
+        type: 2,
+      },
       ...(textElement
         ? { boundElements: [{ type: "text", id: textElement.id }] }
         : {}),
