@@ -250,6 +250,7 @@ export function jsonToExcalidraw(json) {
   });
 
   json.edges.forEach((edge) => {
+    // calculate arrow position
     const vStart = json.vertices[edge.start];
     const vEnd = json.vertices[edge.end];
     const startX = edge.startX + vStart.width / 2;
@@ -302,6 +303,31 @@ export function jsonToExcalidraw(json) {
       ...(textElement
         ? { boundElements: [{ type: "text", id: textElement.id }] }
         : {}),
+    };
+
+    // bound arrow to vertex
+    const startV = elements.find((e) => e.id === edge.start);
+    const endV = elements.find((e) => e.id === edge.end);
+    if (!startV.boundElements) startV.boundElements = [];
+    startV.boundElements.push({
+      type: "arrow",
+      id: arrowId,
+    });
+    if (!endV.boundElements) endV.boundElements = [];
+    endV.boundElements.push({
+      type: "arrow",
+      id: arrowId,
+    });
+    // TODO: calculate focus and gap
+    containerElement.startBinding = {
+      elementId: startV.id,
+      focus: 0.2717252745455439,
+      gap: 6.261578457263113,
+    };
+    containerElement.endBinding = {
+      elementId: endV.id,
+      focus: 0.2717252745455439,
+      gap: 6.261578457263113,
     };
 
     elements.push(containerElement);
