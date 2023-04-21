@@ -3,7 +3,7 @@ export const parseRoot = (graph, containerEl) => {
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertice(vertices[id], containerEl);
   });
-  const edges = graph.getEdges().map(parseEdge);
+  const edges = graph.getEdges().map((e) => parseEdge(e, containerEl));
   const clusters = graph
     .getSubGraphs()
     .map((c) => parseCluster(c, containerEl));
@@ -121,9 +121,46 @@ export const parseVertice = (v, containerEl) => {
 //   "stroke": "thick",
 //   "length": 1
 // }
-export const parseEdge = (node) => {
+export const parseEdge = (node, containerEl) => {
   node.length = undefined;
-  return node;
+  function extractPositions(pathElement) {
+    if (pathElement.tagName.toLowerCase() !== "path") {
+      throw new Error(
+        'Invalid input: Expected an HTMLElement of tag "path", got ' +
+          pathElement.tagName
+      );
+    }
+
+    const dAttribute = pathElement.getAttribute("d");
+    if (!dAttribute) {
+      throw new Error('Path element does not contain a "d" attribute');
+    }
+
+    const commands = dAttribute.split(/(?=[LM])/);
+    const startPosition = commands[0]
+      .substring(1)
+      .split(",")
+      .map((coord) => parseFloat(coord));
+    const endPosition = commands[commands.length - 1]
+      .substring(1)
+      .split(",")
+      .map((coord) => parseFloat(coord));
+
+    return {
+      startX: startPosition[0],
+      startY: startPosition[1],
+      endX: endPosition[0],
+      endY: endPosition[1],
+    };
+  }
+
+  const el = containerEl.querySelector(`[id*="L-${node.start}-${node.end}"]`);
+  const position = extractPositions(el);
+
+  return {
+    ...node,
+    ...position,
+  };
 };
 
 // Excalidraw
@@ -213,10 +250,12 @@ export function jsonToExcalidraw(json) {
   });
 
   json.edges.forEach((edge) => {
-    const startX = json.vertices[edge.start].x;
-    const startY = json.vertices[edge.start].y;
-    const endX = json.vertices[edge.end].x;
-    const endY = json.vertices[edge.end].y;
+    const vStart = json.vertices[edge.start];
+    const vEnd = json.vertices[edge.end];
+    const startX = edge.startX + vStart.width / 2;
+    const startY = edge.startY + vStart.height / 2;
+    const endX = edge.endX + vEnd.width / 2;
+    const endY = edge.endY + vEnd.height / 2;
     const arrowId = `${edge.start}_${edge.end}`;
 
     let textElement;
