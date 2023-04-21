@@ -10,13 +10,20 @@ import mermaid from "mermaid";
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
 // TODO: redraw the text and container with `redrawTextBoundingBox`
+//    sol: we can also change text on mermaid and copy the text dimension directly.
+//    sol: https://github.com/excalidraw/excalidraw/blob/master/src/element/textElement.ts#L286
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 const container = document.getElementById("diagrams");
 
 // skips some diagrams #n
-const SKIPS = [6, 9, 27, 28, 29, 30, 35, 39, 40, 42, 43];
+// skip this because it a minor feature e.g. dashed arrow line, link, etc.
+// we can support this later.
+const SKIPS = [
+  4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 21, 22, 27, 28, 29, 30, 35,
+  37, 38, 39, 40, 41, 42, 43,
+];
 
 // render the diagram
 flowDiagrams.forEach(async (_diagramDefinition, i) => {
