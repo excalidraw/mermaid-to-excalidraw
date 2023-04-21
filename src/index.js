@@ -9,13 +9,14 @@ import mermaid from "mermaid";
 // TODO: how to identify arrow head
 // TODO: how to render arrow curve in Excalidraw
 //    sol: use "curve": "linear" options, find a way to detect breaking point -> replicate on Excalidraw
+// TODO: redraw the text and container with `redrawTextBoundingBox`
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 const container = document.getElementById("diagrams");
 
 // skips some diagrams #n
-const SKIPS = [6, 9, 27, 28, 29, 39, 40, 42, 43];
+const SKIPS = [6, 9, 27, 28, 29, 30, 35, 39, 40, 42, 43];
 
 // render the diagram
 flowDiagrams.forEach(async (_diagramDefinition, i) => {
@@ -54,7 +55,7 @@ flowDiagrams.forEach(async (_diagramDefinition, i) => {
   //   getVertices,
   // } = graph;
   const graph = diagram.parser.yy;
-  console.log(i + 1, diagram, graph.getVertices());
+  // console.log(i + 1, diagram, graph.getVertices());
 
   const root = parseRoot(graph, dg);
   p.innerHTML = JSON.stringify(root, null, 2);
