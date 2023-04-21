@@ -207,4 +207,18 @@ B --> C{Decision}
 C -->|One| D[Result one]
 C -->|Two| E[Result two]
 `,
+  `graph TD
+  A[Start] --> B{Decision 1}
+  B -->|Yes| C[Action 1]
+  B -->|No| D[Action 2]
+  C --> E{Decision 2}
+  D --> E
+  E -->|Yes| F[Action 3]
+  E -->|No| G[Action 4]
+  F --> H{Decision 3}
+  G --> H
+  H -->|Yes| I[Action 5]
+  H -->|No| J[Action 6]
+  I --> K[End]
+  J --> K`,
 ];

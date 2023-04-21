@@ -34,7 +34,7 @@ flowDiagrams.forEach(async (_diagramDefinition, i) => {
   div.id = `diagram-container-${i}`;
   div.innerHTML = `<h1>Test #${
     i + 1
-  }</h1><div id="diagram-${i}"></div><pre id="parsed-${i}"></pre><button onclick="renderExcalidraw(document.getElementById('parsed-${i}').innerText)">Render to Excalidraw</button>`;
+  }</h1><div id="diagram-${i}"></div><button onclick="renderExcalidraw(document.getElementById('parsed-${i}').innerText)">Render to Excalidraw</button><pre id="parsed-${i}"></pre>`;
 
   const dg = div.querySelector(`#diagram-${i}`);
   const { svg } = await mermaid.render(`diagram-${i}`, diagramDefinition);
@@ -78,7 +78,7 @@ function renderExcalidraw(mermaidDataString) {
   const data = JSON.parse(mermaidDataString);
   const elements = jsonToExcalidraw(data);
 
-  console.log(elements);
+  console.log("renderExcalidraw", elements);
 
   root.unmount();
   root = ReactDOM.createRoot(excalidrawWrapper);

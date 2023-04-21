@@ -105,8 +105,8 @@ export const parseVertice = (v, containerEl) => {
     text: v.text,
     type: v.type,
     link,
-    x: matrix.m41,
-    y: matrix.m42,
+    x: matrix.m41 - rect.width / 2,
+    y: matrix.m42 - rect.height / 2,
     width: rect.width,
     height: rect.height,
   };
@@ -263,6 +263,9 @@ export function jsonToExcalidraw(json) {
     if (vertex.type === "circle" || vertex.type === "doublecircle") {
       containerElement.type = "ellipse";
     }
+    if (vertex.type === "diamond") {
+      containerElement.type = "diamond";
+    }
 
     elements.push(containerElement);
     elements.push(textElement);
@@ -270,17 +273,12 @@ export function jsonToExcalidraw(json) {
 
   json.edges.forEach((edge) => {
     // calculate arrow position
-    const vStart = json.vertices[edge.start];
-    const vEnd = json.vertices[edge.end];
-    const startX = edge.startX + vStart.width / 2;
-    const startY = edge.startY + vStart.height / 2;
-    const endX = edge.endX + vEnd.width / 2;
-    const endY = edge.endY + vEnd.height / 2;
+    const { startX, startY, endX, endY, reflectionPoints } = edge;
     const arrowId = `${edge.start}_${edge.end}`;
     // calculate reflection point
-    const points = edge.reflectionPoints.map((point) => [
-      point.x - edge.reflectionPoints[0].x,
-      point.y - edge.reflectionPoints[0].y,
+    const points = reflectionPoints.map((point) => [
+      point.x - reflectionPoints[0].x,
+      point.y - reflectionPoints[0].y,
     ]);
 
     let textElement;
