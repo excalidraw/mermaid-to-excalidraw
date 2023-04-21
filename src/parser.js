@@ -203,36 +203,40 @@ export function jsonToExcalidraw(json) {
       ],
     };
 
+    if (vertex.type === "circle" || vertex.type === "doublecircle") {
+      containerElement.type = "ellipse";
+    }
+
     elements.push(containerElement);
     elements.push(textElement);
   });
 
-  // json.edges.forEach((edge) => {
-  //   const startX = json.vertices[edge.start].x;
-  //   const startY = json.vertices[edge.start].y;
-  //   const endX = json.vertices[edge.end].x;
-  //   const endY = json.vertices[edge.end].y;
+  json.edges.forEach((edge) => {
+    const startX = json.vertices[edge.start].x;
+    const startY = json.vertices[edge.start].y;
+    const endX = json.vertices[edge.end].x;
+    const endY = json.vertices[edge.end].y;
 
-  //   elements.push({
-  //     type: "arrow",
-  //     id: `${edge.start}_${edge.end}`,
-  //     x: startX,
-  //     y: startY,
-  //     x2: endX,
-  //     y2: endY,
-  //     strokeColor: "black",
-  //     backgroundColor: "transparent",
-  //     strokeWidth: 2,
-  //     roughness: 1,
-  //     opacity: 100,
-  //     strokeLinejoin: "round",
-  //     strokeLinecap: "round",
-  //     points: [
-  //       [0, 0],
-  //       [endX - startX, endY - startY],
-  //     ],
-  //   });
-  // });
+    elements.push({
+      type: "arrow",
+      id: `${edge.start}_${edge.end}`,
+      x: startX,
+      y: startY,
+      x2: endX,
+      y2: endY,
+      strokeColor: "black",
+      backgroundColor: "transparent",
+      strokeWidth: 2,
+      roughness: 1,
+      opacity: 100,
+      strokeLinejoin: "round",
+      strokeLinecap: "round",
+      points: [
+        [0, 0],
+        [endX - startX, endY - startY],
+      ],
+    });
+  });
 
   return ExcalidrawLib.restoreElements(elements, null);
 }
