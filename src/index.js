@@ -12,6 +12,7 @@ import mermaid from "mermaid";
 // TODO: redraw the text and container with `redrawTextBoundingBox`
 //    sol: we can also change text on mermaid and copy the text dimension directly.
 //    sol: https://github.com/excalidraw/excalidraw/blob/master/src/element/textElement.ts#L286
+// TODO: make arrow binding position correctly
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });

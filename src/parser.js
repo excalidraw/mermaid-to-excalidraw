@@ -226,22 +226,46 @@ export const parseEdge = (node, containerEl) => {
 // Excalidraw
 export function jsonToExcalidraw(json) {
   const elements = [];
-  // TODO: parse the mapper as a tree before groupping
-  const clusterMapper = json.clusters.reduce((result, cluster) => {
-    cluster.nodes.forEach((n) => {
-      if (!result[n]) result[n] = [];
-      result[n].push(`cluster_group_${cluster.id}`);
+  console.log(json, json.vertices);
+  // parse the diagram into a tree for rendering and grouping
+  const diagramTree = {}; // element: parent, isLeaf (type = vertex)
+  json.clusters.map((cluster) => {
+    cluster.nodes.forEach((e) => {
+      diagramTree[cluster.id] = {
+        id: cluster.id,
+        parent: null,
+        isLeaf: false,
+      };
+      diagramTree[e] = {
+        id: e,
+        parent: cluster.id,
+        isLeaf: json.vertices[e] !== undefined,
+      };
     });
-    return result;
-  }, {});
-  json.clusters.forEach((c) => {
-    if (!clusterMapper[c.id]) clusterMapper[c.id] = [];
-    clusterMapper[c.id].push(`cluster_group_${c.id}`);
   });
+  const groupMapper = {}; // key = vertexId, value = groupId[]
+  [...Object.keys(json.vertices), ...json.clusters.map((c) => c.id)].forEach(
+    (id) => {
+      if (!diagramTree[id]) return;
+      let curr = diagramTree[id];
+      const groupIds = [];
+      if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
+
+      while (true) {
+        if (curr.parent) {
+          groupIds.push(`cluster_group_${curr.parent}`);
+          curr = diagramTree[curr.parent];
+        } else {
+          break;
+        }
+      }
+      groupMapper[id] = groupIds;
+    }
+  );
 
   // TODO: parse the mapper as a tree before groupping
   json.clusters.reverse().forEach((cluster) => {
-    const groupIds = clusterMapper[cluster.id] ? clusterMapper[cluster.id] : [];
+    const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
 
     elements.push({
       type: "rectangle",
@@ -288,7 +312,7 @@ export function jsonToExcalidraw(json) {
   });
 
   Object.values(json.vertices).forEach((vertex) => {
-    const groupIds = clusterMapper[vertex.id] ? clusterMapper[vertex.id] : [];
+    const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
     const textElement = {
       id: `${vertex.id}_text`,
@@ -344,9 +368,16 @@ export function jsonToExcalidraw(json) {
   });
 
   json.edges.forEach((edge) => {
-    let groupIds;
-    if (clusterMapper[edge.start] === clusterMapper[edge.end]) {
-      groupIds = clusterMapper[edge.start] ? clusterMapper[edge.start] : [];
+    let groupIds = [];
+    if (
+      diagramTree[edge.start] &&
+      diagramTree[edge.end] &&
+      diagramTree[edge.start].parent !== null &&
+      diagramTree[edge.start].parent === diagramTree[edge.end].parent
+    ) {
+      const parent = diagramTree[edge.start].parent;
+      groupIds = groupMapper[parent] ? groupMapper[parent] : [];
+      console.log(edge.start, edge.end, groupIds);
     }
 
     // calculate arrow position
@@ -430,6 +461,8 @@ export function jsonToExcalidraw(json) {
       focus: 0.2717252745455439,
       gap: 6.261578457263113,
     };
+
+    console.log("debug", containerElement);
 
     elements.push(containerElement);
     if (textElement) elements.push(textElement);
