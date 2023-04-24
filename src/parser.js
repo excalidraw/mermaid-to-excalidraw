@@ -28,15 +28,20 @@ export const parseRoot = (graph, containerEl) => {
 export const parseCluster = (node, containerEl) => {
   const el = containerEl.querySelector("#" + node.id);
 
-  let dimention;
-  const root = el.parentElement.parentElement;
+  let dimention = { x: 0, y: 0 };
+  let root = el.parentElement.parentElement;
   if (root.classList.value === "root" && root.hasAttribute("transform")) {
-    const style = getComputedStyle(root);
-    const matrix = new DOMMatrixReadOnly(style.transform);
-    dimention = {
-      x: matrix.m41,
-      y: matrix.m42,
-    };
+    while (true) {
+      if (root.classList.value === "root" && root.hasAttribute("transform")) {
+        const style = getComputedStyle(root);
+        const matrix = new DOMMatrixReadOnly(style.transform);
+        dimention.x += matrix.m41;
+        dimention.y += matrix.m42;
+      }
+
+      root = root.parentElement;
+      if (root.id === containerEl.id) break;
+    }
   } else {
     const rect = el.querySelector("rect");
     dimention = {
@@ -96,18 +101,23 @@ export const parseVertice = (v, containerEl) => {
     link = el.parentElement.getAttribute("xlink:href");
 
   const rect = el.getBoundingClientRect();
-  const root = el.parentElement.parentElement;
   const style = getComputedStyle(link ? el.parentElement : el);
   const matrix = new DOMMatrixReadOnly(style.transform);
   const position = {
     x: matrix.m41 - rect.width / 2,
     y: matrix.m42 - rect.height / 2,
   };
-  if (root.classList.value === "root" && root.hasAttribute("transform")) {
-    const style = getComputedStyle(root);
-    const matrix = new DOMMatrixReadOnly(style.transform);
-    position.x += matrix.m41;
-    position.y += matrix.m42;
+  let root = el.parentElement.parentElement;
+  while (true) {
+    if (root.classList.value === "root" && root.hasAttribute("transform")) {
+      const style = getComputedStyle(root);
+      const matrix = new DOMMatrixReadOnly(style.transform);
+      position.x += matrix.m41;
+      position.y += matrix.m42;
+    }
+
+    root = root.parentElement;
+    if (root.id === containerEl.id) break;
   }
 
   return {
@@ -191,15 +201,18 @@ export const parseEdge = (node, containerEl) => {
 
   const el = containerEl.querySelector(`[id*="L-${node.start}-${node.end}"]`);
 
-  let offset;
-  const root = el.parentElement.parentElement;
-  if (root.classList.value === "root" && root.hasAttribute("transform")) {
-    const style = getComputedStyle(root);
-    const matrix = new DOMMatrixReadOnly(style.transform);
-    offset = {
-      x: matrix.m41,
-      y: matrix.m42,
-    };
+  let offset = { x: 0, y: 0 };
+  let root = el.parentElement.parentElement;
+  while (true) {
+    if (root.classList.value === "root" && root.hasAttribute("transform")) {
+      const style = getComputedStyle(root);
+      const matrix = new DOMMatrixReadOnly(style.transform);
+      offset.x += matrix.m41;
+      offset.y += matrix.m42;
+    }
+
+    root = root.parentElement;
+    if (root.id === containerEl.id) break;
   }
 
   const position = extractPositions(el, offset);
@@ -223,7 +236,7 @@ export function jsonToExcalidraw(json) {
     clusterMapper[c.id] = `cluster_group_${c.id}`;
   });
 
-  json.clusters.forEach((cluster) => {
+  json.clusters.reverse().forEach((cluster) => {
     const groupIds = clusterMapper[cluster.id]
       ? [clusterMapper[cluster.id]]
       : [];
