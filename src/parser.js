@@ -95,9 +95,20 @@ export const parseVertice = (v, containerEl) => {
   if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
+  const rect = el.getBoundingClientRect();
+  const root = el.parentElement.parentElement;
   const style = getComputedStyle(link ? el.parentElement : el);
   const matrix = new DOMMatrixReadOnly(style.transform);
-  const rect = el.getBoundingClientRect();
+  const position = {
+    x: matrix.m41 - rect.width / 2,
+    y: matrix.m42 - rect.height / 2,
+  };
+  if (root.classList.value === "root" && root.hasAttribute("transform")) {
+    const style = getComputedStyle(root);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    position.x += matrix.m41;
+    position.y += matrix.m42;
+  }
 
   return {
     id: v.id,
@@ -105,8 +116,7 @@ export const parseVertice = (v, containerEl) => {
     text: v.text,
     type: v.type,
     link,
-    x: matrix.m41 - rect.width / 2,
-    y: matrix.m42 - rect.height / 2,
+    ...position,
     width: rect.width,
     height: rect.height,
   };
