@@ -226,20 +226,22 @@ export const parseEdge = (node, containerEl) => {
 // Excalidraw
 export function jsonToExcalidraw(json) {
   const elements = [];
+  // TODO: parse the mapper as a tree before groupping
   const clusterMapper = json.clusters.reduce((result, cluster) => {
     cluster.nodes.forEach((n) => {
-      result[n] = `cluster_group_${cluster.id}`;
+      if (!result[n]) result[n] = [];
+      result[n].push(`cluster_group_${cluster.id}`);
     });
     return result;
   }, {});
   json.clusters.forEach((c) => {
-    clusterMapper[c.id] = `cluster_group_${c.id}`;
+    if (!clusterMapper[c.id]) clusterMapper[c.id] = [];
+    clusterMapper[c.id].push(`cluster_group_${c.id}`);
   });
 
+  // TODO: parse the mapper as a tree before groupping
   json.clusters.reverse().forEach((cluster) => {
-    const groupIds = clusterMapper[cluster.id]
-      ? [clusterMapper[cluster.id]]
-      : [];
+    const groupIds = clusterMapper[cluster.id] ? clusterMapper[cluster.id] : [];
 
     elements.push({
       type: "rectangle",
@@ -286,7 +288,7 @@ export function jsonToExcalidraw(json) {
   });
 
   Object.values(json.vertices).forEach((vertex) => {
-    const groupIds = clusterMapper[vertex.id] ? [clusterMapper[vertex.id]] : [];
+    const groupIds = clusterMapper[vertex.id] ? clusterMapper[vertex.id] : [];
 
     const textElement = {
       id: `${vertex.id}_text`,
@@ -344,7 +346,7 @@ export function jsonToExcalidraw(json) {
   json.edges.forEach((edge) => {
     let groupIds;
     if (clusterMapper[edge.start] === clusterMapper[edge.end]) {
-      groupIds = clusterMapper[edge.start] ? [clusterMapper[edge.start]] : [];
+      groupIds = clusterMapper[edge.start] ? clusterMapper[edge.start] : [];
     }
 
     // calculate arrow position
