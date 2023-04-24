@@ -228,25 +228,33 @@ export function jsonToExcalidraw(json) {
       strokeWidth: 1,
       roughness: 1,
       opacity: 100,
+      boundElements: [
+        {
+          type: "text",
+          id: `${cluster.id}_title`,
+        },
+      ],
     });
 
-    // Render Cluster Title
-    // elements.push({
-    //   type: "text",
-    //   id: `${cluster.id}_title`,
-    //   x: cluster.x + cluster.width / 2,
-    //   y: cluster.y + 10,
-    //   text: cluster.title,
-    //   fontSize: 20,
-    //   fontFamily: 1,
-    //   textAlign: "center",
-    //   verticalAlign: "top",
-    //   strokeColor: "black",
-    //   backgroundColor: "transparent",
-    //   strokeWidth: 1,
-    //   roughness: 0,
-    //   opacity: 100,
-    // });
+    elements.push({
+      id: `${cluster.id}_title`,
+      containerId: cluster.id,
+      type: "text",
+      strokeColor: "black",
+      backgroundColor: "transparent",
+      text: cluster.title,
+      originalText: cluster.title,
+      width: 5 * cluster.title.length,
+      height: 18,
+      fontSize: 14,
+      fontFamily: 1,
+      lineHeight: 1.25,
+      textAlign: "center",
+      verticalAlign: "top",
+      x: cluster.x + cluster.width / 2,
+      y: cluster.y,
+      opacity: 100,
+    });
   });
 
   Object.values(json.vertices).forEach((vertex) => {
