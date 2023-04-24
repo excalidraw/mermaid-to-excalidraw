@@ -133,7 +133,7 @@ export const parseVertice = (v, containerEl) => {
 // }
 export const parseEdge = (node, containerEl) => {
   node.length = undefined;
-  function extractPositions(pathElement) {
+  function extractPositions(pathElement, offset = { x: 0, y: 0 }) {
     if (pathElement.tagName.toLowerCase() !== "path") {
       throw new Error(
         'Invalid input: Expected an HTMLElement of tag "path", got ' +
@@ -172,19 +172,37 @@ export const parseEdge = (node, containerEl) => {
         return (
           index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
         );
+      })
+      .map((p) => {
+        return {
+          x: p.x + offset.x,
+          y: p.y + offset.y,
+        };
       });
 
     return {
-      startX: startPosition[0],
-      startY: startPosition[1],
-      endX: endPosition[0],
-      endY: endPosition[1],
+      startX: startPosition[0] + offset.x,
+      startY: startPosition[1] + offset.y,
+      endX: endPosition[0] + offset.x,
+      endY: endPosition[1] + offset.y,
       reflectionPoints,
     };
   }
 
   const el = containerEl.querySelector(`[id*="L-${node.start}-${node.end}"]`);
-  const position = extractPositions(el);
+
+  let offset;
+  const root = el.parentElement.parentElement;
+  if (root.classList.value === "root" && root.hasAttribute("transform")) {
+    const style = getComputedStyle(root);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    offset = {
+      x: matrix.m41,
+      y: matrix.m42,
+    };
+  }
+
+  const position = extractPositions(el, offset);
 
   return {
     ...node,
