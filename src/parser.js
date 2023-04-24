@@ -214,38 +214,40 @@ export const parseEdge = (node, containerEl) => {
 export function jsonToExcalidraw(json) {
   const elements = [];
 
-  // json.clusters.forEach((cluster) => {
-  //   elements.push({
-  //     type: "rectangle",
-  //     id: cluster.id,
-  //     x: cluster.x,
-  //     y: cluster.y,
-  //     width: cluster.width,
-  //     height: cluster.height,
-  //     strokeColor: "black",
-  //     backgroundColor: "transparent",
-  //     strokeWidth: 2,
-  //     roughness: 1,
-  //     opacity: 100,
-  //   });
+  json.clusters.forEach((cluster) => {
+    elements.push({
+      type: "rectangle",
+      id: cluster.id,
+      x: cluster.x,
+      y: cluster.y,
+      fillStyle: "solid",
+      width: cluster.width,
+      height: cluster.height,
+      strokeColor: "#495057",
+      backgroundColor: "transparent",
+      strokeWidth: 1,
+      roughness: 1,
+      opacity: 100,
+    });
 
-  //   elements.push({
-  //     type: "text",
-  //     id: `${cluster.id}_title`,
-  //     x: cluster.x + cluster.width / 2,
-  //     y: cluster.y + 10,
-  //     text: cluster.title,
-  //     fontSize: 20,
-  //     fontFamily: 1,
-  //     textAlign: "center",
-  //     verticalAlign: "top",
-  //     strokeColor: "black",
-  //     backgroundColor: "transparent",
-  //     strokeWidth: 1,
-  //     roughness: 0,
-  //     opacity: 100,
-  //   });
-  // });
+    // Render Cluster Title
+    // elements.push({
+    //   type: "text",
+    //   id: `${cluster.id}_title`,
+    //   x: cluster.x + cluster.width / 2,
+    //   y: cluster.y + 10,
+    //   text: cluster.title,
+    //   fontSize: 20,
+    //   fontFamily: 1,
+    //   textAlign: "center",
+    //   verticalAlign: "top",
+    //   strokeColor: "black",
+    //   backgroundColor: "transparent",
+    //   strokeWidth: 1,
+    //   roughness: 0,
+    //   opacity: 100,
+    // });
+  });
 
   Object.values(json.vertices).forEach((vertex) => {
     const textElement = {
