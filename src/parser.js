@@ -213,11 +213,25 @@ export const parseEdge = (node, containerEl) => {
 // Excalidraw
 export function jsonToExcalidraw(json) {
   const elements = [];
+  const clusterMapper = json.clusters.reduce((result, cluster) => {
+    cluster.nodes.forEach((n) => {
+      result[n] = `cluster_group_${cluster.id}`;
+    });
+    return result;
+  }, {});
+  json.clusters.forEach((c) => {
+    clusterMapper[c.id] = `cluster_group_${c.id}`;
+  });
 
   json.clusters.forEach((cluster) => {
+    const groupIds = clusterMapper[cluster.id]
+      ? [clusterMapper[cluster.id]]
+      : [];
+
     elements.push({
       type: "rectangle",
       id: cluster.id,
+      groupIds,
       x: cluster.x,
       y: cluster.y,
       fillStyle: "solid",
@@ -239,6 +253,7 @@ export function jsonToExcalidraw(json) {
     elements.push({
       id: `${cluster.id}_title`,
       containerId: cluster.id,
+      groupIds,
       type: "text",
       strokeColor: "black",
       backgroundColor: "transparent",
@@ -258,8 +273,11 @@ export function jsonToExcalidraw(json) {
   });
 
   Object.values(json.vertices).forEach((vertex) => {
+    const groupIds = clusterMapper[vertex.id] ? [clusterMapper[vertex.id]] : [];
+
     const textElement = {
       id: `${vertex.id}_text`,
+      groupIds,
       type: "text",
       strokeColor: "black",
       backgroundColor: "transparent",
@@ -281,6 +299,7 @@ export function jsonToExcalidraw(json) {
     const containerElement = {
       type: "rectangle",
       id: vertex.id,
+      groupIds,
       x: vertex.x,
       y: vertex.y,
       width: vertex.width,
@@ -310,6 +329,11 @@ export function jsonToExcalidraw(json) {
   });
 
   json.edges.forEach((edge) => {
+    let groupIds;
+    if (clusterMapper[edge.start] === clusterMapper[edge.end]) {
+      groupIds = clusterMapper[edge.start] ? [clusterMapper[edge.start]] : [];
+    }
+
     // calculate arrow position
     const { startX, startY, endX, endY, reflectionPoints } = edge;
     const arrowId = `${edge.start}_${edge.end}`;
@@ -323,6 +347,7 @@ export function jsonToExcalidraw(json) {
     if (edge.text) {
       textElement = {
         id: `${arrowId}_text`,
+        groupIds,
         type: "text",
         strokeColor: "black",
         backgroundColor: "transparent",
@@ -345,6 +370,7 @@ export function jsonToExcalidraw(json) {
     const containerElement = {
       type: "arrow",
       id: arrowId,
+      groupIds,
       x: startX,
       y: startY,
       x2: endX,
