@@ -311,6 +311,7 @@ export function jsonToExcalidraw(json) {
     });
   });
 
+  // Vertices
   Object.values(json.vertices).forEach((vertex) => {
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
@@ -322,9 +323,7 @@ export function jsonToExcalidraw(json) {
       backgroundColor: "transparent",
       text: vertex.text,
       originalText: vertex.text,
-      width: 5 * vertex.text.length,
-      height: 18,
-      fontSize: 14,
+      fontSize: 12,
       fontFamily: 1,
       lineHeight: 1.25,
       textAlign: "center",
@@ -355,6 +354,8 @@ export function jsonToExcalidraw(json) {
         },
       ],
     };
+
+    ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
 
     if (vertex.type === "circle" || vertex.type === "doublecircle") {
       containerElement.type = "ellipse";
