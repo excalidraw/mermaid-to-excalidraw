@@ -267,7 +267,7 @@ export function jsonToExcalidraw(json) {
   json.clusters.reverse().forEach((cluster) => {
     const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
 
-    elements.push({
+    const containerElement = {
       type: "rectangle",
       id: cluster.id,
       angle: 0,
@@ -288,9 +288,9 @@ export function jsonToExcalidraw(json) {
           id: `${cluster.id}_title`,
         },
       ],
-    });
+    };
 
-    elements.push({
+    const textElement = {
       id: `${cluster.id}_title`,
       containerId: cluster.id,
       groupIds,
@@ -309,7 +309,11 @@ export function jsonToExcalidraw(json) {
       x: cluster.x + cluster.width / 2,
       y: cluster.y,
       opacity: 100,
-    });
+    };
+
+    ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
+    elements.push(containerElement);
+    elements.push(textElement);
   });
 
   // Vertices
