@@ -1,0 +1,7 @@
+export declare const from: ([x, y]: readonly [number, number]) => readonly [number, number, number, number, number, number, number, number];
+export declare const toTuple: (point: readonly [number, number, number, number, number, number, number, number]) => [number, number];
+export declare const abs: (point: readonly [number, number, number, number, number, number, number, number]) => readonly [number, number, number, number, number, number, number, number];
+export declare const intersect: (line1: readonly [number, number, number, number, number, number, number, number], line2: readonly [number, number, number, number, number, number, number, number]) => readonly [number, number, number, number, number, number, number, number];
+export declare const project: (point: readonly [number, number, number, number, number, number, number, number], line: readonly [number, number, number, number, number, number, number, number]) => readonly [number, number, number, number, number, number, number, number];
+export declare const distance: (point1: readonly [number, number, number, number, number, number, number, number], point2: readonly [number, number, number, number, number, number, number, number]) => number;
+export declare const distanceToLine: (point: readonly [number, number, number, number, number, number, number, number], line: readonly [number, number, number, number, number, number, number, number]) => number;

@@ -5,7 +5,8 @@
   "main": "index.html",
   "scripts": {
     "start": "parcel index.html --open",
-    "build": "parcel build index.html"
+    "build": "parcel build index.html",
+    "serve": "serve -l 5555 excalidraw-package"
   },
   "dependencies": {
     "mermaid": "^10.1.0",
