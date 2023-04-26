@@ -270,6 +270,7 @@ export function jsonToExcalidraw(json) {
     elements.push({
       type: "rectangle",
       id: cluster.id,
+      angle: 0,
       groupIds,
       x: cluster.x,
       y: cluster.y,
@@ -338,6 +339,7 @@ export function jsonToExcalidraw(json) {
       type: "rectangle",
       id: vertex.id,
       groupIds,
+      angle: 0,
       x: vertex.x,
       y: vertex.y,
       width: vertex.width,
@@ -422,6 +424,7 @@ export function jsonToExcalidraw(json) {
       y: startY,
       x2: endX,
       y2: endY,
+      angle: 0,
       strokeColor: "black",
       backgroundColor: "transparent",
       strokeWidth: 2,
@@ -451,19 +454,24 @@ export function jsonToExcalidraw(json) {
       type: "arrow",
       id: arrowId,
     });
-    // TODO: calculate focus and gap
+    const startFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
+      containerElement,
+      startV,
+      "start"
+    );
+    const endFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
+      containerElement,
+      endV,
+      "end"
+    );
     containerElement.startBinding = {
       elementId: startV.id,
-      focus: 0.2717252745455439,
-      gap: 6.261578457263113,
+      ...startFocusAndGap,
     };
     containerElement.endBinding = {
       elementId: endV.id,
-      focus: 0.2717252745455439,
-      gap: 6.261578457263113,
+      ...endFocusAndGap,
     };
-
-    console.log("debug", containerElement);
 
     elements.push(containerElement);
     if (textElement) elements.push(textElement);
