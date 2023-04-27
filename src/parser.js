@@ -120,11 +120,16 @@ export const parseVertice = (v, containerEl) => {
     if (root.id === containerEl.id) break;
   }
 
+  // convert type
+  let type = v.type;
+  if (["round", "stadium", "subroutine", "cylinder"].includes(type))
+    type = undefined;
+
   return {
     id: v.id,
     labelType: v.labelType, // text, markdown
     text: v.text,
-    type: v.type,
+    type,
     link,
     ...position,
     width: rect.width,
@@ -263,7 +268,6 @@ export function jsonToExcalidraw(json) {
     }
   );
 
-  // TODO: parse the mapper as a tree before groupping
   json.clusters.reverse().forEach((cluster) => {
     const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
 
