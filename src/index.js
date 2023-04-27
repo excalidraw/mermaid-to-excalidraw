@@ -14,10 +14,7 @@ const container = document.getElementById("diagrams");
 // skips some diagrams #n
 // skip this because it a minor feature e.g. dashed arrow line, link, etc.
 // we can support this later.
-const SKIPS = [
-  8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 21, 22, 24, 26, 27, 28, 29, 30, 35,
-  37, 38, 39, 40, 41, 42, 43,
-];
+const SKIPS = [];
 
 // render the diagram
 flowDiagrams.forEach(async (_diagramDefinition, i) => {

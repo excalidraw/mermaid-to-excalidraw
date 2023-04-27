@@ -435,11 +435,12 @@ export function jsonToExcalidraw(json) {
       angle: 0,
       strokeColor: "black",
       backgroundColor: "transparent",
-      strokeWidth: 2,
+      strokeWidth: edge.stroke === "thick" ? 4 : 2,
       roughness: 1,
       opacity: 100,
       strokeLinejoin: "round",
       strokeLinecap: "round",
+      strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points: points,
       roundness: {
         type: 2,
