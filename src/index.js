@@ -2,7 +2,8 @@ import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
 import { jsonToExcalidraw, parseRoot } from "./parser";
 import "./styles.css";
-import mermaid from "mermaid";
+
+const mermaid = window.mermaid;
 
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });

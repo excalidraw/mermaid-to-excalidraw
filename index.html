@@ -15,6 +15,11 @@
   <body>
     <div id="diagrams"></div>
     <div id="excalidraw"></div>
-    <script src="src/index.js"></script>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      window.mermaid = mermaid;
+    </script>
+    <script src="src/index.js" defer></script>
   </body>
 </html>
