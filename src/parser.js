@@ -92,7 +92,7 @@ export const parseCluster = (node, containerEl) => {
 //   }
 // }
 export const parseVertice = (v, containerEl) => {
-  const el = containerEl.querySelector(`[id*="flowchart-${v.id}"]`);
+  const el = containerEl.querySelector(`[id*="flowchart-${v.id}-"]`);
   // if element not found (mean el = cluster), ignore
   if (!el) return;
 
