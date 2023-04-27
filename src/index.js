@@ -4,9 +4,6 @@ import { jsonToExcalidraw, parseRoot } from "./parser";
 import "./styles.css";
 import mermaid from "mermaid";
 
-// Research Backlog
-// TODO: how to handle element type like database, hexagon, etc. (how to transform into other type?)
-
 // initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 const container = document.getElementById("diagrams");
