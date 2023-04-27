@@ -1,6 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 /dist
 .cache
+/excalidraw-package
 
 # dependencies
 /node_modules
