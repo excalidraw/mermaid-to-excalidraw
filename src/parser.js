@@ -122,8 +122,7 @@ export const parseVertice = (v, containerEl) => {
 
   // convert type
   let type = v.type;
-  if (["round", "stadium", "subroutine", "cylinder"].includes(type))
-    type = undefined;
+  if (["stadium", "subroutine", "cylinder"].includes(type)) type = undefined;
 
   return {
     id: v.id,
@@ -357,6 +356,7 @@ export function jsonToExcalidraw(json) {
       strokeWidth: 2,
       roughness: 1,
       opacity: 100,
+      ...(vertex.type === "round" && { roundness: { type: 3 } }),
       boundElements: [
         {
           type: "text",
