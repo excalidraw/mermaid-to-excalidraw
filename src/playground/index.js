@@ -1,6 +1,6 @@
 import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
-import { jsonToExcalidraw, parseRoot } from "./parser";
+import { jsonToExcalidraw, parseRoot } from "../parser";
 import "./styles.css";
 
 const mermaid = window.mermaid;

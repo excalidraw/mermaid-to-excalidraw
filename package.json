@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.html",
   "scripts": {
-    "start": "parcel index.html --open",
+    "playground": "parcel src/playground/index.html --open",
     "build": "parcel build index.html -d public"
   },
   "dependencies": {
