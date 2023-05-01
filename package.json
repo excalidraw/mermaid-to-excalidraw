@@ -2,18 +2,27 @@
   "name": "mermaid-to-excalidraw",
   "version": "1.0.0",
   "description": "",
-  "main": "index.html",
+  "main": "src/index.ts",
+  "files": [
+    "package/**/*"
+  ],
   "scripts": {
+    "start": "yarn playground",
+    "build": "tsc",
     "playground": "parcel src/playground/index.html --open",
     "build-playground": "parcel build src/playground/index.html -d public"
   },
   "dependencies": {
+    "@types/mermaid": "^9.2.0",
+    "babel-polyfill": "^6.26.0",
     "mermaid": "10.1.0",
     "parcel-bundler": "1.6.1",
+    "tsc": "^2.0.4",
     "xml-js": "1.6.11"
   },
   "devDependencies": {
     "@babel/core": "7.2.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "typescript": "4.4.4"
   },
   "resolutions": {

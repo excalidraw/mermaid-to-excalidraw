@@ -1,12 +1,18 @@
+import "babel-polyfill";
+
 import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
 import { jsonToExcalidraw, parseRoot } from "../parser";
 import "./styles.css";
-
-const mermaid = window.mermaid;
+import mermaidToExcalidraw from "..";
 
 // initialize Mermaid
+const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: false });
+const { transform } = mermaidToExcalidraw(mermaid);
+
+console.log("test", transform("graph TD\nA-->B"));
+
 const container = document.getElementById("diagrams");
 
 // skips some diagrams #n

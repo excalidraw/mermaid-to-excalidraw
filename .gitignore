@@ -3,6 +3,7 @@
 .cache
 /excalidraw-package
 /public
+/package
 
 # dependencies
 /node_modules

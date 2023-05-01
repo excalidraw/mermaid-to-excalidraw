@@ -1,3 +1,5 @@
+const ExcalidrawLib = window["ExcalidrawLib"];
+
 export const parseRoot = (graph, containerEl) => {
   const vertices = graph.getVertices();
   Object.keys(vertices).forEach((id) => {
@@ -229,7 +231,7 @@ export const parseEdge = (node, containerEl) => {
 
 // Excalidraw
 export function jsonToExcalidraw(json) {
-  const elements = [];
+  const elements: any = [];
   console.log(json, json.vertices);
   // parse the diagram into a tree for rendering and grouping
   const diagramTree = {}; // element: parent, isLeaf (type = vertex)
@@ -252,7 +254,7 @@ export function jsonToExcalidraw(json) {
     (id) => {
       if (!diagramTree[id]) return;
       let curr = diagramTree[id];
-      const groupIds = [];
+      const groupIds: any = [];
       if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
 
       while (true) {
@@ -320,7 +322,7 @@ export function jsonToExcalidraw(json) {
   });
 
   // Vertices
-  Object.values(json.vertices).forEach((vertex) => {
+  Object.values(json.vertices).forEach((vertex: any) => {
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
     const textElement = {
@@ -424,7 +426,7 @@ export function jsonToExcalidraw(json) {
       };
     }
 
-    const containerElement = {
+    const containerElement: any = {
       type: "arrow",
       id: arrowId,
       groupIds,
@@ -451,8 +453,8 @@ export function jsonToExcalidraw(json) {
     };
 
     // bound arrow to vertex
-    const startV = elements.find((e) => e.id === edge.start);
-    const endV = elements.find((e) => e.id === edge.end);
+    const startV: any = elements.find((e: any) => e.id === edge.start);
+    const endV: any = elements.find((e: any) => e.id === edge.end);
     if (!startV.boundElements) startV.boundElements = [];
     startV.boundElements.push({
       type: "arrow",
