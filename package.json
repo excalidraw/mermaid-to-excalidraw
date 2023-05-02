@@ -6,13 +6,16 @@
   "files": [
     "package/**/*"
   ],
+  "type": "module",
   "scripts": {
     "start": "yarn playground",
+    "test": "vitest",
     "build": "tsc",
     "playground": "parcel src/playground/index.html --open",
     "build-playground": "parcel build src/playground/index.html -d public"
   },
   "dependencies": {
+    "@chunza2542/t2d-excalidraw": "^0.15.4",
     "@types/mermaid": "^9.2.0",
     "babel-polyfill": "^6.26.0",
     "mermaid": "10.1.0",
@@ -23,7 +26,8 @@
   "devDependencies": {
     "@babel/core": "7.2.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "typescript": "4.4.4"
+    "typescript": "4.4.4",
+    "vitest": "^0.30.1"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
