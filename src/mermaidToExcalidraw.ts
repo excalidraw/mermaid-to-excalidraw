@@ -1,4 +1,5 @@
 import mermaid from "mermaid";
+import { JSDOM } from "jsdom";
 
 // TODO: fix type
 type ExcalidrawElement = object;
@@ -13,8 +14,14 @@ const mermaidToExcalidraw = async (
   }
 ): Promise<ExcalidrawElement[]> => {
   mermaid.initialize({});
+  const { document } = new JSDOM(`<!DOCTYPE html><div id="diagram"></div>`)
+    .window;
   const definition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${diagramDefinition}`;
-  const { svg } = await mermaid.render(`diagram-test`, diagramDefinition);
+  const { svg } = await mermaid.render(
+    `diagram-test`,
+    diagramDefinition,
+    document.getElementById("diagram")
+  );
 
   console.log(svg);
 
