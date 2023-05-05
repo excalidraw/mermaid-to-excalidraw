@@ -1,5 +1,5 @@
 {
-  "name": "mermaid-to-excalidraw",
+  "name": "@excalidraw/mermaid-to-excalidraw",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
