@@ -5,18 +5,18 @@ export const parseMermaid = async (
   mermaid: Mermaid,
   diagramDefinition: string
 ): Promise<Graph> => {
+  const definition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${diagramDefinition}`;
   const div = document.createElement("div");
   div.id = `mermaidToExcalidraw`;
   div.setAttribute(
     "style",
     `opacity: 0; position: absolute; top: -10000px; left: -10000px;`
   );
-  const { svg } = await mermaid.render(div.id, diagramDefinition);
+  const { svg } = await mermaid.render(div.id, definition);
   div.innerHTML = `<div id="diagram">${svg}</div>`;
   document.body.appendChild(div);
   const diagramEl = div.querySelector("#diagram");
 
-  const definition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${diagramDefinition}`;
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
   const graph = diagram.parser.yy;
