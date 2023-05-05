@@ -1,6 +1,34 @@
+import { Mermaid } from "mermaid";
+
 const ExcalidrawLib = window["ExcalidrawLib"];
 
-export const parseRoot = (graph, containerEl) => {
+interface Graph {}
+export const parseMermaid = async (
+  mermaid: Mermaid,
+  diagramDefinition: string
+): Promise<Graph> => {
+  const div = document.createElement("div");
+  div.id = `mermaidToExcalidraw`;
+  div.setAttribute(
+    "style",
+    `opacity: 0; position: absolute; top: -10000px; left: -10000px;`
+  );
+  const { svg } = await mermaid.render(div.id, diagramDefinition);
+  div.innerHTML = `<div id="diagram">${svg}</div>`;
+  document.body.appendChild(div);
+  const diagramEl = div.querySelector("#diagram");
+
+  const definition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${diagramDefinition}`;
+  const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
+  diagram.parse();
+  const graph = diagram.parser.yy;
+
+  const root = parseRoot(graph, diagramEl);
+  div.remove();
+  return root;
+};
+
+const parseRoot = (graph, containerEl) => {
   const vertices = graph.getVertices();
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertice(vertices[id], containerEl);
@@ -27,7 +55,7 @@ export const parseRoot = (graph, containerEl) => {
 //   "dir": "RL",
 //   "labelType": "text"
 // },
-export const parseCluster = (node, containerEl) => {
+const parseCluster = (node, containerEl) => {
   const el = containerEl.querySelector("#" + node.id);
 
   let dimention = { x: 0, y: 0 };
@@ -93,7 +121,7 @@ export const parseCluster = (node, containerEl) => {
 //     "props": {}
 //   }
 // }
-export const parseVertice = (v, containerEl) => {
+const parseVertice = (v, containerEl) => {
   const el = containerEl.querySelector(`[id*="flowchart-${v.id}-"]`);
   // if element not found (mean el = cluster), ignore
   if (!el) return;
@@ -147,7 +175,7 @@ export const parseVertice = (v, containerEl) => {
 //   "stroke": "thick",
 //   "length": 1
 // }
-export const parseEdge = (node, containerEl) => {
+const parseEdge = (node, containerEl) => {
   node.length = undefined;
   function extractPositions(pathElement, offset = { x: 0, y: 0 }) {
     if (pathElement.tagName.toLowerCase() !== "path") {

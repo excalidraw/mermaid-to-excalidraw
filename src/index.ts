@@ -1,2 +1,2 @@
-import mermaidToExcalidraw from "./mermaidToExcalidraw.js";
-export default mermaidToExcalidraw;
+export default {};
+export { parseMermaid } from "./parser";
