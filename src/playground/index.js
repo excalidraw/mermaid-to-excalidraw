@@ -2,7 +2,7 @@ import "babel-polyfill";
 
 import { Excalidraw } from "./Excalidraw";
 import { flowDiagrams } from "./flowDiagrams";
-import { parseMermaid } from "..";
+import { graphToExcalidraw, parseMermaid } from "..";
 
 // initialize Mermaid
 const mermaid = window.mermaid;
@@ -38,24 +38,24 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
 });
 
 // render default excalidraw
-// const excalidrawWrapper = document.getElementById("excalidraw");
-// let root = ReactDOM.createRoot(excalidrawWrapper);
-// root.render(React.createElement(Excalidraw));
+const excalidrawWrapper = document.getElementById("excalidraw");
+let root = ReactDOM.createRoot(excalidrawWrapper);
+root.render(React.createElement(Excalidraw));
 
 // Render to Excalidraw
-// function renderExcalidraw(mermaidDataString) {
-//   const data = JSON.parse(mermaidDataString);
-//   const elements = jsonToExcalidraw(data);
+function renderExcalidraw(mermaidDataString) {
+  const data = JSON.parse(mermaidDataString);
+  const elements = graphToExcalidraw(data);
 
-//   console.log("renderExcalidraw", elements);
+  console.log("renderExcalidraw", elements);
 
-//   root.unmount();
-//   root = ReactDOM.createRoot(excalidrawWrapper);
-//   root.render(
-//     React.createElement(Excalidraw, {
-//       elements,
-//     })
-//   );
-// }
+  root.unmount();
+  root = ReactDOM.createRoot(excalidrawWrapper);
+  root.render(
+    React.createElement(Excalidraw, {
+      elements,
+    })
+  );
+}
 
-// window.renderExcalidraw = renderExcalidraw;
+window.renderExcalidraw = renderExcalidraw;
