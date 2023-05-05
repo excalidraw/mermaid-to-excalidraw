@@ -19,11 +19,9 @@
     "mermaid": "10.1.0"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.1",
     "@types/mermaid": "^9.2.0",
     "babel-polyfill": "^6.26.0",
     "parcel-bundler": "1.6.1",
-    "tsc": "^2.0.4",
     "@babel/core": "7.2.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "typescript": "4.4.4",
