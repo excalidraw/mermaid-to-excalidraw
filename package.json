@@ -12,7 +12,7 @@
     "test": "vitest",
     "build": "tsc",
     "playground": "parcel src/playground/index.html --open",
-    "build:playground": "parcel build src/playground/index.html -d public"
+    "build:playground": "parcel build src/playground/index.html -d public --public-url /"
   },
   "dependencies": {
     "@chunza2542/t2d-excalidraw": "^0.15.4",
