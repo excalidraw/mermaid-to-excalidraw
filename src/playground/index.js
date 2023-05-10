@@ -13,7 +13,7 @@ const containerEl = document.getElementById("diagrams");
 // skips some diagrams #n
 // skip this because it a minor feature e.g. dashed arrow line, link, etc.
 // we can support this later.
-const SKIPS = [];
+const SKIPS = [35, 39, 40, 42];
 const FONT_SIZE = 18;
 
 // render the diagram
