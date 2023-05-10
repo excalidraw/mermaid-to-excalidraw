@@ -1,6 +1,15 @@
 const ExcalidrawLib = window["ExcalidrawLib"];
 
-export const graphToExcalidraw = (graph) => {
+interface GraphToExcalidrawOptions {
+  fontSize?: number;
+}
+export const graphToExcalidraw = (
+  graph,
+  options: GraphToExcalidrawOptions = {}
+) => {
+  // adjust size for Vergil font (x0.75)
+  const fontSize = (options.fontSize || 16) * 0.75;
+
   const elements: any = [];
   // parse the diagram into a tree for rendering and grouping
   const diagramTree = {}; // element: parent, isLeaf (type = vertex)
@@ -75,7 +84,7 @@ export const graphToExcalidraw = (graph) => {
       originalText: cluster.title,
       width: 5 * cluster.title.length,
       height: 18,
-      fontSize: 14,
+      fontSize,
       fontFamily: 1,
       lineHeight: 1.25,
       textAlign: "center",
@@ -102,7 +111,7 @@ export const graphToExcalidraw = (graph) => {
       backgroundColor: "transparent",
       text: vertex.text,
       originalText: vertex.text,
-      fontSize: 12,
+      fontSize,
       fontFamily: 1,
       lineHeight: 1.25,
       textAlign: "center",
@@ -182,7 +191,7 @@ export const graphToExcalidraw = (graph) => {
         originalText: edge.text,
         width: 5 * edge.text.length,
         height: 18,
-        fontSize: 14,
+        fontSize,
         fontFamily: 1,
         lineHeight: 1.25,
         textAlign: "center",

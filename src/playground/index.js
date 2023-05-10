@@ -14,6 +14,7 @@ const containerEl = document.getElementById("diagrams");
 // skip this because it a minor feature e.g. dashed arrow line, link, etc.
 // we can support this later.
 const SKIPS = [];
+const FONT_SIZE = 18;
 
 // render the diagram
 flowDiagrams.forEach(async (diagramDefinition, i) => {
@@ -26,14 +27,20 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   }</h1><div id="diagram-${i}"></div><button onclick="renderExcalidraw(document.getElementById('parsed-${i}').innerText)">Render to Excalidraw</button><pre id="parsed-${i}"></pre>`;
 
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`);
-  const { svg } = await mermaid.render(`diagram-${i}`, diagramDefinition);
+  const { svg } = await mermaid.render(
+    `diagram-${i}`,
+    `%%{init: {"themeVariables": {"fontSize": "${FONT_SIZE}px"}} }%%\n` +
+      diagramDefinition
+  );
 
   diagramEl.innerHTML = svg;
   containerEl.append(diagramContainerEl);
 
   // get parsed data
   const parsedDataViewerEl = diagramContainerEl.querySelector(`#parsed-${i}`);
-  const data = await parseMermaid(mermaid, diagramDefinition);
+  const data = await parseMermaid(mermaid, diagramDefinition, {
+    fontSize: FONT_SIZE,
+  });
   parsedDataViewerEl.innerHTML = JSON.stringify(data, null, 2);
 });
 
@@ -45,7 +52,7 @@ root.render(React.createElement(Excalidraw));
 // Render to Excalidraw
 function renderExcalidraw(mermaidDataString) {
   const data = JSON.parse(mermaidDataString);
-  const elements = graphToExcalidraw(data);
+  const elements = graphToExcalidraw(data, { fontSize: FONT_SIZE });
 
   console.log("renderExcalidraw", elements);
 

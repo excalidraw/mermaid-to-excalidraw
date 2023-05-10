@@ -1,11 +1,17 @@
 import { Mermaid } from "mermaid";
 
 interface Graph {}
+interface ParseOptions {
+  fontSize?: number;
+}
 export const parseMermaid = async (
   mermaid: Mermaid,
-  diagramDefinition: string
+  diagramDefinition: string,
+  options: ParseOptions = {}
 ): Promise<Graph> => {
-  const definition = `%%{init: {"flowchart": {"curve": "linear"}} }%%\n${diagramDefinition}`;
+  const fontSize = options.fontSize || 16;
+
+  const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
   const div = document.createElement("div");
   div.id = `mermaidToExcalidraw`;
   div.setAttribute(
