@@ -63,26 +63,22 @@ const parseRoot = (graph, containerEl) => {
 const parseCluster = (node, containerEl) => {
   const el = containerEl.querySelector("#" + node.id);
 
-  let dimention = { x: 0, y: 0 };
+  let dimension = { x: 0, y: 0 };
   let root = el.parentElement.parentElement;
-  if (root.classList.value === "root" && root.hasAttribute("transform")) {
-    while (true) {
-      if (root.classList.value === "root" && root.hasAttribute("transform")) {
-        const style = getComputedStyle(root);
-        const matrix = new DOMMatrixReadOnly(style.transform);
-        dimention.x += matrix.m41;
-        dimention.y += matrix.m42;
-      }
-
-      root = root.parentElement;
-      if (root.id === containerEl.id) break;
+  const rect = el.querySelector("rect");
+  dimension = {
+    x: +(rect.getAttribute("x") || 0),
+    y: +(rect.getAttribute("y") || 0),
+  };
+  while (root && root.id !== containerEl.id) {
+    if (root.classList.value === "root" && root.hasAttribute("transform")) {
+      const style = getComputedStyle(root);
+      const matrix = new DOMMatrixReadOnly(style.transform);
+      dimension.x += matrix.m41;
+      dimension.y += matrix.m42;
     }
-  } else {
-    const rect = el.querySelector("rect");
-    dimention = {
-      x: +(rect.getAttribute("x") || 0),
-      y: +(rect.getAttribute("y") || 0),
-    };
+
+    root = root.parentElement;
   }
 
   // const style = getComputedStyle(el);
@@ -100,7 +96,7 @@ const parseCluster = (node, containerEl) => {
     nodes,
     classes: undefined,
     dir: undefined,
-    ...dimention,
+    ...dimension,
     width: bbox.width,
     height: bbox.height,
     title: entityCodesToText(node.title),
