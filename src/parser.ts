@@ -1,4 +1,5 @@
 import { Mermaid } from "mermaid";
+import { entityCodesToText } from "./utils";
 
 interface Graph {}
 interface ParseOptions {
@@ -102,6 +103,7 @@ const parseCluster = (node, containerEl) => {
     ...dimention,
     width: rect.width,
     height: rect.height,
+    title: entityCodesToText(node.title),
   };
 };
 
@@ -161,7 +163,7 @@ const parseVertice = (v, containerEl) => {
   return {
     id: v.id,
     labelType: v.labelType, // text, markdown
-    text: v.text,
+    text: entityCodesToText(v.text),
     type,
     link,
     ...position,
@@ -258,5 +260,6 @@ const parseEdge = (node, containerEl) => {
   return {
     ...node,
     ...position,
+    text: entityCodesToText(node.text),
   };
 };
