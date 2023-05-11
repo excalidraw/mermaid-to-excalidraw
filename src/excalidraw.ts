@@ -249,6 +249,9 @@ export const graphToExcalidraw = (
       ...arrowType,
     };
 
+    if (textElement)
+      ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
+
     // bound arrow to vertex
     const startV: any = elements.find((e: any) => e.id === edge.start);
     const endV: any = elements.find((e: any) => e.id === edge.end);

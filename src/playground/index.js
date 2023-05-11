@@ -14,7 +14,7 @@ const containerEl = document.getElementById("diagrams");
 // skip this because it a minor feature e.g. dashed arrow line, link, etc.
 // we can support this later.
 const SKIPS = [35, 39, 40, 42];
-const FONT_SIZE = 30;
+const FONT_SIZE = 18;
 
 // render the diagram
 flowDiagrams.forEach(async (diagramDefinition, i) => {
