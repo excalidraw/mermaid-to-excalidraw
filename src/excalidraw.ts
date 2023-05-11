@@ -187,6 +187,15 @@ export const graphToExcalidraw = (
       arrowType.endArrowhead = "dot";
     } else if (edge.type === "arrow_cross") {
       arrowType.endArrowhead = "bar";
+    } else if (edge.type === "double_arrow_circle") {
+      arrowType.endArrowhead = "dot";
+      arrowType.startArrowhead = "dot";
+    } else if (edge.type === "double_arrow_cross") {
+      arrowType.endArrowhead = "bar";
+      arrowType.startArrowhead = "bar";
+    } else if (edge.type === "double_arrow_point") {
+      arrowType.endArrowhead = "arrow";
+      arrowType.startArrowhead = "arrow";
     }
 
     let textElement;
