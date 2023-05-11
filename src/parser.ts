@@ -87,7 +87,7 @@ const parseCluster = (node, containerEl) => {
 
   // const style = getComputedStyle(el);
   // const matrix = new DOMMatrixReadOnly(style.transform);
-  const rect = el.getBoundingClientRect();
+  const bbox = el.getBBox();
   const nodes = node.nodes.map((n) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
@@ -101,8 +101,8 @@ const parseCluster = (node, containerEl) => {
     classes: undefined,
     dir: undefined,
     ...dimention,
-    width: rect.width,
-    height: rect.height,
+    width: bbox.width,
+    height: bbox.height,
     title: entityCodesToText(node.title),
   };
 };
@@ -136,12 +136,13 @@ const parseVertice = (v, containerEl) => {
   if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
-  const rect = el.getBoundingClientRect();
+  const bbox = el.getBBox();
   const style = getComputedStyle(link ? el.parentElement : el);
   const matrix = new DOMMatrixReadOnly(style.transform);
+
   const position = {
-    x: matrix.m41 - rect.width / 2,
-    y: matrix.m42 - rect.height / 2,
+    x: matrix.m41 - bbox.width / 2,
+    y: matrix.m42 - bbox.height / 2,
   };
   let root = el.parentElement.parentElement;
   while (true) {
@@ -167,8 +168,8 @@ const parseVertice = (v, containerEl) => {
     type,
     link,
     ...position,
-    width: rect.width,
-    height: rect.height,
+    width: bbox.width,
+    height: bbox.height,
   };
 };
 
