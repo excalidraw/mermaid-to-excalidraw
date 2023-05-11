@@ -47,6 +47,7 @@ export const graphToExcalidraw = (
     }
   );
 
+  // Clusters
   graph.clusters.reverse().forEach((cluster) => {
     const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
 
@@ -158,6 +159,7 @@ export const graphToExcalidraw = (
     elements.push(textElement);
   });
 
+  // Edges
   graph.edges.forEach((edge) => {
     let groupIds = [];
     if (
@@ -178,6 +180,14 @@ export const graphToExcalidraw = (
       point.x - reflectionPoints[0].x,
       point.y - reflectionPoints[0].y,
     ]);
+
+    // support arrow types
+    const arrowType: any = {};
+    if (edge.type === "arrow_circle") {
+      arrowType.endArrowhead = "dot";
+    } else if (edge.type === "arrow_cross") {
+      arrowType.endArrowhead = "bar";
+    }
 
     let textElement;
     if (edge.text) {
@@ -227,6 +237,7 @@ export const graphToExcalidraw = (
       ...(textElement
         ? { boundElements: [{ type: "text", id: textElement.id }] }
         : {}),
+      ...arrowType,
     };
 
     // bound arrow to vertex
