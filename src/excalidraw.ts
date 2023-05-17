@@ -197,29 +197,29 @@ export const graphToExcalidraw = (
       arrowType.startArrowhead = "arrow";
     }
 
-    let textElement;
-    if (edge.text) {
-      textElement = {
-        id: `${arrowId}_text`,
-        groupIds,
-        type: "text",
-        strokeColor: "black",
-        backgroundColor: "transparent",
-        text: edge.text,
-        originalText: edge.text,
-        width: 5 * edge.text.length,
-        height: 18,
-        fontSize,
-        fontFamily: 1,
-        lineHeight: 1.25,
-        textAlign: "center",
-        verticalAlign: "center",
-        containerId: arrowId,
-        x: startX + (endX - startX) / 2,
-        y: startY + (endY - startY) / 2,
-        opacity: 100,
-      };
-    }
+    // let textElement;
+    // if (edge.text) {
+    //   textElement = {
+    //     id: `${arrowId}_text`,
+    //     groupIds,
+    //     type: "text",
+    //     strokeColor: "black",
+    //     backgroundColor: "transparent",
+    //     text: edge.text,
+    //     originalText: edge.text,
+    //     width: 5 * edge.text.length,
+    //     height: 18,
+    //     fontSize,
+    //     fontFamily: 1,
+    //     lineHeight: 1.25,
+    //     textAlign: "center",
+    //     verticalAlign: "center",
+    //     containerId: arrowId,
+    //     x: startX + (endX - startX) / 2,
+    //     y: startY + (endY - startY) / 2,
+    //     opacity: 100,
+    //   };
+    // }
 
     const containerElement: any = {
       type: "arrow",
@@ -229,22 +229,20 @@ export const graphToExcalidraw = (
       y: startY,
       x2: endX,
       y2: endY,
-      angle: 0,
       strokeColor: "black",
       backgroundColor: "transparent",
       strokeWidth: edge.stroke === "thick" ? 4 : 2,
-      roughness: 1,
-      opacity: 100,
-      strokeLinejoin: "round",
-      strokeLinecap: "round",
+      // strokeLinejoin: "round",
+      // strokeLinecap: "round",
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points: points,
+      ...(edge.text ? { label: { text: edge.text, fontSize: fontSize } } : {}),
       roundness: {
         type: 2,
       },
-      ...(textElement
-        ? { boundElements: [{ type: "text", id: textElement.id }] }
-        : {}),
+      // ...(textElement
+      //   ? { boundElements: [{ type: "text", id: textElement.id }] }
+      //   : {}),
       ...arrowType,
     };
 
@@ -284,7 +282,7 @@ export const graphToExcalidraw = (
     // };
 
     elements.push(containerElement);
-    if (textElement) elements.push(textElement);
+    // if (textElement) elements.push(textElement);
   });
 
   return ExcalidrawLib.restoreElements(elements, null);
