@@ -1,4 +1,3 @@
-// TODO: render cluster title with correct text alignment
 // TODO: support arrow binding
 // TODO: support grouping
 // TOOD: clear all the unused code
