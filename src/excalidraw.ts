@@ -2,6 +2,9 @@
 // TODO: support arrow binding
 // TODO: support grouping
 // TOOD: clear all the unused code and comments
+// TODO: Make the playground more dynamic for testing (user's specified mermaid input)
+// TODO: add comments for better code readability
+//    - https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#pullrequestreview-1428159419
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
