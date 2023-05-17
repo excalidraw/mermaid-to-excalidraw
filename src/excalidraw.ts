@@ -1,5 +1,3 @@
-const ExcalidrawLib = window["ExcalidrawLib"];
-
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -54,50 +52,50 @@ export const graphToExcalidraw = (
     const containerElement = {
       type: "rectangle",
       id: cluster.id,
-      angle: 0,
-      groupIds,
+      // groupIds,
       x: cluster.x,
       y: cluster.y,
-      fillStyle: "solid",
       width: cluster.width,
       height: cluster.height,
       strokeColor: "#495057",
-      backgroundColor: "transparent",
-      strokeWidth: 1,
-      roughness: 1,
-      opacity: 100,
-      boundElements: [
-        {
-          type: "text",
-          id: `${cluster.id}_title`,
-        },
-      ],
+      label: {
+        text: cluster.title,
+        fontSize: fontSize,
+        textAlign: "center",
+        verticalAlign: "top",
+      },
+      // boundElements: [
+      //   {
+      //     type: "text",
+      //     id: `${cluster.id}_title`,
+      //   },
+      // ],
     };
 
-    const textElement = {
-      id: `${cluster.id}_title`,
-      containerId: cluster.id,
-      groupIds,
-      type: "text",
-      strokeColor: "black",
-      backgroundColor: "transparent",
-      text: cluster.title,
-      originalText: cluster.title,
-      width: 5 * cluster.title.length,
-      height: 18,
-      fontSize,
-      fontFamily: 1,
-      lineHeight: 1.25,
-      textAlign: "center",
-      verticalAlign: "top",
-      x: cluster.x + cluster.width / 2,
-      y: cluster.y,
-      opacity: 100,
-    };
+    // const textElement = {
+    //   id: `${cluster.id}_title`,
+    //   containerId: cluster.id,
+    //   groupIds,
+    //   type: "text",
+    //   strokeColor: "black",
+    //   backgroundColor: "transparent",
+    //   text: cluster.title,
+    //   originalText: cluster.title,
+    //   width: 5 * cluster.title.length,
+    //   height: 18,
+    //   fontSize,
+    //   fontFamily: 1,
+    //   lineHeight: 1.25,
+    //   textAlign: "center",
+    //   verticalAlign: "top",
+    //   x: cluster.x + cluster.width / 2,
+    //   y: cluster.y,
+    //   opacity: 100,
+    // };
 
     // ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
     elements.push(containerElement);
-    elements.push(textElement);
+    // elements.push(textElement);
   });
 
   // Vertices
@@ -126,7 +124,7 @@ export const graphToExcalidraw = (
     const containerElement = {
       type: "rectangle",
       id: vertex.id,
-      groupIds,
+      // groupIds,
       x: vertex.x,
       y: vertex.y,
       width: vertex.width,
@@ -224,7 +222,7 @@ export const graphToExcalidraw = (
     const containerElement: any = {
       type: "arrow",
       id: arrowId,
-      groupIds,
+      // groupIds,
       x: startX,
       y: startY,
       x2: endX,
@@ -252,16 +250,16 @@ export const graphToExcalidraw = (
     // bound arrow to vertex
     const startV: any = elements.find((e: any) => e.id === edge.start);
     const endV: any = elements.find((e: any) => e.id === edge.end);
-    if (!startV.boundElements) startV.boundElements = [];
-    startV.boundElements.push({
-      type: "arrow",
-      id: arrowId,
-    });
-    if (!endV.boundElements) endV.boundElements = [];
-    endV.boundElements.push({
-      type: "arrow",
-      id: arrowId,
-    });
+    // if (!startV.boundElements) startV.boundElements = [];
+    // startV.boundElements.push({
+    //   type: "arrow",
+    //   id: arrowId,
+    // });
+    // if (!endV.boundElements) endV.boundElements = [];
+    // endV.boundElements.push({
+    //   type: "arrow",
+    //   id: arrowId,
+    // });
     // const startFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
     //   containerElement,
     //   startV,
@@ -285,5 +283,5 @@ export const graphToExcalidraw = (
     // if (textElement) elements.push(textElement);
   });
 
-  return ExcalidrawLib.restoreElements(elements, null);
+  return elements;
 };
