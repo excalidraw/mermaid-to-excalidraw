@@ -1,3 +1,8 @@
+// TODO: render cluster title with correct text alignment
+// TODO: support arrow binding
+// TODO: support grouping
+// TOOD: clear all the unused code and comments
+
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -6,6 +11,7 @@ export const graphToExcalidraw = (
   options: GraphToExcalidrawOptions = {}
 ) => {
   // Adjust size for Vergil font (x0.75)
+  // TODO: find a way to refactor this
   const fontSize = (options.fontSize || 16) * 0.75;
 
   const elements: any = [];
