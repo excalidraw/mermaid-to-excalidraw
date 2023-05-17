@@ -7,7 +7,7 @@ export const graphToExcalidraw = (
   graph,
   options: GraphToExcalidrawOptions = {}
 ) => {
-  // adjust size for Vergil font (x0.75)
+  // Adjust size for Vergil font (x0.75)
   const fontSize = (options.fontSize || 16) * 0.75;
 
   const elements: any = [];
@@ -95,7 +95,7 @@ export const graphToExcalidraw = (
       opacity: 100,
     };
 
-    ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
+    // ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
     elements.push(containerElement);
     elements.push(textElement);
   });
@@ -104,49 +104,48 @@ export const graphToExcalidraw = (
   Object.values(graph.vertices).forEach((vertex: any) => {
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
-    const textElement = {
-      id: `${vertex.id}_text`,
-      groupIds,
-      type: "text",
-      strokeColor: "black",
-      backgroundColor: "transparent",
-      text: vertex.text,
-      originalText: vertex.text,
-      fontSize,
-      fontFamily: 1,
-      lineHeight: 1.25,
-      textAlign: "center",
-      verticalAlign: "center",
-      containerId: vertex.id,
-      x: vertex.x + vertex.width / 2,
-      y: vertex.y + 10,
-      opacity: 100,
-    };
+    // const textElement = {
+    //   id: `${vertex.id}_text`,
+    //   groupIds,
+    //   type: "text",
+    //   strokeColor: "black",
+    //   backgroundColor: "transparent",
+    //   text: vertex.text,
+    //   originalText: vertex.text,
+    //   fontSize,
+    //   fontFamily: 1,
+    //   lineHeight: 1.25,
+    //   textAlign: "center",
+    //   verticalAlign: "center",
+    //   containerId: vertex.id,
+    //   x: vertex.x + vertex.width / 2,
+    //   y: vertex.y + 10,
+    //   opacity: 100,
+    // };
 
     const containerElement = {
       type: "rectangle",
       id: vertex.id,
       groupIds,
-      angle: 0,
       x: vertex.x,
       y: vertex.y,
       width: vertex.width,
       height: vertex.height,
-      strokeColor: "black",
-      backgroundColor: "transparent",
       strokeWidth: 2,
-      roughness: 1,
-      opacity: 100,
       ...(vertex.type === "round" && { roundness: { type: 3 } }),
-      boundElements: [
-        {
-          type: "text",
-          id: textElement.id,
-        },
-      ],
+      // boundElements: [
+      //   {
+      //     type: "text",
+      //     id: textElement.id,
+      //   },
+      // ],
+      label: {
+        text: vertex.text,
+        fontSize: fontSize,
+      },
     };
 
-    ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
+    // ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
 
     if (vertex.type === "circle" || vertex.type === "doublecircle") {
       containerElement.type = "ellipse";
@@ -156,7 +155,7 @@ export const graphToExcalidraw = (
     }
 
     elements.push(containerElement);
-    elements.push(textElement);
+    // elements.push(textElement);
   });
 
   // Edges
@@ -249,8 +248,8 @@ export const graphToExcalidraw = (
       ...arrowType,
     };
 
-    if (textElement)
-      ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
+    // if (textElement)
+    //   ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
 
     // bound arrow to vertex
     const startV: any = elements.find((e: any) => e.id === edge.start);
@@ -265,24 +264,24 @@ export const graphToExcalidraw = (
       type: "arrow",
       id: arrowId,
     });
-    const startFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
-      containerElement,
-      startV,
-      "start"
-    );
-    const endFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
-      containerElement,
-      endV,
-      "end"
-    );
-    containerElement.startBinding = {
-      elementId: startV.id,
-      ...startFocusAndGap,
-    };
-    containerElement.endBinding = {
-      elementId: endV.id,
-      ...endFocusAndGap,
-    };
+    // const startFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
+    //   containerElement,
+    //   startV,
+    //   "start"
+    // );
+    // const endFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
+    //   containerElement,
+    //   endV,
+    //   "end"
+    // );
+    // containerElement.startBinding = {
+    //   elementId: startV.id,
+    //   ...startFocusAndGap,
+    // };
+    // containerElement.endBinding = {
+    //   elementId: endV.id,
+    //   ...endFocusAndGap,
+    // };
 
     elements.push(containerElement);
     if (textElement) elements.push(textElement);
