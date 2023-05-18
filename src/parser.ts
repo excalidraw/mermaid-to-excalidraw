@@ -2,17 +2,20 @@ import { Mermaid } from "mermaid";
 import { entityCodesToText } from "./utils";
 
 interface Graph {}
-interface ParseOptions {
+interface ParseMermaidOptions {
   fontSize?: number;
 }
 export const parseMermaid = async (
   mermaid: Mermaid,
   diagramDefinition: string,
-  options: ParseOptions = {}
+  options: ParseMermaidOptions = {}
 ): Promise<Graph> => {
   const fontSize = options.fontSize || 16;
 
+  // Render flowchart in linear curves (for better extracting arrow path points) and custom font size
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
+
+  // render the SVG diagram
   const div = document.createElement("div");
   div.id = `mermaidToExcalidraw`;
   div.setAttribute(
@@ -24,6 +27,7 @@ export const parseMermaid = async (
   document.body.appendChild(div);
   const diagramEl = div.querySelector("#diagram");
 
+  // parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
   const graph = diagram.parser.yy;
@@ -50,23 +54,14 @@ const parseRoot = (graph, containerEl) => {
   };
 };
 
-// {
-//   "id": "B1",
-//   "nodes": [
-//     "flowchart-f1-506",
-//     "flowchart-i1-505"
-//   ],
-//   "title": "B1",
-//   "dir": "RL",
-//   "labelType": "text"
-// },
 const parseCluster = (node, containerEl) => {
   const el = containerEl.querySelector("#" + node.id);
 
-  let dimension = { x: 0, y: 0 };
+  // extract cluster position
+  let position = { x: 0, y: 0 };
   let root = el.parentElement.parentElement;
   const rect = el.querySelector("rect");
-  dimension = {
+  position = {
     x: +(rect.getAttribute("x") || 0),
     y: +(rect.getAttribute("y") || 0),
   };
@@ -74,16 +69,14 @@ const parseCluster = (node, containerEl) => {
     if (root.classList.value === "root" && root.hasAttribute("transform")) {
       const style = getComputedStyle(root);
       const matrix = new DOMMatrixReadOnly(style.transform);
-      dimension.x += matrix.m41;
-      dimension.y += matrix.m42;
+      position.x += matrix.m41;
+      position.y += matrix.m42;
     }
 
     root = root.parentElement;
   }
 
-  // const style = getComputedStyle(el);
-  // const matrix = new DOMMatrixReadOnly(style.transform);
-  const bbox = el.getBBox();
+  const boundingBox = el.getBBox();
   const nodes = node.nodes.map((n) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
@@ -96,49 +89,31 @@ const parseCluster = (node, containerEl) => {
     nodes,
     classes: undefined,
     dir: undefined,
-    ...dimension,
-    width: bbox.width,
-    height: bbox.height,
+    ...position,
+    width: boundingBox.width,
+    height: boundingBox.height,
     title: entityCodesToText(node.title),
   };
 };
 
-// "vertices": {
-//   "Start": {
-//     "id": "Start",
-//     "labelType": "text",
-//     "domId": "flowchart-Start-14",
-//     "styles": [],
-//     "classes": [],
-//     "text": "Start",
-//     "props": {}
-//   },
-//   "Stop": {
-//     "id": "Stop",
-//     "labelType": "text",
-//     "domId": "flowchart-Stop-15",
-//     "styles": [],
-//     "classes": [],
-//     "text": "Stop",
-//     "props": {}
-//   }
-// }
 const parseVertice = (v, containerEl) => {
+  // find vertice element
   const el = containerEl.querySelector(`[id*="flowchart-${v.id}-"]`);
   // if element not found (mean el = cluster), ignore
   if (!el) return;
 
+  // check if vertice have a link
   let link;
   if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
-  const bbox = el.getBBox();
+  const boundingBox = el.getBBox();
   const style = getComputedStyle(link ? el.parentElement : el);
   const matrix = new DOMMatrixReadOnly(style.transform);
 
   const position = {
-    x: matrix.m41 - bbox.width / 2,
-    y: matrix.m42 - bbox.height / 2,
+    x: matrix.m41 - boundingBox.width / 2,
+    y: matrix.m42 - boundingBox.height / 2,
   };
   let root = el.parentElement.parentElement;
   while (true) {
@@ -164,22 +139,13 @@ const parseVertice = (v, containerEl) => {
     type,
     link,
     ...position,
-    width: bbox.width,
-    height: bbox.height,
+    width: boundingBox.width,
+    height: boundingBox.height,
   };
 };
 
-// {
-//   "start": "A",
-//   "end": "B",
-//   "type": "arrow_point",
-//   "text": "text",
-//   "labelType": "text",
-//   "stroke": "thick",
-//   "length": 1
-// }
 const parseEdge = (node, containerEl) => {
-  node.length = undefined;
+  // extract edge position start, end, and points (reflectionPoints)
   function extractPositions(pathElement, offset = { x: 0, y: 0 }) {
     if (pathElement.tagName.toLowerCase() !== "path") {
       throw new Error(
@@ -236,6 +202,7 @@ const parseEdge = (node, containerEl) => {
     };
   }
 
+  // find edge element
   const el = containerEl.querySelector(`[id*="L-${node.start}-${node.end}"]`);
 
   let offset = { x: 0, y: 0 };
@@ -253,6 +220,7 @@ const parseEdge = (node, containerEl) => {
   }
 
   const position = extractPositions(el, offset);
+  node.length = undefined;
 
   return {
     ...node,

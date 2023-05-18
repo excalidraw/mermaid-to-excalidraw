@@ -1,8 +1,6 @@
 // TODO: support arrow binding with new API
 // TODO: support grouping with new API
 // TOOD: clear all the unused code
-// TODO: add comments for better code readability
-//    - https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#pullrequestreview-1428159419
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -12,7 +10,6 @@ export const graphToExcalidraw = (
   options: GraphToExcalidrawOptions = {}
 ) => {
   // Adjust size for Vergil font (x0.75)
-  // TODO: find a way to refactor this
   const fontSize = (options.fontSize || 16) * 0.75;
 
   const elements: any = [];
