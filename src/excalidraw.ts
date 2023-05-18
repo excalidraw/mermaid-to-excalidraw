@@ -1,6 +1,6 @@
 // TODO: support arrow binding with new API
 // TODO: support grouping with new API
-// TOOD: clear all the unused code
+// TODO: add flowchart prefix for groupId
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -55,80 +55,28 @@ export const graphToExcalidraw = (
 
     const containerElement = {
       type: "rectangle",
-      id: cluster.id,
       groupIds,
       x: cluster.x,
       y: cluster.y,
       width: cluster.width,
       height: cluster.height,
-      strokeColor: "#495057",
       label: {
         groupIds,
         text: cluster.title,
         fontSize: fontSize,
-        textAlign: "center",
         verticalAlign: "top",
       },
-      // boundElements: [
-      //   {
-      //     type: "text",
-      //     id: `${cluster.id}_title`,
-      //   },
-      // ],
     };
 
-    // const textElement = {
-    //   id: `${cluster.id}_title`,
-    //   containerId: cluster.id,
-    //   groupIds,
-    //   type: "text",
-    //   strokeColor: "black",
-    //   backgroundColor: "transparent",
-    //   text: cluster.title,
-    //   originalText: cluster.title,
-    //   width: 5 * cluster.title.length,
-    //   height: 18,
-    //   fontSize,
-    //   fontFamily: 1,
-    //   lineHeight: 1.25,
-    //   textAlign: "center",
-    //   verticalAlign: "top",
-    //   x: cluster.x + cluster.width / 2,
-    //   y: cluster.y,
-    //   opacity: 100,
-    // };
-
-    // ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
     elements.push(containerElement);
-    // elements.push(textElement);
   });
 
   // Vertices
   Object.values(graph.vertices).forEach((vertex: any) => {
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
-    // const textElement = {
-    //   id: `${vertex.id}_text`,
-    //   groupIds,
-    //   type: "text",
-    //   strokeColor: "black",
-    //   backgroundColor: "transparent",
-    //   text: vertex.text,
-    //   originalText: vertex.text,
-    //   fontSize,
-    //   fontFamily: 1,
-    //   lineHeight: 1.25,
-    //   textAlign: "center",
-    //   verticalAlign: "center",
-    //   containerId: vertex.id,
-    //   x: vertex.x + vertex.width / 2,
-    //   y: vertex.y + 10,
-    //   opacity: 100,
-    // };
-
     const containerElement = {
       type: "rectangle",
-      id: vertex.id,
       groupIds,
       x: vertex.x,
       y: vertex.y,
@@ -136,20 +84,12 @@ export const graphToExcalidraw = (
       height: vertex.height,
       strokeWidth: 2,
       ...(vertex.type === "round" && { roundness: { type: 3 } }),
-      // boundElements: [
-      //   {
-      //     type: "text",
-      //     id: textElement.id,
-      //   },
-      // ],
       label: {
         groupIds,
         text: vertex.text,
         fontSize: fontSize,
       },
     };
-
-    // ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
 
     if (vertex.type === "circle" || vertex.type === "doublecircle") {
       containerElement.type = "ellipse";
@@ -159,7 +99,6 @@ export const graphToExcalidraw = (
     }
 
     elements.push(containerElement);
-    // elements.push(textElement);
   });
 
   // Edges
@@ -178,7 +117,7 @@ export const graphToExcalidraw = (
     // calculate arrow position
     const { startX, startY, endX, endY, reflectionPoints } = edge;
     const arrowId = `${edge.start}_${edge.end}`;
-    // calculate reflection point
+    // calculate arrow points
     const points = reflectionPoints.map((point) => [
       point.x - reflectionPoints[0].x,
       point.y - reflectionPoints[0].y,
@@ -201,43 +140,14 @@ export const graphToExcalidraw = (
       arrowType.startArrowhead = "arrow";
     }
 
-    // let textElement;
-    // if (edge.text) {
-    //   textElement = {
-    //     id: `${arrowId}_text`,
-    //     groupIds,
-    //     type: "text",
-    //     strokeColor: "black",
-    //     backgroundColor: "transparent",
-    //     text: edge.text,
-    //     originalText: edge.text,
-    //     width: 5 * edge.text.length,
-    //     height: 18,
-    //     fontSize,
-    //     fontFamily: 1,
-    //     lineHeight: 1.25,
-    //     textAlign: "center",
-    //     verticalAlign: "center",
-    //     containerId: arrowId,
-    //     x: startX + (endX - startX) / 2,
-    //     y: startY + (endY - startY) / 2,
-    //     opacity: 100,
-    //   };
-    // }
-
     const containerElement: any = {
       type: "arrow",
-      id: arrowId,
       groupIds,
       x: startX,
       y: startY,
       x2: endX,
       y2: endY,
-      strokeColor: "black",
-      backgroundColor: "transparent",
       strokeWidth: edge.stroke === "thick" ? 4 : 2,
-      // strokeLinejoin: "round",
-      // strokeLinecap: "round",
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points: points,
       ...(edge.text
@@ -246,14 +156,8 @@ export const graphToExcalidraw = (
       roundness: {
         type: 2,
       },
-      // ...(textElement
-      //   ? { boundElements: [{ type: "text", id: textElement.id }] }
-      //   : {}),
       ...arrowType,
     };
-
-    // if (textElement)
-    //   ExcalidrawLib.redrawTextBoundingBox(textElement, containerElement);
 
     // bound arrow to vertex
     const startV: any = elements.find((e: any) => e.id === edge.start);
@@ -288,7 +192,6 @@ export const graphToExcalidraw = (
     // };
 
     elements.push(containerElement);
-    // if (textElement) elements.push(textElement);
   });
 
   return elements;
