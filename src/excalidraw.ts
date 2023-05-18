@@ -1,6 +1,5 @@
 // TODO: support arrow binding with new API
 // TODO: support grouping with new API
-// TODO: add flowchart prefix for groupId
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
