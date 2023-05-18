@@ -15,7 +15,6 @@
     "build:playground": "parcel build src/playground/index.html -d public --public-url /"
   },
   "dependencies": {
-    "@chunza2542/t2d-excalidraw": "^0.15.4",
     "mermaid": "10.1.0"
   },
   "devDependencies": {
