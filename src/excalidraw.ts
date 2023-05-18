@@ -1,5 +1,5 @@
-// TODO: support arrow binding
-// TODO: support grouping
+// TODO: support arrow binding with new API
+// TODO: support grouping with new API
 // TOOD: clear all the unused code
 // TODO: add comments for better code readability
 //    - https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#pullrequestreview-1428159419
@@ -59,13 +59,14 @@ export const graphToExcalidraw = (
     const containerElement = {
       type: "rectangle",
       id: cluster.id,
-      // groupIds,
+      groupIds,
       x: cluster.x,
       y: cluster.y,
       width: cluster.width,
       height: cluster.height,
       strokeColor: "#495057",
       label: {
+        groupIds,
         text: cluster.title,
         fontSize: fontSize,
         textAlign: "center",
@@ -131,7 +132,7 @@ export const graphToExcalidraw = (
     const containerElement = {
       type: "rectangle",
       id: vertex.id,
-      // groupIds,
+      groupIds,
       x: vertex.x,
       y: vertex.y,
       width: vertex.width,
@@ -145,6 +146,7 @@ export const graphToExcalidraw = (
       //   },
       // ],
       label: {
+        groupIds,
         text: vertex.text,
         fontSize: fontSize,
       },
@@ -229,7 +231,7 @@ export const graphToExcalidraw = (
     const containerElement: any = {
       type: "arrow",
       id: arrowId,
-      // groupIds,
+      groupIds,
       x: startX,
       y: startY,
       x2: endX,
@@ -241,7 +243,9 @@ export const graphToExcalidraw = (
       // strokeLinecap: "round",
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points: points,
-      ...(edge.text ? { label: { text: edge.text, fontSize: fontSize } } : {}),
+      ...(edge.text
+        ? { label: { text: edge.text, fontSize: fontSize, groupIds } }
+        : {}),
       roundness: {
         type: 2,
       },
