@@ -128,15 +128,11 @@ const parseVertice = (v, containerEl) => {
     if (root.id === containerEl.id) break;
   }
 
-  // convert type
-  let type = v.type;
-  if (["stadium", "subroutine", "cylinder"].includes(type)) type = undefined;
-
   return {
     id: v.id,
     labelType: v.labelType, // text, markdown
     text: entityCodesToText(v.text),
-    type,
+    type: v.type,
     link,
     ...position,
     width: boundingBox.width,
