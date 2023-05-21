@@ -1,6 +1,9 @@
+import { computeExcalidrawArrowType } from "./utils";
+
 // TODO: support arrow binding with new API
 // TODO: support grouping with new API
 // TODO: update types
+// TODO: refactor grouping algorithm
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -9,7 +12,7 @@ export const graphToExcalidraw = (
   graph,
   options: GraphToExcalidrawOptions = {}
 ) => {
-  // Adjust size for Vergil font (x0.75)
+  // Adjust size for Virgil font (x0.75)
   const fontSize = (options.fontSize || 16) * 0.75;
 
   const elements: any = [];
@@ -116,7 +119,7 @@ export const graphToExcalidraw = (
 
     // calculate arrow position
     const { startX, startY, endX, endY, reflectionPoints } = edge;
-    const arrowId = `${edge.start}_${edge.end}`;
+
     // calculate arrow points
     const points = reflectionPoints.map((point) => [
       point.x - reflectionPoints[0].x,
@@ -124,21 +127,7 @@ export const graphToExcalidraw = (
     ]);
 
     // support arrow types
-    const arrowType: any = {};
-    if (edge.type === "arrow_circle") {
-      arrowType.endArrowhead = "dot";
-    } else if (edge.type === "arrow_cross") {
-      arrowType.endArrowhead = "bar";
-    } else if (edge.type === "double_arrow_circle") {
-      arrowType.endArrowhead = "dot";
-      arrowType.startArrowhead = "dot";
-    } else if (edge.type === "double_arrow_cross") {
-      arrowType.endArrowhead = "bar";
-      arrowType.startArrowhead = "bar";
-    } else if (edge.type === "double_arrow_point") {
-      arrowType.endArrowhead = "arrow";
-      arrowType.startArrowhead = "arrow";
-    }
+    const arrowType = computeExcalidrawArrowType(edge.type);
 
     const containerElement: any = {
       type: "arrow",
