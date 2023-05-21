@@ -12,13 +12,12 @@ body {
 .excalidraw-wrapper {
   height: 100%;
 }
-.excalidraw .App-top-bar {
+/* .excalidraw .App-top-bar {
   display: none !important;
 }
 .App-bottom-bar {
   display: none !important;
-}
-
+} */
 /* pre {
   display: none;
 } */
