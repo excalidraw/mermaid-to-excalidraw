@@ -1,4 +1,4 @@
-export const Excalidraw = (props) => {
+const ExcalidrawWrapper = (props) => {
   const excalidrawRef = React.useRef(null);
 
   return React.createElement(
@@ -22,3 +22,5 @@ export const Excalidraw = (props) => {
     )
   );
 };
+
+export default ExcalidrawWrapper;

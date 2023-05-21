@@ -1,6 +1,6 @@
 import "babel-polyfill";
 
-import { Excalidraw } from "./Excalidraw";
+import ExcalidrawWrapper from "./ExcalidrawWrapper";
 import { flowDiagrams } from "./flowDiagrams";
 import { graphToExcalidraw, parseMermaid } from "..";
 
@@ -81,7 +81,7 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
 // render default excalidraw
 const excalidrawWrapper = document.getElementById("excalidraw");
 let root = ReactDOM.createRoot(excalidrawWrapper);
-root.render(React.createElement(Excalidraw));
+root.render(React.createElement(ExcalidrawWrapper));
 
 // Render to Excalidraw
 function renderExcalidraw(mermaidDataString) {
