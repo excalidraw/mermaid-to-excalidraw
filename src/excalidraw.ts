@@ -94,7 +94,30 @@ export const graphToExcalidraw = (
       },
     };
 
-    if (vertex.type === "circle" || vertex.type === "doublecircle") {
+    if (vertex.type === "doublecircle") {
+      // Create new groupId for double circle
+      groupIds.push(`doublecircle_${vertex.id}}`)
+      const innerCircle = {
+        type: "ellipse",
+        groupIds,
+        x: vertex.x + 5,
+        y: vertex.y + 5,
+        width: vertex.width - 10,
+        height: vertex.height - 10,
+        strokeWidth: 2,
+        ...(vertex.type === "round" && { roundness: { type: 3 } }),
+        label: {
+          groupIds,
+          text: vertex.text,
+          fontSize: fontSize,
+        },
+      };
+      containerElement.label = undefined;
+      containerElement.groupIds = groupIds;
+      containerElement.type = "ellipse";
+      elements.push(innerCircle);
+    }
+    if (vertex.type === "circle") {
       containerElement.type = "ellipse";
     }
     if (vertex.type === "diamond") {
