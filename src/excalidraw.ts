@@ -1,5 +1,6 @@
 // TODO: support arrow binding with new API
 // TODO: support grouping with new API
+// TODO: update types
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -157,38 +158,6 @@ export const graphToExcalidraw = (
       },
       ...arrowType,
     };
-
-    // bound arrow to vertex
-    const startV: any = elements.find((e: any) => e.id === edge.start);
-    const endV: any = elements.find((e: any) => e.id === edge.end);
-    // if (!startV.boundElements) startV.boundElements = [];
-    // startV.boundElements.push({
-    //   type: "arrow",
-    //   id: arrowId,
-    // });
-    // if (!endV.boundElements) endV.boundElements = [];
-    // endV.boundElements.push({
-    //   type: "arrow",
-    //   id: arrowId,
-    // });
-    // const startFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
-    //   containerElement,
-    //   startV,
-    //   "start"
-    // );
-    // const endFocusAndGap = ExcalidrawLib.calculateFocusAndGap(
-    //   containerElement,
-    //   endV,
-    //   "end"
-    // );
-    // containerElement.startBinding = {
-    //   elementId: startV.id,
-    //   ...startFocusAndGap,
-    // };
-    // containerElement.endBinding = {
-    //   elementId: endV.id,
-    //   ...endFocusAndGap,
-    // };
 
     elements.push(containerElement);
   });
