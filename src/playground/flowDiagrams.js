@@ -207,7 +207,7 @@ B --> C{Decision}
 C -->|One| D[Result one]
 C -->|Two| E[Result two]
 `,
-  `graph TD
+  `flowchart TD
   A[Start] --> B{Decision 1}
   B -->|Yes| C[Action 1]
   B -->|No| D[Action 2]

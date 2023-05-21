@@ -93,7 +93,7 @@ function renderExcalidraw(mermaidDataString) {
   root.unmount();
   root = ReactDOM.createRoot(excalidrawWrapper);
   root.render(
-    React.createElement(Excalidraw, {
+    React.createElement(ExcalidrawWrapper, {
       elements,
     })
   );
