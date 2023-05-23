@@ -92,6 +92,7 @@ export const graphToExcalidraw = (
         text: vertex.text,
         fontSize: fontSize,
       },
+      link: vertex.link || undefined,
     };
 
     if (vertex.type === "doublecircle") {
