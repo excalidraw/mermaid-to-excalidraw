@@ -86,7 +86,7 @@ export const graphToExcalidraw = (
       width: vertex.width,
       height: vertex.height,
       strokeWidth: 2,
-      ...(vertex.type === "round" && { roundness: { type: 3 } }),
+      ...((vertex.type === "round" || vertex.type === "stadium") && { roundness: { type: 3 } }),
       label: {
         groupIds,
         text: vertex.text,
