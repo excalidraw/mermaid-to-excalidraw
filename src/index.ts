@@ -1,3 +1,2 @@
-export default {};
-export { parseMermaid } from "./parser";
-export { graphToExcalidraw } from "./excalidraw";
+export { parseMermaid } from "./parseMermaid";
+export { graphToExcalidraw } from "./graphToExcalidraw";

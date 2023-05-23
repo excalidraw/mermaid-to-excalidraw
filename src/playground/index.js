@@ -1,15 +1,15 @@
 import "babel-polyfill";
 
 import { flowDiagrams } from "./flowDiagrams";
-import { parseMermaid } from "../parser";
+import { parseMermaid } from "..";
 import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 
 // Initialize Mermaid
 const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: false });
 
-import "./initExcalidraw"
-import "./initCustomTest"
+import "./initExcalidraw";
+import "./initCustomTest";
 
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");

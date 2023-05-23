@@ -86,7 +86,9 @@ export const graphToExcalidraw = (
       width: vertex.width,
       height: vertex.height,
       strokeWidth: 2,
-      ...((vertex.type === "round" || vertex.type === "stadium") && { roundness: { type: 3 } }),
+      ...((vertex.type === "round" || vertex.type === "stadium") && {
+        roundness: { type: 3 },
+      }),
       label: {
         groupIds,
         text: vertex.text,
@@ -97,7 +99,7 @@ export const graphToExcalidraw = (
 
     if (vertex.type === "doublecircle") {
       // Create new groupId for double circle
-      groupIds.push(`doublecircle_${vertex.id}}`)
+      groupIds.push(`doublecircle_${vertex.id}}`);
       const innerCircle = {
         type: "ellipse",
         groupIds,
