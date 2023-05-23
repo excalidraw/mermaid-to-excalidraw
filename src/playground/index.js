@@ -1,58 +1,20 @@
 import "babel-polyfill";
 
-import ExcalidrawWrapper from "./ExcalidrawWrapper";
 import { flowDiagrams } from "./flowDiagrams";
-import { graphToExcalidraw, parseMermaid } from "..";
+import { parseMermaid } from "../parser";
+import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 
 // Initialize Mermaid
 const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: false });
 
+import "./initExcalidraw"
+import "./initCustomTest"
+
+// Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");
-
-// Custom test section
-const customTestEl = document.createElement("div");
-customTestEl.innerHTML = `
-  <h1>Custom Test</h1>
-  <textarea id="mermaid-input" rows="10" cols="50"></textarea><br>
-  <button id="render-excalidraw-btn">Render to Excalidraw</button>
-  <div id="custom-diagram"></div>
-  <pre id="custom-parsed-data"></pre>
-`;
-containerEl.prepend(customTestEl);
-document
-  .getElementById("render-excalidraw-btn")
-  .addEventListener("click", async () => {
-    const diagramDefinition = document.getElementById("mermaid-input").value;
-
-    const diagramEl = document.getElementById("custom-diagram");
-    const { svg } = await mermaid.render(
-      `custom-digaram`,
-      `%%{init: {"themeVariables": {"fontSize": "${FONT_SIZE}px"}} }%%\n` +
-        diagramDefinition
-    );
-    diagramEl.innerHTML = svg;
-
-    const parsedData = await parseMermaid(mermaid, diagramDefinition, {
-      fontSize: FONT_SIZE,
-    });
-    document.getElementById("custom-parsed-data").innerText = JSON.stringify(
-      parsedData,
-      null,
-      2
-    );
-    renderExcalidraw(JSON.stringify(parsedData));
-  });
-
-// skips some diagrams #n
-// skip this because it a minor feature e.g. dashed arrow line, link, etc.
-// we can support this later.
-const SKIPS = [35, 39, 40, 42];
-const FONT_SIZE = 18;
-
-// render the diagram
 flowDiagrams.forEach(async (diagramDefinition, i) => {
-  if (SKIPS.includes(i + 1)) return;
+  if (SKIP_CASES.includes(i + 1)) return;
 
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
@@ -63,7 +25,7 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`);
   const { svg } = await mermaid.render(
     `diagram-${i}`,
-    `%%{init: {"themeVariables": {"fontSize": "${FONT_SIZE}px"}} }%%\n` +
+    `%%{init: {"themeVariables": {"fontSize": "${DEFAULT_FONT_SIZE}px"}} }%%\n` +
       diagramDefinition
   );
 
@@ -73,30 +35,7 @@ flowDiagrams.forEach(async (diagramDefinition, i) => {
   // get parsed data
   const parsedDataViewerEl = diagramContainerEl.querySelector(`#parsed-${i}`);
   const data = await parseMermaid(mermaid, diagramDefinition, {
-    fontSize: FONT_SIZE,
+    fontSize: DEFAULT_FONT_SIZE,
   });
   parsedDataViewerEl.innerHTML = JSON.stringify(data, null, 2);
 });
-
-// render default excalidraw
-const excalidrawWrapper = document.getElementById("excalidraw");
-let root = ReactDOM.createRoot(excalidrawWrapper);
-root.render(React.createElement(ExcalidrawWrapper));
-
-// Render to Excalidraw
-function renderExcalidraw(mermaidDataString) {
-  const data = JSON.parse(mermaidDataString);
-  const elements = graphToExcalidraw(data, { fontSize: FONT_SIZE });
-
-  console.log("renderExcalidraw", elements);
-
-  root.unmount();
-  root = ReactDOM.createRoot(excalidrawWrapper);
-  root.render(
-    React.createElement(ExcalidrawWrapper, {
-      elements,
-    })
-  );
-}
-
-window.renderExcalidraw = renderExcalidraw;
