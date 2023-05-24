@@ -12,7 +12,10 @@ export const graphToExcalidraw = (
   graph,
   options: GraphToExcalidrawOptions = {}
 ) => {
-  // Adjust size for Virgil font (x0.75)
+  // Adjust size for Virgil font
+  // Note: I've tried changing the mermaid default font to Vergil so that I can use the same font size when converting to excalidraw,
+  // but there is a text overflow problem when rendering on Mermaid.
+  // So I manually decrease the Excalidraw font size by multiplying it by some number.
   const fontSize = (options.fontSize || 16) * 0.75;
 
   const elements: any = [];
@@ -79,6 +82,7 @@ export const graphToExcalidraw = (
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
     const containerElement = {
+      id: vertex.id,
       type: "rectangle",
       groupIds,
       x: vertex.x,
@@ -155,7 +159,9 @@ export const graphToExcalidraw = (
     // support arrow types
     const arrowType = computeExcalidrawArrowType(edge.type);
 
+    const arrowId = `${edge.start}_${edge.end}`;
     const containerElement: any = {
+      id: arrowId,
       type: "arrow",
       groupIds,
       x: startX,
@@ -173,6 +179,31 @@ export const graphToExcalidraw = (
       },
       ...arrowType,
     };
+
+    const startVertex: any = elements.find((e: any) => e.id === edge.start);
+    const endVertex: any = elements.find((e: any) => e.id === edge.end);
+    if (!startVertex.boundElements) startVertex.boundElements = [];
+    startVertex.boundElements.push({
+      type: "arrow",
+      id: arrowId,
+    });
+    if (!endVertex.boundElements) endVertex.boundElements = [];
+    endVertex.boundElements.push({
+      type: "arrow",
+      id: arrowId,
+    });
+    containerElement.startBinding = {
+      elementId: startVertex.id,
+      // focus: 0.3,
+      // gap: 1,
+    };
+    containerElement.endBinding = {
+      elementId: endVertex.id,
+      // focus: 0.3,
+      // gap: ,
+    };
+
+    console.log("tesdfla,", containerElement);
 
     elements.push(containerElement);
   });
