@@ -8,9 +8,9 @@ let root = ReactDOM.createRoot(excalidrawWrapper);
 root.render(React.createElement(ExcalidrawWrapper));
 
 // Render to Excalidraw
-function renderExcalidraw(mermaidDataString) {
+function renderExcalidraw(mermaidDataString, fontSize = DEFAULT_FONT_SIZE) {
   const data = JSON.parse(mermaidDataString);
-  const elements = graphToExcalidraw(data, { fontSize: DEFAULT_FONT_SIZE });
+  const elements = graphToExcalidraw(data, { fontSize });
 
   console.log("renderExcalidraw", elements);
 
