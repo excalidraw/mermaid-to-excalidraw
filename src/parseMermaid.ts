@@ -12,6 +12,11 @@ export const parseMermaid = async (
 ): Promise<Graph> => {
   const fontSize = options.fontSize || 16;
 
+  // Check supported diagram type
+  if (!isSupportedDiagram(diagramDefinition)) {
+    throw new Error("Unsupported diagram type");
+  }
+
   // Render flowchart in linear curves (for better extracting arrow path points) and custom font size
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
 
@@ -223,4 +228,11 @@ const parseEdge = (node, containerEl) => {
     ...position,
     text: entityCodesToText(node.text),
   };
+};
+
+const isSupportedDiagram = (definition): boolean => {
+  if (definition.trim().startsWith("flowchart")) {
+    return true;
+  }
+  return false;
 };
