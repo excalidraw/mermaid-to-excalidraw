@@ -59,6 +59,7 @@ export const graphToExcalidraw = (
     const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
 
     const containerElement = {
+      id: cluster.id,
       type: "rectangle",
       groupIds,
       x: cluster.x,
