@@ -1,6 +1,5 @@
 import { computeExcalidrawArrowType } from "./utils";
 
-// TODO: support arrow binding with new API
 // TODO: support grouping with new API
 // TODO: update types
 // TODO: refactor grouping algorithm
@@ -182,28 +181,12 @@ export const graphToExcalidraw = (
 
     const startVertex: any = elements.find((e: any) => e.id === edge.start);
     const endVertex: any = elements.find((e: any) => e.id === edge.end);
-    if (!startVertex.boundElements) startVertex.boundElements = [];
-    startVertex.boundElements.push({
-      type: "arrow",
-      id: arrowId,
-    });
-    if (!endVertex.boundElements) endVertex.boundElements = [];
-    endVertex.boundElements.push({
-      type: "arrow",
-      id: arrowId,
-    });
-    containerElement.startBinding = {
-      elementId: startVertex.id,
-      // focus: 0.3,
-      // gap: 1,
+    containerElement.start = {
+      id: startVertex.id,
     };
-    containerElement.endBinding = {
-      elementId: endVertex.id,
-      // focus: 0.3,
-      // gap: ,
+    containerElement.end = {
+      id: endVertex.id,
     };
-
-    console.log("tesdfla,", containerElement);
 
     elements.push(containerElement);
   });
