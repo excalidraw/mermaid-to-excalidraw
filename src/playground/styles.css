@@ -12,6 +12,9 @@ body {
 .excalidraw-wrapper {
   height: 100%;
 }
+#excalidraw .mobile-misc-tools-container {
+  display: none !important;
+}
 /* .excalidraw .App-top-bar {
   display: none !important;
 }

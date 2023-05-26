@@ -1,7 +1,7 @@
 import { computeExcalidrawArrowType } from "./utils";
 
-// TODO: support grouping with new API
 // TODO: update types
+// TODO: support grouping with new API
 // TODO: refactor grouping algorithm
 
 interface GraphToExcalidrawOptions {
