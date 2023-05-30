@@ -68,6 +68,7 @@ export const graphToExcalidraw = (
     if (vertex.type === "doublecircle") {
       // Create new groupId for double circle
       groupIds.push(`doublecircle_${vertex.id}}`);
+      // Create inner circle element
       const innerCircle = {
         type: "ellipse",
         groupIds,
@@ -102,20 +103,19 @@ export const graphToExcalidraw = (
   graph.edges.forEach((edge) => {
     let groupIds = [];
     if (getParentId(edge.start) == getParentId(edge.end)) {
-      const parent = getParentId(edge.start);
-      groupIds = getGroupIds(parent);
+      groupIds = getGroupIds(getParentId(edge.start));
     }
 
-    // calculate arrow position
+    // Get arrow position data
     const { startX, startY, endX, endY, reflectionPoints } = edge;
 
-    // calculate arrow points
+    // Calculate Excalidraw arrow's points
     const points = reflectionPoints.map((point) => [
       point.x - reflectionPoints[0].x,
       point.y - reflectionPoints[0].y,
     ]);
 
-    // support arrow types
+    // Get supported arrow type
     const arrowType = computeExcalidrawArrowType(edge.type);
 
     const arrowId = `${edge.start}_${edge.end}`;
@@ -139,6 +139,7 @@ export const graphToExcalidraw = (
       ...arrowType,
     };
 
+    // Bind start and end vertex to arrow
     const startVertex = elements.find((e) => e.id === edge.start);
     const endVertex = elements.find((e) => e.id === edge.end);
     containerElement.start = {
