@@ -1,4 +1,4 @@
-export interface Vertice {
+export interface Vertex {
   id: string;
   type: string;
   labelType: string;
@@ -42,6 +42,6 @@ export interface Edge {
 
 export interface Graph {
   clusters: Cluster[];
-  vertices: { [key: string]: Vertice };
+  vertices: { [key: string]: Vertex };
   edges: Edge[];
 }

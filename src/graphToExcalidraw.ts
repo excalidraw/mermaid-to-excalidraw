@@ -1,6 +1,8 @@
 import { Graph } from "./interfaces";
 
-interface ExcalidrawElement {}
+interface ExcalidrawElement {
+  [key: string]: any;
+}
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -36,7 +38,7 @@ export const graphToExcalidraw = (
     (id) => {
       if (!diagramTree[id]) return;
       let curr = diagramTree[id];
-      const groupIds: any = [];
+      const groupIds: string[] = [];
       if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
 
       while (true) {
@@ -75,7 +77,7 @@ export const graphToExcalidraw = (
   });
 
   // Vertices
-  Object.values(graph.vertices).forEach((vertex: any) => {
+  Object.values(graph.vertices).forEach((vertex) => {
     const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
 
     const containerElement = {
@@ -109,7 +111,7 @@ export const graphToExcalidraw = (
         width: vertex.width - 10,
         height: vertex.height - 10,
         strokeWidth: 2,
-        ...(vertex.type === "round" && { roundness: { type: 3 } }),
+        roundness: { type: 3 },
         label: {
           groupIds,
           text: vertex.text,
@@ -157,7 +159,7 @@ export const graphToExcalidraw = (
     const arrowType = computeExcalidrawArrowType(edge.type);
 
     const arrowId = `${edge.start}_${edge.end}`;
-    const containerElement: any = {
+    const containerElement: ExcalidrawElement = {
       id: arrowId,
       type: "arrow",
       groupIds,
@@ -177,8 +179,8 @@ export const graphToExcalidraw = (
       ...arrowType,
     };
 
-    const startVertex: any = elements.find((e: any) => e.id === edge.start);
-    const endVertex: any = elements.find((e: any) => e.id === edge.end);
+    const startVertex = elements.find((e) => e.id === edge.start);
+    const endVertex = elements.find((e) => e.id === edge.end);
     containerElement.start = {
       id: startVertex.id,
     };
@@ -194,7 +196,7 @@ export const graphToExcalidraw = (
 
 /* Helper Functions */
 
-// compute arrow type from mermaid edge type
+// Convert mermaid edge type to Excalidraw arrow type
 interface ArrowType {
   startArrowhead?: string;
   endArrowhead?: string;

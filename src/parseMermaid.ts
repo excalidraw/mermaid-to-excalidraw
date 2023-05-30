@@ -1,5 +1,5 @@
 import { Mermaid } from "mermaid";
-import { Cluster, Edge, Graph, Position, Vertice } from "./interfaces";
+import { Cluster, Edge, Graph, Position, Vertex } from "./interfaces";
 
 interface ParseMermaidOptions {
   fontSize?: number;
@@ -46,9 +46,9 @@ export const parseMermaid = async (
 /* Parsing Functions */
 
 const parseRoot = (mermaidParser, containerEl: Element): Graph => {
-  const vertices = mermaidParser.getVertices();
+  const vertices = mermaidParser.getVertexs();
   Object.keys(vertices).forEach((id) => {
-    vertices[id] = parseVertice(vertices[id], containerEl);
+    vertices[id] = parseVertex(vertices[id], containerEl);
   });
   const edges = mermaidParser
     .getEdges()
@@ -97,15 +97,15 @@ const parseCluster = (data, containerEl: Element): Cluster => {
   };
 };
 
-const parseVertice = (data, containerEl: Element): Vertice => {
-  // Find vertice element
+const parseVertex = (data, containerEl: Element): Vertex => {
+  // Find Vertex element
   const el: SVGSVGElement = containerEl.querySelector(
     `[id*="flowchart-${data.id}-"]`
   );
   // If element not found (mean el = cluster), ignore
   if (!el) return;
 
-  // Check if vertice attached with link
+  // Check if Vertex attached with link
   let link;
   if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
