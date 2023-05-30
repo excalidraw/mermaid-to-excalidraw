@@ -1,10 +1,47 @@
 import { Mermaid } from "mermaid";
 
-interface Graph {
-  clusters: any[];
-  vertices: any[];
-  edges: any[];
+interface Cluster {
+  id: string;
+  labelType: string;
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  link?: string;
 }
+interface Vertice {
+  id: string;
+  nodes: string[];
+  title: string;
+  labelType: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+interface Position {
+  x: number;
+  y: number;
+}
+interface Edge {
+  start: string;
+  end: string;
+  type: string;
+  labelType: string;
+  stroke: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  reflectionPoints: Position[];
+}
+interface Graph {
+  clusters: Cluster[];
+  vertices: { [key: string]: Vertice };
+  edges: Edge[];
+}
+
 interface ParseMermaidOptions {
   fontSize?: number;
 }
@@ -38,8 +75,8 @@ export const parseMermaid = async (
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
-  const graph = diagram.parser.yy;
-  const root = parseRoot(graph, diagramEl);
+  const mermaidParser = diagram.parser.yy;
+  const root = parseRoot(mermaidParser, diagramEl);
 
   // Remove the rendered diagram
   div.remove();
@@ -48,15 +85,17 @@ export const parseMermaid = async (
 };
 
 /* Parsing Functions */
-const parseRoot = (graph, containerEl) => {
-  const vertices = graph.getVertices();
+const parseRoot = (mermaidParser, containerEl: Element): Graph => {
+  const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertice(vertices[id], containerEl);
   });
-  const edges = graph.getEdges().map((e) => parseEdge(e, containerEl));
-  const clusters = graph
+  const edges = mermaidParser
+    .getEdges()
+    .map((data) => parseEdge(data, containerEl));
+  const clusters = mermaidParser
     .getSubGraphs()
-    .map((c) => parseCluster(c, containerEl));
+    .map((data) => parseCluster(data, containerEl));
 
   return {
     clusters,
@@ -65,14 +104,13 @@ const parseRoot = (graph, containerEl) => {
   };
 };
 
-const parseCluster = (node, containerEl) => {
-  const el = containerEl.querySelector("#" + node.id);
-
-  // extract cluster position
-  let position = { x: 0, y: 0 };
+const computeElementPosition = (
+  el: Element,
+  containerEl: Element
+): Position => {
   let root = el.parentElement.parentElement;
   const rect = el.querySelector("rect");
-  position = {
+  let position = {
     x: +(rect.getAttribute("x") || 0),
     y: +(rect.getAttribute("y") || 0),
   };
@@ -86,24 +124,39 @@ const parseCluster = (node, containerEl) => {
 
     root = root.parentElement;
   }
+  return position;
+};
 
-  const boundingBox = el.getBBox();
-  const nodes = node.nodes.map((n) => {
+const parseCluster = (data, containerEl: Element): Cluster => {
+  // Extract only node id
+  const nodes = data.nodes.map((n) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
     }
     return n;
   });
 
-  return {
-    ...node,
-    nodes,
-    classes: undefined,
-    dir: undefined,
-    ...position,
+  // Get position
+  const el: SVGSVGElement = containerEl.querySelector("#" + data.id);
+  const position = computeElementPosition(el, containerEl);
+
+  // Get dimension
+  const boundingBox = el.getBBox();
+  const dimension = {
     width: boundingBox.width,
     height: boundingBox.height,
-    title: entityCodesToText(node.title),
+  };
+
+  // Remove irrelevant properties
+  data.classes = undefined;
+  data.dir = undefined;
+
+  return {
+    ...data,
+    nodes,
+    ...position,
+    ...dimension,
+    title: entityCodesToText(data.title),
   };
 };
 
