@@ -1,19 +1,20 @@
-import { computeExcalidrawArrowType } from "./utils";
+import { Graph } from "./interfaces";
 
+interface ExcalidrawElement {}
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
 export const graphToExcalidraw = (
-  graph,
+  graph: Graph,
   options: GraphToExcalidrawOptions = {}
-) => {
+): ExcalidrawElement[] => {
   // Adjust size for Virgil font
   // Note: I've tried changing the mermaid default font to Vergil so that I can use the same font size when converting to excalidraw,
   // but there is a text overflow problem when rendering on Mermaid.
   // So I manually decrease the Excalidraw font size by multiplying it by some number.
   const fontSize = (options.fontSize || 16) * 0.75;
 
-  const elements: any = [];
+  const elements: ExcalidrawElement[] = [];
   // parse the diagram into a tree for rendering and grouping
   const diagramTree = {}; // element: parent, isLeaf (type = vertex)
   graph.clusters.map((cluster) => {
@@ -189,4 +190,31 @@ export const graphToExcalidraw = (
   });
 
   return elements;
+};
+
+/* Helper Functions */
+
+// compute arrow type from mermaid edge type
+interface ArrowType {
+  startArrowhead?: string;
+  endArrowhead?: string;
+}
+const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
+  const arrowType: ArrowType = {};
+  if (mermaidEdgeType === "arrow_circle") {
+    arrowType.endArrowhead = "dot";
+  } else if (mermaidEdgeType === "arrow_cross") {
+    arrowType.endArrowhead = "bar";
+  } else if (mermaidEdgeType === "double_arrow_circle") {
+    arrowType.endArrowhead = "dot";
+    arrowType.startArrowhead = "dot";
+  } else if (mermaidEdgeType === "double_arrow_cross") {
+    arrowType.endArrowhead = "bar";
+    arrowType.startArrowhead = "bar";
+  } else if (mermaidEdgeType === "double_arrow_point") {
+    arrowType.endArrowhead = "arrow";
+    arrowType.startArrowhead = "arrow";
+  }
+
+  return arrowType;
 };
