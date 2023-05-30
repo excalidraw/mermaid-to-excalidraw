@@ -153,7 +153,10 @@ const parseVertice = (data, containerEl: Element): Vertice => {
     link = el.parentElement.getAttribute("xlink:href");
 
   // Get position
-  const position = computeElementPosition(el, containerEl);
+  const position = computeElementPosition(
+    link ? el.parentElement : el,
+    containerEl
+  );
 
   // Get dimension
   const boundingBox = el.getBBox();
@@ -161,26 +164,6 @@ const parseVertice = (data, containerEl: Element): Vertice => {
     width: boundingBox.width,
     height: boundingBox.height,
   };
-
-  // const style = getComputedStyle(link ? el.parentElement : el);
-  // const matrix = new DOMMatrixReadOnly(style.transform);
-
-  // const position = {
-  //   x: matrix.m41 - boundingBox.width / 2,
-  //   y: matrix.m42 - boundingBox.height / 2,
-  // };
-  // let root = el.parentElement.parentElement;
-  // while (true) {
-  //   if (root.classList.value === "root" && root.hasAttribute("transform")) {
-  //     const style = getComputedStyle(root);
-  //     const matrix = new DOMMatrixReadOnly(style.transform);
-  //     position.x += matrix.m41;
-  //     position.y += matrix.m42;
-  //   }
-
-  //   root = root.parentElement;
-  //   if (root.id === containerEl.id) break;
-  // }
 
   return {
     id: data.id,
@@ -282,7 +265,7 @@ const parseEdge = (node, containerEl) => {
 
 // Compute element position
 const computeElementPosition = (
-  el: SVGSVGElement,
+  el: Element,
   containerEl: Element
 ): Position => {
   let root = el.parentElement.parentElement;
@@ -309,8 +292,6 @@ const computeElementPosition = (
     x: transformX + childPosition.x,
     y: transformY + childPosition.y,
   };
-  const oldP = JSON.parse(JSON.stringify(position));
-
   while (root && root.id !== containerEl.id) {
     if (root.classList.value === "root" && root.hasAttribute("transform")) {
       const style = getComputedStyle(root);
@@ -322,7 +303,6 @@ const computeElementPosition = (
     root = root.parentElement;
   }
 
-  console.log("debug", el.id, childPosition, childElement, oldP, position);
   return position;
 };
 
