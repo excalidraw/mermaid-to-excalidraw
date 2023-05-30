@@ -10,52 +10,17 @@ export const graphToExcalidraw = (
   graph: Graph,
   options: GraphToExcalidrawOptions = {}
 ): ExcalidrawElement[] => {
+  const elements: ExcalidrawElement[] = [];
   // Adjust size for Virgil font
   // Note: I've tried changing the mermaid default font to Vergil so that I can use the same font size when converting to excalidraw,
   // but there is a text overflow problem when rendering on Mermaid.
   // So I manually decrease the Excalidraw font size by multiplying it by some number.
   const fontSize = (options.fontSize || 16) * 0.75;
-
-  const elements: ExcalidrawElement[] = [];
-  // parse the diagram into a tree for rendering and grouping
-  const diagramTree = {}; // element: parent, isLeaf (type = vertex)
-  graph.clusters.map((cluster) => {
-    cluster.nodes.forEach((e) => {
-      diagramTree[cluster.id] = {
-        id: cluster.id,
-        parent: null,
-        isLeaf: false,
-      };
-      diagramTree[e] = {
-        id: e,
-        parent: cluster.id,
-        isLeaf: graph.vertices[e] !== undefined,
-      };
-    });
-  });
-  const groupMapper = {}; // key = vertexId, value = groupId[]
-  [...Object.keys(graph.vertices), ...graph.clusters.map((c) => c.id)].forEach(
-    (id) => {
-      if (!diagramTree[id]) return;
-      let curr = diagramTree[id];
-      const groupIds: string[] = [];
-      if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
-
-      while (true) {
-        if (curr.parent) {
-          groupIds.push(`cluster_group_${curr.parent}`);
-          curr = diagramTree[curr.parent];
-        } else {
-          break;
-        }
-      }
-      groupMapper[id] = groupIds;
-    }
-  );
+  const { getGroupIds, getParentId } = computeGroupIds(graph);
 
   // Clusters
   graph.clusters.reverse().forEach((cluster) => {
-    const groupIds = groupMapper[cluster.id] ? groupMapper[cluster.id] : [];
+    const groupIds = getGroupIds(cluster.id);
 
     const containerElement = {
       id: cluster.id,
@@ -78,7 +43,7 @@ export const graphToExcalidraw = (
 
   // Vertices
   Object.values(graph.vertices).forEach((vertex) => {
-    const groupIds = groupMapper[vertex.id] ? groupMapper[vertex.id] : [];
+    const groupIds = getGroupIds(vertex.id);
 
     const containerElement = {
       id: vertex.id,
@@ -136,14 +101,9 @@ export const graphToExcalidraw = (
   // Edges
   graph.edges.forEach((edge) => {
     let groupIds = [];
-    if (
-      diagramTree[edge.start] &&
-      diagramTree[edge.end] &&
-      diagramTree[edge.start].parent !== null &&
-      diagramTree[edge.start].parent === diagramTree[edge.end].parent
-    ) {
-      const parent = diagramTree[edge.start].parent;
-      groupIds = groupMapper[parent] ? groupMapper[parent] : [];
+    if (getParentId(edge.start) == getParentId(edge.end)) {
+      const parent = getParentId(edge.start);
+      groupIds = getGroupIds(parent);
     }
 
     // calculate arrow position
@@ -195,6 +155,68 @@ export const graphToExcalidraw = (
 };
 
 /* Helper Functions */
+
+// Compute groupIds for each element
+const computeGroupIds = (
+  graph: Graph
+): {
+  getGroupIds: (elementId: string) => string[];
+  getParentId: (elementId: string) => string | null;
+} => {
+  // Parse the diagram into a tree for rendering and grouping
+  const tree: {
+    [key: string]: {
+      id: string;
+      parent: string | null;
+      isLeaf: boolean; // true = vertex, false = cluster
+    };
+  } = {};
+  graph.clusters.map((cluster) => {
+    cluster.nodes.forEach((nodeId) => {
+      tree[cluster.id] = {
+        id: cluster.id,
+        parent: null,
+        isLeaf: false,
+      };
+      tree[nodeId] = {
+        id: nodeId,
+        parent: cluster.id,
+        isLeaf: graph.vertices[nodeId] !== undefined,
+      };
+    });
+  });
+  const mapper: {
+    [key: string]: string[];
+  } = {};
+  [...Object.keys(graph.vertices), ...graph.clusters.map((c) => c.id)].forEach(
+    (id) => {
+      if (!tree[id]) return;
+      let curr = tree[id];
+      const groupIds: string[] = [];
+      if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
+
+      while (true) {
+        if (curr.parent) {
+          groupIds.push(`cluster_group_${curr.parent}`);
+          curr = tree[curr.parent];
+        } else {
+          break;
+        }
+      }
+
+      mapper[id] = groupIds;
+    }
+  );
+
+  return {
+    getGroupIds: (elementId) => {
+      return mapper[elementId] || [];
+    },
+    getParentId: (elementId) => {
+      return tree[elementId] ? tree[elementId].parent : null;
+    },
+  };
+};
 
 // Convert mermaid edge type to Excalidraw arrow type
 interface ArrowType {

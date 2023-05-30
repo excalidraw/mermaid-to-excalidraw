@@ -46,7 +46,7 @@ export const parseMermaid = async (
 /* Parsing Functions */
 
 const parseRoot = (mermaidParser, containerEl: Element): Graph => {
-  const vertices = mermaidParser.getVertexs();
+  const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertex(vertices[id], containerEl);
   });
