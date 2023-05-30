@@ -1,10 +1,11 @@
 import { parseMermaid } from "../parseMermaid";
 import { DEFAULT_FONT_SIZE } from "./settings";
 
-// Init custom test section
 const mermaid = window.mermaid;
 const customTestEl = document.createElement("div");
 const containerEl = document.getElementById("diagrams");
+
+// Init custom test section
 customTestEl.innerHTML = `
   <h1>Custom Test</h1>
   <ul>
@@ -19,6 +20,8 @@ customTestEl.innerHTML = `
   <pre id="custom-parsed-data"></pre>
 `;
 containerEl.prepend(customTestEl);
+
+// Handle render to Excalidraw event
 document
   .getElementById("render-excalidraw-btn")
   .addEventListener("click", async () => {

@@ -1,6 +1,6 @@
 // [...document.querySelectorAll("pre.shiki")].map(x => x.innerText.replaceAll("\\", "\\\\").replaceAll("`", "\\`")).map(x => `\`${x}\``).filter(x => !(x.includes('---') || x.includes('<body>') || x.includes('<script>') || x.includes('<style>'))).join(",")
 // https://mermaid.js.org/syntax/flowchart.html
-export const flowDiagrams = [
+export const FLOWCHART_DIAGRAM_TESTCASES = [
   `flowchart TD
 Start --> Stop
 `,
@@ -67,9 +67,6 @@ A ==> B
   `flowchart LR
 A == text ==> B
 `,
-  //   `flowchart LR
-  // A ~~~ B
-  // `,
   `flowchart LR
 A -- text --> B -- text2 --> C
 `,

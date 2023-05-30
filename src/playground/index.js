@@ -1,7 +1,7 @@
 import "babel-polyfill";
 
-import { flowDiagrams } from "./flowDiagrams";
 import { parseMermaid } from "..";
+import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
 import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 
 // Initialize Mermaid
@@ -13,7 +13,8 @@ import "./initCustomTest";
 
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");
-flowDiagrams.forEach(async (diagramDefinition, i) => {
+
+FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition, i) => {
   if (SKIP_CASES.includes(i + 1)) return;
 
   const diagramContainerEl = document.createElement("div");
