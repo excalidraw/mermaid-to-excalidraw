@@ -1,7 +1,5 @@
 import { computeExcalidrawArrowType } from "./utils";
 
-// TODO: update types
-
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }

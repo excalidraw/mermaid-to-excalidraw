@@ -1,7 +1,10 @@
 import { Mermaid } from "mermaid";
-import { entityCodesToText } from "./utils";
 
-interface Graph {}
+interface Graph {
+  clusters: any[];
+  vertices: any[];
+  edges: any[];
+}
 interface ParseMermaidOptions {
   fontSize?: number;
 }
@@ -17,10 +20,10 @@ export const parseMermaid = async (
     throw new Error("Unsupported diagram type");
   }
 
-  // Render flowchart in linear curves (for better extracting arrow path points) and custom font size
+  // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
 
-  // render the SVG diagram
+  // Render the SVG diagram
   const div = document.createElement("div");
   div.id = `mermaidToExcalidraw`;
   div.setAttribute(
@@ -32,16 +35,19 @@ export const parseMermaid = async (
   document.body.appendChild(div);
   const diagramEl = div.querySelector("#diagram");
 
-  // parse the diagram
+  // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
   const graph = diagram.parser.yy;
-
   const root = parseRoot(graph, diagramEl);
+
+  // Remove the rendered diagram
   div.remove();
+
   return root;
 };
 
+/* Parsing Functions */
 const parseRoot = (graph, containerEl) => {
   const vertices = graph.getVertices();
   Object.keys(vertices).forEach((id) => {
@@ -230,9 +236,21 @@ const parseEdge = (node, containerEl) => {
   };
 };
 
-const isSupportedDiagram = (definition): boolean => {
+/* Helper Functions */
+// Check if the definition is a supported diagram
+const isSupportedDiagram = (definition: string): boolean => {
   if (definition.trim().startsWith("flowchart")) {
     return true;
   }
   return false;
+};
+
+// Convert mermaid entity codes to text
+const entityCodesToText = (input: string): string => {
+  const modifiedInput = input
+    .replace(/#(\d+);/g, "&#$1;")
+    .replace(/#([a-z]+);/g, "&$1;");
+  const element = document.createElement("textarea");
+  element.innerHTML = modifiedInput;
+  return element.value;
 };
