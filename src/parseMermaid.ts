@@ -176,88 +176,23 @@ const parseVertice = (data, containerEl: Element): Vertice => {
   };
 };
 
-const parseEdge = (node, containerEl) => {
-  // extract edge position start, end, and points (reflectionPoints)
-  function extractPositions(pathElement, offset = { x: 0, y: 0 }) {
-    if (pathElement.tagName.toLowerCase() !== "path") {
-      throw new Error(
-        'Invalid input: Expected an HTMLElement of tag "path", got ' +
-          pathElement.tagName
-      );
-    }
+const parseEdge = (data, containerEl: Element): Edge => {
+  // Find edge element
+  const el: SVGPathElement = containerEl.querySelector(
+    `[id*="L-${data.start}-${data.end}"]`
+  );
 
-    const dAttribute = pathElement.getAttribute("d");
-    if (!dAttribute) {
-      throw new Error('Path element does not contain a "d" attribute');
-    }
+  // Compute edge position data
+  const position = computeElementPosition(el, containerEl);
+  const edgePositionData = computeEdgePositions(el, position);
 
-    const commands = dAttribute.split(/(?=[LM])/);
-    const startPosition = commands[0]
-      .substring(1)
-      .split(",")
-      .map((coord) => parseFloat(coord));
-    const endPosition = commands[commands.length - 1]
-      .substring(1)
-      .split(",")
-      .map((coord) => parseFloat(coord));
-    const reflectionPoints = commands
-      .map((command) => {
-        const coords = command
-          .substring(1)
-          .split(",")
-          .map((coord) => parseFloat(coord));
-        return { x: coords[0], y: coords[1] };
-      })
-      .filter((point, index, array) => {
-        if (index === array.length - 1) {
-          return true;
-        }
-
-        const prevPoint = array[index - 1];
-        return (
-          index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
-        );
-      })
-      .map((p) => {
-        return {
-          x: p.x + offset.x,
-          y: p.y + offset.y,
-        };
-      });
-
-    return {
-      startX: startPosition[0] + offset.x,
-      startY: startPosition[1] + offset.y,
-      endX: endPosition[0] + offset.x,
-      endY: endPosition[1] + offset.y,
-      reflectionPoints,
-    };
-  }
-
-  // find edge element
-  const el = containerEl.querySelector(`[id*="L-${node.start}-${node.end}"]`);
-
-  let offset = { x: 0, y: 0 };
-  let root = el.parentElement.parentElement;
-  while (true) {
-    if (root.classList.value === "root" && root.hasAttribute("transform")) {
-      const style = getComputedStyle(root);
-      const matrix = new DOMMatrixReadOnly(style.transform);
-      offset.x += matrix.m41;
-      offset.y += matrix.m42;
-    }
-
-    root = root.parentElement;
-    if (root.id === containerEl.id) break;
-  }
-
-  const position = extractPositions(el, offset);
-  node.length = undefined;
+  // Remove irrelevant properties
+  data.length = undefined;
 
   return {
-    ...node,
-    ...position,
-    text: entityCodesToText(node.text),
+    ...data,
+    ...edgePositionData,
+    text: entityCodesToText(data.text),
   };
 };
 
@@ -304,6 +239,72 @@ const computeElementPosition = (
   }
 
   return position;
+};
+
+// Extract edge position start, end, and points (reflectionPoints)
+interface EdgePositionData {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  reflectionPoints: Position[];
+}
+const computeEdgePositions = (
+  pathElement: SVGPathElement,
+  offset: Position = { x: 0, y: 0 }
+): EdgePositionData => {
+  if (pathElement.tagName.toLowerCase() !== "path") {
+    throw new Error(
+      'Invalid input: Expected an HTMLElement of tag "path", got ' +
+        pathElement.tagName
+    );
+  }
+
+  const dAttribute = pathElement.getAttribute("d");
+  if (!dAttribute) {
+    throw new Error('Path element does not contain a "d" attribute');
+  }
+
+  const commands = dAttribute.split(/(?=[LM])/);
+  const startPosition = commands[0]
+    .substring(1)
+    .split(",")
+    .map((coord) => parseFloat(coord));
+  const endPosition = commands[commands.length - 1]
+    .substring(1)
+    .split(",")
+    .map((coord) => parseFloat(coord));
+  const reflectionPoints = commands
+    .map((command) => {
+      const coords = command
+        .substring(1)
+        .split(",")
+        .map((coord) => parseFloat(coord));
+      return { x: coords[0], y: coords[1] };
+    })
+    .filter((point, index, array) => {
+      if (index === array.length - 1) {
+        return true;
+      }
+      const prevPoint = array[index - 1];
+      return (
+        index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
+      );
+    })
+    .map((p) => {
+      return {
+        x: p.x + offset.x,
+        y: p.y + offset.y,
+      };
+    });
+
+  return {
+    startX: startPosition[0] + offset.x,
+    startY: startPosition[1] + offset.y,
+    endX: endPosition[0] + offset.x,
+    endY: endPosition[1] + offset.y,
+    reflectionPoints,
+  };
 };
 
 // Check if the definition is a supported diagram
