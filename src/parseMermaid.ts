@@ -1,7 +1,8 @@
 import { Mermaid } from "mermaid";
 
-interface Cluster {
+interface Vertice {
   id: string;
+  type: string;
   labelType: string;
   text: string;
   x: number;
@@ -10,7 +11,7 @@ interface Cluster {
   height: number;
   link?: string;
 }
-interface Vertice {
+interface Cluster {
   id: string;
   nodes: string[];
   title: string;
@@ -85,6 +86,7 @@ export const parseMermaid = async (
 };
 
 /* Parsing Functions */
+
 const parseRoot = (mermaidParser, containerEl: Element): Graph => {
   const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {
@@ -102,29 +104,6 @@ const parseRoot = (mermaidParser, containerEl: Element): Graph => {
     vertices,
     edges,
   };
-};
-
-const computeElementPosition = (
-  el: Element,
-  containerEl: Element
-): Position => {
-  let root = el.parentElement.parentElement;
-  const rect = el.querySelector("rect");
-  let position = {
-    x: +(rect.getAttribute("x") || 0),
-    y: +(rect.getAttribute("y") || 0),
-  };
-  while (root && root.id !== containerEl.id) {
-    if (root.classList.value === "root" && root.hasAttribute("transform")) {
-      const style = getComputedStyle(root);
-      const matrix = new DOMMatrixReadOnly(style.transform);
-      position.x += matrix.m41;
-      position.y += matrix.m42;
-    }
-
-    root = root.parentElement;
-  }
-  return position;
 };
 
 const parseCluster = (data, containerEl: Element): Cluster => {
@@ -160,47 +139,57 @@ const parseCluster = (data, containerEl: Element): Cluster => {
   };
 };
 
-const parseVertice = (v, containerEl) => {
-  // find vertice element
-  const el = containerEl.querySelector(`[id*="flowchart-${v.id}-"]`);
-  // if element not found (mean el = cluster), ignore
+const parseVertice = (data, containerEl: Element): Vertice => {
+  // Find vertice element
+  const el: SVGSVGElement = containerEl.querySelector(
+    `[id*="flowchart-${data.id}-"]`
+  );
+  // If element not found (mean el = cluster), ignore
   if (!el) return;
 
-  // check if vertice have a link
+  // Check if vertice attached with link
   let link;
   if (el.parentElement.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
+  // Get position
+  const position = computeElementPosition(el, containerEl);
+
+  // Get dimension
   const boundingBox = el.getBBox();
-  const style = getComputedStyle(link ? el.parentElement : el);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-
-  const position = {
-    x: matrix.m41 - boundingBox.width / 2,
-    y: matrix.m42 - boundingBox.height / 2,
-  };
-  let root = el.parentElement.parentElement;
-  while (true) {
-    if (root.classList.value === "root" && root.hasAttribute("transform")) {
-      const style = getComputedStyle(root);
-      const matrix = new DOMMatrixReadOnly(style.transform);
-      position.x += matrix.m41;
-      position.y += matrix.m42;
-    }
-
-    root = root.parentElement;
-    if (root.id === containerEl.id) break;
-  }
-
-  return {
-    id: v.id,
-    labelType: v.labelType, // text, markdown
-    text: entityCodesToText(v.text),
-    type: v.type,
-    link,
-    ...position,
+  const dimension = {
     width: boundingBox.width,
     height: boundingBox.height,
+  };
+
+  // const style = getComputedStyle(link ? el.parentElement : el);
+  // const matrix = new DOMMatrixReadOnly(style.transform);
+
+  // const position = {
+  //   x: matrix.m41 - boundingBox.width / 2,
+  //   y: matrix.m42 - boundingBox.height / 2,
+  // };
+  // let root = el.parentElement.parentElement;
+  // while (true) {
+  //   if (root.classList.value === "root" && root.hasAttribute("transform")) {
+  //     const style = getComputedStyle(root);
+  //     const matrix = new DOMMatrixReadOnly(style.transform);
+  //     position.x += matrix.m41;
+  //     position.y += matrix.m42;
+  //   }
+
+  //   root = root.parentElement;
+  //   if (root.id === containerEl.id) break;
+  // }
+
+  return {
+    id: data.id,
+    labelType: data.labelType,
+    text: entityCodesToText(data.text),
+    type: data.type,
+    link,
+    ...position,
+    ...dimension,
   };
 };
 
@@ -290,6 +279,53 @@ const parseEdge = (node, containerEl) => {
 };
 
 /* Helper Functions */
+
+// Compute element position
+const computeElementPosition = (
+  el: SVGSVGElement,
+  containerEl: Element
+): Position => {
+  let root = el.parentElement.parentElement;
+  const style = getComputedStyle(el);
+  const matrix = new DOMMatrixReadOnly(style.transform);
+  const transformX = matrix.m41 || 0;
+  const transformY = matrix.m42 || 0;
+
+  const childElement = el.childNodes[0] as SVGSVGElement;
+  let childPosition = { x: 0, y: 0 };
+  if (childElement) {
+    const childStyle = getComputedStyle(childElement);
+    const childMatrix = new DOMMatrixReadOnly(childStyle.transform);
+    const boundingBox = childElement.getBBox();
+    childPosition = {
+      x:
+        +childElement.getAttribute("x") || childMatrix.m41 + boundingBox.x || 0,
+      y:
+        +childElement.getAttribute("y") || childMatrix.m42 + boundingBox.y || 0,
+    };
+  }
+
+  let position = {
+    x: transformX + childPosition.x,
+    y: transformY + childPosition.y,
+  };
+  const oldP = JSON.parse(JSON.stringify(position));
+
+  while (root && root.id !== containerEl.id) {
+    if (root.classList.value === "root" && root.hasAttribute("transform")) {
+      const style = getComputedStyle(root);
+      const matrix = new DOMMatrixReadOnly(style.transform);
+      position.x += matrix.m41;
+      position.y += matrix.m42;
+    }
+
+    root = root.parentElement;
+  }
+
+  console.log("debug", el.id, childPosition, childElement, oldP, position);
+  return position;
+};
+
 // Check if the definition is a supported diagram
 const isSupportedDiagram = (definition: string): boolean => {
   if (definition.trim().startsWith("flowchart")) {
