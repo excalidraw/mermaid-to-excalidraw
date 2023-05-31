@@ -1,15 +1,14 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/index.ts",
+  "version": "0.1.0",
+  "description": "Mermaid to Excalidraw Diagrams",
+  "main": "src/index.js",
   "files": [
-    "package/**/*"
+    "dist/*"
   ],
   "type": "module",
   "scripts": {
     "start": "yarn playground",
-    "test": "vitest",
     "build": "tsc",
     "playground": "parcel src/playground/index.html --open",
     "build:playground": "parcel build src/playground/index.html -d public --public-url /"

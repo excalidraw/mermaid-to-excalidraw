@@ -845,11 +845,6 @@
   resolved "https://registry.yarnpkg.com/@braintree/sanitize-url/-/sanitize-url-6.0.2.tgz#6110f918d273fe2af8ea1c4398a88774bb9fc12f"
   integrity sha512-Tbsj02wXCbqGmzdnXNk0SOF19ChhRU70BsroIi4Pm6Ehp56in6vch94mfbdQ17DozxkL3BAVjbZ4Qc1a0HFRAg==
 
-"@chunza2542/t2d-excalidraw@^0.15.4":
-  version "0.15.4"
-  resolved "https://registry.yarnpkg.com/@chunza2542/t2d-excalidraw/-/t2d-excalidraw-0.15.4.tgz#706527b434c1cef9d61ecc53ae9d6b86bdb48165"
-  integrity sha512-m39QJtNFJw4wdk8iSiSRKYEDqjhhOhY8IITPT+xvKJ9266lukEQK6KKu/u9O1qMffd3zgOFHn9MyKXXWp4GLqQ==
-
 "@esbuild/android-arm64@0.17.18":
   version "0.17.18"
   resolved "https://registry.yarnpkg.com/@esbuild/android-arm64/-/android-arm64-0.17.18.tgz#4aa8d8afcffb4458736ca9b32baa97d7cb5861ea"
@@ -1016,15 +1011,6 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.3.5.tgz#ae69bcbb1bebb68c4ac0b11e9d8ed04526b3562b"
   integrity sha512-mEo1sAde+UCE6b2hxn332f1g1E8WfYRu6p5SvTKr2ZKC1f7gFJXk4h5PyGP9Dt6gCaG8y8XhwnXWC6Iy2cmBng==
 
-"@types/jsdom@^21.1.1":
-  version "21.1.1"
-  resolved "https://registry.yarnpkg.com/@types/jsdom/-/jsdom-21.1.1.tgz#e59e26352071267b507bf04d51841a1d7d3e8617"
-  integrity sha512-cZFuoVLtzKP3gmq9eNosUL1R50U+USkbLtUQ1bYVgl/lKp0FZM7Cq4aIHAL8oIvQ17uSHi7jXPtfDOdjPwBE7A==
-  dependencies:
-    "@types/node" "*"
-    "@types/tough-cookie" "*"
-    parse5 "^7.0.0"
-
 "@types/mermaid@^9.2.0":
   version "9.2.0"
   resolved "https://registry.yarnpkg.com/@types/mermaid/-/mermaid-9.2.0.tgz#19219b569bc0b6ab5814f82468953bf0bc5e2dec"
@@ -1060,11 +1046,6 @@
   version "0.16.3"
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.3.tgz#cef09e3ec9af1d63d2a6cc5b383a737e24e6dcf5"
   integrity sha512-5cJ8CB4yAx7BH1oMvdU0Jh9lrEXyPkar6F9G/ERswkCuvP4KQZfZkSjcMbAICCpQTN4OuZn8tz0HiKv9TGZgrQ==
-
-"@types/tough-cookie@*":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.2.tgz#6286b4c7228d58ab7866d19716f3696e03a09397"
-  integrity sha512-Q5vtl1W5ue16D+nIaW8JWebSSraJVlK+EthKn7e7UcD4KWsaSJ8BqGPXNaPghgtcn/fhvrN17Tv8ksUsQpiplw==
 
 "@vitest/expect@0.30.1":
   version "0.30.1"
@@ -3105,11 +3086,6 @@ entities@^2.0.0:
   resolved "https://registry.yarnpkg.com/entities/-/entities-2.2.0.tgz#098dc90ebb83d8dffa089d55256b351d34c4da55"
   integrity sha512-p92if5Nz619I0w+akJrLZH0MX0Pb5DX39XOwQTtXSdQQOaYH03S1uIQp4mhOZtAXrxq4ViO67YTiLBo2638o9A==
 
-entities@^4.4.0:
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/entities/-/entities-4.5.0.tgz#5d268ea5e7113ec74c4d033b79ea5a35a488fb48"
-  integrity sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==
-
 errno@~0.1.7:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/errno/-/errno-0.1.8.tgz#8bb3e9c7d463be4976ff888f76b4809ebc2e811f"
@@ -4749,13 +4725,6 @@ parse-asn1@^5.0.0, parse-asn1@^5.1.5:
     evp_bytestokey "^1.0.0"
     pbkdf2 "^3.0.3"
     safe-buffer "^5.1.1"
-
-parse5@^7.0.0:
-  version "7.1.2"
-  resolved "https://registry.yarnpkg.com/parse5/-/parse5-7.1.2.tgz#0736bebbfd77793823240a23b7fc5e010b7f8e32"
-  integrity sha512-Czj1WaSVpaoj0wbhMzLmWD69anp2WH7FXMB9n1Sy8/ZFF9jolSQVMu1Ij5WIyGmcBmhk7EOndpO4mIpihVqAXw==
-  dependencies:
-    entities "^4.4.0"
 
 parseurl@~1.3.3:
   version "1.3.3"
