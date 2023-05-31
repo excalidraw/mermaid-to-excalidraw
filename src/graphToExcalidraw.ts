@@ -45,7 +45,7 @@ export const graphToExcalidraw = (
   Object.values(graph.vertices).forEach((vertex) => {
     const groupIds = getGroupIds(vertex.id);
 
-    const containerElement = {
+    const containerElement: ExcalidrawElement = {
       id: vertex.id,
       type: "rectangle",
       groupIds,
@@ -101,9 +101,11 @@ export const graphToExcalidraw = (
 
   // Edges
   graph.edges.forEach((edge) => {
-    let groupIds = [];
-    if (getParentId(edge.start) == getParentId(edge.end)) {
-      groupIds = getGroupIds(getParentId(edge.start));
+    let groupIds: string[] = [];
+    const startParentId = getParentId(edge.start);
+    const endParentId = getParentId(edge.end);
+    if (startParentId && startParentId === endParentId) {
+      groupIds = getGroupIds(startParentId);
     }
 
     // Get arrow position data
@@ -142,6 +144,8 @@ export const graphToExcalidraw = (
     // Bind start and end vertex to arrow
     const startVertex = elements.find((e) => e.id === edge.start);
     const endVertex = elements.find((e) => e.id === edge.end);
+    if (!startVertex || !endVertex) return;
+
     containerElement.start = {
       id: startVertex.id,
     };

@@ -4,6 +4,11 @@ import { Cluster, Edge, Graph, Position, Vertex } from "./interfaces";
 interface ParseMermaidOptions {
   fontSize?: number;
 }
+interface MermaidParser {
+  getVertices: () => { [key: string]: any };
+  getEdges: () => any[];
+  getSubGraphs: () => any[];
+}
 export const parseMermaid = async (
   mermaid: Mermaid,
   diagramDefinition: string,
@@ -45,7 +50,10 @@ export const parseMermaid = async (
 
 /* Parsing Functions */
 
-const parseRoot = (mermaidParser, containerEl: Element): Graph => {
+const parseRoot = (
+  mermaidParser: MermaidParser,
+  containerEl: Element
+): Graph => {
   const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertex(vertices[id], containerEl);
@@ -64,7 +72,7 @@ const parseRoot = (mermaidParser, containerEl: Element): Graph => {
   };
 };
 
-const parseCluster = (data, containerEl: Element): Cluster => {
+const parseCluster = (data: any, containerEl: Element): Cluster => {
   // Extract only node id
   const nodes = data.nodes.map((n) => {
     if (n.startsWith("flowchart-")) {
@@ -97,7 +105,7 @@ const parseCluster = (data, containerEl: Element): Cluster => {
   };
 };
 
-const parseVertex = (data, containerEl: Element): Vertex => {
+const parseVertex = (data: any, containerEl: Element): Vertex => {
   // Find Vertex element
   const el: SVGSVGElement = containerEl.querySelector(
     `[id*="flowchart-${data.id}-"]`
@@ -134,7 +142,7 @@ const parseVertex = (data, containerEl: Element): Vertex => {
   };
 };
 
-const parseEdge = (data, containerEl: Element): Edge => {
+const parseEdge = (data: any, containerEl: Element): Edge => {
   // Find edge element
   const el: SVGPathElement = containerEl.querySelector(
     `[id*="L-${data.start}-${data.end}"]`
