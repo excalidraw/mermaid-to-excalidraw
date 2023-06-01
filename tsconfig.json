@@ -2,12 +2,14 @@
   "compilerOptions": {
     "target": "ES2021",
     "strict": true,
-    // "module": "commonjs",
+    "module": "ES2015",
     "declaration": true,
-    "outDir": "./package",
+    "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*"]
