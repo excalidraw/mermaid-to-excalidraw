@@ -1,4 +1,7 @@
-const ExcalidrawWrapper = (props) => {
+import React from "react";
+import { Excalidraw } from "@excalidraw/excalidraw";
+
+const ExcalidrawWrapper = (props: any) => {
   const excalidrawRef = React.useRef(null);
 
   return React.createElement(
@@ -9,7 +12,7 @@ const ExcalidrawWrapper = (props) => {
       {
         className: "excalidraw-wrapper",
       },
-      React.createElement(ExcalidrawLib.Excalidraw, {
+      React.createElement(Excalidraw, {
         initialData: {
           elements: props.elements,
           appState: {

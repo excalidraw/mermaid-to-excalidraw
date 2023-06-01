@@ -10,15 +10,21 @@
     "start": "yarn playground",
     "build": "tsc",
     "playground": "parcel src/playground/index.html --open",
-    "build:playground": "parcel build src/playground/index.html --dist-dir public --public-url /"
+    "build:playground": "parcel build src/playground/index.html --dist-dir dist --public-url /"
   },
   "dependencies": {
-    "mermaid": "10.1.0"
+    "@excalidraw/excalidraw": "0.15.2-6546-5841e6a",
+    "mermaid": "10.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.0",
     "@types/mermaid": "^9.2.0",
+    "@types/react-dom": "^18.2.4",
+    "buffer": "^5.5.0||^6.0.0",
     "parcel": "^2.9.1",
+    "process": "^0.11.10",
     "typescript": "4.4.4",
     "vitest": "^0.30.1"
   },
