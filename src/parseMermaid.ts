@@ -32,9 +32,11 @@ export const parseMermaid = async (
     `opacity: 0; position: absolute; top: -10000px; left: -10000px;`
   );
   const { svg } = await mermaid.render(div.id, definition);
-  div.innerHTML = `<div id="diagram">${svg}</div>`;
+  const diagramEl = document.createElement("div");
+  diagramEl.innerHTML = svg;
+  diagramEl.id = "diagram";
+  div.appendChild(diagramEl);
   document.body.appendChild(div);
-  const diagramEl = div.querySelector("#diagram");
 
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
