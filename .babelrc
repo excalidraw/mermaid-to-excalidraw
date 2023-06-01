@@ -1,6 +1,3 @@
 {
-  "plugins": [
-    "transform-object-rest-spread",
-    "@babel/plugin-syntax-optional-chaining"
-  ]
+  "plugins": ["@babel/plugin-syntax-optional-chaining"]
 }
