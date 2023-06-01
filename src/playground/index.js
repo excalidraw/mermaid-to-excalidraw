@@ -1,5 +1,3 @@
-import "babel-polyfill";
-
 import mermaid from "mermaid";
 import { parseMermaid } from "..";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
