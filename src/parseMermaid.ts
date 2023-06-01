@@ -44,7 +44,6 @@ export const parseMermaid = async (
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
 
-  // Remove the rendered diagram
   div.remove();
 
   return root;
