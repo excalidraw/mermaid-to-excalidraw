@@ -1,11 +1,11 @@
 import "babel-polyfill";
 
+import mermaid from "mermaid";
 import { parseMermaid } from "..";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
 import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 
 // Initialize Mermaid
-const mermaid = window.mermaid;
 mermaid.initialize({ startOnLoad: false });
 
 import "./initExcalidraw";

@@ -74,7 +74,7 @@ const parseRoot = (
 
 const parseCluster = (data: any, containerEl: Element): Cluster => {
   // Extract only node id
-  const nodes = data.nodes.map((n) => {
+  const nodes = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
     }
@@ -82,7 +82,8 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
   });
 
   // Get position
-  const el: SVGSVGElement = containerEl.querySelector("#" + data.id);
+  const el: SVGSVGElement | null = containerEl.querySelector("#" + data.id);
+  if (!el) throw new Error("Cluster element not found");
   const position = computeElementPosition(el, containerEl);
 
   // Get dimension
@@ -107,15 +108,14 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
 
 const parseVertex = (data: any, containerEl: Element): Vertex => {
   // Find Vertex element
-  const el: SVGSVGElement = containerEl.querySelector(
+  const el: SVGSVGElement | null = containerEl.querySelector(
     `[id*="flowchart-${data.id}-"]`
   );
-  // If element not found (mean el = cluster), ignore
-  if (!el) return;
+  if (!el) throw new Error("Vertex element not found");
 
   // Check if Vertex attached with link
   let link;
-  if (el.parentElement.tagName.toLowerCase() === "a")
+  if (el.parentElement?.tagName.toLowerCase() === "a")
     link = el.parentElement.getAttribute("xlink:href");
 
   // Get position
@@ -136,7 +136,7 @@ const parseVertex = (data: any, containerEl: Element): Vertex => {
     labelType: data.labelType,
     text: entityCodesToText(data.text),
     type: data.type,
-    link,
+    link: link || undefined,
     ...position,
     ...dimension,
   };
@@ -144,9 +144,10 @@ const parseVertex = (data: any, containerEl: Element): Vertex => {
 
 const parseEdge = (data: any, containerEl: Element): Edge => {
   // Find edge element
-  const el: SVGPathElement = containerEl.querySelector(
+  const el: SVGPathElement | null = containerEl.querySelector(
     `[id*="L-${data.start}-${data.end}"]`
   );
+  if (!el) throw new Error("Edge element not found");
 
   // Compute edge position data
   const position = computeElementPosition(el, containerEl);
@@ -166,10 +167,12 @@ const parseEdge = (data: any, containerEl: Element): Edge => {
 
 // Compute element position
 const computeElementPosition = (
-  el: Element,
+  el: Element | null,
   containerEl: Element
 ): Position => {
-  let root = el.parentElement.parentElement;
+  if (!el) throw new Error("Element not found");
+
+  let root = el.parentElement?.parentElement;
   const style = getComputedStyle(el);
   const matrix = new DOMMatrixReadOnly(style.transform);
   const transformX = matrix.m41 || 0;
@@ -183,9 +186,13 @@ const computeElementPosition = (
     const boundingBox = childElement.getBBox();
     childPosition = {
       x:
-        +childElement.getAttribute("x") || childMatrix.m41 + boundingBox.x || 0,
+        Number(childElement.getAttribute("x")) ||
+        childMatrix.m41 + boundingBox.x ||
+        0,
       y:
-        +childElement.getAttribute("y") || childMatrix.m42 + boundingBox.y || 0,
+        Number(childElement.getAttribute("y")) ||
+        childMatrix.m42 + boundingBox.y ||
+        0,
     };
   }
 
