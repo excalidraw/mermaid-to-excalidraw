@@ -6,6 +6,8 @@ import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 // Initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 
+(window as any)["mermaid"] = mermaid;
+
 import "./initCustomTest";
 import renderExcalidraw from "./initExcalidraw";
 
