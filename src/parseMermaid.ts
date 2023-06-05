@@ -76,7 +76,7 @@ const parseRoot = (
 };
 
 const parseCluster = (data: any, containerEl: Element): Cluster => {
-  // Extract only node id
+  // Extract only node id for better reference e.g. full element id = flowchart-c1-205 will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
