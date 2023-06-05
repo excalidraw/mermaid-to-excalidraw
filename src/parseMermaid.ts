@@ -30,7 +30,7 @@ export const parseMermaid = async (
 
   // Render the SVG diagram
   const mermaidDiv = document.createElement("div");
-  mermaidDiv.id = `mermaidToExcalidraw`;
+  mermaidDiv.id = `mermaid-to-excalidraw`;
   // Hide the element from the screen
   mermaidDiv.setAttribute(
     "style",
