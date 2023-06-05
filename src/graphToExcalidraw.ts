@@ -11,11 +11,7 @@ export const graphToExcalidraw = (
   options: GraphToExcalidrawOptions = {}
 ): ExcalidrawElement[] => {
   const elements: ExcalidrawElement[] = [];
-  // Adjust size for Virgil font
-  // Note: I've tried changing the mermaid default font to Vergil so that I can use the same font size when converting to excalidraw,
-  // but there is a text overflow problem when rendering on Mermaid.
-  // So I manually decrease the Excalidraw font size by multiplying it by some number.
-  const fontSize = (options.fontSize || 16) * 0.75;
+  const fontSize = options.fontSize || 20;
   const { getGroupIds, getParentId } = computeGroupIds(graph);
 
   // Clusters

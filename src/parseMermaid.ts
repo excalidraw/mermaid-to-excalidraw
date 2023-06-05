@@ -14,7 +14,7 @@ export const parseMermaid = async (
   diagramDefinition: string,
   options: ParseMermaidOptions = {}
 ): Promise<Graph> => {
-  const fontSize = options.fontSize || 16;
+  const fontSize = options.fontSize || 20;
 
   // Check supported diagram type
   if (!isSupportedDiagram(diagramDefinition)) {
@@ -22,7 +22,10 @@ export const parseMermaid = async (
   }
 
   // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
-  const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
+  // Note: increase the font size by multiplying with 1.25 to match the Excalidraw Virgil font
+  const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${
+    fontSize * 1.25
+  }px"}} }%%\n${diagramDefinition}`;
 
   // Render the SVG diagram
   const mermaidDiv = document.createElement("div");
