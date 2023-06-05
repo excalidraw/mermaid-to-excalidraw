@@ -25,18 +25,18 @@ export const parseMermaid = async (
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${fontSize}px"}} }%%\n${diagramDefinition}`;
 
   // Render the SVG diagram
-  const div = document.createElement("div");
-  div.id = `mermaidToExcalidraw`;
-  div.setAttribute(
+  const mermaidDiv = document.createElement("div");
+  mermaidDiv.id = `mermaidToExcalidraw`;
+  mermaidDiv.setAttribute(
     "style",
     `opacity: 0; position: absolute; top: -10000px; left: -10000px;`
   );
-  const { svg } = await mermaid.render(div.id, definition);
+  const { svg } = await mermaid.render(mermaidDiv.id, definition);
   const diagramEl = document.createElement("div");
   diagramEl.innerHTML = svg;
   diagramEl.id = "diagram";
-  div.appendChild(diagramEl);
-  document.body.appendChild(div);
+  mermaidDiv.appendChild(diagramEl);
+  document.body.appendChild(mermaidDiv);
 
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
@@ -44,7 +44,7 @@ export const parseMermaid = async (
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
 
-  div.remove();
+  mermaidDiv.remove();
 
   return root;
 };
@@ -234,12 +234,12 @@ const computeEdgePositions = (
     );
   }
 
-  const dAttribute = pathElement.getAttribute("d");
-  if (!dAttribute) {
+  const dAttr = pathElement.getAttribute("d");
+  if (!dAttr) {
     throw new Error('Path element does not contain a "d" attribute');
   }
 
-  const commands = dAttribute.split(/(?=[LM])/);
+  const commands = dAttr.split(/(?=[LM])/);
   const startPosition = commands[0]
     .substring(1)
     .split(",")
