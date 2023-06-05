@@ -6,8 +6,6 @@ import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 // Initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 
-(window as any)["mermaid"] = mermaid;
-
 import "./initCustomTest";
 import renderExcalidraw from "./initExcalidraw";
 
@@ -39,7 +37,7 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
     const data = btn.getAttribute("data");
     const pd = document.getElementById(`parsed-${data}`);
     if (!pd) throw new Error("Parsed data viewer element not found");
-    renderExcalidraw(pd.innerText);
+    renderExcalidraw(pd.innerHTML);
   });
 
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`);
