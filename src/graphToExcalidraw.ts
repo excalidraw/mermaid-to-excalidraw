@@ -173,7 +173,7 @@ const computeGroupIds = (
     };
   } = {};
   graph.clusters.map((cluster) => {
-    cluster.nodes.forEach((nodeId) => {
+    cluster.nodeIds.forEach((nodeId) => {
       tree[cluster.id] = {
         id: cluster.id,
         parent: null,

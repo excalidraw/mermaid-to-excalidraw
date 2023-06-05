@@ -77,7 +77,7 @@ const parseRoot = (
 
 const parseCluster = (data: any, containerEl: Element): Cluster => {
   // Extract only node id
-  const nodes = data.nodes.map((n: string) => {
+  const nodeIds = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
     }
@@ -102,7 +102,7 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
 
   return {
     ...data,
-    nodes,
+    nodeIds,
     ...position,
     ...dimension,
     title: entityCodesToText(data.title),
