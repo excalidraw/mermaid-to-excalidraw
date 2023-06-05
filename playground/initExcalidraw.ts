@@ -1,7 +1,7 @@
 import React from "react";
 import * as ReactDOM from "react-dom/client";
 import ExcalidrawWrapper from "./ExcalidrawWrapper";
-import { graphToExcalidraw } from "..";
+import { graphToExcalidraw } from "../src";
 import { DEFAULT_FONT_SIZE } from "./settings";
 
 let excalidrawWrapper: HTMLElement | null;

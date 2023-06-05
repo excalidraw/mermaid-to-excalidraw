@@ -9,8 +9,8 @@
   "scripts": {
     "start": "yarn playground",
     "build": "tsc",
-    "playground": "parcel src/playground/index.html --open",
-    "build:playground": "parcel build src/playground/index.html --no-scope-hoist --dist-dir dist --public-url /"
+    "playground": "parcel playground/index.html --open",
+    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist --public-url /"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "0.15.2-6546-5841e6a",

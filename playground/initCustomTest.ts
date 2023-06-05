@@ -1,5 +1,5 @@
 import mermaid from "mermaid";
-import { parseMermaid } from "../parseMermaid";
+import { parseMermaid } from "../src/parseMermaid";
 import { DEFAULT_FONT_SIZE } from "./settings";
 import renderExcalidraw from "./initExcalidraw";
 

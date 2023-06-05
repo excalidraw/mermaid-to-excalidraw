@@ -10,6 +10,6 @@
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"],
+  "include": ["src", "playground"],
   "exclude": ["node_modules", "**/__tests__/*"]
 }
