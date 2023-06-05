@@ -1,13 +1,9 @@
 import { Mermaid } from "mermaid";
 import { Cluster, Edge, Graph, Position, Vertex } from "./interfaces";
+import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 
 interface ParseMermaidOptions {
   fontSize?: number;
-}
-interface MermaidParser {
-  getVertices: () => { [key: string]: any };
-  getEdges: () => any[];
-  getSubGraphs: () => any[];
 }
 export const parseMermaid = async (
   mermaid: Mermaid,
@@ -46,6 +42,7 @@ export const parseMermaid = async (
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
+  // Get mermaid parsed data from Jison parser shared variable `yy`
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
 
@@ -57,7 +54,7 @@ export const parseMermaid = async (
 /* Parsing Functions */
 
 const parseRoot = (
-  mermaidParser: MermaidParser,
+  mermaidParser: typeof flowDb,
   containerEl: Element
 ): Graph => {
   const vertices = mermaidParser.getVertices();
@@ -66,7 +63,7 @@ const parseRoot = (
   });
   const edges = mermaidParser
     .getEdges()
-    .map((data) => parseEdge(data, containerEl));
+    .map((data: any) => parseEdge(data, containerEl));
   const clusters = mermaidParser
     .getSubGraphs()
     .map((data) => parseCluster(data, containerEl));
