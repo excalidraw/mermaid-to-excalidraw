@@ -23,6 +23,7 @@ export const parseMermaid = async (
 
   // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
   // Note: increase the font size by multiplying with 1.5 to match the Excalidraw Virgil font
+  // TODO: find a way to make the match for Virgil font
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${
     fontSize * 1.5
   }px"}} }%%\n${diagramDefinition}`;
@@ -111,12 +112,12 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
   };
 };
 
-const parseVertex = (data: any, containerEl: Element): Vertex => {
+const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   // Find Vertex element
   const el: SVGSVGElement | null = containerEl.querySelector(
     `[id*="flowchart-${data.id}-"]`
   );
-  if (!el) throw new Error("Vertex element not found");
+  if (!el) return undefined;
 
   // Check if Vertex attached with link
   let link;
