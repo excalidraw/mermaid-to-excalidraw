@@ -294,7 +294,7 @@ const isSupportedDiagram = (definition: string): boolean => {
   return false;
 };
 
-// Convert mermaid entity codes to text
+// Convert mermaid entity codes to text e.g. "#9829;" to "♥"
 const entityCodesToText = (input: string): string => {
   const modifiedInput = input
     .replace(/#(\d+);/g, "&#$1;")
