@@ -22,17 +22,18 @@ export const parseMermaid = async (
   }
 
   // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
-  // Note: increase the font size by multiplying with 1.25 to match the Excalidraw Virgil font
+  // Note: increase the font size by multiplying with 1.5 to match the Excalidraw Virgil font
   const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${
-    fontSize * 1.25
+    fontSize * 1.5
   }px"}} }%%\n${diagramDefinition}`;
 
   // Render the SVG diagram
   const mermaidDiv = document.createElement("div");
   mermaidDiv.id = `mermaidToExcalidraw`;
+  // Hide the element from the screen
   mermaidDiv.setAttribute(
     "style",
-    `opacity: 0; position: absolute; top: -10000px; left: -10000px;`
+    `opacity: 0; position: absolute; z-index: -1;`
   );
   const { svg } = await mermaid.render(mermaidDiv.id, definition);
   const diagramEl = document.createElement("div");
