@@ -20,9 +20,18 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
 
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
-  diagramContainerEl.innerHTML = `<h1>Test #${
-    i + 1
-  }</h1><div id="diagram-${i}"></div><button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button><pre id="parsed-${i}"></pre>`;
+  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">Test #${i + 1}
+  </h2>
+  <div id="diagram-${i}"></div>
+  <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
+  <details style="margin-top: 20px">
+    <summary>Mermaid syntax</summary>
+    <pre id="mermaid-syntax-${i}"></pre>
+  </details>
+  <details style="margin-top: 10px">
+    <summary>Parsed data from parseMermaid</summary>
+    <pre id="parsed-${i}"></pre>
+  </details>`;
 
   const btn = diagramContainerEl.querySelector(`#diagram-btn-${i}`);
   if (!btn) throw new Error("Button element not found");
@@ -44,7 +53,14 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   diagramEl.innerHTML = svg;
   containerEl.append(diagramContainerEl);
 
-  // get parsed data
+  // Render mermaid syntax
+  const mermaidSyntaxEl = diagramContainerEl.querySelector(
+    `#mermaid-syntax-${i}`
+  );
+  if (!mermaidSyntaxEl) throw new Error("Mermaid syntax element not found");
+  mermaidSyntaxEl.innerHTML = diagramDefinition;
+
+  // Get parsed data
   const parsedDataViewerEl = diagramContainerEl.querySelector(`#parsed-${i}`);
   if (!parsedDataViewerEl)
     throw new Error("Parsed data viewer element not found");
