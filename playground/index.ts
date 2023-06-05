@@ -74,4 +74,3 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
 });
 
 // TODO: refactor playground TS code
-// TODO: fix build err

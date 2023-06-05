@@ -2,4 +2,4 @@
 
 Convert mermaid diagrams to excalidraw
 
-TODO: Update README
+TODO: Setup Guide, `parseMermaid` documentation
