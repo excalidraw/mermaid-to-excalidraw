@@ -1,19 +1,18 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 // Initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 
 import "./initCustomTest";
-import renderExcalidraw from "./initExcalidraw";
-import { DEFAULT_FONT_SIZE } from "../src/constants";
+import { renderExcalidraw } from "./initExcalidraw";
 
 // Render all the diagram test cases
-const containerEl = document.getElementById("diagrams");
-if (!containerEl) {
-  throw new Error("Container element not found");
-}
+const containerEl = document.createElement("div");
+containerEl.id = "diagrams";
+document.body.appendChild(containerEl);
 
 FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   const diagramContainerEl = document.createElement("div");
@@ -80,5 +79,3 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
     console.error(e);
   }
 });
-
-// TODO: refactor playground TS code

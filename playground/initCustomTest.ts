@@ -1,13 +1,9 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src/parseMermaid";
-import renderExcalidraw from "./initExcalidraw";
+import { renderExcalidraw } from "./initExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 const customTestEl = document.createElement("div");
-const containerEl = document.getElementById("diagrams");
-if (!containerEl) {
-  throw new Error("Container element not found");
-}
 
 // Init custom test section
 customTestEl.innerHTML = `
@@ -23,7 +19,7 @@ customTestEl.innerHTML = `
   <div id="custom-diagram"></div>
   <pre id="custom-parsed-data"></pre>
 `;
-containerEl.prepend(customTestEl);
+document.body.appendChild(customTestEl);
 
 // Handle render to Excalidraw event
 const btn = document.getElementById("render-excalidraw-btn");
@@ -32,6 +28,7 @@ if (!btn) {
 }
 
 btn.addEventListener("click", async () => {
+  // Get inputs
   const mermaidInput = document.getElementById(
     "mermaid-input"
   ) as HTMLInputElement;
@@ -47,6 +44,7 @@ btn.addEventListener("click", async () => {
   const diagramDefinition = mermaidInput.value;
   const customFontSize = Number(fontSizeInput.value);
 
+  // Render Mermaid diagram
   const diagramEl = document.getElementById("custom-diagram");
   if (!diagramEl) {
     throw new Error("Diagram element not found");
@@ -57,6 +55,7 @@ btn.addEventListener("click", async () => {
   );
   diagramEl.innerHTML = svg;
 
+  // Parse Mermaid diagram and render to Excalidraw
   try {
     const parsedData = await parseMermaid(mermaid, diagramDefinition, {
       fontSize: customFontSize,

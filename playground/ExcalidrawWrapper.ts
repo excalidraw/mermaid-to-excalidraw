@@ -1,7 +1,10 @@
 import React from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
 
-const ExcalidrawWrapper = (props: any) => {
+interface ExcalidrawWrapperProps {
+  elements: any[];
+}
+const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const excalidrawRef = React.useRef(null);
 
   return React.createElement(
