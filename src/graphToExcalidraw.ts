@@ -1,5 +1,6 @@
+import markdownToText from "markdown-to-text";
 import { DEFAULT_FONT_SIZE } from "./constants";
-import { Graph } from "./interfaces";
+import { Cluster, Edge, Graph, Vertex } from "./interfaces";
 
 interface ExcalidrawElement {
   [key: string]: any;
@@ -29,7 +30,7 @@ export const graphToExcalidraw = (
       height: cluster.height,
       label: {
         groupIds,
-        text: cluster.title,
+        text: getText(cluster),
         fontSize: fontSize,
         verticalAlign: "top",
       },
@@ -56,7 +57,7 @@ export const graphToExcalidraw = (
       }),
       label: {
         groupIds,
-        text: vertex.text,
+        text: getText(vertex),
         fontSize: fontSize,
       },
       link: vertex.link || undefined,
@@ -77,7 +78,7 @@ export const graphToExcalidraw = (
         roundness: { type: 3 },
         label: {
           groupIds,
-          text: vertex.text,
+          text: getText(vertex),
           fontSize: fontSize,
         },
       };
@@ -130,7 +131,7 @@ export const graphToExcalidraw = (
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points: points,
       ...(edge.text
-        ? { label: { text: edge.text, fontSize: fontSize, groupIds } }
+        ? { label: { text: getText(edge), fontSize: fontSize, groupIds } }
         : {}),
       roundness: {
         type: 2,
@@ -243,4 +244,10 @@ const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
   }
 
   return arrowType;
+};
+
+// Get text from graph elements, fallback markdown to text
+const getText = (element: Vertex | Edge | Cluster): string => {
+  if (element.labelType === "markdown") return markdownToText(element.text);
+  return element.text;
 };

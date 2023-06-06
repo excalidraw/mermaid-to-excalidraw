@@ -13,7 +13,7 @@ export interface Vertex {
 export interface Cluster {
   id: string;
   nodeIds: string[];
-  title: string;
+  text: string;
   labelType: string;
   x: number;
   y: number;

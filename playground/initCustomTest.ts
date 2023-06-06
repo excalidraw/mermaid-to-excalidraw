@@ -48,12 +48,17 @@ btn.addEventListener("click", async () => {
   );
   diagramEl.innerHTML = svg;
 
-  const parsedData = await parseMermaid(mermaid, diagramDefinition, {
-    fontSize: customFontSize,
-  });
-  const parsedDataEl = document.getElementById("custom-parsed-data");
-  if (!parsedDataEl) throw new Error("Parsed data viewer element not found");
-  parsedDataEl.innerText = JSON.stringify(parsedData, null, 2);
+  try {
+    const parsedData = await parseMermaid(mermaid, diagramDefinition, {
+      fontSize: customFontSize,
+    });
 
-  renderExcalidraw(JSON.stringify(parsedData), customFontSize);
+    const parsedDataEl = document.getElementById("custom-parsed-data");
+    if (!parsedDataEl) throw new Error("Parsed data viewer element not found");
+    parsedDataEl.innerText = JSON.stringify(parsedData, null, 2);
+
+    renderExcalidraw(JSON.stringify(parsedData), customFontSize);
+  } catch (e) {
+    console.error("Custom Test Error:", e);
+  }
 });

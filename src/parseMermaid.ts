@@ -86,7 +86,9 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
   });
 
   // Get position
-  const el: SVGSVGElement | null = containerEl.querySelector("#" + data.id);
+  const el: SVGSVGElement | null = containerEl.querySelector(
+    `[id='${data.id}']`
+  );
   if (!el) throw new Error("Cluster element not found");
   const position = computeElementPosition(el, containerEl);
 
@@ -106,7 +108,7 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
     nodeIds,
     ...position,
     ...dimension,
-    title: entityCodesToText(data.title),
+    text: entityCodesToText(data.title),
   };
 };
 

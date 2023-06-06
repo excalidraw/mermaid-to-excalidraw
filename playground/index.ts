@@ -9,7 +9,7 @@ import "./initCustomTest";
 import renderExcalidraw from "./initExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
-const SKIP_CASES = [35, 39, 40, 42];
+const SKIP_CASES = [39, 40, 42];
 
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");
