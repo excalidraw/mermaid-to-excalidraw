@@ -9,15 +9,11 @@ import "./initCustomTest";
 import renderExcalidraw from "./initExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
-const SKIP_CASES = [39, 40, 42];
-
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");
 if (!containerEl) throw new Error("Container element not found");
 
 FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
-  if (SKIP_CASES.includes(i + 1)) return;
-
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
   diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">Test #${i + 1}

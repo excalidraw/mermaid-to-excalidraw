@@ -248,6 +248,14 @@ const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
 
 // Get text from graph elements, fallback markdown to text
 const getText = (element: Vertex | Edge | Cluster): string => {
-  if (element.labelType === "markdown") return markdownToText(element.text);
-  return element.text;
+  let text = element.text;
+  if (element.labelType === "markdown") text = markdownToText(element.text);
+
+  return removeFontAwesomeIcons(text);
+};
+
+// Remove font awesome icons support from text
+const removeFontAwesomeIcons = (input: string): string => {
+  const fontAwesomeRegex = /\s?(fa|fab):[a-zA-Z0-9-]+/g;
+  return input.replace(fontAwesomeRegex, "");
 };
