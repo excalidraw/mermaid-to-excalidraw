@@ -1,7 +1,7 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src/parseMermaid";
-import { DEFAULT_FONT_SIZE } from "./settings";
 import renderExcalidraw from "./initExcalidraw";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 const customTestEl = document.createElement("div");
 const containerEl = document.getElementById("diagrams");

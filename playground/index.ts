@@ -1,13 +1,15 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
-import { DEFAULT_FONT_SIZE, SKIP_CASES } from "./settings";
 
 // Initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 
 import "./initCustomTest";
 import renderExcalidraw from "./initExcalidraw";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
+
+const SKIP_CASES = [35, 39, 40, 42];
 
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");

@@ -1,6 +1,7 @@
 import { Mermaid } from "mermaid";
 import { Cluster, Edge, Graph, Position, Vertex } from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
+import { DEFAULT_FONT_SIZE } from "./constants";
 
 interface ParseMermaidOptions {
   fontSize?: number;
@@ -10,7 +11,7 @@ export const parseMermaid = async (
   diagramDefinition: string,
   options: ParseMermaidOptions = {}
 ): Promise<Graph> => {
-  const fontSize = options.fontSize || 20;
+  const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
 
   // Check supported diagram type
   if (!isSupportedDiagram(diagramDefinition)) {
@@ -76,7 +77,7 @@ const parseRoot = (
 };
 
 const parseCluster = (data: any, containerEl: Element): Cluster => {
-  // Extract only node id for better reference e.g. full element id = flowchart-c1-205 will map to "c1"
+  // Extract only node id for better reference e.g. full element id = "flowchart-c1-205" will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];

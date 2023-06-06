@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_SIZE } from "./constants";
 import { Graph } from "./interfaces";
 
 interface ExcalidrawElement {
@@ -11,7 +12,7 @@ export const graphToExcalidraw = (
   options: GraphToExcalidrawOptions = {}
 ): ExcalidrawElement[] => {
   const elements: ExcalidrawElement[] = [];
-  const fontSize = options.fontSize || 20;
+  const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
   const { getGroupIds, getParentId } = computeGroupIds(graph);
 
   // Clusters
