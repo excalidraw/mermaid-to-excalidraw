@@ -15,7 +15,9 @@ export default function renderExcalidraw(
   if (!excalidrawWrapper || !root) {
     // render default excalidraw
     excalidrawWrapper = document.getElementById("excalidraw");
-    if (!excalidrawWrapper) throw new Error("Excalidraw wrapper not found");
+    if (!excalidrawWrapper) {
+      throw new Error("Excalidraw wrapper not found");
+    }
 
     root = ReactDOM.createRoot(excalidrawWrapper);
     root.render(React.createElement(ExcalidrawWrapper));
@@ -23,9 +25,11 @@ export default function renderExcalidraw(
 
   const data = JSON.parse(mermaidDataString);
   const elements = graphToExcalidraw(data, { fontSize });
-  if (!excalidrawWrapper) throw new Error("Excalidraw wrapper not found");
+  if (!excalidrawWrapper) {
+    throw new Error("Excalidraw wrapper not found");
+  }
 
-  console.log("renderExcalidraw", elements);
+  console.info("renderExcalidraw", elements);
 
   root.unmount();
   root = ReactDOM.createRoot(excalidrawWrapper);

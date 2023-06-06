@@ -11,7 +11,9 @@ import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 // Render all the diagram test cases
 const containerEl = document.getElementById("diagrams");
-if (!containerEl) throw new Error("Container element not found");
+if (!containerEl) {
+  throw new Error("Container element not found");
+}
 
 FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   const diagramContainerEl = document.createElement("div");
@@ -30,20 +32,25 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   </details>`;
 
   const btn = diagramContainerEl.querySelector(`#diagram-btn-${i}`);
-  if (!btn) throw new Error("Button element not found");
+  if (!btn) {
+    throw new Error("Button element not found");
+  }
   btn.addEventListener("click", async () => {
     const data = btn.getAttribute("data");
     const pd = document.getElementById(`parsed-${data}`);
-    if (!pd) throw new Error("Parsed data viewer element not found");
+    if (!pd) {
+      throw new Error("Parsed data viewer element not found");
+    }
     renderExcalidraw(pd.innerHTML);
   });
 
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`);
-  if (!diagramEl) throw new Error("Diagram element not found");
+  if (!diagramEl) {
+    throw new Error("Diagram element not found");
+  }
   const { svg } = await mermaid.render(
     `diagram-${i}`,
-    `%%{init: {"themeVariables": {"fontSize": "${DEFAULT_FONT_SIZE}px"}} }%%\n` +
-      diagramDefinition
+    `%%{init: {"themeVariables": {"fontSize": "${DEFAULT_FONT_SIZE}px"}} }%%\n${diagramDefinition}`
   );
 
   diagramEl.innerHTML = svg;
@@ -53,13 +60,16 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   const mermaidSyntaxEl = diagramContainerEl.querySelector(
     `#mermaid-syntax-${i}`
   );
-  if (!mermaidSyntaxEl) throw new Error("Mermaid syntax element not found");
+  if (!mermaidSyntaxEl) {
+    throw new Error("Mermaid syntax element not found");
+  }
   mermaidSyntaxEl.innerHTML = diagramDefinition;
 
   // Get parsed data
   const parsedDataViewerEl = diagramContainerEl.querySelector(`#parsed-${i}`);
-  if (!parsedDataViewerEl)
+  if (!parsedDataViewerEl) {
     throw new Error("Parsed data viewer element not found");
+  }
 
   try {
     const data = await parseMermaid(mermaid, diagramDefinition, {

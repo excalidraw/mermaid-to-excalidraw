@@ -10,7 +10,8 @@
     "start": "yarn playground",
     "build": "tsc",
     "playground": "parcel playground/index.html --open",
-    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist --public-url /"
+    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist --public-url /",
+    "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {
     "@excalidraw/excalidraw": "0.15.2-6546-5841e6a",
@@ -21,10 +22,17 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.0",
+    "@excalidraw/eslint-config": "^1.0.3",
     "@types/mermaid": "^9.2.0",
     "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.9",
+    "@typescript-eslint/parser": "^5.59.9",
     "buffer": "^5.5.0||^6.0.0",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "parcel": "^2.9.1",
+    "prettier": "^2.8.8",
     "process": "^0.11.10",
     "typescript": "4.4.4",
     "vitest": "^0.30.1"

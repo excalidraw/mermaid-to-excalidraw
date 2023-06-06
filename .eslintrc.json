@@ -1,0 +1,3 @@
+{
+  "extends": ["@excalidraw/eslint-config"]
+}

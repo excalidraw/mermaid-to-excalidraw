@@ -31,7 +31,7 @@ export const graphToExcalidraw = (
       label: {
         groupIds,
         text: getText(cluster),
-        fontSize: fontSize,
+        fontSize,
         verticalAlign: "top",
       },
     };
@@ -58,7 +58,7 @@ export const graphToExcalidraw = (
       label: {
         groupIds,
         text: getText(vertex),
-        fontSize: fontSize,
+        fontSize,
       },
       link: vertex.link || undefined,
     };
@@ -79,7 +79,7 @@ export const graphToExcalidraw = (
         label: {
           groupIds,
           text: getText(vertex),
-          fontSize: fontSize,
+          fontSize,
         },
       };
       containerElement.label = undefined;
@@ -129,9 +129,9 @@ export const graphToExcalidraw = (
       y2: endY,
       strokeWidth: edge.stroke === "thick" ? 4 : 2,
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
-      points: points,
+      points,
       ...(edge.text
-        ? { label: { text: getText(edge), fontSize: fontSize, groupIds } }
+        ? { label: { text: getText(edge), fontSize, groupIds } }
         : {}),
       roundness: {
         type: 2,
@@ -142,7 +142,9 @@ export const graphToExcalidraw = (
     // Bind start and end vertex to arrow
     const startVertex = elements.find((e) => e.id === edge.start);
     const endVertex = elements.find((e) => e.id === edge.end);
-    if (!startVertex || !endVertex) return;
+    if (!startVertex || !endVertex) {
+      return;
+    }
 
     containerElement.start = {
       id: startVertex.id,
@@ -193,10 +195,14 @@ const computeGroupIds = (
   } = {};
   [...Object.keys(graph.vertices), ...graph.clusters.map((c) => c.id)].forEach(
     (id) => {
-      if (!tree[id]) return;
+      if (!tree[id]) {
+        return;
+      }
       let curr = tree[id];
       const groupIds: string[] = [];
-      if (!curr.isLeaf) groupIds.push(`cluster_group_${curr.id}`);
+      if (!curr.isLeaf) {
+        groupIds.push(`cluster_group_${curr.id}`);
+      }
 
       while (true) {
         if (curr.parent) {
@@ -249,7 +255,9 @@ const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
 // Get text from graph elements, fallback markdown to text
 const getText = (element: Vertex | Edge | Cluster): string => {
   let text = element.text;
-  if (element.labelType === "markdown") text = markdownToText(element.text);
+  if (element.labelType === "markdown") {
+    text = markdownToText(element.text);
+  }
 
   return removeFontAwesomeIcons(text);
 };

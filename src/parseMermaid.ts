@@ -89,7 +89,9 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
   const el: SVGSVGElement | null = containerEl.querySelector(
     `[id='${data.id}']`
   );
-  if (!el) throw new Error("Cluster element not found");
+  if (!el) {
+    throw new Error("Cluster element not found");
+  }
   const position = computeElementPosition(el, containerEl);
 
   // Get dimension
@@ -117,12 +119,15 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   const el: SVGSVGElement | null = containerEl.querySelector(
     `[id*="flowchart-${data.id}-"]`
   );
-  if (!el) return undefined;
+  if (!el) {
+    return undefined;
+  }
 
   // Check if Vertex attached with link
   let link;
-  if (el.parentElement?.tagName.toLowerCase() === "a")
+  if (el.parentElement?.tagName.toLowerCase() === "a") {
     link = el.parentElement.getAttribute("xlink:href");
+  }
 
   // Get position
   const position = computeElementPosition(
@@ -153,7 +158,9 @@ const parseEdge = (data: any, containerEl: Element): Edge => {
   const el: SVGPathElement | null = containerEl.querySelector(
     `[id*="L-${data.start}-${data.end}"]`
   );
-  if (!el) throw new Error("Edge element not found");
+  if (!el) {
+    throw new Error("Edge element not found");
+  }
 
   // Compute edge position data
   const position = computeElementPosition(el, containerEl);
@@ -176,7 +183,9 @@ const computeElementPosition = (
   el: Element | null,
   containerEl: Element
 ): Position => {
-  if (!el) throw new Error("Element not found");
+  if (!el) {
+    throw new Error("Element not found");
+  }
 
   let root = el.parentElement?.parentElement;
   const style = getComputedStyle(el);
@@ -202,7 +211,7 @@ const computeElementPosition = (
     };
   }
 
-  let position = {
+  const position = {
     x: transformX + childPosition.x,
     y: transformY + childPosition.y,
   };
@@ -234,8 +243,7 @@ const computeEdgePositions = (
 ): EdgePositionData => {
   if (pathElement.tagName.toLowerCase() !== "path") {
     throw new Error(
-      'Invalid input: Expected an HTMLElement of tag "path", got ' +
-        pathElement.tagName
+      `Invalid input: Expected an HTMLElement of tag "path", got ${pathElement.tagName}`
     );
   }
 
