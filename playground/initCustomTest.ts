@@ -13,11 +13,14 @@ customTestEl.innerHTML = `
     <li>See supported and unsupported features at <a target="_blank" href="https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#issue-1686226562">PR's description</a></li>
   </ul>
   <br>
-  <textarea id="mermaid-input" rows="10" cols="50"></textarea><br>
+  <textarea id="mermaid-input" rows="10" cols="50" placeholder="Input Mermaid Syntax"></textarea><br>
   <label for="font-size-input">Custom Font Size: </label> <input type="number" id="font-size-input" value="${DEFAULT_FONT_SIZE}"><br>
-  <button id="render-excalidraw-btn">Render to Excalidraw</button>
-  <div id="custom-diagram"></div>
-  <pre id="custom-parsed-data"></pre>
+  <button style="margin-top: 10px" id="render-excalidraw-btn">Render to Excalidraw</button>
+  <div style="margin-top: 20px" id="custom-diagram"></div>
+  <details style="margin-top: 20px; display: none;">
+    <summary>Parsed data from parseMermaid</summary>
+    <pre id="custom-parsed-data"></pre>
+  </details>
 `;
 document.body.appendChild(customTestEl);
 
@@ -64,6 +67,9 @@ btn.addEventListener("click", async () => {
     const parsedDataEl = document.getElementById("custom-parsed-data");
     if (!parsedDataEl) {
       throw new Error("Parsed data viewer element not found");
+    }
+    if (parsedDataEl.parentElement) {
+      parsedDataEl.parentElement.style.display = "block";
     }
     parsedDataEl.innerText = JSON.stringify(parsedData, null, 2);
 
