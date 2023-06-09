@@ -76,7 +76,8 @@ const parseRoot = (
 };
 
 const parseCluster = (data: any, containerEl: Element): Cluster => {
-  // Extract only node id for better reference e.g. full element id = "flowchart-c1-205" will map to "c1"
+  // Extract only node id for better reference
+  // e.g. full element id = "flowchart-c1-205" will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
@@ -251,6 +252,7 @@ const computeEdgePositions = (
     throw new Error('Path element does not contain a "d" attribute');
   }
 
+  // Split the d attribute based on M (Move To) and L (Line To) commands
   const commands = dAttr.split(/(?=[LM])/);
   const startPosition = commands[0]
     .substring(1)
