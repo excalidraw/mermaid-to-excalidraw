@@ -13,7 +13,7 @@
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {
-    "markdown-to-text": "^0.1.1",
+    "markdown-to-text": "0.1.1",
     "mermaid": "10.1.0"
   },
   "devDependencies": {

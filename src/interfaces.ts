@@ -1,6 +1,13 @@
+export enum VertexType {
+  ROUND = "round",
+  STADIUM = "stadium",
+  DOUBLECIRCLE = "doublecircle",
+  CIRCLE = "circle",
+  DIAMOND = "diamond",
+}
 export interface Vertex {
   id: string;
-  type: string;
+  type: VertexType;
   labelType: string;
   text: string;
   x: number;

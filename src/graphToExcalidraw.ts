@@ -1,6 +1,6 @@
 import markdownToText from "markdown-to-text";
 import { DEFAULT_FONT_SIZE } from "./constants";
-import { Cluster, Edge, Graph, Vertex } from "./interfaces";
+import { Cluster, Edge, Graph, Vertex, VertexType } from "./interfaces";
 
 interface ExcalidrawElement {
   [key: string]: any;
@@ -52,9 +52,6 @@ export const graphToExcalidraw = (
       width: vertex.width,
       height: vertex.height,
       strokeWidth: 2,
-      ...((vertex.type === "round" || vertex.type === "stadium") && {
-        roundness: { type: 3 },
-      }),
       label: {
         groupIds,
         text: getText(vertex),
@@ -63,35 +60,49 @@ export const graphToExcalidraw = (
       link: vertex.link || undefined,
     };
 
-    if (vertex.type === "doublecircle") {
-      // Create new groupId for double circle
-      groupIds.push(`doublecircle_${vertex.id}}`);
-      // Create inner circle element
-      const innerCircle = {
-        type: "ellipse",
-        groupIds,
-        x: vertex.x + 5,
-        y: vertex.y + 5,
-        width: vertex.width - 10,
-        height: vertex.height - 10,
-        strokeWidth: 2,
-        roundness: { type: 3 },
-        label: {
+    switch (vertex.type) {
+      case VertexType.STADIUM: {
+        containerElement.roundness = { type: 3 };
+        break;
+      }
+      case VertexType.ROUND: {
+        containerElement.roundness = { type: 3 };
+        break;
+      }
+      case VertexType.DOUBLECIRCLE: {
+        const CIRCLE_MARGIN = 5;
+        // Create new groupId for double circle
+        groupIds.push(`doublecircle_${vertex.id}}`);
+        // Create inner circle element
+        const innerCircle = {
+          type: "ellipse",
           groupIds,
-          text: getText(vertex),
-          fontSize,
-        },
-      };
-      containerElement.label = undefined;
-      containerElement.groupIds = groupIds;
-      containerElement.type = "ellipse";
-      elements.push(innerCircle);
-    }
-    if (vertex.type === "circle") {
-      containerElement.type = "ellipse";
-    }
-    if (vertex.type === "diamond") {
-      containerElement.type = "diamond";
+          x: vertex.x + CIRCLE_MARGIN,
+          y: vertex.y + CIRCLE_MARGIN,
+          width: vertex.width - CIRCLE_MARGIN * 2,
+          height: vertex.height - CIRCLE_MARGIN * 2,
+          strokeWidth: 2,
+          roundness: { type: 3 },
+          label: {
+            groupIds,
+            text: getText(vertex),
+            fontSize,
+          },
+        };
+        containerElement.label = undefined;
+        containerElement.groupIds = groupIds;
+        containerElement.type = "ellipse";
+        elements.push(innerCircle);
+        break;
+      }
+      case VertexType.CIRCLE: {
+        containerElement.type = "ellipse";
+        break;
+      }
+      case VertexType.DIAMOND: {
+        containerElement.type = "diamond";
+        break;
+      }
     }
 
     elements.push(containerElement);
