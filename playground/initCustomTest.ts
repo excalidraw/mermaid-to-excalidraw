@@ -1,29 +1,11 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src/parseMermaid";
 import { renderExcalidraw } from "./initExcalidraw";
-import { DEFAULT_FONT_SIZE } from "../src/constants";
 
-const customTestEl = document.createElement("div");
-
-// Init custom test section
-customTestEl.innerHTML = `
-  <h1>Custom Test</h1>
-  <ul>
-    <li>Support only flowchart diagram (the input must started with "flowchart")</li>
-    <li>See supported and unsupported features at <a target="_blank" href="https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#issue-1686226562">PR's description</a></li>
-  </ul>
-  <br>
-  <textarea id="mermaid-input" rows="10" cols="50" placeholder="Input Mermaid Syntax"></textarea><br>
-  <label for="font-size-input">Custom Font Size: </label> <input type="number" id="font-size-input" value="${DEFAULT_FONT_SIZE}"><br>
-  <button style="margin-top: 10px" id="render-excalidraw-btn">Render to Excalidraw</button>
-  <div style="margin-top: 20px" id="custom-diagram"></div>
-  <details style="margin-top: 20px; display: none;">
-    <summary>Parsed data from parseMermaid</summary>
-    <pre id="custom-parsed-data"></pre>
-  </details>
-  <div id="error" style="display: none; color: red; margin-top: 20px;"></div>
-`;
-document.body.appendChild(customTestEl);
+const customTestEl = document.getElementById("custom-test");
+if (!customTestEl) {
+  throw new Error("Custom test section not found");
+}
 
 // Handle render to Excalidraw event
 const btn = document.getElementById("render-excalidraw-btn");
