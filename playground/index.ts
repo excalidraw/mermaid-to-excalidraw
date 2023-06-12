@@ -17,24 +17,18 @@ document.body.appendChild(containerEl);
 FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
-  diagramContainerEl.innerHTML = `<h2 style="margin-top: 0; display: none;">Test #${
-    i + 1
-  }
+  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">Test #${i + 1}
   </h2>
   <div id="diagram-${i}"></div>
-  <button id="diagram-btn-${i}" data="${i}">.</button>
-    <pre id="mermaid-syntax-${i}"></pre>
-  <details style="margin-top: 20px; display: none;">
+  <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
+  <details style="margin-top: 20px">
     <summary>Mermaid syntax</summary>
+    <pre id="mermaid-syntax-${i}"></pre>
   </details>
-  <details style="margin-top: 10px; display: none;">
+  <details style="margin-top: 10px">
     <summary>Parsed data from parseMermaid</summary>
     <pre id="parsed-${i}"></pre>
   </details>`;
-  diagramContainerEl.setAttribute(
-    "style",
-    "display: block; border: 1px solid #ddd;"
-  );
 
   const btn = diagramContainerEl.querySelector(`#diagram-btn-${i}`);
   if (!btn) {
