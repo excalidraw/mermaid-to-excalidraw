@@ -47,11 +47,16 @@ function graphToExcalidraw(
 
 - Flowcharts Diagram
   - Shape: rectangle, rounded corner, circle, double circle, diamond.
+    ![](./images/example-shape.png)
   - Arrow: arrow_circle, arrow_cross, double_arrow_circle, double_arrow_point.
+    ![](./images/example-arrow-type.png)
   - Arrow stroke: dotted, thick.
+    ![](./images/example-arrow-style.png)
   - Cluster
-  - Attached link
+    ![](./images/example-cluster.png)
   - Entity codes supported.
+    ![](./images/example-entity-code.png)
+  - Attached link
 - Playground
   - Render all flow diagram test cases, Render to Excalidraw canvas, `parseMermaid` data, Excalidraw initial data (see: Devtool Console)
   - Custom Test Input, Custom font size, Error handling.
