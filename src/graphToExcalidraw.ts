@@ -1,10 +1,11 @@
 import markdownToText from "markdown-to-text";
 import { DEFAULT_FONT_SIZE } from "./constants";
 import { Cluster, Edge, Graph, Vertex, VertexType } from "./interfaces";
+import { Arrowhead } from "@excalidraw/excalidraw/types/element/types";
+import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
+import { ArrayElement, Mutable } from "./utils/types";
 
-interface ExcalidrawElement {
-  [key: string]: any;
-}
+type ExcalidrawElement = Mutable<ArrayElement<ImportedDataState["elements"]>>;
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -20,7 +21,7 @@ export const graphToExcalidraw = (
   graph.clusters.reverse().forEach((cluster) => {
     const groupIds = getGroupIds(cluster.id);
 
-    const containerElement = {
+    const containerElement: ExcalidrawElement = {
       id: cluster.id,
       type: "rectangle",
       groupIds,
@@ -57,7 +58,7 @@ export const graphToExcalidraw = (
         text: getText(vertex),
         fontSize,
       },
-      link: vertex.link || undefined,
+      link: vertex.link || null,
     };
 
     switch (vertex.type) {
@@ -74,7 +75,7 @@ export const graphToExcalidraw = (
         // Create new groupId for double circle
         groupIds.push(`doublecircle_${vertex.id}}`);
         // Create inner circle element
-        const innerCircle = {
+        const innerCircle: ExcalidrawElement = {
           type: "ellipse",
           groupIds,
           x: vertex.x + CIRCLE_MARGIN,
@@ -136,8 +137,9 @@ export const graphToExcalidraw = (
       groupIds,
       x: startX,
       y: startY,
-      x2: endX,
-      y2: endY,
+      // TODO: what is x2, y2????
+      // x2: endX,
+      // y2: endY,
       strokeWidth: edge.stroke === "thick" ? 4 : 2,
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points,
@@ -157,12 +159,28 @@ export const graphToExcalidraw = (
       return;
     }
 
-    containerElement.start = {
-      id: startVertex.id,
-    };
-    containerElement.end = {
-      id: endVertex.id,
-    };
+    // TODO: Fix Test #41 bug
+    // TODO: Re-handle type
+    if (
+      startVertex.type === "rectangle" ||
+      startVertex.type === "diamond" ||
+      startVertex.type === "ellipse"
+    ) {
+      containerElement.start = {
+        type: startVertex.type,
+        id: startVertex.id,
+      };
+    }
+    if (
+      endVertex.type === "rectangle" ||
+      endVertex.type === "diamond" ||
+      endVertex.type === "ellipse"
+    ) {
+      containerElement.end = {
+        type: endVertex.type,
+        id: endVertex.id,
+      };
+    }
 
     elements.push(containerElement);
   });
@@ -240,8 +258,8 @@ const computeGroupIds = (
 
 // Convert mermaid edge type to Excalidraw arrow type
 interface ArrowType {
-  startArrowhead?: string;
-  endArrowhead?: string;
+  startArrowhead?: Arrowhead;
+  endArrowhead?: Arrowhead;
 }
 const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
   const arrowType: ArrowType = {};
