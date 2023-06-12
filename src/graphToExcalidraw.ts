@@ -119,7 +119,7 @@ export const graphToExcalidraw = (
     }
 
     // Get arrow position data
-    const { startX, startY, endX, endY, reflectionPoints } = edge;
+    const { startX, startY, reflectionPoints } = edge;
 
     // Calculate Excalidraw arrow's points
     const points = reflectionPoints.map((point) => [
@@ -137,9 +137,8 @@ export const graphToExcalidraw = (
       groupIds,
       x: startX,
       y: startY,
-      // TODO: what is x2, y2????
-      // x2: endX,
-      // y2: endY,
+      // 4 and 2 are the Excalidraw's stroke width of thick and thin respectively
+      // TODO: use constant exported from Excalidraw package
       strokeWidth: edge.stroke === "thick" ? 4 : 2,
       strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
       points,
@@ -160,7 +159,7 @@ export const graphToExcalidraw = (
     }
 
     // TODO: Fix Test #41 bug
-    // TODO: Re-handle type
+    // TODO: remove type attribute from start and end
     if (
       startVertex.type === "rectangle" ||
       startVertex.type === "diamond" ||
