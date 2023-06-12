@@ -158,28 +158,12 @@ export const graphToExcalidraw = (
       return;
     }
 
-    // TODO: Fix Test #41 bug
-    // TODO: remove type attribute from start and end
-    if (
-      startVertex.type === "rectangle" ||
-      startVertex.type === "diamond" ||
-      startVertex.type === "ellipse"
-    ) {
-      containerElement.start = {
-        type: startVertex.type,
-        id: startVertex.id,
-      };
-    }
-    if (
-      endVertex.type === "rectangle" ||
-      endVertex.type === "diamond" ||
-      endVertex.type === "ellipse"
-    ) {
-      containerElement.end = {
-        type: endVertex.type,
-        id: endVertex.id,
-      };
-    }
+    containerElement.start = {
+      id: startVertex.id || "",
+    };
+    containerElement.end = {
+      id: endVertex.id || "",
+    };
 
     elements.push(containerElement);
   });
