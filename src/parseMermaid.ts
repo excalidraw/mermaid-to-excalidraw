@@ -8,45 +8,38 @@ interface ParseMermaidOptions {
 }
 export const parseMermaid = async (
   mermaid: Mermaid,
-  diagramDefinition: string,
+  definition: string,
   options: ParseMermaidOptions = {}
 ): Promise<Graph> => {
-  const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
-
   // Check supported diagram type
-  if (!isSupportedDiagram(diagramDefinition)) {
+  if (!isSupportedDiagram(definition)) {
     throw new Error("Unsupported diagram type");
   }
 
-  // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
-  // Increase the Mermaid's font size by multiplying with 1.25 to match the Excalidraw Virgil font
-  const definition = `%%{init: {"flowchart": {"curve": "linear"}, "themeVariables": {"fontSize": "${
-    fontSize * 1.25
-  }px"}} }%%\n${diagramDefinition}`;
-
   // Render the SVG diagram
-  const mermaidDiv = document.createElement("div");
-  mermaidDiv.id = `mermaid-to-excalidraw`;
-  // Hide the element from the screen
-  mermaidDiv.setAttribute(
+  const { svg } = await renderMermaid(mermaid, definition, {
+    curve: "linear",
+    fontSize: options.fontSize,
+  });
+
+  const diagramEl = document.createElement("div");
+  diagramEl.setAttribute(
     "style",
     `opacity: 0; position: absolute; z-index: -1;`
   );
-  const { svg } = await mermaid.render(mermaidDiv.id, definition);
-  const diagramEl = document.createElement("div");
   diagramEl.innerHTML = svg;
-  diagramEl.id = "diagram";
-  mermaidDiv.appendChild(diagramEl);
-  document.body.appendChild(mermaidDiv);
+  diagramEl.id = "mermaid-diagram";
+  document.body.appendChild(diagramEl);
 
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
   diagram.parse();
+
   // Get mermaid parsed data from Jison parser shared variable `yy`
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
 
-  mermaidDiv.remove();
+  diagramEl.remove();
 
   return root;
 };
@@ -177,6 +170,39 @@ const parseEdge = (data: any, containerEl: Element): Edge => {
 };
 
 /* Helper Functions */
+
+// Render mermaid diagram
+interface MermaidDefinitionOptions {
+  curve?: "linear" | "basis";
+  fontSize?: number;
+}
+const renderMermaid = async (
+  mermaid: Mermaid,
+  definition: string,
+  options?: MermaidDefinitionOptions
+): Promise<{ svg: string }> => {
+  // Create mermaid diagram definition
+  const diagramInitOptions = {
+    // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
+    flowchart: {
+      curve: options?.curve || "basis",
+    },
+    // Increase the Mermaid's font size by multiplying with 1.25 to match the Excalidraw Virgil font
+    themeVariables: {
+      fontSize: `${(options?.fontSize || DEFAULT_FONT_SIZE) * 1.25}px`,
+    },
+  };
+  const fullDefinition = `%%{init: ${JSON.stringify(
+    diagramInitOptions
+  )}}%%\n${definition}`;
+
+  // Render the SVG diagram
+  const renderResult = await mermaid.render(
+    "mermaid-to-excalidraw",
+    fullDefinition
+  );
+  return { svg: renderResult.svg };
+};
 
 // Compute element position
 const computeElementPosition = (
