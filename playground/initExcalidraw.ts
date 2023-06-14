@@ -19,7 +19,7 @@ export const renderExcalidraw = (
   fontSize = DEFAULT_FONT_SIZE
 ) => {
   const mermaidGraphData = JSON.parse(mermaidGraphDataString);
-  const elements = graphToExcalidraw(mermaidGraphData, { fontSize });
+  const { elements, files } = graphToExcalidraw(mermaidGraphData, { fontSize });
 
   console.info("renderExcalidraw", elements);
 
@@ -28,6 +28,7 @@ export const renderExcalidraw = (
   root.render(
     React.createElement(ExcalidrawWrapper, {
       elements,
+      files,
     })
   );
 };

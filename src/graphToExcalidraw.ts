@@ -1,7 +1,15 @@
 import markdownToText from "markdown-to-text";
 import { DEFAULT_FONT_SIZE } from "./constants";
-import { Cluster, Edge, Graph, Vertex, VertexType } from "./interfaces";
-import { Arrowhead } from "@excalidraw/excalidraw/types/element/types";
+import {
+  Cluster,
+  Edge,
+  Graph,
+  GraphImage,
+  Vertex,
+  VertexType,
+} from "./interfaces";
+import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
+import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
 import { ArrayElement, Mutable } from "./utils/types";
 
@@ -9,10 +17,56 @@ type ExcalidrawElement = Mutable<ArrayElement<ImportedDataState["elements"]>>;
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
+interface GraphToExcalidrawResult {
+  elements: ExcalidrawElement[];
+  files?: BinaryFiles;
+}
 export const graphToExcalidraw = (
-  graph: Graph,
+  graph: Graph | GraphImage,
   options: GraphToExcalidrawOptions = {}
-): ExcalidrawElement[] => {
+): GraphToExcalidrawResult => {
+  if (graph.type === "graphImage") {
+    const imageId = crypto.randomUUID() as FileId;
+    // TODO: refactor image element data
+    const imageElement: ExcalidrawElement = {
+      type: "image",
+      id: "61oaFzp4DF-DSUqLSzGKw",
+      x: 0,
+      y: 0,
+      width: 359.97501227046155,
+      height: 359.97501227046155,
+      angle: 0,
+      strokeColor: "transparent",
+      backgroundColor: "transparent",
+      fillStyle: "solid",
+      strokeWidth: 4,
+      strokeStyle: "solid",
+      roughness: 1,
+      opacity: 100,
+      groupIds: [],
+      roundness: null,
+      seed: 938432494,
+      version: 5,
+      versionNonce: 1748022382,
+      isDeleted: false,
+      boundElements: null,
+      updated: 1686726871374,
+      link: null,
+      locked: false,
+      status: "saved",
+      fileId: imageId,
+      scale: [1, 1],
+    };
+    const files = {
+      [imageId]: {
+        id: imageId,
+        mimeType: graph.mimeType,
+        dataURL: graph.dataURL,
+      },
+    } as BinaryFiles;
+    return { files, elements: [imageElement] };
+  }
+
   const elements: ExcalidrawElement[] = [];
   const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
   const { getGroupIds, getParentId } = computeGroupIds(graph);
@@ -168,7 +222,9 @@ export const graphToExcalidraw = (
     elements.push(containerElement);
   });
 
-  return elements;
+  return {
+    elements,
+  };
 };
 
 /* Helper Functions */

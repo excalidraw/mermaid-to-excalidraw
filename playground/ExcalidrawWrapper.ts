@@ -1,8 +1,10 @@
 import React from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
 
+// TODO: refactor type
 interface ExcalidrawWrapperProps {
   elements: any[];
+  files: any;
 }
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const excalidrawRef = React.useRef(null);
@@ -18,6 +20,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
       React.createElement(Excalidraw, {
         initialData: {
           elements: props.elements,
+          files: props.files,
           appState: {
             viewBackgroundColor: "#fafafa",
             currentItemFontFamily: 1,
