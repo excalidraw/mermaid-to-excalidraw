@@ -22,6 +22,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
             viewBackgroundColor: "#fafafa",
             currentItemFontFamily: 1,
           },
+          scrollToContent: true,
         },
         ref: excalidrawRef,
       })
