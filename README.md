@@ -75,4 +75,15 @@ function graphToExcalidraw(
   - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
   - Arrow: double_arrow_cross (fallback to Excalidraw's `bar` arrow type)
   - Custom element style e.g. font family, font color, bg color, stroke color, etc. (fallback to default styling)
-- Currently, we support only flowchart diagrams.
+- Unsupported diagram will be rendered as SVG image
+  ```
+  gantt
+    title A Gantt Diagram
+    dateFormat  YYYY-MM-DD
+    section Section
+    A task           :a1, 2014-01-01, 30d
+    Another task     :after a1  , 20d
+    section Another
+    Task in sec      :2014-01-12  , 12d
+    another task      : 24d
+  ```

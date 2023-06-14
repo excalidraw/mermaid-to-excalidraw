@@ -38,10 +38,10 @@ export const parseMermaid = async (
     if (!svgEl) {
       throw new Error("SVG element not found");
     }
-    const boundingBox = svgEl.getBBox();
-    const width = boundingBox.width;
-    const height = boundingBox.height;
-    svgContainer.remove();
+    const rect = svgEl.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    // svgContainer.remove();
 
     // Convert SVG to image
     const mimeType = "image/svg+xml";
