@@ -47,7 +47,14 @@ export interface Edge {
   reflectionPoints: Position[];
 }
 
+export interface GraphImage {
+  type: "graphImage";
+  mimeType: string;
+  dataURL: string;
+}
+
 export interface Graph {
+  type: "graph";
   clusters: Cluster[];
   vertices: { [key: string]: Vertex };
   edges: Edge[];

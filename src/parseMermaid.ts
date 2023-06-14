@@ -1,5 +1,12 @@
 import { Mermaid } from "mermaid";
-import { Cluster, Edge, Graph, Position, Vertex } from "./interfaces";
+import {
+  Cluster,
+  Edge,
+  Graph,
+  GraphImage,
+  Position,
+  Vertex,
+} from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
 
@@ -10,14 +17,32 @@ export const parseMermaid = async (
   mermaid: Mermaid,
   definition: string,
   options: ParseMermaidOptions = {}
-): Promise<Graph> => {
-  // Check supported diagram type
+): Promise<Graph | GraphImage> => {
+  // Check supported diagram type, fallback to image if diagram type not-supported
   if (!isSupportedDiagram(definition)) {
-    throw new Error("Unsupported diagram type");
+    // Render the diagram with default curve and export as svg image
+    const { svg } = await renderMermaid(mermaid, definition, {
+      curve: "basis",
+      fontSize: options.fontSize,
+    });
+
+    // Convert SVG to image
+    const mimeType = "image/svg+xml";
+    const decoded = unescape(encodeURIComponent(svg));
+    const base64 = btoa(decoded);
+    const dataURL = `data:image/svg+xml;base64,${base64}`;
+
+    const graphImage: GraphImage = {
+      type: "graphImage",
+      mimeType,
+      dataURL,
+    };
+
+    return graphImage;
   }
 
   // Render the SVG diagram
-  const { svg } = await renderMermaid(mermaid, definition, {
+  const { svg, fullDefinition } = await renderMermaid(mermaid, definition, {
     curve: "linear",
     fontSize: options.fontSize,
   });
@@ -32,7 +57,7 @@ export const parseMermaid = async (
   document.body.appendChild(diagramEl);
 
   // Parse the diagram
-  const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
+  const diagram = await mermaid.mermaidAPI.getDiagramFromText(fullDefinition);
   diagram.parse();
 
   // Get mermaid parsed data from Jison parser shared variable `yy`
@@ -62,6 +87,7 @@ const parseRoot = (
     .map((data) => parseCluster(data, containerEl));
 
   return {
+    type: "graph",
     clusters,
     vertices,
     edges,
@@ -180,7 +206,7 @@ const renderMermaid = async (
   mermaid: Mermaid,
   definition: string,
   options?: MermaidDefinitionOptions
-): Promise<{ svg: string }> => {
+): Promise<{ svg: string; fullDefinition: string }> => {
   // Create mermaid diagram definition
   const diagramInitOptions = {
     // Add options for rendering flowchart in linear curves (for better extracting arrow path points) and custom font size
@@ -201,7 +227,7 @@ const renderMermaid = async (
     "mermaid-to-excalidraw",
     fullDefinition
   );
-  return { svg: renderResult.svg };
+  return { svg: renderResult.svg, fullDefinition };
 };
 
 // Compute element position
