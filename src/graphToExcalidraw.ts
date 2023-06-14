@@ -27,13 +27,14 @@ export const graphToExcalidraw = (
   if (graph.type === "graphImage") {
     const imageId = crypto.randomUUID() as FileId;
     // TODO: refactor image element data once the API is supported
+    const { width, height } = graph;
     const imageElement: ExcalidrawElement = {
       type: "image",
       id: "61oaFzp4DF-DSUqLSzGKw",
       x: 0,
       y: 0,
-      width: 359.97501227046155,
-      height: 359.97501227046155,
+      width,
+      height,
       angle: 0,
       strokeColor: "transparent",
       backgroundColor: "transparent",

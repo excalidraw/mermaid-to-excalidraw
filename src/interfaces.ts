@@ -51,6 +51,8 @@ export interface GraphImage {
   type: "graphImage";
   mimeType: string;
   dataURL: string;
+  width: number;
+  height: number;
 }
 
 export interface Graph {

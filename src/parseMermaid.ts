@@ -26,7 +26,22 @@ export const parseMermaid = async (
       fontSize: options.fontSize,
     });
 
-    // TODO: export svg width and height
+    // Extract SVG width and height
+    const svgContainer = document.createElement("div");
+    svgContainer.innerHTML = svg;
+    svgContainer.setAttribute(
+      "style",
+      `opacity: 0; position: absolute; z-index: -1;`
+    );
+    document.body.appendChild(svgContainer);
+    const svgEl = svgContainer.querySelector("svg");
+    if (!svgEl) {
+      throw new Error("SVG element not found");
+    }
+    const boundingBox = svgEl.getBBox();
+    const width = boundingBox.width;
+    const height = boundingBox.height;
+    svgContainer.remove();
 
     // Convert SVG to image
     const mimeType = "image/svg+xml";
@@ -38,6 +53,8 @@ export const parseMermaid = async (
       type: "graphImage",
       mimeType,
       dataURL,
+      width,
+      height,
     };
 
     return graphImage;
