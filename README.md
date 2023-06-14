@@ -66,8 +66,8 @@ function graphToExcalidraw(
 - Unsupported Flowchart Features
   - Markdown strings (Fallback to text)
   - Basic FontAwesome (Fallback to text, ignore icons)
-  - Cross arrow
-  - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid, Double circle. (all these shapes will fall back to similar supported shapes, including rectangles, rounds, circles, rhombus.
+  - Cross arrow (Fallback to Excalidraw's `bar` arrow type)
+  - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
   - Arrow: double_arrow_cross (fallback to Excalidraw's `bar` arrow type)
   - Custom element style e.g. font family, font color, bg color, stroke color, etc. (fallback to default styling)
 - Currently, we support only flowchart diagrams.
