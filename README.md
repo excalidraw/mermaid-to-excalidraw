@@ -25,20 +25,25 @@ yarn test:code
 ## Documentation
 
 ```ts
+// Un-supported diagram will render as SVG image (GraphImage)
 function parseMermaid(
   mermaid: Mermaid,
   diagramDefinition: string,
   options?: {
     fontSize: number;
   }
-): Graph;
+): Graph | GraphImage;
 
+interface GraphToExcalidrawResult {
+  elements: ExcalidrawElement[];
+  files?: BinaryFiles;
+}
 function graphToExcalidraw(
-  graph: Graph,
+  graph: Graph | GraphImage,
   options?: {
     fontSize: number;
   }
-): ExcalidrawElement[];
+): GraphToExcalidrawResult;
 ```
 
 - Default font size is `20`

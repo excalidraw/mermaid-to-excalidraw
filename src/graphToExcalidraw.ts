@@ -12,7 +12,6 @@ import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawElement } from "./types";
 
-// TODO: update the README.md for the API change
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
