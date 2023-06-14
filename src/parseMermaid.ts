@@ -27,6 +27,7 @@ export const parseMermaid = async (
     });
 
     // Extract SVG width and height
+    // TODO: make width and height change dynamically based on user's screen dimension
     const svgContainer = document.createElement("div");
     svgContainer.innerHTML = svg;
     svgContainer.setAttribute(
@@ -41,7 +42,7 @@ export const parseMermaid = async (
     const rect = svgEl.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
-    // svgContainer.remove();
+    svgContainer.remove();
 
     // Convert SVG to image
     const mimeType = "image/svg+xml";

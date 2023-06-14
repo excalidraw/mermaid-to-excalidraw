@@ -75,7 +75,7 @@ function graphToExcalidraw(
   - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
   - Arrow: double_arrow_cross (fallback to Excalidraw's `bar` arrow type)
   - Custom element style e.g. font family, font color, bg color, stroke color, etc. (fallback to default styling)
-- Unsupported diagram will be rendered as SVG image
+- Unsupported diagram will be rendered as SVG image, For example:
   ```
   gantt
     title A Gantt Diagram
@@ -86,4 +86,10 @@ function graphToExcalidraw(
     section Another
     Task in sec      :2014-01-12  , 12d
     another task      : 24d
+  ```
+  ```
+  erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
   ```
