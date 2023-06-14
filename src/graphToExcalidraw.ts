@@ -13,6 +13,7 @@ import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
 import { ArrayElement, Mutable } from "./utils/types";
 
+// TODO: update the README.md for the API change
 type ExcalidrawElement = Mutable<ArrayElement<ImportedDataState["elements"]>>;
 interface GraphToExcalidrawOptions {
   fontSize?: number;

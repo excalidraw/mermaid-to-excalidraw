@@ -26,6 +26,8 @@ export const parseMermaid = async (
       fontSize: options.fontSize,
     });
 
+    // TODO: export svg width and height
+
     // Convert SVG to image
     const mimeType = "image/svg+xml";
     const decoded = unescape(encodeURIComponent(svg));
