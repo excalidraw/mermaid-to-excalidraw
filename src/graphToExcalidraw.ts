@@ -10,11 +10,9 @@ import {
 } from "./interfaces";
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
-import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
-import { ArrayElement, Mutable } from "./utils/types";
+import { ExcalidrawElement } from "./types";
 
 // TODO: update the README.md for the API change
-type ExcalidrawElement = Mutable<ArrayElement<ImportedDataState["elements"]>>;
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -28,7 +26,7 @@ export const graphToExcalidraw = (
 ): GraphToExcalidrawResult => {
   if (graph.type === "graphImage") {
     const imageId = crypto.randomUUID() as FileId;
-    // TODO: refactor image element data
+    // TODO: refactor image element data once the API is supported
     const imageElement: ExcalidrawElement = {
       type: "image",
       id: "61oaFzp4DF-DSUqLSzGKw",

@@ -1,10 +1,11 @@
 import React from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
+import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
+import { ExcalidrawElement } from "../src/types";
 
-// TODO: refactor type
 interface ExcalidrawWrapperProps {
-  elements: any[];
-  files: any;
+  elements: ExcalidrawElement[];
+  files?: BinaryFiles;
 }
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const excalidrawRef = React.useRef(null);
