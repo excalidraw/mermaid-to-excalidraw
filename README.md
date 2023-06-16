@@ -70,10 +70,14 @@ function graphToExcalidraw(
 
 - Unsupported Flowchart Features
   - Markdown strings (Fallback to text)
+    ![](./images/unsupported/markdown.png)
   - Basic FontAwesome (Fallback to text, ignore icons)
+    ![](./images/unsupported/fontawesome.png)
   - Cross arrow (Fallback to Excalidraw's `bar` arrow type)
-  - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
   - Arrow: double_arrow_cross (fallback to Excalidraw's `bar` arrow type)
+    ![](./images/unsupported/cross-arrow.png)
+  - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
+    ![](./images/unsupported/shapes.png)
   - Custom element style e.g. font family, font color, bg color, stroke color, etc. (fallback to default styling)
 - Unsupported diagram will be rendered as SVG image, For example:
   ```
