@@ -21,6 +21,7 @@
     "@babel/core": "^7.12.0",
     "@excalidraw/eslint-config": "^1.0.3",
     "@excalidraw/excalidraw": "0.15.2-6546-9e6751c",
+    "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "^9.2.0",
     "@types/react-dom": "^18.2.4",
     "@typescript-eslint/eslint-plugin": "^5.59.9",
