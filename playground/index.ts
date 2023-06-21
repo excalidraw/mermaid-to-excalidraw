@@ -1,6 +1,6 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src";
-import { FLOWCHART_DIAGRAM_TESTCASES } from "./flowchartDiagramTestcases";
+import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 // Initialize Mermaid

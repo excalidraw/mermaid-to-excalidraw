@@ -1,4 +1,4 @@
-export const FLOWCHART_DIAGRAM_TESTCASES = [
+export default [
   `flowchart TD
 Start --> Stop
 `,
