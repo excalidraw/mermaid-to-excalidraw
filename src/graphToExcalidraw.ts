@@ -11,6 +11,7 @@ import {
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawElement } from "./types";
+import { nanoid } from "nanoid";
 
 // TODO: Implement style mapping
 
@@ -26,12 +27,12 @@ export const graphToExcalidraw = (
   options: GraphToExcalidrawOptions = {}
 ): GraphToExcalidrawResult => {
   if (graph.type === "graphImage") {
-    const imageId = crypto.randomUUID() as FileId;
+    const imageId = nanoid() as FileId;
     // TODO: refactor image element data once the API is supported
     const { width, height } = graph;
     const imageElement: ExcalidrawElement = {
       type: "image",
-      id: "61oaFzp4DF-DSUqLSzGKw",
+      id: nanoid(),
       x: 0,
       y: 0,
       width,
