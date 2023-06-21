@@ -24,6 +24,22 @@ yarn test:code
 
 ## Documentation
 
+### Get started
+
+Example code:
+
+```ts
+const mermaidGraphData = await parseMermaid(mermaid, diagramDefinition, {
+  fontSize: DEFAULT_FONT_SIZE,
+});
+
+const { elements, files } = graphToExcalidraw(mermaidGraphData);
+
+// Render elements and files on Excalidraw
+```
+
+### Exported Functions
+
 ```ts
 // Un-supported diagram will render as SVG image (GraphImage)
 function parseMermaid(
