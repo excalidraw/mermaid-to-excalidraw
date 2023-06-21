@@ -6,7 +6,7 @@ import {
   Graph,
   GraphImage,
   Vertex,
-  VertexType,
+  VERTEX_TYPE,
 } from "./interfaces";
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
@@ -115,15 +115,15 @@ export const graphToExcalidraw = (
     };
 
     switch (vertex.type) {
-      case VertexType.STADIUM: {
+      case VERTEX_TYPE.STADIUM: {
         containerElement.roundness = { type: 3 };
         break;
       }
-      case VertexType.ROUND: {
+      case VERTEX_TYPE.ROUND: {
         containerElement.roundness = { type: 3 };
         break;
       }
-      case VertexType.DOUBLECIRCLE: {
+      case VERTEX_TYPE.DOUBLECIRCLE: {
         const CIRCLE_MARGIN = 5;
         // Create new groupId for double circle
         groupIds.push(`doublecircle_${vertex.id}}`);
@@ -149,11 +149,11 @@ export const graphToExcalidraw = (
         elements.push(innerCircle);
         break;
       }
-      case VertexType.CIRCLE: {
+      case VERTEX_TYPE.CIRCLE: {
         containerElement.type = "ellipse";
         break;
       }
-      case VertexType.DIAMOND: {
+      case VERTEX_TYPE.DIAMOND: {
         containerElement.type = "diamond";
         break;
       }

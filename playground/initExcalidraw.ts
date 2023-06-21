@@ -5,7 +5,7 @@ import { graphToExcalidraw } from "../src";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 // Create Excalidraw Wrapper element
-const excalidrawWrapper: HTMLElement = document.createElement("div");
+const excalidrawWrapper = document.createElement("div");
 excalidrawWrapper.id = "excalidraw";
 document.body.appendChild(excalidrawWrapper);
 

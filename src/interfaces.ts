@@ -1,4 +1,4 @@
-export enum VertexType {
+export enum VERTEX_TYPE {
   ROUND = "round",
   STADIUM = "stadium",
   DOUBLECIRCLE = "doublecircle",
@@ -7,7 +7,7 @@ export enum VertexType {
 }
 export interface Vertex {
   id: string;
-  type: VertexType;
+  type: VERTEX_TYPE;
   labelType: string;
   text: string;
   x: number;
