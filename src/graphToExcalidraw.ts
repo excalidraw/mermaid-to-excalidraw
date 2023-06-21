@@ -12,6 +12,8 @@ import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawElement } from "./types";
 
+// TODO: Implement style mapping
+
 interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
@@ -299,24 +301,28 @@ interface ArrowType {
   startArrowhead?: Arrowhead;
   endArrowhead?: Arrowhead;
 }
-const computeExcalidrawArrowType = (mermaidEdgeType: string): ArrowType => {
-  const arrowType: ArrowType = {};
-  if (mermaidEdgeType === "arrow_circle") {
-    arrowType.endArrowhead = "dot";
-  } else if (mermaidEdgeType === "arrow_cross") {
-    arrowType.endArrowhead = "bar";
-  } else if (mermaidEdgeType === "double_arrow_circle") {
-    arrowType.endArrowhead = "dot";
-    arrowType.startArrowhead = "dot";
-  } else if (mermaidEdgeType === "double_arrow_cross") {
-    arrowType.endArrowhead = "bar";
-    arrowType.startArrowhead = "bar";
-  } else if (mermaidEdgeType === "double_arrow_point") {
-    arrowType.endArrowhead = "arrow";
-    arrowType.startArrowhead = "arrow";
-  }
-
-  return arrowType;
+const MERMAID_EDGE_TYPE_MAPPER: { [key: string]: ArrowType } = {
+  arrow_circle: {
+    endArrowhead: "dot",
+  },
+  arrow_cross: {
+    endArrowhead: "bar",
+  },
+  double_arrow_circle: {
+    endArrowhead: "dot",
+    startArrowhead: "dot",
+  },
+  double_arrow_cross: {
+    endArrowhead: "bar",
+    startArrowhead: "bar",
+  },
+  double_arrow_point: {
+    endArrowhead: "arrow",
+    startArrowhead: "arrow",
+  },
+};
+const computeExcalidrawArrowType = (mermaidArrowType: string): ArrowType => {
+  return MERMAID_EDGE_TYPE_MAPPER[mermaidArrowType];
 };
 
 // Get text from graph elements, fallback markdown to text
