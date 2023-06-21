@@ -10,6 +10,9 @@ import {
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
 
+// TODO: arrow bugs on Test #33
+// TODO: GraphImage render size, make it same size as default Excalidraw font
+
 interface ParseMermaidOptions {
   fontSize?: number;
 }

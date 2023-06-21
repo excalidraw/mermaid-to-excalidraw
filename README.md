@@ -29,6 +29,11 @@ yarn test:code
 Example code:
 
 ```ts
+import {
+  parseMermaid,
+  graphToExcalidraw,
+} from "@excalidraw/mermaid-to-excalidraw";
+
 const mermaidGraphData = await parseMermaid(mermaid, diagramDefinition, {
   fontSize: DEFAULT_FONT_SIZE,
 });
