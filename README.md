@@ -34,9 +34,14 @@ import {
   graphToExcalidraw,
 } from "@excalidraw/mermaid-to-excalidraw";
 
-const mermaidGraphData = await parseMermaid(mermaid, diagramDefinition, {
-  fontSize: DEFAULT_FONT_SIZE,
-});
+let mermaidGraphData;
+try {
+  mermaidGraphData = await parseMermaid(mermaid, diagramDefinition, {
+    fontSize: DEFAULT_FONT_SIZE,
+  });
+} catch (e) {
+  // Parse error, displaying error message to users
+}
 
 const { elements, files } = graphToExcalidraw(mermaidGraphData);
 
