@@ -30,23 +30,15 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
     <pre id="parsed-${i}"></pre>
   </details>`;
 
-  const btn = diagramContainerEl.querySelector(`#diagram-btn-${i}`);
-  if (!btn) {
-    throw new Error("Button element not found");
-  }
+  const btn = diagramContainerEl.querySelector(`#diagram-btn-${i}`)!;
+
   btn.addEventListener("click", async () => {
     const data = btn.getAttribute("data");
-    const pd = document.getElementById(`parsed-${data}`);
-    if (!pd) {
-      throw new Error("Parsed data viewer element not found");
-    }
+    const pd = document.getElementById(`parsed-${data}`)!;
     renderExcalidraw(pd.innerHTML);
   });
 
-  const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`);
-  if (!diagramEl) {
-    throw new Error("Diagram element not found");
-  }
+  const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`)!;
   const { svg } = await mermaid.render(
     `diagram-${i}`,
     `%%{init: {"themeVariables": {"fontSize": "${DEFAULT_FONT_SIZE}px"}} }%%\n${diagramDefinition}`
@@ -58,24 +50,20 @@ FLOWCHART_DIAGRAM_TESTCASES.forEach(async (diagramDefinition: string, i) => {
   // Render mermaid syntax
   const mermaidSyntaxEl = diagramContainerEl.querySelector(
     `#mermaid-syntax-${i}`
-  );
-  if (!mermaidSyntaxEl) {
-    throw new Error("Mermaid syntax element not found");
-  }
+  )!;
   mermaidSyntaxEl.innerHTML = diagramDefinition;
 
   // Get parsed data
-  const parsedDataViewerEl = diagramContainerEl.querySelector(`#parsed-${i}`);
-  if (!parsedDataViewerEl) {
-    throw new Error("Parsed data viewer element not found");
-  }
-
   try {
     const data = await parseMermaid(mermaid, diagramDefinition, {
       fontSize: DEFAULT_FONT_SIZE,
     });
+
+    const parsedDataViewerEl = diagramContainerEl.querySelector(
+      `#parsed-${i}`
+    )!;
     parsedDataViewerEl.innerHTML = JSON.stringify(data, null, 2);
   } catch (e) {
-    console.error(e);
+    console.error("Playground Error:", e);
   }
 });
