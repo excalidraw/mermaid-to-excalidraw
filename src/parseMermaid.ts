@@ -181,6 +181,28 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
     height: boundingBox.height,
   };
 
+  // Extract style
+  const labelContainerStyle = el
+    .querySelector(".label-container")
+    ?.getAttribute("style");
+  const labelStyle = el.querySelector(".label")?.getAttribute("style");
+
+  const style: { [key: string]: string } = {};
+  labelContainerStyle?.split(";").forEach((property) => {
+    if (!property) return;
+
+    const key = property.split(":")[0].trim();
+    const value = property.split(":")[1].trim();
+    style[key] = value;
+  });
+  labelStyle?.split(";").forEach((property) => {
+    if (!property) return;
+
+    const key = property.split(":")[0].trim();
+    const value = property.split(":")[1].trim();
+    style[key] = value;
+  });
+
   return {
     id: data.id,
     labelType: data.labelType,
@@ -189,6 +211,7 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
     link: link || undefined,
     ...position,
     ...dimension,
+    style,
   };
 };
 

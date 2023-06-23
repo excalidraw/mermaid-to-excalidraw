@@ -15,6 +15,7 @@ export interface Vertex {
   width: number;
   height: number;
   link?: string;
+  style?: { [key: string]: string };
 }
 
 export interface Cluster {
