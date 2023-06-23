@@ -186,7 +186,7 @@ A:::someclass --> B
 classDef someclass fill:#f96
 `,
   `flowchart LR
-A-->B[AAA<span>BBB</span>]
+A-->B[AAABBB]
 B-->D
 class A cssClass
 `,

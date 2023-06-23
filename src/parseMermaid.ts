@@ -10,9 +10,6 @@ import {
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
 
-// TODO: arrow bugs on Test #33
-// TODO: GraphImage render size, make it same size as default Excalidraw font
-
 interface ParseMermaidOptions {
   fontSize?: number;
 }
@@ -35,7 +32,7 @@ export const parseMermaid = async (
     svgContainer.innerHTML = svg;
     svgContainer.setAttribute(
       "style",
-      `opacity: 0; position: absolute; z-index: -1;`
+      `opacity: 0; position: relative; z-index: -1;`
     );
     document.body.appendChild(svgContainer);
     const svgEl = svgContainer.querySelector("svg");
@@ -73,7 +70,7 @@ export const parseMermaid = async (
   const diagramEl = document.createElement("div");
   diagramEl.setAttribute(
     "style",
-    `opacity: 0; position: absolute; z-index: -1;`
+    `opacity: 0; position: relative; z-index: -1;`
   );
   diagramEl.innerHTML = svg;
   diagramEl.id = "mermaid-diagram";
