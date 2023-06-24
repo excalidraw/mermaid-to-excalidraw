@@ -5,6 +5,7 @@ import {
   Edge,
   Graph,
   GraphImage,
+  STYLE_PROPERTY,
   Vertex,
   VERTEX_TYPE,
 } from "./interfaces";
@@ -12,8 +13,6 @@ import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawElement } from "./types";
 import { nanoid } from "nanoid";
-
-// TODO: Implement style mapping
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -100,6 +99,9 @@ export const graphToExcalidraw = (
   Object.values(graph.vertices).forEach((vertex) => {
     const groupIds = getGroupIds(vertex.id);
 
+    // Compute custom style
+    const elementStyle = computeExcalidrawVertexStyle(vertex.style);
+
     const containerElement: ExcalidrawElement = {
       id: vertex.id,
       type: "rectangle",
@@ -115,6 +117,7 @@ export const graphToExcalidraw = (
         fontSize,
       },
       link: vertex.link || null,
+      ...elementStyle,
     };
 
     switch (vertex.type) {
@@ -146,7 +149,6 @@ export const graphToExcalidraw = (
             fontSize,
           },
         };
-        containerElement.label = undefined;
         containerElement.groupIds = groupIds;
         containerElement.type = "ellipse";
         elements.push(innerCircle);
@@ -340,4 +342,34 @@ const getText = (element: Vertex | Edge | Cluster): string => {
 const removeFontAwesomeIcons = (input: string): string => {
   const fontAwesomeRegex = /\s?(fa|fab):[a-zA-Z0-9-]+/g;
   return input.replace(fontAwesomeRegex, "");
+};
+
+// Compute style for vertex
+const computeExcalidrawVertexStyle = (style: Vertex["style"]): any => {
+  const excalidrawStyle: any = {};
+  Object.keys(style).forEach((property) => {
+    switch (property) {
+      case STYLE_PROPERTY.COLOR: {
+        break;
+      }
+      case STYLE_PROPERTY.FILL: {
+        excalidrawStyle.backgroundColor = style[property];
+        excalidrawStyle.fillStyle = "solid";
+        break;
+      }
+      case STYLE_PROPERTY.STROKE: {
+        excalidrawStyle.strokeColor = style[property];
+        break;
+      }
+      case STYLE_PROPERTY.STROKE_WIDTH: {
+        excalidrawStyle.strokeWidth = Number(style[property].split("px")[0]);
+        break;
+      }
+      case STYLE_PROPERTY.STROKE_DASHARRAY: {
+        excalidrawStyle.strokeStyle = "dashed";
+        break;
+      }
+    }
+  });
+  return excalidrawStyle;
 };

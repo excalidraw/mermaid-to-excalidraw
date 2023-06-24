@@ -5,6 +5,13 @@ export enum VERTEX_TYPE {
   CIRCLE = "circle",
   DIAMOND = "diamond",
 }
+export enum STYLE_PROPERTY {
+  COLOR = "color",
+  FILL = "fill",
+  STROKE = "stroke",
+  STROKE_WIDTH = "stroke-width",
+  STROKE_DASHARRAY = "stroke-dasharray",
+}
 export interface Vertex {
   id: string;
   type: VERTEX_TYPE;
@@ -15,7 +22,7 @@ export interface Vertex {
   width: number;
   height: number;
   link?: string;
-  style?: { [key: string]: string };
+  style: { [key in STYLE_PROPERTY]: string };
 }
 
 export interface Cluster {
