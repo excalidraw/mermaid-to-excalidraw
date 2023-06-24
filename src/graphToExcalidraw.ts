@@ -10,9 +10,15 @@ import {
   VERTEX_TYPE,
 } from "./interfaces";
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
-import { Arrowhead, FileId } from "@excalidraw/excalidraw/types/element/types";
+import {
+  Arrowhead,
+  FileId,
+  ExcalidrawRectangleElement,
+  ExcalidrawTextElement,
+} from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawElement } from "./types";
 import { nanoid } from "nanoid";
+import { Mutable } from "./utils/types";
 
 interface GraphToExcalidrawOptions {
   fontSize?: number;
@@ -100,7 +106,8 @@ export const graphToExcalidraw = (
     const groupIds = getGroupIds(vertex.id);
 
     // Compute custom style
-    const elementStyle = computeExcalidrawVertexStyle(vertex.style);
+    const containerStyle = computeExcalidrawVertexStyle(vertex.containerStyle);
+    const labelStyle = computeExcalidrawVertexLabelStyle(vertex.labelStyle);
 
     const containerElement: ExcalidrawElement = {
       id: vertex.id,
@@ -115,9 +122,10 @@ export const graphToExcalidraw = (
         groupIds,
         text: getText(vertex),
         fontSize,
+        ...labelStyle,
       },
       link: vertex.link || null,
-      ...elementStyle,
+      ...containerStyle,
     };
 
     switch (vertex.type) {
@@ -344,32 +352,53 @@ const removeFontAwesomeIcons = (input: string): string => {
   return input.replace(fontAwesomeRegex, "");
 };
 
-// Compute style for vertex
-const computeExcalidrawVertexStyle = (style: Vertex["style"]): any => {
-  const excalidrawStyle: any = {};
+// Compute style for label
+const computeExcalidrawVertexLabelStyle = (
+  style: Vertex["labelStyle"]
+): Partial<Mutable<ExcalidrawTextElement>> => {
+  const excalidrawProperty: Partial<Mutable<ExcalidrawTextElement>> = {};
   Object.keys(style).forEach((property) => {
     switch (property) {
       case STYLE_PROPERTY.COLOR: {
-        break;
-      }
-      case STYLE_PROPERTY.FILL: {
-        excalidrawStyle.backgroundColor = style[property];
-        excalidrawStyle.fillStyle = "solid";
-        break;
-      }
-      case STYLE_PROPERTY.STROKE: {
-        excalidrawStyle.strokeColor = style[property];
-        break;
-      }
-      case STYLE_PROPERTY.STROKE_WIDTH: {
-        excalidrawStyle.strokeWidth = Number(style[property].split("px")[0]);
-        break;
-      }
-      case STYLE_PROPERTY.STROKE_DASHARRAY: {
-        excalidrawStyle.strokeStyle = "dashed";
+        excalidrawProperty.strokeColor = style[property];
         break;
       }
     }
   });
-  return excalidrawStyle;
+  return excalidrawProperty;
+};
+
+// Compute style for vertex
+const computeExcalidrawVertexStyle = (
+  style: Vertex["containerStyle"]
+): Partial<Mutable<ExcalidrawRectangleElement>> => {
+  const excalidrawProperty: Partial<Mutable<ExcalidrawRectangleElement>> = {};
+  Object.keys(style).forEach((property) => {
+    switch (property) {
+      case STYLE_PROPERTY.COLOR: {
+        excalidrawProperty.strokeColor = style[property];
+        break;
+      }
+      case STYLE_PROPERTY.FILL: {
+        excalidrawProperty.backgroundColor = style[property];
+        excalidrawProperty.fillStyle = "solid";
+        break;
+      }
+      case STYLE_PROPERTY.STROKE: {
+        excalidrawProperty.strokeColor = style[property];
+        break;
+      }
+      case STYLE_PROPERTY.STROKE_WIDTH: {
+        excalidrawProperty.strokeWidth = Number(
+          style[property]?.split("px")[0]
+        );
+        break;
+      }
+      case STYLE_PROPERTY.STROKE_DASHARRAY: {
+        excalidrawProperty.strokeStyle = "dashed";
+        break;
+      }
+    }
+  });
+  return excalidrawProperty;
 };

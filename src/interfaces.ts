@@ -22,7 +22,8 @@ export interface Vertex {
   width: number;
   height: number;
   link?: string;
-  style: { [key in STYLE_PROPERTY]: string };
+  containerStyle: { [key in STYLE_PROPERTY]?: string };
+  labelStyle: { [key in STYLE_PROPERTY]?: string };
 }
 
 export interface Cluster {

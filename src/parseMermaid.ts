@@ -5,6 +5,7 @@ import {
   Graph,
   GraphImage,
   Position,
+  STYLE_PROPERTY,
   Vertex,
 } from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
@@ -182,25 +183,26 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   };
 
   // Extract style
-  const labelContainerStyle = el
+  const labelContainerStyleText = el
     .querySelector(".label-container")
     ?.getAttribute("style");
-  const labelStyle = el.querySelector(".label")?.getAttribute("style");
+  const labelStyleText = el.querySelector(".label")?.getAttribute("style");
 
-  const style: { [key: string]: string } = {};
-  labelContainerStyle?.split(";").forEach((property) => {
+  const containerStyle: Vertex["containerStyle"] = {};
+  labelContainerStyleText?.split(";").forEach((property) => {
     if (!property) return;
 
-    const key = property.split(":")[0].trim();
+    const key = property.split(":")[0].trim() as STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
-    style[key] = value;
+    containerStyle[key] = value;
   });
-  labelStyle?.split(";").forEach((property) => {
+  const labelStyle: Vertex["labelStyle"] = {};
+  labelStyleText?.split(";").forEach((property) => {
     if (!property) return;
 
-    const key = property.split(":")[0].trim();
+    const key = property.split(":")[0].trim() as STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
-    style[key] = value;
+    labelStyle[key] = value;
   });
 
   return {
@@ -211,7 +213,8 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
     link: link || undefined,
     ...position,
     ...dimension,
-    style,
+    containerStyle,
+    labelStyle,
   };
 };
 
