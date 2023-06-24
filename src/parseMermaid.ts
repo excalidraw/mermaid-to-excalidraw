@@ -1,11 +1,12 @@
 import { Mermaid } from "mermaid";
 import {
+  CONTAINER_STYLE_PROPERTY,
   Cluster,
   Edge,
   Graph,
   GraphImage,
+  LABEL_STYLE_PROPERTY,
   Position,
-  STYLE_PROPERTY,
   Vertex,
 } from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
@@ -192,7 +193,7 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   labelContainerStyleText?.split(";").forEach((property) => {
     if (!property) return;
 
-    const key = property.split(":")[0].trim() as STYLE_PROPERTY;
+    const key = property.split(":")[0].trim() as CONTAINER_STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
     containerStyle[key] = value;
   });
@@ -200,7 +201,7 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   labelStyleText?.split(";").forEach((property) => {
     if (!property) return;
 
-    const key = property.split(":")[0].trim() as STYLE_PROPERTY;
+    const key = property.split(":")[0].trim() as LABEL_STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
     labelStyle[key] = value;
   });

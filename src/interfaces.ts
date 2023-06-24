@@ -5,8 +5,10 @@ export enum VERTEX_TYPE {
   CIRCLE = "circle",
   DIAMOND = "diamond",
 }
-export enum STYLE_PROPERTY {
+export enum LABEL_STYLE_PROPERTY {
   COLOR = "color",
+}
+export enum CONTAINER_STYLE_PROPERTY {
   FILL = "fill",
   STROKE = "stroke",
   STROKE_WIDTH = "stroke-width",
@@ -22,8 +24,8 @@ export interface Vertex {
   width: number;
   height: number;
   link?: string;
-  containerStyle: { [key in STYLE_PROPERTY]?: string };
-  labelStyle: { [key in STYLE_PROPERTY]?: string };
+  containerStyle: { [key in CONTAINER_STYLE_PROPERTY]?: string };
+  labelStyle: { [key in LABEL_STYLE_PROPERTY]?: string };
 }
 
 export interface Cluster {
