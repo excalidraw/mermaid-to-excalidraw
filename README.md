@@ -22,9 +22,7 @@ Eslint code test:
 yarn test:code
 ```
 
-## Documentation
-
-### Get started
+## Get started
 
 Example code:
 
@@ -48,38 +46,62 @@ const { elements, files } = graphToExcalidraw(mermaidGraphData);
 // Render elements and files on Excalidraw
 ```
 
-### Exported Functions
+## API
+
+### parseMermaid
+
+Takes `mermaid`, `diagramDefinition`, and optional `options` as inputs, and return either a `Graph` or `GraphImage`. If the diagram is unsupported, it renders as an SVG image (GraphImage).
+
+**_Signature_**
 
 ```ts
-// Un-supported diagram will render as SVG image (GraphImage)
 function parseMermaid(
   mermaid: Mermaid,
   diagramDefinition: string,
   options?: {
-    fontSize: number;
+    fontSize: number; // default 20
   }
 ): Graph | GraphImage;
+```
 
-interface GraphToExcalidrawResult {
-  elements: ExcalidrawElement[];
-  files?: BinaryFiles;
-}
+**How to use**
+
+```ts
+import { parseMermaid } from "@excalidraw/mermaid-to-excalidraw";
+```
+
+### graphToExcalidraw
+
+Takes a `Graph` or `GraphImage` and optional `options` as inputs, and returns `elements` and optionally `files`.
+
+**_Signature_**
+
+```ts
 function graphToExcalidraw(
   graph: Graph | GraphImage,
   options?: {
     fontSize: number;
   }
-): GraphToExcalidrawResult;
+): {
+  elements: ExcalidrawElement[];
+  files?: BinaryFiles;
+};
 ```
 
-- Default font size is `20`
+**How to use**
 
-### Playground
+```ts
+import { graphToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
+```
+
+## Playground
 
 [Open Playground](https://mermaid-to-excalidraw.vercel.app)
 
 - Additional Notes
   - If you're clicking the "Render to Excalidraw" button on the same diagram multiple times, you may notice a slight change of elements stroke on the Excalidraw diagram. This occurs as a result of the randomness featured in the libraries used by Excalidraw, specifically Rough.js.
+
+## Features
 
 ### Supported features
 
