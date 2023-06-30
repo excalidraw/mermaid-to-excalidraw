@@ -1,5 +1,3 @@
-import React, { useEffect, useMemo } from "react";
-import { Excalidraw } from "@excalidraw/excalidraw";
 import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
@@ -22,7 +20,7 @@ const resolvablePromise = () => {
   return promise;
 };
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
-  const excalidrawRef = useMemo(
+  const excalidrawRef = React.useMemo(
     () => ({
       current: {
         readyPromise: resolvablePromise(),
@@ -31,7 +29,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
     []
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     excalidrawRef.current.readyPromise.then(
       (excalidrawAPI: ExcalidrawImperativeAPI) => {
         setTimeout(() => {
@@ -54,7 +52,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
       {
         className: "excalidraw-wrapper",
       },
-      React.createElement(Excalidraw, {
+      React.createElement(ExcalidrawLib.Excalidraw, {
         initialData: {
           files: props.files,
           appState: {
