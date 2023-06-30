@@ -76,6 +76,8 @@ function graphToExcalidraw(
 
 ### Playground
 
+[Open Playground](https://mermaid-to-excalidraw.vercel.app)
+
 - Additional Notes
   - If you're clicking the "Render to Excalidraw" button on the same diagram multiple times, you may notice a slight change of elements stroke on the Excalidraw diagram. This occurs as a result of the randomness featured in the libraries used by Excalidraw, specifically Rough.js.
 
