@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "lib/index.js",
+  "targets": {
+    "main": false
+  },
   "files": [
     "dist/*"
   ],
