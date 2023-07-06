@@ -137,7 +137,7 @@ import { graphToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
 - Unsupported diagram will be rendered as SVG image, For example:
 <table>
   <tr>
-    <th style="text-align: left">
+    <th align="left">
       <pre>
 gantt
   title A Gantt Diagram
@@ -155,7 +155,7 @@ gantt
     </th>
   </tr>
   <tr>
-    <th style="text-align: left">
+    <th align="left">
       <pre>
 erDiagram
   CUSTOMER ||--o{ ORDER : places
