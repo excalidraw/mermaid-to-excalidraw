@@ -124,16 +124,94 @@ import { graphToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
 ### Un-supported features
 
 - Unsupported Flowchart Features
+
   - Markdown strings (Fallback to text)
-    ![](./images/unsupported/markdown.png)
+    <table>
+    <tr>
+    <th align="left">
+    <pre>
+    flowchart LR
+      subgraph "One"
+      a("`The **cat** in the hat`") -- "edge label" --> b{{"`The **dog** in the hog`"}}
+    end
+    </pre>
+    </th>
+    <th>
+    <img src="./images/unsupported/markdown.png"/>
+    </th>
+    </tr>
+    </table>
   - Basic FontAwesome (Fallback to text, ignore icons)
-    ![](./images/unsupported/fontawesome.png)
+    <table>
+    <tr>
+    <th align="left">
+    <pre>
+    flowchart TD
+    B["fab:fa-twitter for peace"]
+    B-->C[fa:fa-ban forbidden]
+    B-->D(fa:fa-spinner)
+    B-->E(A fa:fa-camera-retro perhaps?)
+    </pre>
+    </th>
+    <th>
+    <img src="./images/unsupported/fontawesome.png"/>
+    </th>
+    </tr>
+    </table>
   - Cross arrow (Fallback to Excalidraw's `bar` arrow type)
   - Arrow: double_arrow_cross (fallback to Excalidraw's `bar` arrow type)
-    ![](./images/unsupported/cross-arrow.png)
+    <table>
+    <tr>
+    <th align="left">
+    <pre>
+    flowchart LR
+    C x--x D
+    </pre>
+    </th>
+    <th>
+    <img src="./images/unsupported/cross-arrow.png"/>
+    </th>
+    </tr>
+    </table>
   - Shape: subroutine, cylindrical, asymmetric, hexagon, Parallelogram, Trapezoid (all these shapes will fall back to similar supported shapes, including rectangles, rounds, rhombus.)
-    ![](./images/unsupported/shapes.png)
-  - Custom style from CSS classname
+    <table>
+    <tr>
+    <th align="left">
+    <pre>
+    flowchart LR
+    id1([This is the text in the box])
+
+    flowchart LR
+    id1[[This is the text in the box]]
+
+    flowchart LR
+    id1[(Database)]
+
+    flowchart LR
+    id1>This is the text in the box]
+
+    flowchart LR
+    id1{{This is the text in the box}}
+
+    flowchart TD
+    id1[/This is the text in the box/]
+
+    flowchart TD
+    id1[\This is the text in the box\]
+
+    flowchart TD
+    A[/Christmas\]
+
+    flowchart TD
+    B[\Go shopping/]
+    </pre>
+    </th>
+    <th>
+    <img src="./images/unsupported/shapes.png"/>
+    </th>
+    </tr>
+    </table>
+
 - Unsupported diagram will be rendered as SVG image, For example:
 <table>
   <tr>
