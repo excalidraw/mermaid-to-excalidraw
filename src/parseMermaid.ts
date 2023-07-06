@@ -191,7 +191,9 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
 
   const containerStyle: Vertex["containerStyle"] = {};
   labelContainerStyleText?.split(";").forEach((property) => {
-    if (!property) return;
+    if (!property) {
+      return;
+    }
 
     const key = property.split(":")[0].trim() as CONTAINER_STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
@@ -199,7 +201,9 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   });
   const labelStyle: Vertex["labelStyle"] = {};
   labelStyleText?.split(";").forEach((property) => {
-    if (!property) return;
+    if (!property) {
+      return;
+    }
 
     const key = property.split(":")[0].trim() as LABEL_STYLE_PROPERTY;
     const value = property.split(":")[1].trim();
