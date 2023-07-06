@@ -8,41 +8,31 @@ interface ExcalidrawWrapperProps {
   elements: ExcalidrawElement[];
   files?: BinaryFiles;
 }
-const resolvablePromise = () => {
-  let resolve;
-  let reject;
-  const promise: any = new Promise((_resolve, _reject) => {
-    resolve = _resolve;
-    reject = _reject;
-  });
-  promise.resolve = resolve;
-  promise.reject = reject;
-  return promise;
-};
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
-  const excalidrawRef = React.useMemo(
-    () => ({
-      current: {
-        readyPromise: resolvablePromise(),
-      },
-    }),
-    []
-  );
+  const excalidrawRef = React.useRef(null);
 
   React.useEffect(() => {
-    excalidrawRef.current.readyPromise.then(
-      (excalidrawAPI: ExcalidrawImperativeAPI) => {
-        setTimeout(() => {
-          excalidrawAPI.updateScene({
-            elements: props.elements,
-          });
-          excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
-            fitToContent: true,
-          });
-        }, 0);
-      }
-    );
-  }, [excalidrawRef.current]);
+    if (!props.elements || !excalidrawRef.current) {
+      return;
+    }
+
+    const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
+    excalidrawAPI.updateScene({
+      elements: props.elements,
+    });
+    excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
+      fitToContent: true,
+    });
+  }, [props.elements]);
+
+  React.useEffect(() => {
+    if (!props.files) {
+      return;
+    }
+
+    const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
+    excalidrawAPI.addFiles(Object.values(props.files));
+  }, [props.files]);
 
   return React.createElement(
     React.Fragment,
@@ -54,7 +44,6 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
       },
       React.createElement(ExcalidrawLib.Excalidraw, {
         initialData: {
-          files: props.files,
           appState: {
             viewBackgroundColor: "#fafafa",
             currentItemFontFamily: 1,

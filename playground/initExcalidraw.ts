@@ -8,7 +8,7 @@ excalidrawWrapper.id = "excalidraw";
 document.body.appendChild(excalidrawWrapper);
 
 // Init Excalidraw
-let root = ReactDOM.createRoot(excalidrawWrapper);
+const root = ReactDOM.createRoot(excalidrawWrapper);
 root.render(React.createElement(ExcalidrawWrapper));
 
 // Render to Excalidraw
@@ -21,8 +21,6 @@ export const renderExcalidraw = (
 
   console.info("renderExcalidraw", elements);
 
-  root.unmount();
-  root = ReactDOM.createRoot(excalidrawWrapper);
   root.render(
     React.createElement(ExcalidrawWrapper, {
       elements,
