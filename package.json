@@ -2,6 +2,7 @@
   "name": "@excalidraw/mermaid-to-excalidraw",
   "version": "0.1.0",
   "description": "Mermaid to Excalidraw Diagrams",
+  "main": "lib/index.js",
   "files": [
     "dist/*"
   ],

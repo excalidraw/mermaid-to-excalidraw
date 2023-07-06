@@ -4,12 +4,13 @@
     "strict": true,
     "module": "ES2015",
     "declaration": true,
-    "outDir": "dist",
+    "outDir": "lib",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
-  "include": ["src", "playground"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "**/__tests__/*"]
 }
