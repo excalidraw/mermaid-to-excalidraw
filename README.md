@@ -135,20 +135,38 @@ import { graphToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
     ![](./images/unsupported/shapes.png)
   - Custom style from CSS classname
 - Unsupported diagram will be rendered as SVG image, For example:
+<table>
+  <tr>
+    <th>
+      <pre>
+        gantt
+          title A Gantt Diagram
+          dateFormat  YYYY-MM-DD
+          section Section
+          A task           :a1, 2014-01-01, 30d
+          Another task     :after a1  , 20d
+          section Another
+          Task in sec      :2014-01-12  , 12d
+          another task      : 24d
+      </pre>
+    </th>
+    <th>
+       <img src="./images/unsupported/gantt.png"/>
+    </th>
+  </tr>
+  <tr>
+    <th>
+      <pre>
+        erDiagram
+          CUSTOMER ||--o{ ORDER : places
+          ORDER ||--|{ LINE-ITEM : contains
+          CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
+      </pre>
+    </th>
+    <th>
+       <img src="./images/unsupported/erdiagram.png"/>
+    </th>
+  </tr>
+</table>
   ```
-  gantt
-    title A Gantt Diagram
-    dateFormat  YYYY-MM-DD
-    section Section
-    A task           :a1, 2014-01-01, 30d
-    Another task     :after a1  , 20d
-    section Another
-    Task in sec      :2014-01-12  , 12d
-    another task      : 24d
-  ```
-  ```
-  erDiagram
-    CUSTOMER ||--o{ ORDER : places
-    ORDER ||--|{ LINE-ITEM : contains
-    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
   ```
