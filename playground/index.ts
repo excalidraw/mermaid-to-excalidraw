@@ -87,7 +87,7 @@ async function renderDiagram(
 
   // Get parsed data
   try {
-    const data = await parseMermaid(mermaid, diagramDefinition, {
+    const data = await parseMermaid(diagramDefinition, {
       fontSize: DEFAULT_FONT_SIZE,
     });
 

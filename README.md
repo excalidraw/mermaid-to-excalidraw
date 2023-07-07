@@ -34,7 +34,7 @@ import {
 
 let mermaidGraphData;
 try {
-  mermaidGraphData = await parseMermaid(mermaid, diagramDefinition, {
+  mermaidGraphData = await parseMermaid(diagramDefinition, {
     fontSize: DEFAULT_FONT_SIZE,
   });
 } catch (e) {
@@ -50,13 +50,12 @@ const { elements, files } = graphToExcalidraw(mermaidGraphData);
 
 ### parseMermaid
 
-Takes `mermaid`, `diagramDefinition`, and optional `options` as inputs, and return either a `Graph` or `GraphImage`. If the diagram is unsupported, it renders as an SVG image (GraphImage).
+Takes `diagramDefinition` and optional `options` as inputs, and return either a `Graph` or `GraphImage`. If the diagram is unsupported, it renders as an SVG image (GraphImage).
 
 **_Signature_**
 
 ```ts
 function parseMermaid(
-  mermaid: Mermaid,
   diagramDefinition: string,
   options?: {
     fontSize: number; // default 20

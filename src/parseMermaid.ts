@@ -1,4 +1,4 @@
-import { Mermaid } from "mermaid";
+import mermaid, { Mermaid } from "mermaid";
 import {
   CONTAINER_STYLE_PROPERTY,
   Cluster,
@@ -16,10 +16,11 @@ interface ParseMermaidOptions {
   fontSize?: number;
 }
 export const parseMermaid = async (
-  mermaid: Mermaid,
   definition: string,
   options: ParseMermaidOptions = {}
 ): Promise<Graph | GraphImage> => {
+  mermaid.initialize({ startOnLoad: false });
+
   // Check supported diagram type, fallback to image if diagram type not-supported
   if (!isSupportedDiagram(definition)) {
     // Render the diagram with default curve and export as svg image
