@@ -26,7 +26,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   }, [props.elements]);
 
   React.useEffect(() => {
-    if (!props.files) {
+    if (!props.files || !excalidrawRef.current) {
       return;
     }
 
