@@ -22,6 +22,12 @@ Eslint code test:
 yarn test:code
 ```
 
+Build command:
+
+```
+yarn build:package
+```
+
 ## Get started
 
 Example code:

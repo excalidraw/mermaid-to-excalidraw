@@ -1,11 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 /dist
+/dist-playground
 .cache
 .parcel-cache
 /excalidraw-package
 /public
 /package
-/lib
 
 # dependencies
 /node_modules

@@ -2,7 +2,7 @@
   "name": "@excalidraw/mermaid-to-excalidraw",
   "version": "0.1.0",
   "description": "Mermaid to Excalidraw Diagrams",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "targets": {
     "main": false
   },
@@ -11,9 +11,9 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build:package": "tsc -p tsconfig.package.json",
     "start:playground": "parcel playground/index.html --open",
-    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist --public-url /",
+    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist-playground --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {

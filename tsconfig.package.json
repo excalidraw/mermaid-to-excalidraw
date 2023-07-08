@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "playground/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "**/__tests__/*"]
 }
