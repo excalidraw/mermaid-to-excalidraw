@@ -11,9 +11,9 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "tsc -b src",
+    "build": "rm -rf ./dist && tsc -b src",
     "start:playground": "parcel playground/index.html --open",
-    "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir ./playground/dist --public-url /",
+    "build:playground": "rm -rf ./playground/dist && parcel build playground/index.html --no-scope-hoist --dist-dir ./playground/dist --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {
