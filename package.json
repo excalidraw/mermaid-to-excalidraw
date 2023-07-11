@@ -11,7 +11,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.package.json",
+    "build": "tsc -b src",
     "start:playground": "parcel playground/index.html --open",
     "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir ./playground/dist --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."

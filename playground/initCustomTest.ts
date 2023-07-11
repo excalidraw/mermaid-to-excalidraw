@@ -30,7 +30,7 @@ btn.addEventListener("click", async () => {
     diagramEl.innerHTML = svg;
 
     // Parse Mermaid diagram and render to Excalidraw
-    const parsedData = await parseMermaid(mermaid, diagramDefinition, {
+    const parsedData = await parseMermaid(diagramDefinition, {
       fontSize: customFontSize,
     });
 
