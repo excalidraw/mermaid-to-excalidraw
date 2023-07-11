@@ -25,7 +25,7 @@ yarn test:code
 Build command:
 
 ```
-yarn build:package
+yarn build
 ```
 
 ## Get started

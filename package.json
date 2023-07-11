@@ -11,7 +11,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build:package": "tsc -p tsconfig.package.json",
+    "build": "tsc -p tsconfig.package.json",
     "start:playground": "parcel playground/index.html --open",
     "build:playground": "parcel build playground/index.html --no-scope-hoist --dist-dir dist-playground --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
@@ -27,7 +27,7 @@
     "@excalidraw/excalidraw": "0.15.2-6546-9e6751c",
     "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "9.2.0",
-    "@types/react": "^18.2.14",
+    "@types/react": "18.2.14",
     "@types/react-dom": "18.2.4",
     "@typescript-eslint/eslint-plugin": "5.59.9",
     "@typescript-eslint/parser": "5.59.9",
@@ -36,7 +36,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "parcel": "2.9.1",
     "prettier": "2.8.8",
-    "process": "^0.11.10",
+    "process": "0.11.10",
     "typescript": "4.4.4"
   },
   "resolutions": {
