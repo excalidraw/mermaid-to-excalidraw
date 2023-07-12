@@ -1,6 +1,10 @@
 body {
   font-family: sans-serif;
-  width: 50vw;
+
+  #flowchart-container,
+  #unsupported {
+    max-width: 48%;
+  }
 }
 
 #excalidraw {

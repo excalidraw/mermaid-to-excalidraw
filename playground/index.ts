@@ -12,7 +12,7 @@ import { renderExcalidraw } from "./initExcalidraw";
 
 (async () => {
   // Render flowchart diagrams
-  const flowchartContainer = document.createElement("div");
+  const flowchartContainer = document.getElementById("flowchart-container")!;
   document.body.appendChild(flowchartContainer);
   await Promise.all(
     FLOWCHART_DIAGRAM_TESTCASES.map((diagramDefinition, i) => {
@@ -21,7 +21,7 @@ import { renderExcalidraw } from "./initExcalidraw";
   );
 
   // Render unsupported diagrams
-  const unsupportedContainer = document.createElement("div");
+  const unsupportedContainer = document.getElementById("unsupported")!;
   unsupportedContainer.innerHTML = `
     <h1 style="margin-top: 50px">Unsupported diagrams</h1>
     <p>Unsupported diagram will be rendered as SVG image.</p>
