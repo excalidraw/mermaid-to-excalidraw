@@ -13,7 +13,7 @@ yarn
 Start development playground:
 
 ```
-yarn start:playground
+yarn start
 ```
 
 Eslint code test:
