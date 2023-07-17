@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "strict": true,
+    "module": "ES2015",
+    "declaration": true,
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "**/__tests__/*"]
+}

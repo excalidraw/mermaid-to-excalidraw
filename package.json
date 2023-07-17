@@ -1,0 +1,48 @@
+{
+  "name": "@excalidraw/mermaid-to-excalidraw",
+  "version": "0.1.0",
+  "description": "Mermaid to Excalidraw Diagrams",
+  "main": "dist/index.js",
+  "//": "Set targets.main = false, this instructs Parcel to ignore the main parameters.",
+  "targets": {
+    "main": false
+  },
+  "files": [
+    "dist/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf ./dist && tsc -b src && uglifyjs-folder dist -eo dist -x .js",
+    "start:playground": "parcel playground/index.html --open --dist-dir ./public",
+    "build:playground": "rm -rf ./public && parcel build playground/index.html --no-scope-hoist --dist-dir ./public --public-url /",
+    "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
+  },
+  "dependencies": {
+    "markdown-to-text": "0.1.1",
+    "mermaid": "10.2.3",
+    "nanoid": "4.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "7.12.0",
+    "@excalidraw/eslint-config": "1.0.3",
+    "@excalidraw/excalidraw": "0.15.2-6546-9e6751c",
+    "@parcel/transformer-sass": "2.9.1",
+    "@types/mermaid": "9.2.0",
+    "@types/react": "18.2.14",
+    "@types/react-dom": "18.2.4",
+    "@typescript-eslint/eslint-plugin": "5.59.9",
+    "@typescript-eslint/parser": "5.59.9",
+    "eslint": "8.42.0",
+    "eslint-config-prettier": "8.8.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "parcel": "2.9.1",
+    "prettier": "2.8.8",
+    "process": "0.11.10",
+    "typescript": "4.4.4",
+    "uglifyjs-folder": "^3.3.0"
+  },
+  "resolutions": {
+    "@babel/preset-env": "7.13.8"
+  },
+  "keywords": []
+}

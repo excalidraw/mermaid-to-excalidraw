@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mermaid to Excalidraw Playground</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.scss" />
+  </head>
+
+  <body>
+    <section id="custom-test">
+      <h1>Custom Test</h1>
+      <ul>
+        <li>
+          Support only flowchart diagram (the input must started with
+          "flowchart")
+        </li>
+        <li>
+          See supported and unsupported features at
+          <a
+            target="_blank"
+            href="https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#issue-1686226562"
+            >PR's description</a
+          >
+        </li>
+      </ul>
+      <br />
+      <textarea
+        id="mermaid-input"
+        rows="10"
+        cols="50"
+        placeholder="Input Mermaid Syntax"
+      ></textarea
+      ><br />
+      <label for="font-size-input">Custom Font Size: </label>
+      <input type="number" id="font-size-input" value="20" /><br />
+      <button id="render-excalidraw-btn">Render to Excalidraw</button>
+      <div id="custom-diagram"></div>
+      <details id="parsed-data-details">
+        <summary>Parsed data from parseMermaid</summary>
+        <pre id="custom-parsed-data"></pre>
+      </details>
+      <div id="error"></div>
+    </section>
+
+    <img
+      src="./images/spinner.gif"
+      alt="Loading Spinner"
+      id="diagram-loading-spinner"
+      width="50"
+    />
+    <div id="flowchart-container"></div>
+    <div id="unsupported"></div>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/@excalidraw/excalidraw@0.15.2-6546-9e6751c/dist/excalidraw.development.js"
+    ></script>
+    <script type="module" src="index.ts"></script>
+  </body>
+</html>
