@@ -883,10 +883,10 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/eslint-config/-/eslint-config-1.0.3.tgz#2122ef7413ae77874ae9848ce0f1c6b3f0d8bbbd"
   integrity sha512-GemHNF5Z6ga0BWBSX7GJaNBUchLu6RwTcAB84eX1MeckRNhNasAsPCdelDlFalz27iS4RuYEQh0bPE8SRxJgbQ==
 
-"@excalidraw/excalidraw@0.15.2-6546-9e6751c":
-  version "0.15.2-6546-9e6751c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.15.2-6546-9e6751c.tgz#4382a0dfc26d1a68a7720b4be3fce0ebb5d3153b"
-  integrity sha512-IFpTUaD7C2mQuYAHuk9kvRLQE9IxHSmk1NHHr5FRyY+lxb0X1SirWjKTau5GbGZ9hNUlUoXxJtU9yi25xVly8A==
+"@excalidraw/excalidraw@0.15.2-6546-a6b389c":
+  version "0.15.2-6546-a6b389c"
+  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.15.2-6546-a6b389c.tgz#9fe05bc0b870c75b78f513f695ad60bd9680f1ba"
+  integrity sha512-pUwrB3a6mQxfygxlGvtY3qmyjY1bnExa8w0Sl+HeYXYltSHX0YP/sMw5dUmtWhbVoLQjhsovdP0Inz+KitlMeQ==
 
 "@humanwhocodes/config-array@^0.11.10":
   version "0.11.10"
@@ -4473,7 +4473,7 @@ typescript@4.4.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.4.tgz#2cd01a1a1f160704d3101fd5a58ff0f9fcb8030c"
   integrity sha512-DqGhF5IKoBl8WNf8C1gu8q0xZSInh9j1kJJMqT3a94w1JzVaBU4EXOSMrz9yDqMT0xt3selp83fuFMQ0uzv6qA==
 
-uglifyjs-folder@^3.3.0:
+uglifyjs-folder@3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/uglifyjs-folder/-/uglifyjs-folder-3.3.0.tgz#5b53ad2af5e6fb2f0837a0a3e7bd48f23dfdea2d"
   integrity sha512-Kmo7F2lwO+qYui3TCaOJ9GsiEEtEhqe7BWk5hti4W6WVKUUi/UPsu415QiSr4Q2wFU9HUZUBogdwM9EZyXLPpw==

@@ -13,7 +13,7 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf ./dist && tsc -b src && uglifyjs-folder dist -eo dist -x .js",
-    "start:playground": "parcel playground/index.html --open --dist-dir ./public",
+    "start": "parcel playground/index.html --open --dist-dir ./public",
     "build:playground": "rm -rf ./public && parcel build playground/index.html --no-scope-hoist --dist-dir ./public --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
@@ -25,7 +25,7 @@
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
-    "@excalidraw/excalidraw": "0.15.2-6546-9e6751c",
+    "@excalidraw/excalidraw": "0.15.2-6546-a6b389c",
     "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "9.2.0",
     "@types/react": "18.2.14",
@@ -39,7 +39,7 @@
     "prettier": "2.8.8",
     "process": "0.11.10",
     "typescript": "4.4.4",
-    "uglifyjs-folder": "^3.3.0"
+    "uglifyjs-folder": "3.3.0"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
