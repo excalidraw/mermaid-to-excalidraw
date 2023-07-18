@@ -2,12 +2,14 @@ import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types/types";
-import { ExcalidrawElement } from "../src/types";
+import { ExcalidrawProgrammaticElement } from "@excalidraw/excalidraw/types/data/transform";
 
 interface ExcalidrawWrapperProps {
-  elements: ExcalidrawElement[];
+  elements: ExcalidrawProgrammaticElement[];
   files?: BinaryFiles;
 }
+
+const { Excalidraw, convertToExcalidrawElements } = ExcalidrawLib;
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const excalidrawRef = React.useRef(null);
 
@@ -18,7 +20,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
 
     const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
     excalidrawAPI.updateScene({
-      elements: props.elements,
+      elements: convertToExcalidrawElements(props.elements),
     });
     excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
       fitToContent: true,
@@ -42,7 +44,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
       {
         className: "excalidraw-wrapper",
       },
-      React.createElement(ExcalidrawLib.Excalidraw, {
+      React.createElement(Excalidraw, {
         initialData: {
           appState: {
             viewBackgroundColor: "#fafafa",
