@@ -883,10 +883,10 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/eslint-config/-/eslint-config-1.0.3.tgz#2122ef7413ae77874ae9848ce0f1c6b3f0d8bbbd"
   integrity sha512-GemHNF5Z6ga0BWBSX7GJaNBUchLu6RwTcAB84eX1MeckRNhNasAsPCdelDlFalz27iS4RuYEQh0bPE8SRxJgbQ==
 
-"@excalidraw/excalidraw@0.15.2-6546-a6b389c":
-  version "0.15.2-6546-a6b389c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.15.2-6546-a6b389c.tgz#9fe05bc0b870c75b78f513f695ad60bd9680f1ba"
-  integrity sha512-pUwrB3a6mQxfygxlGvtY3qmyjY1bnExa8w0Sl+HeYXYltSHX0YP/sMw5dUmtWhbVoLQjhsovdP0Inz+KitlMeQ==
+"@excalidraw/excalidraw@0.15.2-6546-eae7ba2":
+  version "0.15.2-6546-eae7ba2"
+  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.15.2-6546-eae7ba2.tgz#17d9bf4af43ab6be8ee5b3a3c8f62745b6b6e035"
+  integrity sha512-orgxBo1Ykus12mjzjENDJeVfAdHXOGlB1WxcvOr8SdkCDvuV4Aj3x3SGqryNZ1EtXCQScyvcrMCopVmyGSkl5g==
 
 "@humanwhocodes/config-array@^0.11.10":
   version "0.11.10"
