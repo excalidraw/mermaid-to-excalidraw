@@ -2,10 +2,10 @@ import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types/types";
-import { ExcalidrawProgrammaticElement } from "@excalidraw/excalidraw/types/data/transform";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
 
 interface ExcalidrawWrapperProps {
-  elements: ExcalidrawProgrammaticElement[];
+  elements: ExcalidrawElementSkeleton[];
   files?: BinaryFiles;
 }
 

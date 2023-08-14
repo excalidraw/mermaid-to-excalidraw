@@ -11,7 +11,7 @@ import {
   VERTEX_TYPE,
 } from "./interfaces";
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
-import { ExcalidrawProgrammaticElement } from "@excalidraw/excalidraw/types/data/transform";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
 import {
   Arrowhead,
   FileId,
@@ -25,7 +25,7 @@ interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
 interface GraphToExcalidrawResult {
-  elements: ExcalidrawProgrammaticElement[];
+  elements: ExcalidrawElementSkeleton[];
   files?: BinaryFiles;
 }
 export const graphToExcalidraw = (
@@ -36,7 +36,7 @@ export const graphToExcalidraw = (
     const imageId = nanoid() as FileId;
 
     const { width, height } = graph;
-    const imageElement: ExcalidrawProgrammaticElement = {
+    const imageElement: ExcalidrawElementSkeleton = {
       type: "image",
       x: 0,
       y: 0,
@@ -55,7 +55,7 @@ export const graphToExcalidraw = (
     return { files, elements: [imageElement] };
   }
 
-  const elements: ExcalidrawProgrammaticElement[] = [];
+  const elements: ExcalidrawElementSkeleton[] = [];
   const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
   const { getGroupIds, getParentId } = computeGroupIds(graph);
 
@@ -63,7 +63,7 @@ export const graphToExcalidraw = (
   graph.clusters.reverse().forEach((cluster) => {
     const groupIds = getGroupIds(cluster.id);
 
-    const containerElement: ExcalidrawProgrammaticElement = {
+    const containerElement: ExcalidrawElementSkeleton = {
       id: cluster.id,
       type: "rectangle",
       groupIds,
@@ -90,7 +90,7 @@ export const graphToExcalidraw = (
     const containerStyle = computeExcalidrawVertexStyle(vertex.containerStyle);
     const labelStyle = computeExcalidrawVertexLabelStyle(vertex.labelStyle);
 
-    let containerElement: ExcalidrawProgrammaticElement = {
+    let containerElement: ExcalidrawElementSkeleton = {
       id: vertex.id,
       type: "rectangle",
       groupIds,
@@ -123,7 +123,7 @@ export const graphToExcalidraw = (
         // Create new groupId for double circle
         groupIds.push(`doublecircle_${vertex.id}}`);
         // Create inner circle element
-        const innerCircle: ExcalidrawProgrammaticElement = {
+        const innerCircle: ExcalidrawElementSkeleton = {
           type: "ellipse",
           groupIds,
           x: vertex.x + CIRCLE_MARGIN,
@@ -177,7 +177,7 @@ export const graphToExcalidraw = (
     const arrowType = computeExcalidrawArrowType(edge.type);
 
     const arrowId = `${edge.start}_${edge.end}`;
-    const containerElement: ExcalidrawProgrammaticElement = {
+    const containerElement: ExcalidrawElementSkeleton = {
       id: arrowId,
       type: "arrow",
       groupIds,
