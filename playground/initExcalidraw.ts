@@ -1,6 +1,8 @@
 import ExcalidrawWrapper from "./ExcalidrawWrapper";
 import { graphToExcalidraw } from "../src";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
+import React from "react";
+import { createRoot } from "react-dom/client";
 
 // Create Excalidraw Wrapper element
 const excalidrawWrapper = document.createElement("div");
@@ -8,7 +10,7 @@ excalidrawWrapper.id = "excalidraw";
 document.body.appendChild(excalidrawWrapper);
 
 // Init Excalidraw
-const root = ReactDOM.createRoot(excalidrawWrapper);
+const root = createRoot(excalidrawWrapper);
 root.render(React.createElement(ExcalidrawWrapper));
 
 // Render to Excalidraw

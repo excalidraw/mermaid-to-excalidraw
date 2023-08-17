@@ -12,10 +12,12 @@ import {
 } from "./interfaces";
 import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import {
   Arrowhead,
   FileId,
   ExcalidrawTextElement,
+  ExcalidrawElement,
 } from "@excalidraw/excalidraw/types/element/types";
 import { ExcalidrawVertexElement } from "./types";
 import { nanoid } from "nanoid";
@@ -25,7 +27,7 @@ interface GraphToExcalidrawOptions {
   fontSize?: number;
 }
 interface GraphToExcalidrawResult {
-  elements: ExcalidrawElementSkeleton[];
+  elements: ExcalidrawElement[];
   files?: BinaryFiles;
 }
 export const graphToExcalidraw = (
@@ -52,7 +54,7 @@ export const graphToExcalidraw = (
         dataURL: graph.dataURL,
       },
     } as BinaryFiles;
-    return { files, elements: [imageElement] };
+    return { files, elements: convertToExcalidrawElements([imageElement]) };
   }
 
   const elements: ExcalidrawElementSkeleton[] = [];
@@ -215,7 +217,7 @@ export const graphToExcalidraw = (
   });
 
   return {
-    elements,
+    elements: convertToExcalidrawElements(elements),
   };
 };
 

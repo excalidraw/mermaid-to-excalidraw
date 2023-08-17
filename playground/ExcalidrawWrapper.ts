@@ -1,15 +1,15 @@
+import React from "react";
 import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types/types";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
-
+import { Excalidraw } from "@excalidraw/excalidraw";
+import { ExcalidrawElement } from "../src/types";
 interface ExcalidrawWrapperProps {
-  elements: ExcalidrawElementSkeleton[];
+  elements: ExcalidrawElement[];
   files?: BinaryFiles;
 }
 
-const { Excalidraw, convertToExcalidrawElements } = ExcalidrawLib;
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const excalidrawRef = React.useRef(null);
 
@@ -20,7 +20,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
 
     const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
     excalidrawAPI.updateScene({
-      elements: convertToExcalidrawElements(props.elements),
+      elements: props.elements,
     });
     excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
       fitToContent: true,
