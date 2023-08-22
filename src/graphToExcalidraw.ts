@@ -1,4 +1,4 @@
-import markdownToText from "markdown-to-text";
+import { removeMarkdown } from "@excalidraw/markdown-to-text";
 import { DEFAULT_FONT_SIZE } from "./constants";
 import {
   Cluster,
@@ -320,7 +320,7 @@ const computeExcalidrawArrowType = (mermaidArrowType: string): ArrowType => {
 const getText = (element: Vertex | Edge | Cluster): string => {
   let text = element.text;
   if (element.labelType === "markdown") {
-    text = markdownToText(element.text);
+    text = removeMarkdown(element.text);
   }
 
   return removeFontAwesomeIcons(text);
