@@ -69,6 +69,6 @@ export interface GraphImage {
 export interface Graph {
   type: "graph";
   clusters: Cluster[];
-  vertices: { [key: string]: Vertex };
+  vertices: { [key: string]: Vertex | undefined };
   edges: Edge[];
 }

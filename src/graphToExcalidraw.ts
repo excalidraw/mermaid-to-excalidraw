@@ -84,6 +84,9 @@ export const graphToExcalidraw = (
 
   // Vertices
   Object.values(graph.vertices).forEach((vertex) => {
+    if (!vertex) {
+      return;
+    }
     const groupIds = getGroupIds(vertex.id);
 
     // Compute custom style
