@@ -100,7 +100,6 @@ export const parseMermaid = async (
   // Get mermaid parsed data from Jison parser shared variable `yy`
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
-  console.log(root, "ROOT");
   diagramEl.remove();
 
   return root;
@@ -190,7 +189,6 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
     link ? el.parentElement : el,
     containerEl
   );
-  console.log("POSITION", position);
   // Get dimension
   const boundingBox = el.getBBox();
   const dimension = {
