@@ -888,7 +888,7 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.15.2-6546-3398d86.tgz#e74d5ad944b8b414924d27ee91469a32b4f08dbf"
   integrity sha512-Tzq6qighJUytXRA8iMzQ8onoGclo9CuvPSw7DMvPxME8nxAxn5CeK/gsxIs3zwooj9CC6XF42BSrx0+n+fPxaQ==
 
-"@excalidraw/markdown-to-text@^0.1.2":
+"@excalidraw/markdown-to-text@0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@excalidraw/markdown-to-text/-/markdown-to-text-0.1.2.tgz#1703705e7da608cf478f17bfe96fb295f55a23eb"
   integrity sha512-1nDXBNAojfi3oSFwJswKREkFm5wrSjqay81QlyRv2pkITG/XYB5v+oChENVBQLcxQwX4IUATWvXM5BcaNhPiIg==

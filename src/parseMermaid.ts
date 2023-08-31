@@ -15,6 +15,20 @@ import { DEFAULT_FONT_SIZE } from "./constants";
 interface ParseMermaidOptions {
   fontSize?: number;
 }
+
+const getTransformAttr = (el: Element) => {
+  const transformAttr = el.getAttribute("transform");
+  const translateMatch = transformAttr?.match(
+    /translate\(([\d.-]+),\s*([\d.-]+)\)/
+  );
+  let transformX = 0;
+  let transformY = 0;
+  if (translateMatch) {
+    transformX = Number(translateMatch[1]);
+    transformY = Number(translateMatch[2]);
+  }
+  return { transformX, transformY };
+};
 export const parseMermaid = async (
   definition: string,
   options: ParseMermaidOptions = {}
@@ -86,7 +100,7 @@ export const parseMermaid = async (
   // Get mermaid parsed data from Jison parser shared variable `yy`
   const mermaidParser = diagram.parser.yy;
   const root = parseRoot(mermaidParser, diagramEl);
-
+  console.log(root, "ROOT");
   diagramEl.remove();
 
   return root;
@@ -176,7 +190,7 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
     link ? el.parentElement : el,
     containerEl
   );
-
+  console.log("POSITION", position);
   // Get dimension
   const boundingBox = el.getBBox();
   const dimension = {
@@ -292,39 +306,35 @@ const computeElementPosition = (
   }
 
   let root = el.parentElement?.parentElement;
-  const style = getComputedStyle(el);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-  const transformX = matrix.m41 || 0;
-  const transformY = matrix.m42 || 0;
 
   const childElement = el.childNodes[0] as SVGSVGElement;
   let childPosition = { x: 0, y: 0 };
   if (childElement) {
-    const childStyle = getComputedStyle(childElement);
-    const childMatrix = new DOMMatrixReadOnly(childStyle.transform);
+    const { transformX, transformY } = getTransformAttr(childElement);
+
     const boundingBox = childElement.getBBox();
     childPosition = {
       x:
         Number(childElement.getAttribute("x")) ||
-        childMatrix.m41 + boundingBox.x ||
+        transformX + boundingBox.x ||
         0,
       y:
         Number(childElement.getAttribute("y")) ||
-        childMatrix.m42 + boundingBox.y ||
+        transformY + boundingBox.y ||
         0,
     };
   }
 
+  const { transformX, transformY } = getTransformAttr(el);
   const position = {
     x: transformX + childPosition.x,
     y: transformY + childPosition.y,
   };
   while (root && root.id !== containerEl.id) {
     if (root.classList.value === "root" && root.hasAttribute("transform")) {
-      const style = getComputedStyle(root);
-      const matrix = new DOMMatrixReadOnly(style.transform);
-      position.x += matrix.m41;
-      position.y += matrix.m42;
+      const { transformX, transformY } = getTransformAttr(root);
+      position.x += transformX;
+      position.y += transformY;
     }
 
     root = root.parentElement;
