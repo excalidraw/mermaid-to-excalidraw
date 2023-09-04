@@ -23,9 +23,9 @@ import { renderExcalidraw } from "./initExcalidraw";
   // Render unsupported diagrams
   const unsupportedContainer = document.getElementById("unsupported")!;
   unsupportedContainer.innerHTML = `
-    <h1 style="margin-top: 50px">Unsupported diagrams</h1>
-    <p>Unsupported diagram will be rendered as SVG image.</p>
-  `;
+      <h1 style="margin-top: 50px">Unsupported diagrams</h1>
+      <p>Unsupported diagram will be rendered as SVG image.</p>
+    `;
   const indexOffset = FLOWCHART_DIAGRAM_TESTCASES.length;
   document.body.appendChild(unsupportedContainer);
   await Promise.all(
