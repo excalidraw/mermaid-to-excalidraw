@@ -29,6 +29,7 @@ const getTransformAttr = (el: Element) => {
   }
   return { transformX, transformY };
 };
+
 export const parseMermaid = async (
   definition: string,
   options: ParseMermaidOptions = {}
@@ -123,7 +124,7 @@ const parseRoot = (
     .map((data) => parseCluster(data, containerEl));
 
   return {
-    type: "graph",
+    type: "flowchart",
     clusters,
     vertices,
     edges,

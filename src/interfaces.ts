@@ -1,3 +1,6 @@
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
+import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
+
 export enum VERTEX_TYPE {
   ROUND = "round",
   STADIUM = "stadium",
@@ -66,9 +69,20 @@ export interface GraphImage {
   height: number;
 }
 
+type ImplementedGraphTypes = "flowchart";
+
 export interface Graph {
-  type: "graph";
+  type: ImplementedGraphTypes;
   clusters: Cluster[];
   vertices: { [key: string]: Vertex | undefined };
   edges: Edge[];
+}
+
+export interface GraphToExcalidrawResult {
+  elements: ExcalidrawElementSkeleton[];
+  files?: BinaryFiles;
+}
+
+export interface GraphToExcalidrawOptions {
+  fontSize?: number;
 }
