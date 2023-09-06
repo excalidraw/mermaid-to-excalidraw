@@ -1,12 +1,12 @@
 import { MermaidOptions } from ".";
 import { FlowchartConverter } from "./converter/types/flowchart";
 import { GraphImageConverter } from "./converter/types/graphImage";
-import { Graph, GraphImage, GraphToExcalidrawResult } from "./interfaces";
+import { Graph, GraphImage, MermaidToExcalidrawResult } from "./interfaces";
 
 export const graphToExcalidraw = (
   graph: Graph | GraphImage,
   options: MermaidOptions = {}
-): GraphToExcalidrawResult => {
+): MermaidToExcalidrawResult => {
   switch (graph.type) {
     case "graphImage": {
       return GraphImageConverter.convert(graph, options);

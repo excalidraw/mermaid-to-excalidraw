@@ -1,9 +1,6 @@
+import { MermaidOptions } from "..";
 import { DEFAULT_FONT_SIZE } from "../constants";
-import {
-  Graph,
-  GraphToExcalidrawOptions,
-  GraphToExcalidrawResult,
-} from "../interfaces";
+import { Graph, MermaidToExcalidrawResult } from "../interfaces";
 
 export class GraphConverter<T = Graph> {
   private converter;
@@ -12,12 +9,12 @@ export class GraphConverter<T = Graph> {
   }: {
     converter: (
       graph: T,
-      options: Required<GraphToExcalidrawOptions>
-    ) => GraphToExcalidrawResult;
+      options: Required<MermaidOptions>
+    ) => MermaidToExcalidrawResult;
   }) {
     this.converter = converter;
   }
-  convert = (graph: T, options: GraphToExcalidrawOptions) => {
+  convert = (graph: T, options: MermaidOptions) => {
     return this.converter(graph, {
       ...options,
       fontSize: options.fontSize || DEFAULT_FONT_SIZE,

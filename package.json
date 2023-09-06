@@ -1,6 +1,6 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "0.1.0",
+  "version": "0.1.0-api",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "//": "Set targets.main = false, this instructs Parcel to ignore the main parameters.",
