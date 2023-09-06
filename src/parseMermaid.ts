@@ -11,10 +11,7 @@ import {
 } from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
-
-export interface ParseMermaidOptions {
-  fontSize?: number;
-}
+import { MermaidOptions } from ".";
 
 const getTransformAttr = (el: Element) => {
   const transformAttr = el.getAttribute("transform");
@@ -32,7 +29,7 @@ const getTransformAttr = (el: Element) => {
 
 export const parseMermaid = async (
   definition: string,
-  options: ParseMermaidOptions = {}
+  options: MermaidOptions = {}
 ): Promise<Graph | GraphImage> => {
   mermaid.initialize({ startOnLoad: false });
 

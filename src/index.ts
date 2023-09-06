@@ -1,9 +1,12 @@
 import { graphToExcalidraw } from "./graphToExcalidraw";
-import { ParseMermaidOptions, parseMermaid } from "./parseMermaid";
+import { parseMermaid } from "./parseMermaid";
 
+export interface MermaidOptions {
+  fontSize?: number;
+}
 const parseMermaidToExcalidraw = async (
   definition: string,
-  options: ParseMermaidOptions = {}
+  options: MermaidOptions = {}
 ) => {
   const parsedMermaidData = await parseMermaid(definition, options);
   const excalidrawElements = graphToExcalidraw(parsedMermaidData, options);

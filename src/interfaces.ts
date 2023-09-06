@@ -82,7 +82,3 @@ export interface GraphToExcalidrawResult {
   elements: ExcalidrawElementSkeleton[];
   files?: BinaryFiles;
 }
-
-export interface GraphToExcalidrawOptions {
-  fontSize?: number;
-}
