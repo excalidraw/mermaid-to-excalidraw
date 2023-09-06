@@ -1,5 +1,5 @@
 import ExcalidrawWrapper from "./ExcalidrawWrapper";
-import { graphToExcalidraw } from "../src";
+import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 
 // Create Excalidraw Wrapper element

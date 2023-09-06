@@ -78,11 +78,7 @@ export interface Graph {
   edges: Edge[];
 }
 
-export interface GraphToExcalidrawResult {
+export interface MermaidToExcalidrawResult {
   elements: ExcalidrawElementSkeleton[];
   files?: BinaryFiles;
-}
-
-export interface GraphToExcalidrawOptions {
-  fontSize?: number;
 }

@@ -33,70 +33,43 @@ yarn build
 Example code:
 
 ```ts
-import {
-  parseMermaid,
-  graphToExcalidraw,
-} from "@excalidraw/mermaid-to-excalidraw";
+import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
 
-let mermaidGraphData;
 try {
-  mermaidGraphData = await parseMermaid(diagramDefinition, {
+  const { elements, files } = await parseMermaid(diagramDefinition, {
     fontSize: DEFAULT_FONT_SIZE,
   });
+  // Render elements and files on Excalidraw
 } catch (e) {
   // Parse error, displaying error message to users
 }
-
-const { elements, files } = graphToExcalidraw(mermaidGraphData);
-
-// Render elements and files on Excalidraw
 ```
 
 ## API
 
-### parseMermaid
+### parseMermaidToExcalidraw
 
-Takes `diagramDefinition` and optional `options` as inputs, and return either a `Graph` or `GraphImage`. If the diagram is unsupported, it renders as an SVG image (GraphImage).
+Takes `diagramDefinition` and optional `options` as inputs, and it return `elements` and optionally `files`.
 
 **_Signature_**
 
 ```ts
-function parseMermaid(
-  diagramDefinition: string,
-  options?: {
-    fontSize: number; // default 20
-  }
-): Graph | GraphImage;
+import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
+
+try {
+  const { elements, files } = await parseMermaid(diagramDefinition, {
+    fontSize: DEFAULT_FONT_SIZE,
+  });
+  // Render elements and files on Excalidraw
+} catch (e) {
+  // Parse error, displaying error message to users
+}
 ```
 
 **How to use**
 
 ```ts
-import { parseMermaid } from "@excalidraw/mermaid-to-excalidraw";
-```
-
-### graphToExcalidraw
-
-Takes a `Graph` or `GraphImage` and optional `options` as inputs, and returns `elements` and optionally `files`.
-
-**_Signature_**
-
-```ts
-function graphToExcalidraw(
-  graph: Graph | GraphImage,
-  options?: {
-    fontSize: number;
-  }
-): {
-  elements: ExcalidrawElement[];
-  files?: BinaryFiles;
-};
-```
-
-**How to use**
-
-```ts
-import { graphToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
+import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
 ```
 
 ## Playground
