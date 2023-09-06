@@ -12,7 +12,7 @@ import {
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
 
-interface ParseMermaidOptions {
+export interface ParseMermaidOptions {
   fontSize?: number;
 }
 

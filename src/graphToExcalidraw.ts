@@ -20,7 +20,9 @@ export const graphToExcalidraw = (
     }
     default: {
       throw new Error(
-        `graphToExcalidraw: unknown graph type "${(graph as any).type}"`
+        `graphToExcalidraw: unknown graph type "${
+          (graph as any).type
+        }, only flowcharts are supported!"`
       );
     }
   }
