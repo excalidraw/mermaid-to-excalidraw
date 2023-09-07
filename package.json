@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "//": "Set targets.main = false, this instructs Parcel to ignore the main parameters.",
   "targets": {
-    "main": false
+    "main": false,
+    "types": false
   },
   "files": [
     "dist/*"
