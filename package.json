@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "//": "Set targets.main = false, this instructs Parcel to ignore the main parameters.",
   "targets": {
-    "main": false
+    "main": false,
+    "types": false
   },
   "files": [
     "dist/*"

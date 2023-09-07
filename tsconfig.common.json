@@ -6,7 +6,6 @@
     "declaration": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
