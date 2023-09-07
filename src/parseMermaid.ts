@@ -57,11 +57,19 @@ export const parseMermaid = async (
     const rect = svgEl.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
+
+    // Set width and height explictly since in firefox it gets set to 0
+    // if the width and height are not expilcitly set
+    // eg in some cases like er Diagram, gnatt, width and height is set as 100%
+    // which sets the dimensions as 0 in firefox and thus the diagram isn't rendered
+    svgEl.setAttribute("width", `${width}`);
+    svgEl.setAttribute("height", `${height}`);
+
     svgContainer.remove();
 
     // Convert SVG to image
     const mimeType = "image/svg+xml";
-    const decoded = unescape(encodeURIComponent(svg));
+    const decoded = unescape(encodeURIComponent(svgEl.outerHTML));
     const base64 = btoa(decoded);
     const dataURL = `data:image/svg+xml;base64,${base64}`;
 
