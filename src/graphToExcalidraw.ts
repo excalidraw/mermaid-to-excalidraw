@@ -1,5 +1,5 @@
 import { MermaidOptions } from ".";
-import { FlowchartConverter } from "./converter/types/flowchart";
+import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart";
 import { GraphImageConverter } from "./converter/types/graphImage";
 import { Graph, GraphImage, MermaidToExcalidrawResult } from "./interfaces";
 
@@ -12,7 +12,7 @@ export const graphToExcalidraw = (
       return GraphImageConverter.convert(graph, options);
     }
     case "flowchart": {
-      return FlowchartConverter.convert(graph, options);
+      return FlowchartToExcalidrawSkeletonConverter.convert(graph, options);
     }
     default: {
       throw new Error(
