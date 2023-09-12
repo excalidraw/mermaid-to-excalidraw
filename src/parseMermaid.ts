@@ -37,7 +37,7 @@ export const parseMermaid = async (
   // Check supported diagram type, fallback to image if diagram type not-supported
   if (!isSupportedDiagram(definition)) {
     // Render the diagram with default curve and export as svg image
-    const { svg } = await renderMermaidToSVG(mermaid, definition, {
+    const { svg } = await renderMermaidToSvg(mermaid, definition, {
       curve: "basis",
       fontSize: options.fontSize,
     });
@@ -86,7 +86,7 @@ export const parseMermaid = async (
   }
 
   // Render the SVG diagram
-  const { svg, fullDefinition } = await renderMermaidToSVG(
+  const { svg, fullDefinition } = await renderMermaidToSvg(
     mermaid,
     definition,
     {
@@ -277,7 +277,7 @@ interface MermaidDefinitionOptions {
   curve?: "linear" | "basis";
   fontSize?: number;
 }
-const renderMermaidToSVG = async (
+const renderMermaidToSvg = async (
   mermaid: Mermaid,
   definition: string,
   options?: MermaidDefinitionOptions
