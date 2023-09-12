@@ -90,7 +90,7 @@ import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
     ![](./images/example-arrow-type.png)
   - Arrow stroke: dotted, thick.
     ![](./images/example-arrow-style.png)
-  - Subgraphs
+  - SubGraphs
     ![](./images/example-cluster.png)
   - Entity codes supported.
     ![](./images/example-entity-code.png)
