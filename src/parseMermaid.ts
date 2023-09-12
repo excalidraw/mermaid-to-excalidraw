@@ -131,7 +131,7 @@ const parseRoot = (
     .map((data: any) => parseEdge(data, containerEl));
   const subGraphs = mermaidParser
     .getSubGraphs()
-    .map((data) => parseSubgGraph(data, containerEl));
+    .map((data) => parseSubGraph(data, containerEl));
 
   return {
     type: "flowchart",
@@ -141,7 +141,7 @@ const parseRoot = (
   };
 };
 
-const parseSubgGraph = (data: any, containerEl: Element): SubGraph => {
+const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference
   // e.g. full element id = "flowchart-c1-205" will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
@@ -156,7 +156,7 @@ const parseSubgGraph = (data: any, containerEl: Element): SubGraph => {
     `[id='${data.id}']`
   );
   if (!el) {
-    throw new Error("Subgraph element not found");
+    throw new Error("SubGraph element not found");
   }
   const position = computeElementPosition(el, containerEl);
 
