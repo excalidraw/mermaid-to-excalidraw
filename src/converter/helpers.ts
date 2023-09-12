@@ -4,10 +4,10 @@ import {
 } from "@excalidraw/excalidraw/types/element/types";
 import {
   CONTAINER_STYLE_PROPERTY,
-  Cluster,
   Edge,
   Graph,
   LABEL_STYLE_PROPERTY,
+  SubGraph,
   Vertex,
 } from "../interfaces";
 import { ExcalidrawVertexElement } from "../types";
@@ -28,19 +28,19 @@ export const computeGroupIds = (
     [key: string]: {
       id: string;
       parent: string | null;
-      isLeaf: boolean; // true = vertex, false = cluster
+      isLeaf: boolean; // true = vertex, false = subGraph
     };
   } = {};
-  graph.subGraphs.map((cluster) => {
-    cluster.nodeIds.forEach((nodeId) => {
-      tree[cluster.id] = {
-        id: cluster.id,
+  graph.subGraphs.map((subGraph) => {
+    subGraph.nodeIds.forEach((nodeId) => {
+      tree[subGraph.id] = {
+        id: subGraph.id,
         parent: null,
         isLeaf: false,
       };
       tree[nodeId] = {
         id: nodeId,
-        parent: cluster.id,
+        parent: subGraph.id,
         isLeaf: graph.vertices[nodeId] !== undefined,
       };
     });
@@ -56,12 +56,12 @@ export const computeGroupIds = (
       let curr = tree[id];
       const groupIds: string[] = [];
       if (!curr.isLeaf) {
-        groupIds.push(`cluster_group_${curr.id}`);
+        groupIds.push(`subgraph_group_${curr.id}`);
       }
 
       while (true) {
         if (curr.parent) {
-          groupIds.push(`cluster_group_${curr.parent}`);
+          groupIds.push(`subgraph_group_${curr.parent}`);
           curr = tree[curr.parent];
         } else {
           break;
@@ -117,7 +117,7 @@ export const computeExcalidrawArrowType = (
 };
 
 // Get text from graph elements, fallback markdown to text
-export const getText = (element: Vertex | Edge | Cluster): string => {
+export const getText = (element: Vertex | Edge | SubGraph): string => {
   let text = element.text;
   if (element.labelType === "markdown") {
     text = removeMarkdown(element.text);
