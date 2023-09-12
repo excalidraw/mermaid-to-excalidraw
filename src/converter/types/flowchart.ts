@@ -15,21 +15,21 @@ export const FlowchartConverter = new GraphConverter({
     const fontSize = options.fontSize;
     const { getGroupIds, getParentId } = computeGroupIds(graph);
 
-    // Clusters
-    graph.clusters.reverse().forEach((cluster) => {
-      const groupIds = getGroupIds(cluster.id);
+    // SubGraphs
+    graph.subGraphs.reverse().forEach((subGraph) => {
+      const groupIds = getGroupIds(subGraph.id);
 
       const containerElement: ExcalidrawElementSkeleton = {
-        id: cluster.id,
+        id: subGraph.id,
         type: "rectangle",
         groupIds,
-        x: cluster.x,
-        y: cluster.y,
-        width: cluster.width,
-        height: cluster.height,
+        x: subGraph.x,
+        y: subGraph.y,
+        width: subGraph.width,
+        height: subGraph.height,
         label: {
           groupIds,
-          text: getText(cluster),
+          text: getText(subGraph),
           fontSize,
           verticalAlign: "top",
         },

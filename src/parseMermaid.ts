@@ -124,13 +124,13 @@ const parseRoot = (
   const edges = mermaidParser
     .getEdges()
     .map((data: any) => parseEdge(data, containerEl));
-  const clusters = mermaidParser
+  const subGraphs = mermaidParser
     .getSubGraphs()
     .map((data) => parseCluster(data, containerEl));
 
   return {
     type: "flowchart",
-    clusters,
+    subGraphs,
     vertices,
     edges,
   };
