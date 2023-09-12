@@ -1,17 +1,18 @@
 import mermaid, { Mermaid } from "mermaid";
 import {
   CONTAINER_STYLE_PROPERTY,
-  Cluster,
   Edge,
   Graph,
   GraphImage,
   LABEL_STYLE_PROPERTY,
   Position,
+  SubGraph,
   Vertex,
 } from "./interfaces";
 import flowDb from "mermaid/dist/diagrams/flowchart/flowDb";
 import { DEFAULT_FONT_SIZE } from "./constants";
 import { MermaidOptions } from ".";
+import { entityCodesToText, isSupportedDiagram } from "./utils";
 
 const getTransformAttr = (el: Element) => {
   const transformAttr = el.getAttribute("transform");
@@ -36,7 +37,7 @@ export const parseMermaid = async (
   // Check supported diagram type, fallback to image if diagram type not-supported
   if (!isSupportedDiagram(definition)) {
     // Render the diagram with default curve and export as svg image
-    const { svg } = await renderMermaid(mermaid, definition, {
+    const { svg } = await renderMermaidToSvg(mermaid, definition, {
       curve: "basis",
       fontSize: options.fontSize,
     });
@@ -85,10 +86,14 @@ export const parseMermaid = async (
   }
 
   // Render the SVG diagram
-  const { svg, fullDefinition } = await renderMermaid(mermaid, definition, {
-    curve: "linear",
-    fontSize: options.fontSize,
-  });
+  const { svg, fullDefinition } = await renderMermaidToSvg(
+    mermaid,
+    definition,
+    {
+      curve: "linear",
+      fontSize: options.fontSize,
+    }
+  );
 
   const diagramEl = document.createElement("div");
   diagramEl.setAttribute(
@@ -126,7 +131,7 @@ const parseRoot = (
     .map((data: any) => parseEdge(data, containerEl));
   const subGraphs = mermaidParser
     .getSubGraphs()
-    .map((data) => parseCluster(data, containerEl));
+    .map((data) => parseSubGraph(data, containerEl));
 
   return {
     type: "flowchart",
@@ -136,7 +141,7 @@ const parseRoot = (
   };
 };
 
-const parseCluster = (data: any, containerEl: Element): Cluster => {
+const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference
   // e.g. full element id = "flowchart-c1-205" will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
@@ -151,7 +156,7 @@ const parseCluster = (data: any, containerEl: Element): Cluster => {
     `[id='${data.id}']`
   );
   if (!el) {
-    throw new Error("Cluster element not found");
+    throw new Error("SubGraph element not found");
   }
   const position = computeElementPosition(el, containerEl);
 
@@ -272,7 +277,7 @@ interface MermaidDefinitionOptions {
   curve?: "linear" | "basis";
   fontSize?: number;
 }
-const renderMermaid = async (
+const renderMermaidToSvg = async (
   mermaid: Mermaid,
   definition: string,
   options?: MermaidDefinitionOptions
@@ -411,22 +416,4 @@ const computeEdgePositions = (
     endY: endPosition[1] + offset.y,
     reflectionPoints,
   };
-};
-
-// Check if the definition is a supported diagram
-const isSupportedDiagram = (definition: string): boolean => {
-  if (definition.trim().startsWith("flowchart")) {
-    return true;
-  }
-  return false;
-};
-
-// Convert mermaid entity codes to text e.g. "#9829;" to "♥"
-const entityCodesToText = (input: string): string => {
-  const modifiedInput = input
-    .replace(/#(\d+);/g, "&#$1;")
-    .replace(/#([a-z]+);/g, "&$1;");
-  const element = document.createElement("textarea");
-  element.innerHTML = modifiedInput;
-  return element.value;
 };
