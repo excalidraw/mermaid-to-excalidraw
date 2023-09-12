@@ -31,7 +31,7 @@ export interface Vertex {
   labelStyle: { [key in LABEL_STYLE_PROPERTY]?: string };
 }
 
-export interface Cluster {
+export interface SubGraphs {
   id: string;
   nodeIds: string[];
   text: string;
@@ -73,7 +73,7 @@ type ImplementedGraphTypes = "flowchart";
 
 export interface Graph {
   type: ImplementedGraphTypes;
-  clusters: Cluster[];
+  subGraphs: SubGraphs[];
   vertices: { [key: string]: Vertex | undefined };
   edges: Edge[];
 }

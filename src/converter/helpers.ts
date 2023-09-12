@@ -31,7 +31,7 @@ export const computeGroupIds = (
       isLeaf: boolean; // true = vertex, false = cluster
     };
   } = {};
-  graph.clusters.map((cluster) => {
+  graph.subGraphs.map((cluster) => {
     cluster.nodeIds.forEach((nodeId) => {
       tree[cluster.id] = {
         id: cluster.id,
@@ -48,7 +48,7 @@ export const computeGroupIds = (
   const mapper: {
     [key: string]: string[];
   } = {};
-  [...Object.keys(graph.vertices), ...graph.clusters.map((c) => c.id)].forEach(
+  [...Object.keys(graph.vertices), ...graph.subGraphs.map((c) => c.id)].forEach(
     (id) => {
       if (!tree[id]) {
         return;
