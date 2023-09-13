@@ -31,18 +31,6 @@ const processMermaidTextWithOptions = (
   return fullDefinition;
 };
 
-const appendSvgToDOMAndGetContainer = (svg: string) => {
-  const svgContainer = document.createElement("div");
-  svgContainer.setAttribute(
-    "style",
-    `opacity: 0; position: relative; z-index: -1;`
-  );
-  svgContainer.innerHTML = svg;
-  svgContainer.id = "mermaid-diagram";
-  document.body.appendChild(svgContainer);
-  return svgContainer;
-};
-
 // Fallback to Svg
 const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
   // Extract SVG width and height
@@ -94,7 +82,16 @@ export const parseMermaid = async (
 
   // Render the SVG diagram
   const { svg } = await mermaid.render("mermaid-to-excalidraw", fullDefinition);
-  const svgContainer = appendSvgToDOMAndGetContainer(svg);
+
+  // Append Svg to DOM
+  const svgContainer = document.createElement("div");
+  svgContainer.setAttribute(
+    "style",
+    `opacity: 0; position: relative; z-index: -1;`
+  );
+  svgContainer.innerHTML = svg;
+  svgContainer.id = "mermaid-diagram";
+  document.body.appendChild(svgContainer);
 
   let data;
   switch (diagram.type) {
