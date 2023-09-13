@@ -85,10 +85,8 @@ export const parseMermaid = async (
 ): Promise<Graph | GraphImage> => {
   mermaid.initialize({ startOnLoad: false });
 
-  const diagramSupported = isSupportedDiagram(definition);
-
   const fullDefinition = processMermaidTextWithOptions(definition, {
-    curve: diagramSupported ? "linear" : "basis",
+    curve: isSupportedDiagram(definition) ? "linear" : "basis",
     fontSize: options.fontSize,
   });
   // Parse the diagram
