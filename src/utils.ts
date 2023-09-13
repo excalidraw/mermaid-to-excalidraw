@@ -1,8 +1,8 @@
-import { SUPPORTED_CHART_TYPES } from "./constants";
+import { SUPPORTED_DIAGRAM_TYPES } from "./constants";
 
 // Check if the definition is a supported diagram
 export const isSupportedDiagram = (definition: string): boolean => {
-  return SUPPORTED_CHART_TYPES.some((chartType) =>
+  return SUPPORTED_DIAGRAM_TYPES.some((chartType) =>
     definition.trim().startsWith(chartType)
   );
 };
@@ -15,4 +15,18 @@ export const entityCodesToText = (input: string): string => {
   const element = document.createElement("textarea");
   element.innerHTML = modifiedInput;
   return element.value;
+};
+
+export const getTransformAttr = (el: Element) => {
+  const transformAttr = el.getAttribute("transform");
+  const translateMatch = transformAttr?.match(
+    /translate\(([\d.-]+),\s*([\d.-]+)\)/
+  );
+  let transformX = 0;
+  let transformY = 0;
+  if (translateMatch) {
+    transformX = Number(translateMatch[1]);
+    transformY = Number(translateMatch[2]);
+  }
+  return { transformX, transformY };
 };
