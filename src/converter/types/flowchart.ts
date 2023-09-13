@@ -17,7 +17,7 @@ import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawArrowType,
 } from "../helpers";
-import { entityCodesToText } from "../../utils";
+import { entityCodesToText, getTransformAttr } from "../../utils";
 
 import { Diagram } from "mermaid/dist/Diagram";
 
@@ -192,51 +192,6 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     };
   },
 });
-
-export const parseMermaidFlowChartDiagram = (
-  diagram: Diagram,
-  containerEl: Element
-): Graph => {
-  // This does some cleanup and initialization making sure
-  // diagram is parsed correctly. Useful when multiple diagrams are
-  // parsed together one after another, eg in playground
-  // https://github.com/mermaid-js/mermaid/blob/e561cbd3be2a93b8bedfa4839484966faad92ccf/packages/mermaid/src/Diagram.ts#L43
-  diagram.parse();
-
-  // Get mermaid parsed data from parser shared variable `yy`
-  const mermaidParser = diagram.parser.yy;
-  const vertices = mermaidParser.getVertices();
-  Object.keys(vertices).forEach((id) => {
-    vertices[id] = parseVertex(vertices[id], containerEl);
-  });
-  const edges = mermaidParser
-    .getEdges()
-    .map((data: any) => parseEdge(data, containerEl));
-  const subGraphs = mermaidParser
-    .getSubGraphs()
-    .map((data: any) => parseSubGraph(data, containerEl));
-
-  return {
-    type: "flowchart",
-    subGraphs,
-    vertices,
-    edges,
-  };
-};
-
-const getTransformAttr = (el: Element) => {
-  const transformAttr = el.getAttribute("transform");
-  const translateMatch = transformAttr?.match(
-    /translate\(([\d.-]+),\s*([\d.-]+)\)/
-  );
-  let transformX = 0;
-  let transformY = 0;
-  if (translateMatch) {
-    transformX = Number(translateMatch[1]);
-    transformY = Number(translateMatch[2]);
-  }
-  return { transformX, transformY };
-};
 
 const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference
@@ -477,5 +432,36 @@ const computeEdgePositions = (
     endX: endPosition[0] + offset.x,
     endY: endPosition[1] + offset.y,
     reflectionPoints,
+  };
+};
+
+export const parseMermaidFlowChartDiagram = (
+  diagram: Diagram,
+  containerEl: Element
+): Graph => {
+  // This does some cleanup and initialization making sure
+  // diagram is parsed correctly. Useful when multiple diagrams are
+  // parsed together one after another, eg in playground
+  // https://github.com/mermaid-js/mermaid/blob/e561cbd3be2a93b8bedfa4839484966faad92ccf/packages/mermaid/src/Diagram.ts#L43
+  diagram.parse();
+
+  // Get mermaid parsed data from parser shared variable `yy`
+  const mermaidParser = diagram.parser.yy;
+  const vertices = mermaidParser.getVertices();
+  Object.keys(vertices).forEach((id) => {
+    vertices[id] = parseVertex(vertices[id], containerEl);
+  });
+  const edges = mermaidParser
+    .getEdges()
+    .map((data: any) => parseEdge(data, containerEl));
+  const subGraphs = mermaidParser
+    .getSubGraphs()
+    .map((data: any) => parseSubGraph(data, containerEl));
+
+  return {
+    type: "flowchart",
+    subGraphs,
+    vertices,
+    edges,
   };
 };
