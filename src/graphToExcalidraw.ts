@@ -1,7 +1,7 @@
-import { MermaidOptions } from ".";
-import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart";
-import { GraphImageConverter } from "./converter/types/graphImage";
-import { Graph, GraphImage, MermaidToExcalidrawResult } from "./interfaces";
+import { MermaidOptions } from "./index.js";
+import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart.js";
+import { GraphImageConverter } from "./converter/types/graphImage.js";
+import { Graph, GraphImage, MermaidToExcalidrawResult } from "./interfaces.js";
 
 export const graphToExcalidraw = (
   graph: Graph | GraphImage,

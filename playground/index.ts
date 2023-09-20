@@ -1,14 +1,14 @@
 import mermaid from "mermaid";
-import { parseMermaid } from "../src/parseMermaid";
-import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart";
-import UNSUPPORTED_DIAGRAM_TESTCASES from "./testcases/unsupported";
-import { DEFAULT_FONT_SIZE } from "../src/constants";
+import { parseMermaid } from "../src/parseMermaid.js";
+import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart.js";
+import UNSUPPORTED_DIAGRAM_TESTCASES from "./testcases/unsupported.js";
+import { DEFAULT_FONT_SIZE } from "../src/constants.js";
 
 // Initialize Mermaid
 mermaid.initialize({ startOnLoad: false });
 
 import "./initCustomTest";
-import { renderExcalidraw } from "./initExcalidraw";
+import { renderExcalidraw } from "./initExcalidraw.js";
 
 (async () => {
   // Render flowchart diagrams

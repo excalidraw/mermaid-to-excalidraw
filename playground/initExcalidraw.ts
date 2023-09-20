@@ -1,6 +1,6 @@
-import ExcalidrawWrapper from "./ExcalidrawWrapper";
-import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { DEFAULT_FONT_SIZE } from "../src/constants";
+import ExcalidrawWrapper from "./ExcalidrawWrapper.js";
+import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
+import { DEFAULT_FONT_SIZE } from "../src/constants.js";
 
 // Create Excalidraw Wrapper element
 const excalidrawWrapper = document.createElement("div");

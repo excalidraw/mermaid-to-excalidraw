@@ -6,7 +6,7 @@
     "declaration": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },

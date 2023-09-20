@@ -1,6 +1,6 @@
-import { MermaidOptions } from "..";
-import { DEFAULT_FONT_SIZE } from "../constants";
-import { Graph, MermaidToExcalidrawResult } from "../interfaces";
+import { MermaidOptions } from "../index.js";
+import { DEFAULT_FONT_SIZE } from "../constants.js";
+import { Graph, MermaidToExcalidrawResult } from "../interfaces.js";
 
 export class GraphConverter<T = Graph> {
   private converter;

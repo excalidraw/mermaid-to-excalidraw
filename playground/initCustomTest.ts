@@ -1,6 +1,6 @@
 import mermaid from "mermaid";
-import { parseMermaid } from "../src/parseMermaid";
-import { renderExcalidraw } from "./initExcalidraw";
+import { parseMermaid } from "../src/parseMermaid.js";
+import { renderExcalidraw } from "./initExcalidraw.js";
 
 const customTestEl = document.getElementById("custom-test")!;
 const btn = document.getElementById("render-excalidraw-btn")!;
