@@ -212,4 +212,20 @@ C -->|Two| E[Result two]
   H -->|No| J[Action 6]
   I --> K[End]
   J --> K`,
+  `
+  quadrantChart
+    title Quandrant Chart
+    x-axis Low X --> Lower X
+    y-axis Low Y --> Lower Y
+    quadrant-1 Quadrant 1
+    quadrant-2 Quadrant 2
+    quadrant-3 Quadrant 3
+    quadrant-4 Quadrant 4
+    Point A: [0.6  , 0.9]
+    Point B: [0.15, 0.10]
+    Point C: [0.57, 0.69]
+    Point D: [0.90, 0.45]
+    Point E: [0.60, 0.23]
+    Point F: [0.35, 0.78]
+  `,
 ];
