@@ -1,7 +1,7 @@
 import {
   Arrowhead,
   ExcalidrawTextElement,
-} from "@excalidraw/excalidraw/types/element/types";
+} from "@excalidraw/excalidraw/types/element/types.js";
 import {
   CONTAINER_STYLE_PROPERTY,
   Edge,
