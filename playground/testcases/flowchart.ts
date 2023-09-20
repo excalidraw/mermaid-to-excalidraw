@@ -212,20 +212,61 @@ C -->|Two| E[Result two]
   H -->|No| J[Action 6]
   I --> K[End]
   J --> K`,
-  `
-  quadrantChart
-    title Quandrant Chart
-    x-axis Low X --> Lower X
-    y-axis Low Y --> Lower Y
-    quadrant-1 Quadrant 1
-    quadrant-2 Quadrant 2
-    quadrant-3 Quadrant 3
-    quadrant-4 Quadrant 4
-    Point A: [0.6  , 0.9]
-    Point B: [0.15, 0.10]
-    Point C: [0.57, 0.69]
-    Point D: [0.90, 0.45]
-    Point E: [0.60, 0.23]
-    Point F: [0.35, 0.78]
-  `,
+  `flowchart TD
+
+  A[Start] --> B[Initialize]
+
+  B[Initialize] --> C[Input Data]
+  C[Input Data] --> D{Data Valid?}
+
+  D{Data Valid?} -- Yes --> E[Process Data]
+  E[Process Data] --> F{More Data?}
+  F{More Data?} -- Yes --> C[Input Data]
+  F{More Data?} -- No --> G[Generate Output]
+
+  D{Data Valid?} -- No --> I[Report Error]
+  I[Report Error] --> H[End]
+
+  B[Initialize] --> J[Task 1]
+  J[Task 1] --> K[Task 2]
+  K[Task 2] --> L[Task 3]
+  L[Task 3] --> M[Task 4]
+  M[Task 4] --> N[Task 5]
+  N[Task 5] --> O[Task 6]
+  O[Task 6] --> P[Task 7]
+  P[Task 7] --> Q[Task 8]
+  Q[Task 8] --> R[Task 9]
+  R[Task 9] --> S[Task 10]
+  S[Task 10] --> T[End]
+
+  U[Decision] --> V[Decision Point]
+  V[Decision Point] --> W{Condition 1}
+  W{Condition 1} -- Yes --> X[Option 1]
+  X[Option 1] --> Y[End Option 1]
+  W{Condition 1} -- No --> Z[Option 2]
+  Z[Option 2] --> Y[End Option 2]
+  Y[End Option 1] --> U[Decision]
+
+  AA[Loop] --> AB[Loop Start]
+  AB[Loop Start] --> AC[Loop Condition]
+  AC[Loop Condition] -- Yes --> AD[Loop Task]
+  AD[Loop Task] --> AE[Loop End]
+  AC[Loop Condition] -- No --> AF[Exit Loop]
+  AF[Exit Loop] --> AE[Loop End]
+  AE[Loop End] --> AA[Loop]
+
+  AG[Subprocess] --> AH[Start Subprocess]
+  AH[Start Subprocess] --> AI[Subprocess Task 1]
+  AI[Subprocess Task 1] --> AJ[Subprocess Task 2]
+  AJ[Subprocess Task 2] --> AK[Subprocess Task 3]
+  AK[Subprocess Task 3] --> AL[End Subprocess]
+
+  A[Start] --> B[Initialize]
+  B[Initialize] --> J[Task 1]
+  J[Task 1] --> U[Decision]
+  U[Decision] --> AA[Loop]
+  AA[Loop] --> AG[Subprocess]
+  AG[Subprocess] --> J[Task 1]
+  AG[Subprocess] --> B[Initialize]
+`,
 ];
