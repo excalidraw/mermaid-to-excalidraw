@@ -41,8 +41,12 @@ try {
 
 ## Playground
 
-Try out [here](https://mermaid-to-excalidraw.vercel.app)
+Try out [here](https://mermaid-to-excalidraw.vercel.app).
 
 ## API
 
-Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/api)
+Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/api).
+
+## Support new Diagram type
+
+Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type).
