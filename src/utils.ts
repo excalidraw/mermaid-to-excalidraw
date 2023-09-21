@@ -1,4 +1,4 @@
-import { SUPPORTED_DIAGRAM_TYPES } from "./constants";
+import { SUPPORTED_DIAGRAM_TYPES } from "./constants.js";
 
 // Check if the definition is a supported diagram
 export const isSupportedDiagram = (definition: string): boolean => {

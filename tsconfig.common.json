@@ -2,11 +2,11 @@
   "compilerOptions": {
     "target": "ES2021",
     "strict": true,
-    "module": "ES2015",
+    "module": "NodeNext",
     "declaration": true,
     "outDir": "dist",
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },

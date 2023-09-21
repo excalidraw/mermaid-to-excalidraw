@@ -1,9 +1,9 @@
-import { GraphConverter } from "../GraphConverter";
-import { FileId } from "@excalidraw/excalidraw/types/element/types";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
-import { BinaryFiles } from "@excalidraw/excalidraw/types/types";
+import { GraphConverter } from "../GraphConverter.js";
+import { FileId } from "@excalidraw/excalidraw/types/element/types.js";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import { BinaryFiles } from "@excalidraw/excalidraw/types/types.js";
 import { nanoid } from "nanoid";
-import { GraphImage } from "../../interfaces";
+import { GraphImage } from "../../interfaces.js";
 
 export const GraphImageConverter = new GraphConverter<GraphImage>({
   converter: (graph) => {

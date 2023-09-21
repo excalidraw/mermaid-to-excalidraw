@@ -1,4 +1,4 @@
-import { entityCodesToText, getTransformAttr } from "../utils";
+import { entityCodesToText, getTransformAttr } from "../utils.js";
 import {
   CONTAINER_STYLE_PROPERTY,
   Edge,
@@ -7,9 +7,9 @@ import {
   Position,
   SubGraph,
   Vertex,
-} from "../interfaces";
+} from "../interfaces.js";
 
-import { Diagram } from "mermaid/dist/Diagram";
+import { Diagram } from "mermaid/dist/Diagram.js";
 
 const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference

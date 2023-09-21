@@ -1,8 +1,8 @@
 import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
-} from "@excalidraw/excalidraw/types/types";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
+} from "@excalidraw/excalidraw/types/types.js";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 
 interface ExcalidrawWrapperProps {
   elements: ExcalidrawElementSkeleton[];

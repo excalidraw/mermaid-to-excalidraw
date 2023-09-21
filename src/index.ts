@@ -1,5 +1,5 @@
-import { graphToExcalidraw } from "./graphToExcalidraw";
-import { parseMermaid } from "./parseMermaid";
+import { graphToExcalidraw } from "./graphToExcalidraw.js";
+import { parseMermaid } from "./parseMermaid.js";
 
 export interface MermaidOptions {
   fontSize?: number;

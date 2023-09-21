@@ -1,10 +1,10 @@
-import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types";
+import { ImportedDataState } from "@excalidraw/excalidraw/types/data/types.js";
 import {
   ExcalidrawRectangleElement,
   ExcalidrawDiamondElement,
   ExcalidrawEllipseElement,
-} from "@excalidraw/excalidraw/types/element/types";
-import { Mutable } from "@excalidraw/excalidraw/types/utility-types";
+} from "@excalidraw/excalidraw/types/element/types.js";
+import { Mutable } from "@excalidraw/excalidraw/types/utility-types.js";
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
 

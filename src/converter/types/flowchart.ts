@@ -1,5 +1,5 @@
-import { GraphConverter } from "../GraphConverter";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform";
+import { GraphConverter } from "../GraphConverter.js";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 
 import {
   computeGroupIds,
@@ -7,8 +7,8 @@ import {
   computeExcalidrawVertexStyle,
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawArrowType,
-} from "../helpers";
-import { VERTEX_TYPE } from "../../interfaces";
+} from "../helpers.js";
+import { VERTEX_TYPE } from "../../interfaces.js";
 
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph, options) => {

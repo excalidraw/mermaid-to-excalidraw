@@ -1,9 +1,9 @@
 import mermaid from "mermaid";
-import { Graph, GraphImage } from "./interfaces";
-import { DEFAULT_FONT_SIZE } from "./constants";
-import { MermaidOptions } from ".";
-import { isSupportedDiagram } from "./utils";
-import { parseMermaidFlowChartDiagram } from "./parser/flowchart";
+import { Graph, GraphImage } from "./interfaces.js";
+import { DEFAULT_FONT_SIZE } from "./constants.js";
+import { MermaidOptions } from "./index.js";
+import { isSupportedDiagram } from "./utils.js";
+import { parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 
 interface MermaidDefinitionOptions {
   curve?: "linear" | "basis";
