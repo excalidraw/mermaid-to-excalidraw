@@ -82,7 +82,7 @@ export const computeGroupIds = (
   };
 };
 
-interface ArrowType {
+export interface ArrowType {
   startArrowhead?: Arrowhead;
   endArrowhead?: Arrowhead;
 }

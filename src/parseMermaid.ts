@@ -1,9 +1,10 @@
 import mermaid from "mermaid";
-import { Graph, GraphImage } from "./interfaces.js";
+import { GraphImage } from "./interfaces.js";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { MermaidOptions } from "./index.js";
 import { isSupportedDiagram } from "./utils.js";
-import { parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
+import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
+import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
 
 interface MermaidDefinitionOptions {
   curve?: "linear" | "basis";
@@ -70,7 +71,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 export const parseMermaid = async (
   definition: string,
   options: MermaidOptions = {}
-): Promise<Graph | GraphImage> => {
+): Promise<Flowchart | GraphImage | Sequence> => {
   mermaid.initialize({ startOnLoad: false });
 
   const fullDefinition = processMermaidTextWithOptions(definition, {
@@ -97,6 +98,12 @@ export const parseMermaid = async (
   switch (diagram.type) {
     case "flowchart-v2": {
       data = parseMermaidFlowChartDiagram(diagram, svgContainer);
+      break;
+    }
+
+    case "sequence": {
+      data = parseMermaidSequenceDiagram(diagram, svgContainer);
+
       break;
     }
     // fallback to image if diagram type not-supported

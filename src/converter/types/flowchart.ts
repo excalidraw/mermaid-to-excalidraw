@@ -9,9 +9,10 @@ import {
   computeExcalidrawArrowType,
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
+import { Flowchart } from "../../parser/flowchart.js";
 
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
-  converter: (graph, options) => {
+  converter: (graph: Flowchart, options) => {
     const elements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
     const { getGroupIds, getParentId } = computeGroupIds(graph);

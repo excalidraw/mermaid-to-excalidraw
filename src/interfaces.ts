@@ -47,35 +47,12 @@ export interface Position {
   y: number;
 }
 
-export interface Edge {
-  start: string;
-  end: string;
-  type: string;
-  text: string;
-  labelType: string;
-  stroke: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  reflectionPoints: Position[];
-}
-
 export interface GraphImage {
   type: "graphImage";
   mimeType: string;
   dataURL: string;
   width: number;
   height: number;
-}
-
-type ImplementedGraphTypes = "flowchart";
-
-export interface Graph {
-  type: ImplementedGraphTypes;
-  subGraphs: SubGraph[];
-  vertices: { [key: string]: Vertex | undefined };
-  edges: Edge[];
 }
 
 export interface MermaidToExcalidrawResult {
