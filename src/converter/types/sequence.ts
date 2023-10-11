@@ -59,6 +59,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
       if (!arrow) {
         return;
       }
+      const strokeStyle = EXCALIDRAW_STROKE_STYLE_FOR_ARROW[arrow.strokeStyle];
       const arrowElement: ExcalidrawElementSkeleton = {
         type: "arrow",
         x: arrow.startX,
@@ -69,15 +70,18 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         ],
         width: arrow.endX - arrow.startX,
         height: arrow.endY - arrow.startY,
-        strokeStyle: EXCALIDRAW_STROKE_STYLE_FOR_ARROW[arrow.arrowType],
-
+        strokeStyle,
+        endArrowhead:
+          strokeStyle === EXCALIDRAW_STROKE_STYLE_FOR_ARROW.SOLID ||
+          strokeStyle === EXCALIDRAW_STROKE_STYLE_FOR_ARROW.DOTTED
+            ? null
+            : "arrow",
         label: {
           text: arrow.text || "",
         },
       };
       elements.push(arrowElement);
     });
-    console.log(elements, "ELEMENTS");
     return { elements };
   },
 });

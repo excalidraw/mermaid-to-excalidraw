@@ -16,7 +16,7 @@ type ARROW_KEYS = keyof typeof SUPPORTED_SEQUENCE_ARROW_TYPES;
 
 export type Arrow = Line & {
   text?: string | null;
-  arrowType: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
+  strokeStyle: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
 };
 
 export interface Sequence {
@@ -113,7 +113,7 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
       arrow.strokeColor = arrowNode.getAttribute("stroke");
       arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
       arrow.type = "arrow";
-      arrow.arrowType = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
+      arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
       arrows.push(arrow);
     }
   });
