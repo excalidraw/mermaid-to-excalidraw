@@ -40,6 +40,7 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
   1: "DOTTED",
   3: "SOLID_CROSS",
   4: "DOTTED_CROSS",
+  5: "SOLID_OPEN",
   6: "DOTTED_OPEN",
   24: "SOLID_POINT",
   25: "DOTTED_POINT",
@@ -133,6 +134,6 @@ export const parseMermaidSequenceDiagram = (
   const { nodes, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
   const arrows = parseMessages(messages, containerEl);
-  console.log("parsing", nodes, actorData.containerEl);
+  console.log("parsing", mermaidParser.LINETYPE, messages);
   return { type: "sequence", lines, arrows, nodes };
 };

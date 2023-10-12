@@ -9,6 +9,7 @@ const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
   DOTTED: "dotted",
   SOLID_CROSS: "solid",
   DOTTED_CROSS: "dotted",
+  SOLID_OPEN: "solid",
   DOTTED_OPEN: "dotted",
   SOLID_POINT: "solid",
   DOTTED_POINT: "dotted",
@@ -17,7 +18,6 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Sequence, options: any) => {
     const elements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
-    console.log(chart, "CHART");
     Object.values(chart.nodes).forEach((vertex) => {
       if (!vertex) {
         return;
@@ -60,6 +60,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         return;
       }
       const strokeStyle = EXCALIDRAW_STROKE_STYLE_FOR_ARROW[arrow.strokeStyle];
+      console.log(arrow.strokeStyle, "HEYYYY");
       const arrowElement: ExcalidrawElementSkeleton = {
         type: "arrow",
         x: arrow.startX,
@@ -72,8 +73,8 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         height: arrow.endY - arrow.startY,
         strokeStyle,
         endArrowhead:
-          strokeStyle === EXCALIDRAW_STROKE_STYLE_FOR_ARROW.SOLID ||
-          strokeStyle === EXCALIDRAW_STROKE_STYLE_FOR_ARROW.DOTTED
+          arrow.strokeStyle === "SOLID_OPEN" ||
+          arrow.strokeStyle === "DOTTED_OPEN"
             ? null
             : "arrow",
         label: {

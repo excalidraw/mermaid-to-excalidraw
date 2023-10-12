@@ -9,28 +9,46 @@ mermaid.initialize({ startOnLoad: false });
 
 import "./initCustomTest";
 import { renderExcalidraw } from "./initExcalidraw.js";
+import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
 
+let indexOffset = 0;
 (async () => {
   // Render flowchart diagrams
   const flowchartContainer = document.getElementById("flowchart-container")!;
   await Promise.all(
-    FLOWCHART_DIAGRAM_TESTCASES.map((diagramDefinition, i) => {
-      return renderDiagram(flowchartContainer, diagramDefinition, i);
+    FLOWCHART_DIAGRAM_TESTCASES.map((defination, index) => {
+      const name = `Test ${index + 1}`;
+      return renderDiagram(flowchartContainer, name, defination, index);
     })
   );
-
+  indexOffset += FLOWCHART_DIAGRAM_TESTCASES.length;
+  // Render Sequence diagrams
+  const sequenceContainer = document.getElementById("sequence-container")!;
+  await Promise.all(
+    SEQUENCE_DIAGRAM_TESTCASES.map(({ name, defination }, index) => {
+      return renderDiagram(
+        sequenceContainer,
+        name,
+        defination,
+        index + indexOffset
+      );
+    })
+  );
+  indexOffset += SEQUENCE_DIAGRAM_TESTCASES.length;
   // Render unsupported diagrams
   const unsupportedContainer = document.getElementById("unsupported")!;
   unsupportedContainer.innerHTML = `
       <p>Unsupported diagram will be rendered as SVG image.</p>
     `;
-  const indexOffset = FLOWCHART_DIAGRAM_TESTCASES.length;
   await Promise.all(
-    UNSUPPORTED_DIAGRAM_TESTCASES.map((diagramDefinition, i) => {
+    UNSUPPORTED_DIAGRAM_TESTCASES.map((diagramDefinition, index) => {
+      const name = `Test ${index + 1}`;
+
       return renderDiagram(
         unsupportedContainer,
+        name,
         diagramDefinition,
-        i + indexOffset
+        index + indexOffset
       );
     })
   );
@@ -41,12 +59,13 @@ import { renderExcalidraw } from "./initExcalidraw.js";
 
 async function renderDiagram(
   containerEl: HTMLElement,
+  name: string,
   diagramDefinition: string,
   i: number
 ) {
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
-  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">Test #${i + 1}
+  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">${name}
   </h2>
   <div id="diagram-${i}"></div>
   <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
@@ -64,6 +83,7 @@ async function renderDiagram(
   btn.addEventListener("click", async () => {
     const data = btn.getAttribute("data");
     const pd = document.getElementById(`parsed-${data}`)!;
+    console.log(pd.innerHTML, "HEYYY", data);
     renderExcalidraw(pd.innerHTML);
   });
 
