@@ -57,6 +57,8 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
       fontSize: element?.label?.fontSize,
       verticalAlign: "middle",
     },
+    strokeStyle: element?.strokeStyle,
+    strokeWidth: element?.strokeWidth,
   };
   return container;
 };

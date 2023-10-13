@@ -43,6 +43,13 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     A->>J: Hello John, how are you?
     J->>A: Great!`,
   },
+  {
+    name: "Notes",
+    defination: `sequenceDiagram
+    participant Alice
+    Note left of Alice: This is a note
+    Note right of Alice: Hey I am coming soon!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };

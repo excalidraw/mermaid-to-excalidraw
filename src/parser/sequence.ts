@@ -44,6 +44,8 @@ export type Container = {
   y: number;
   width: number;
   height: number;
+  strokeStyle?: "dashed" | "solid";
+  strokeWidth?: number;
 };
 export type Node = Container | Line | Arrow | Text;
 
@@ -279,6 +281,24 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   return arrows;
 };
 
+const parseNotes = (containerEl: Element) => {
+  const noteNodes = Array.from(containerEl.querySelectorAll(".note")).map(
+    (node) => node.parentElement
+  );
+  const notes: Container[] = [];
+  noteNodes.forEach((node) => {
+    if (!node) {
+      return;
+    }
+    const rect = node.firstChild as SVGSVGElement;
+    const text = node.lastChild?.textContent!;
+    const note = createContainerElement(rect, "rectangle", text);
+    note.strokeStyle = "dashed";
+    notes.push(note);
+  });
+  return notes;
+};
+
 export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -292,5 +312,7 @@ export const parseMermaidSequenceDiagram = (
   const { nodes, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
   const arrows = parseMessages(messages, containerEl);
+  const notes = parseNotes(containerEl);
+  nodes.push(notes);
   return { type: "sequence", lines, arrows, nodes };
 };
