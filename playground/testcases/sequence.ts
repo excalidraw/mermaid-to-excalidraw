@@ -35,6 +35,14 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     Alice->>Bob: Hi Bob
     Bob->>Alice: Hi Alice`,
   },
+  {
+    name: "Identifiers",
+    defination: `sequenceDiagram
+    participant A as Alice
+    participant J as John
+    A->>J: Hello John, how are you?
+    J->>A: Great!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };
