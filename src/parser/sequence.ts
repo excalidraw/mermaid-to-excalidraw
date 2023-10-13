@@ -9,25 +9,43 @@ export type Line = {
   endY: number;
   strokeColor: string | null;
   strokeWidth: string | null;
-  type: "line" | "arrow";
+  type: "line";
 };
 
-export type Node = {
+type ARROW_KEYS = keyof typeof SUPPORTED_SEQUENCE_ARROW_TYPES;
+
+export type Arrow = Omit<Line, "type"> & {
+  type: "arrow";
+  label?: {
+    text: string | null;
+    fontSize: number;
+  };
+  strokeStyle: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
+};
+
+export type Text = {
+  type: "text";
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize: number;
+};
+
+export type Container = {
   id: string;
-  type: "rectangle" | "line" | "ellipse" | "text";
-  text?: string;
+  type: "rectangle" | "ellipse";
+  label?: {
+    text: string | null;
+    fontSize: number;
+  };
   x: number;
   y: number;
   width: number;
   height: number;
 };
-
-type ARROW_KEYS = keyof typeof SUPPORTED_SEQUENCE_ARROW_TYPES;
-
-export type Arrow = Line & {
-  text?: string | null;
-  strokeStyle: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
-};
+export type Node = Container | Line | Arrow | Text;
 
 export interface Sequence {
   type: "sequence";
@@ -58,12 +76,17 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
 
 const createNodeElement = (
   actorNode: SVGSVGElement,
-  type: Node["type"],
+  type: Container["type"],
   text?: string
 ) => {
-  const node = {} as Node;
+  const node = {} as Container;
   node.type = type;
-  node.text = text;
+  if (text) {
+    node.label = {
+      text,
+      fontSize: 16,
+    };
+  }
   const boundingBox = actorNode.getBBox();
   node.x = boundingBox.x;
   node.y = boundingBox.y;
@@ -73,7 +96,7 @@ const createNodeElement = (
 };
 
 const createTextElement = (textNode: SVGTextElement, text: string) => {
-  const node = {} as Node;
+  const node = {} as Text;
   const x = Number(textNode.getAttribute("x"));
   const y = Number(textNode.getAttribute("y"));
   node.type = "text";
@@ -85,7 +108,6 @@ const createTextElement = (textNode: SVGTextElement, text: string) => {
   node.y = y;
   const fontSize = parseInt(getComputedStyle(textNode).fontSize);
   node.fontSize = fontSize;
-  console.log(fontSize, "font");
   return node;
 };
 const createLineElement = (
@@ -107,6 +129,19 @@ const createLineElement = (
   return line;
 };
 
+const createArrowElement = (arrowNode: SVGLineElement, message: Message) => {
+  const arrow = {} as Arrow;
+  arrow.label = { text: message.message, fontSize: 16 };
+  arrow.startX = Number(arrowNode.getAttribute("x1"));
+  arrow.startY = Number(arrowNode.getAttribute("y1"));
+  arrow.endX = Number(arrowNode.getAttribute("x2"));
+  arrow.endY = Number(arrowNode.getAttribute("y2"));
+  arrow.strokeColor = arrowNode.getAttribute("stroke");
+  arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
+  arrow.type = "arrow";
+  arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
+  return arrow;
+};
 const createActorSymbol = (rootNode: SVGGElement, text: string) => {
   if (!rootNode) {
     throw "root node not found";
@@ -136,7 +171,7 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
       default:
         ele = createNodeElement(
           child,
-          SVG_TO_SHAPE_MAPPER[child.tagName] as Node["type"],
+          SVG_TO_SHAPE_MAPPER[child.tagName],
           child.textContent || undefined
         );
     }
@@ -231,16 +266,7 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
 
   arrowNodes.forEach((arrowNode, index) => {
     const message = messages[index];
-    const arrow = {} as Arrow;
-    arrow.text = message.message;
-    arrow.startX = Number(arrowNode.getAttribute("x1"));
-    arrow.startY = Number(arrowNode.getAttribute("y1"));
-    arrow.endX = Number(arrowNode.getAttribute("x2"));
-    arrow.endY = Number(arrowNode.getAttribute("y2"));
-    arrow.strokeColor = arrowNode.getAttribute("stroke");
-    arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
-    arrow.type = "arrow";
-    arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
+    const arrow = createArrowElement(arrowNode, message);
     arrows.push(arrow);
   });
   return arrows;

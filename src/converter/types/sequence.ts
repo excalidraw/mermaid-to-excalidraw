@@ -1,13 +1,8 @@
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 import { GraphConverter } from "../GraphConverter.js";
-import {
-  ExcalidrawRectangleElement,
-  ExcalidrawTextElement,
-  StrokeStyle,
-} from "@excalidraw/excalidraw/types/element/types.js";
-import { Arrow, Line, Node, Sequence } from "../../parser/sequence.js";
-import { ExcalidrawElement } from "../../types.js";
-import { MermaidOptions } from "../../index.js";
+
+import { Arrow, Line, Node, Sequence, Text } from "../../parser/sequence.js";
+import { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 
 // Arrow mapper for the supported sequence arrow types
 const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
@@ -22,7 +17,6 @@ const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
 };
 
 const createLine = (line: Line) => {
-  console.log(line, "LINE");
   const lineElement: ExcalidrawElementSkeleton = {
     type: "line",
     x: line.startX,
@@ -34,11 +28,10 @@ const createLine = (line: Line) => {
     width: line.endX - line.startX,
     height: line.endY - line.startY,
   };
-  console.log(lineElement);
   return lineElement;
 };
 
-const createText = (element: Node) => {
+const createText = (element: Text) => {
   const textElement: ExcalidrawElementSkeleton = {
     type: "text",
     x: element.x,
@@ -52,7 +45,7 @@ const createText = (element: Node) => {
   return textElement;
 };
 
-const createContainer = (element: Node, options: MermaidOptions) => {
+const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
   const container: ExcalidrawElementSkeleton = {
     type: element.type,
     x: element.x,
@@ -60,8 +53,8 @@ const createContainer = (element: Node, options: MermaidOptions) => {
     width: element.width,
     height: element.height,
     label: {
-      text: element.text || "",
-      fontSize: options.fontSize,
+      text: element?.label?.text || "",
+      fontSize: element?.label?.fontSize,
       verticalAlign: "middle",
     },
   };
@@ -86,13 +79,15 @@ const createArrow = (arrow: Arrow) => {
         ? null
         : "arrow",
     label: {
-      text: arrow.text || "",
+      text: arrow?.label?.text || "",
+      fontSize: 16,
     },
   };
   return arrowElement;
 };
+
 export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
-  converter: (chart: Sequence, options: any) => {
+  converter: (chart: Sequence) => {
     const elements: ExcalidrawElementSkeleton[] = [];
     Object.values(chart.nodes).forEach((node) => {
       if (!node || !node.length) {
@@ -108,7 +103,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
 
           case "rectangle":
           case "ellipse":
-            excalidrawElement = createContainer(element, options);
+            excalidrawElement = createContainer(element);
             break;
 
           case "text":
@@ -136,7 +131,6 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
 
       elements.push(createArrow(arrow));
     });
-    console.log(elements, "ELEMNETS");
     return { elements };
   },
 });
