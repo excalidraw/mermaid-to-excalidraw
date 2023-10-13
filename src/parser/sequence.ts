@@ -62,6 +62,11 @@ type Message = {
   wrap: boolean;
 };
 
+type Actor = {
+  name: string;
+  description: string;
+  type: "actor" | "participant";
+};
 // Currently mermaid supported these 6 arrow types, the names are taken from mermaidParser.LINETYPE
 const SUPPORTED_SEQUENCE_ARROW_TYPES = {
   0: "SOLID",
@@ -74,7 +79,7 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
   25: "DOTTED_POINT",
 };
 
-const createNodeElement = (
+const createContainerElement = (
   actorNode: SVGSVGElement,
   type: Container["type"],
   text?: string
@@ -110,6 +115,7 @@ const createTextElement = (textNode: SVGTextElement, text: string) => {
   node.fontSize = fontSize;
   return node;
 };
+
 const createLineElement = (
   lineNode: SVGLineElement,
   startX: number,
@@ -142,11 +148,12 @@ const createArrowElement = (arrowNode: SVGLineElement, message: Message) => {
   arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
   return arrow;
 };
+
 const createActorSymbol = (rootNode: SVGGElement, text: string) => {
   if (!rootNode) {
     throw "root node not found";
   }
-  const children = Array.from(rootNode.children) as SVGSVGElement[];
+  const children = Array.from(rootNode.children) as SVGElement[];
   const nodeElements: Node[] = [];
   children.forEach((child) => {
     let ele;
@@ -166,11 +173,11 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
         );
         break;
       case "text":
-        ele = createTextElement(child, text);
+        ele = createTextElement(child as SVGTextElement, text);
         break;
       default:
-        ele = createNodeElement(
-          child,
+        ele = createContainerElement(
+          child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
           child.textContent || undefined
         );
@@ -180,7 +187,7 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
   return nodeElements;
 };
 
-const parseActor = (actors: any, containerEl: Element) => {
+const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
   const actorRootNodes = Array.from(containerEl.querySelectorAll(".actor"))
     .filter((node) => node.tagName === "text")
     .map((actor) => actor.tagName === "text" && actor.parentElement)!;
@@ -188,7 +195,7 @@ const parseActor = (actors: any, containerEl: Element) => {
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const actorsLength = Object.keys(actors).length;
-  Object.values(actors).forEach((actor: any, index) => {
+  Object.values(actors).forEach((actor, index) => {
     //@ts-ignore
     // For each actor there are two nodes top and bottom which is connected by a line
     const topRootNode = actorRootNodes[index] as SVGGElement;
@@ -198,10 +205,10 @@ const parseActor = (actors: any, containerEl: Element) => {
     if (!topRootNode) {
       throw "root not not found";
     }
-    const text = actor.name;
+    const text = actor.description;
     if (actor.type === "participant") {
       // creating top actor node element
-      const topNodeElement = createNodeElement(
+      const topNodeElement = createContainerElement(
         topRootNode.firstChild as SVGSVGElement,
         "rectangle",
         text
@@ -209,7 +216,7 @@ const parseActor = (actors: any, containerEl: Element) => {
       nodes.push([topNodeElement]);
 
       // creating bottom actor node element
-      const bottomNodeElement = createNodeElement(
+      const bottomNodeElement = createContainerElement(
         bottomRootNode.firstChild as SVGSVGElement,
         "rectangle",
         text
