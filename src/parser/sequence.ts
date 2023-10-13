@@ -230,21 +230,18 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   ) as SVGLineElement[];
 
   arrowNodes.forEach((arrowNode, index) => {
-    const textNode = arrowNode.nextElementSibling as SVGTextElement | null;
     const message = messages[index];
     const arrow = {} as Arrow;
-    if (textNode) {
-      arrow.text = textNode.textContent;
-      arrow.startX = Number(arrowNode.getAttribute("x1"));
-      arrow.startY = Number(arrowNode.getAttribute("y1"));
-      arrow.endX = Number(arrowNode.getAttribute("x2"));
-      arrow.endY = Number(arrowNode.getAttribute("y2"));
-      arrow.strokeColor = arrowNode.getAttribute("stroke");
-      arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
-      arrow.type = "arrow";
-      arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
-      arrows.push(arrow);
-    }
+    arrow.text = message.message;
+    arrow.startX = Number(arrowNode.getAttribute("x1"));
+    arrow.startY = Number(arrowNode.getAttribute("y1"));
+    arrow.endX = Number(arrowNode.getAttribute("x2"));
+    arrow.endY = Number(arrowNode.getAttribute("y2"));
+    arrow.strokeColor = arrowNode.getAttribute("stroke");
+    arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
+    arrow.type = "arrow";
+    arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
+    arrows.push(arrow);
   });
   return arrows;
 };
