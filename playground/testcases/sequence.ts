@@ -27,6 +27,14 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   John--)Alice: Great!
   Alice-)John: See you later!`,
   },
+  {
+    name: "Actor symbols",
+    defination: `sequenceDiagram
+    actor Alice
+    actor Bob
+    Alice->>Bob: Hi Bob
+    Bob->>Alice: Hi Alice`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };
