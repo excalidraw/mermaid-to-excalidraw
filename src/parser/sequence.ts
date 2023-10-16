@@ -276,9 +276,13 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
-
+  // There are cases when messages array contains messages without
+  // from and to eg loops hence removing those cases
+  const arrowMessages = messages.filter(
+    (message) => message.from && message.to
+  );
   arrowNodes.forEach((arrowNode, index) => {
-    const message = messages[index];
+    const message = arrowMessages[index];
     const arrow = createArrowElement(arrowNode, message);
     arrows.push(arrow);
   });
@@ -331,5 +335,6 @@ export const parseMermaidSequenceDiagram = (
   const activations = parseActivations(containerEl);
   nodes.push(notes);
   nodes.push(activations);
+  console.log(mermaidParser, "meramid");
   return { type: "sequence", lines, arrows, nodes };
 };
