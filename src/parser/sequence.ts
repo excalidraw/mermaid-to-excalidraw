@@ -46,6 +46,8 @@ export type Container = {
   height: number;
   strokeStyle?: "dashed" | "solid";
   strokeWidth?: number;
+  bgColor?: string;
+  subtype?: "activation";
 };
 export type Node = Container | Line | Arrow | Text;
 
@@ -84,7 +86,8 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
 const createContainerElement = (
   actorNode: SVGSVGElement,
   type: Container["type"],
-  text?: string
+  text?: string,
+  subtype?: Container["subtype"]
 ) => {
   const node = {} as Container;
   node.type = type;
@@ -99,6 +102,7 @@ const createContainerElement = (
   node.y = boundingBox.y;
   node.width = boundingBox.width;
   node.height = boundingBox.height;
+  node.subtype = subtype;
   return node;
 };
 
@@ -205,7 +209,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
     const bottomRootNode = actorRootNodes[actorsLength + index] as SVGGElement;
 
     if (!topRootNode) {
-      throw "root not not found";
+      throw "root not found";
     }
     const text = actor.description;
     if (actor.type === "participant") {
@@ -298,7 +302,18 @@ const parseNotes = (containerEl: Element) => {
   });
   return notes;
 };
+const parseActivations = (containerEl: Element) => {
+  const activationNodes = Array.from(
+    containerEl.querySelectorAll(`[class*=activation]`)
+  ) as SVGSVGElement[];
+  const activations: Container[] = [];
+  activationNodes.forEach((node) => {
+    const rect = createContainerElement(node, "rectangle", "", "activation");
+    activations.push(rect);
+  });
 
+  return activations;
+};
 export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -313,6 +328,8 @@ export const parseMermaidSequenceDiagram = (
   const messages = mermaidParser.getMessages();
   const arrows = parseMessages(messages, containerEl);
   const notes = parseNotes(containerEl);
+  const activations = parseActivations(containerEl);
   nodes.push(notes);
+  nodes.push(activations);
   return { type: "sequence", lines, arrows, nodes };
 };

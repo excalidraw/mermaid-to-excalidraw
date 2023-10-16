@@ -46,6 +46,13 @@ const createText = (element: Text) => {
 };
 
 const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
+  let extraProps = {};
+  if (element.type === "rectangle" && element.subtype === "activation") {
+    extraProps = {
+      backgroundColor: "#e9ecef",
+      fillStyle: "solid",
+    };
+  }
   const container: ExcalidrawElementSkeleton = {
     type: element.type,
     x: element.x,
@@ -59,7 +66,10 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
     },
     strokeStyle: element?.strokeStyle,
     strokeWidth: element?.strokeWidth,
+    backgroundColor: element?.bgColor,
+    ...extraProps,
   };
+
   return container;
 };
 
@@ -91,6 +101,7 @@ const createArrow = (arrow: Arrow) => {
 export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Sequence) => {
     const elements: ExcalidrawElementSkeleton[] = [];
+    const activations: ExcalidrawElementSkeleton[] = [];
     Object.values(chart.nodes).forEach((node) => {
       if (!node || !node.length) {
         return;
@@ -115,7 +126,11 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
             throw `unknown type ${element.type}`;
             break;
         }
-        elements.push(excalidrawElement);
+        if (element.type === "rectangle" && element?.subtype === "activation") {
+          activations.push(excalidrawElement);
+        } else {
+          elements.push(excalidrawElement);
+        }
       });
     });
 
@@ -133,6 +148,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
 
       elements.push(createArrow(arrow));
     });
+    elements.push(...activations);
     return { elements };
   },
 });
