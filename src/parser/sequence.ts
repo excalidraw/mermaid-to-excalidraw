@@ -44,8 +44,8 @@ export type Container = {
   };
   x: number;
   y: number;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   strokeStyle?: "dashed" | "solid";
   strokeWidth?: number;
   strokeColor?: string;
@@ -368,17 +368,21 @@ const parseLoops = (containerEl: Element) => {
     const textElement = createTextElement(node, text);
 
     texts.push(textElement);
-    const parentElement = node.parentElement;
-    const labelBox = parentElement?.querySelector(
-      ".labelBox"
-    )! as SVGSVGElement;
-    const labelText =
-      parentElement?.querySelector(".labelText")?.textContent || "";
-    const container = createContainerElement(labelBox, "rectangle", labelText);
-    container.strokeColor = "#adb5bd";
-    container.bgColor = "#e9ecef";
-    nodes.push(container);
   });
+  if (!loopText.length) {
+    return;
+  }
+  const parentElement = loopText[0].parentElement;
+  const labelBox = parentElement?.querySelector(".labelBox")! as SVGSVGElement;
+  const labelTextNode = parentElement?.querySelector(".labelText");
+  const labelText = labelTextNode?.textContent || "";
+  const container = createContainerElement(labelBox, "rectangle", labelText);
+  container.strokeColor = "#adb5bd";
+  container.bgColor = "#e9ecef";
+  // So width is calculated based on label
+  container.width = undefined;
+
+  nodes.push(container);
   return { lines, texts, nodes };
 };
 

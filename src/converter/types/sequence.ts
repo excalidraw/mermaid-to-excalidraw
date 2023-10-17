@@ -157,16 +157,18 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
     elements.push(...activations);
 
     // loops
-    const { lines, texts, nodes } = chart.loops;
-    lines.forEach((line) => {
-      elements.push(createLine(line));
-    });
-    texts.forEach((text) => {
-      elements.push(createText(text));
-    });
-    nodes.forEach((node) => {
-      elements.push(createContainer(node));
-    });
+    if (chart.loops) {
+      const { lines, texts, nodes } = chart.loops;
+      lines.forEach((line) => {
+        elements.push(createLine(line));
+      });
+      texts.forEach((text) => {
+        elements.push(createText(text));
+      });
+      nodes.forEach((node) => {
+        elements.push(createContainer(node));
+      });
+    }
 
     return { elements };
   },
