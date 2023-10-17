@@ -1,5 +1,6 @@
 import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
+import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 
 export type Line = {
   id?: string;
@@ -8,13 +9,14 @@ export type Line = {
   endX: number;
   endY: number;
   strokeColor: string | null;
-  strokeWidth: string | null;
+  strokeWidth: number | null;
+  strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
   type: "line";
 };
 
 type ARROW_KEYS = keyof typeof SUPPORTED_SEQUENCE_ARROW_TYPES;
 
-export type Arrow = Omit<Line, "type"> & {
+export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
   label?: {
     text: string | null;
@@ -51,11 +53,16 @@ export type Container = {
 };
 export type Node = Container | Line | Arrow | Text;
 
+type Loop = {
+  lines: Line[];
+  texts: Text[];
+};
 export interface Sequence {
   type: "sequence";
   nodes: Array<Node[]>;
   lines: Line[];
   arrows: Arrow[];
+  loops: Loop;
 }
 
 type Message = {
@@ -136,7 +143,7 @@ const createLineElement = (
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
   line.strokeColor = lineNode.getAttribute("stroke");
-  line.strokeWidth = lineNode.getAttribute("stroke-width");
+  line.strokeWidth = Number(lineNode.getAttribute("stroke-width"));
   line.type = "line";
   return line;
 };
@@ -144,12 +151,22 @@ const createLineElement = (
 const createArrowElement = (arrowNode: SVGLineElement, message: Message) => {
   const arrow = {} as Arrow;
   arrow.label = { text: message.message, fontSize: 16 };
+
   arrow.startX = Number(arrowNode.getAttribute("x1"));
   arrow.startY = Number(arrowNode.getAttribute("y1"));
   arrow.endX = Number(arrowNode.getAttribute("x2"));
   arrow.endY = Number(arrowNode.getAttribute("y2"));
+
+  if (message.message) {
+    // In mermaid the text is positioned above arrow but in Excalidraw
+    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
+    const offset = 10;
+    arrow.startY = arrow.startY - offset;
+    arrow.endY = arrow.endY - offset;
+  }
+
   arrow.strokeColor = arrowNode.getAttribute("stroke");
-  arrow.strokeWidth = arrowNode.getAttribute("stroke-width");
+  arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   arrow.type = "arrow";
   arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
   return arrow;
@@ -276,6 +293,7 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
+
   // There are cases when messages array contains messages without
   // from and to eg loops hence removing those cases
   const arrowMessages = messages.filter(
@@ -284,6 +302,7 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   arrowNodes.forEach((arrowNode, index) => {
     const message = arrowMessages[index];
     const arrow = createArrowElement(arrowNode, message);
+
     arrows.push(arrow);
   });
   return arrows;
@@ -318,6 +337,39 @@ const parseActivations = (containerEl: Element) => {
 
   return activations;
 };
+
+const parseLoops = (containerEl: Element) => {
+  const lineNodes = Array.from(
+    containerEl.querySelectorAll(".loopLine")
+  ) as SVGLineElement[];
+  const lines: Line[] = [];
+  const texts: Text[] = [];
+  lineNodes.forEach((node) => {
+    const startX = Number(node.getAttribute("x1"));
+    const startY = Number(node.getAttribute("y1"));
+    const endX = Number(node.getAttribute("x2"));
+    const endY = Number(node.getAttribute("y2"));
+    const line = createLineElement(node, startX, startY, endX, endY);
+    line.strokeStyle = "dotted";
+    line.strokeColor = "#adb5bd";
+    line.strokeWidth = 2;
+    lines.push(line);
+  });
+
+  const loopText = Array.from(
+    containerEl.querySelectorAll(".loopText")
+  ) as SVGTextElement[];
+  loopText.forEach((node) => {
+    const text = node.textContent || "";
+    const textElement = createTextElement(node, text);
+    texts.push(textElement);
+
+    const label = node.previousElementSibling as SVGTextElement;
+    texts.push(createTextElement(label, label.textContent || ""));
+  });
+  return { lines, texts };
+};
+
 export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -333,8 +385,9 @@ export const parseMermaidSequenceDiagram = (
   const arrows = parseMessages(messages, containerEl);
   const notes = parseNotes(containerEl);
   const activations = parseActivations(containerEl);
+  const loops = parseLoops(containerEl);
   nodes.push(notes);
   nodes.push(activations);
-  console.log(mermaidParser, "meramid");
-  return { type: "sequence", lines, arrows, nodes };
+
+  return { type: "sequence", lines, arrows, nodes, loops };
 };

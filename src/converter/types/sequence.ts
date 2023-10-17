@@ -27,6 +27,9 @@ const createLine = (line: Line) => {
     ],
     width: line.endX - line.startX,
     height: line.endY - line.startY,
+    strokeStyle: line.strokeStyle || "solid",
+    strokeColor: line.strokeColor || "#000",
+    strokeWidth: line.strokeWidth || 1,
   };
   return lineElement;
 };
@@ -149,6 +152,16 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
       elements.push(createArrow(arrow));
     });
     elements.push(...activations);
+
+    // loops
+    const { lines, texts } = chart.loops;
+    lines.forEach((line) => {
+      elements.push(createLine(line));
+    });
+    texts.forEach((text) => {
+      elements.push(createText(text));
+    });
+
     return { elements };
   },
 });

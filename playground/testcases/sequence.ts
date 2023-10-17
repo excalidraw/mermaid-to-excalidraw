@@ -56,6 +56,15 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     John-->>-Alice: Hi Alice, I can hear you!
     John-->>-Alice: I feel great!`,
   },
+  {
+    name: "Loops",
+    defination: `
+    sequenceDiagram
+    Alice->John: Hi John, how are you?
+    loop Every minute
+        John-->Alice: Great!
+    end`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };

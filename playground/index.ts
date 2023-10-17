@@ -65,7 +65,7 @@ async function renderDiagram(
 ) {
   const diagramContainerEl = document.createElement("div");
   diagramContainerEl.id = `diagram-container-${i}`;
-  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px">${name}
+  diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px; color:#f06595;">${name}
   </h2>
   
   <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;width:40vw;padding:5px" id="mermaid-syntax-${i}"></pre>
@@ -83,7 +83,6 @@ async function renderDiagram(
   btn.addEventListener("click", async () => {
     const data = btn.getAttribute("data");
     const pd = document.getElementById(`parsed-${data}`)!;
-    console.log(pd.innerHTML, "HEYYY", data);
     renderExcalidraw(pd.innerHTML);
   });
 
