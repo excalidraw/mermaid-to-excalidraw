@@ -79,6 +79,17 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
         Bob->>Alice: Thanks for asking
     end`,
   },
+  {
+    name: "Parallel Actions",
+    defination: `sequenceDiagram
+    par Alice to Bob
+        Alice->>Bob: Hello Folks!
+    and Alice to John
+        Alice->>John: Hello Folks!
+    end
+    Bob-->>Alice: Hi Alice!
+    John-->>Alice: Hi Alice!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };
