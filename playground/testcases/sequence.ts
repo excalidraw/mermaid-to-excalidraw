@@ -101,6 +101,14 @@ sequenceDiagram
     end
     API-->BillingService: Start billing process`,
   },
+  {
+    name: "Comments",
+    defination: `
+    sequenceDiagram
+    Alice->>John: Hi John, whats up?
+    %% this is a comment
+    John-->>Alice: Great!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };
