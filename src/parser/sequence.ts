@@ -48,6 +48,7 @@ export type Container = {
   height: number;
   strokeStyle?: "dashed" | "solid";
   strokeWidth?: number;
+  strokeColor?: string;
   bgColor?: string;
   subtype?: "activation";
 };
@@ -56,6 +57,7 @@ export type Node = Container | Line | Arrow | Text;
 type Loop = {
   lines: Line[];
   texts: Text[];
+  nodes: Container[];
 };
 export interface Sequence {
   type: "sequence";
@@ -344,6 +346,7 @@ const parseLoops = (containerEl: Element) => {
   ) as SVGLineElement[];
   const lines: Line[] = [];
   const texts: Text[] = [];
+  const nodes: Container[] = [];
   lineNodes.forEach((node) => {
     const startX = Number(node.getAttribute("x1"));
     const startY = Number(node.getAttribute("y1"));
@@ -359,15 +362,24 @@ const parseLoops = (containerEl: Element) => {
   const loopText = Array.from(
     containerEl.querySelectorAll(".loopText")
   ) as SVGTextElement[];
+
   loopText.forEach((node) => {
     const text = node.textContent || "";
     const textElement = createTextElement(node, text);
-    texts.push(textElement);
 
-    const label = node.previousElementSibling as SVGTextElement;
-    texts.push(createTextElement(label, label.textContent || ""));
+    texts.push(textElement);
+    const parentElement = node.parentElement;
+    const labelBox = parentElement?.querySelector(
+      ".labelBox"
+    )! as SVGSVGElement;
+    const labelText =
+      parentElement?.querySelector(".labelText")?.textContent || "";
+    const container = createContainerElement(labelBox, "rectangle", labelText);
+    container.strokeColor = "#adb5bd";
+    container.bgColor = "#e9ecef";
+    nodes.push(container);
   });
-  return { lines, texts };
+  return { lines, texts, nodes };
 };
 
 export const parseMermaidSequenceDiagram = (
