@@ -65,7 +65,7 @@ export interface Sequence {
   nodes: Array<Node[]>;
   lines: Line[];
   arrows: Arrow[];
-  loops: Loop;
+  loops: Loop | undefined;
 }
 
 type Message = {
@@ -153,10 +153,10 @@ const createLineElement = (
 
 const createArrowElement = (
   arrowNode: SVGLineElement | SVGPathElement,
-  message: Message
+  message: string | null
 ) => {
   const arrow = {} as Arrow;
-  arrow.label = { text: message.message, fontSize: 16 };
+  arrow.label = { text: message, fontSize: 16 };
   const tagName = arrowNode.tagName;
 
   if (tagName === "line") {
@@ -198,7 +198,7 @@ const createArrowElement = (
     arrow.endY = endPosition[1];
     arrow.points = points;
   }
-  if (message.message) {
+  if (message) {
     // In mermaid the text is positioned above arrow but in Excalidraw
     // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
     const offset = 10;
@@ -341,13 +341,12 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
 
-  // There are cases when messages array contains messages without
-  // from and to eg loops hence removing those cases
-  const arrowMessages = messages.filter(
-    (message) => message.from && message.to
-  );
+  const arrowMessages = Array.from(
+    containerEl.querySelectorAll('[class*="messageText"]')
+  ) as SVGTextElement[];
+
   arrowNodes.forEach((arrowNode, index) => {
-    const message = arrowMessages[index];
+    const message = arrowMessages[index].textContent;
     const arrow = createArrowElement(arrowNode, message);
 
     arrows.push(arrow);
@@ -372,6 +371,7 @@ const parseNotes = (containerEl: Element) => {
   });
   return notes;
 };
+
 const parseActivations = (containerEl: Element) => {
   const activationNodes = Array.from(
     containerEl.querySelectorAll(`[class*=activation]`)
