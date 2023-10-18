@@ -51,7 +51,7 @@ export type Container = {
   strokeWidth?: number;
   strokeColor?: string;
   bgColor?: string;
-  subtype?: "activation";
+  subtype?: "activation" | "highlight" | "note";
 };
 export type Node = Container | Line | Arrow | Text;
 
@@ -94,7 +94,7 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
 };
 
 const createContainerElement = (
-  actorNode: SVGSVGElement,
+  actorNode: SVGSVGElement | SVGRectElement,
   type: Container["type"],
   text?: string,
   subtype?: Container["subtype"]
@@ -113,6 +113,19 @@ const createContainerElement = (
   node.width = boundingBox.width;
   node.height = boundingBox.height;
   node.subtype = subtype;
+
+  switch (subtype) {
+    case "highlight":
+      const bgColor = actorNode.getAttribute("fill");
+      if (bgColor) {
+        node.bgColor = bgColor;
+      }
+      break;
+    case "note":
+      node.strokeStyle = "dashed";
+      break;
+  }
+
   return node;
 };
 
@@ -365,8 +378,7 @@ const parseNotes = (containerEl: Element) => {
     }
     const rect = node.firstChild as SVGSVGElement;
     const text = node.lastChild?.textContent!;
-    const note = createContainerElement(rect, "rectangle", text);
-    note.strokeStyle = "dashed";
+    const note = createContainerElement(rect, "rectangle", text, "note");
     notes.push(note);
   });
   return notes;
@@ -431,6 +443,19 @@ const parseLoops = (containerEl: Element) => {
   return { lines, texts, nodes };
 };
 
+const computeHighlights = (containerEl: Element) => {
+  const rects = Array.from(
+    containerEl.querySelectorAll(".rect")
+  ) as SVGRectElement[];
+  const nodes: Container[] = [];
+
+  rects.forEach((rect) => {
+    const node = createContainerElement(rect, "rectangle", "", "highlight");
+    nodes.push(node);
+  });
+  return nodes;
+};
+
 export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -447,6 +472,8 @@ export const parseMermaidSequenceDiagram = (
   const notes = parseNotes(containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(containerEl);
+  const bgHightlights = computeHighlights(containerEl);
+  nodes.push(bgHightlights);
   nodes.push(notes);
   nodes.push(activations);
 
