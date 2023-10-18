@@ -14,7 +14,7 @@ export type Line = {
   type: "line";
 };
 
-type ARROW_KEYS = keyof typeof SUPPORTED_SEQUENCE_ARROW_TYPES;
+type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
 
 export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
@@ -22,7 +22,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
     text: string | null;
     fontSize: number;
   };
-  strokeStyle: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
+  strokeStyle: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
   points?: number[][];
 };
 
@@ -69,7 +69,7 @@ export interface Sequence {
 }
 
 type Message = {
-  type: ARROW_KEYS;
+  type: ARROW_KEYS & typeof MESSAGE_TYPE;
   to: string;
   from: string;
   message: string;
@@ -82,7 +82,7 @@ type Actor = {
   type: "actor" | "participant";
 };
 // Currently mermaid supported these 6 arrow types, the names are taken from mermaidParser.LINETYPE
-const SUPPORTED_SEQUENCE_ARROW_TYPES = {
+const SEQUENCE_ARROW_TYPES = {
   0: "SOLID",
   1: "DOTTED",
   3: "SOLID_CROSS",
@@ -91,6 +91,10 @@ const SUPPORTED_SEQUENCE_ARROW_TYPES = {
   6: "DOTTED_OPEN",
   24: "SOLID_POINT",
   25: "DOTTED_POINT",
+};
+
+const MESSAGE_TYPE = {
+  NOTE: 2,
 };
 
 const createContainerElement = (
@@ -222,7 +226,7 @@ const createArrowElement = (
   arrow.strokeColor = arrowNode.getAttribute("stroke");
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   arrow.type = "arrow";
-  arrow.strokeStyle = SUPPORTED_SEQUENCE_ARROW_TYPES[message.type];
+  arrow.strokeStyle = SEQUENCE_ARROW_TYPES[message.type];
   return arrow;
 };
 
@@ -348,12 +352,12 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
   return { nodes, lines };
 };
 
-const parseMessages = (messages: Message[], containerEl: Element) => {
+const computeArrows = (messages: Message[], containerEl: Element) => {
   const arrows: Arrow[] = [];
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
-  const supportedMessageTypes = Object.keys(SUPPORTED_SEQUENCE_ARROW_TYPES);
+  const supportedMessageTypes = Object.keys(SEQUENCE_ARROW_TYPES);
   const arrowMessages = messages.filter((message) =>
     supportedMessageTypes.includes(message.type.toString())
   );
@@ -367,17 +371,20 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   return arrows;
 };
 
-const parseNotes = (containerEl: Element) => {
+const computeNotes = (messages: Message[], containerEl: Element) => {
   const noteNodes = Array.from(containerEl.querySelectorAll(".note")).map(
     (node) => node.parentElement
   );
+  const noteText = messages.filter(
+    (message) => message.type === MESSAGE_TYPE.NOTE
+  );
   const notes: Container[] = [];
-  noteNodes.forEach((node) => {
+  noteNodes.forEach((node, index) => {
     if (!node) {
       return;
     }
     const rect = node.firstChild as SVGSVGElement;
-    const text = node.lastChild?.textContent!;
+    const text = noteText[index].message;
     const note = createContainerElement(rect, "rectangle", text, "note");
     notes.push(note);
   });
@@ -426,20 +433,23 @@ const parseLoops = (containerEl: Element) => {
 
     texts.push(textElement);
   });
-  if (!loopText.length) {
-    return;
-  }
-  const parentElement = loopText[0].parentElement;
-  const labelBox = parentElement?.querySelector(".labelBox")! as SVGSVGElement;
-  const labelTextNode = parentElement?.querySelector(".labelText");
-  const labelText = labelTextNode?.textContent || "";
-  const container = createContainerElement(labelBox, "rectangle", labelText);
-  container.strokeColor = "#adb5bd";
-  container.bgColor = "#e9ecef";
-  // So width is calculated based on label
-  container.width = undefined;
 
-  nodes.push(container);
+  const labelBoxes = Array.from(
+    containerEl?.querySelectorAll(".labelBox")
+  )! as SVGSVGElement[];
+  const labelTextNode = Array.from(containerEl?.querySelectorAll(".labelText"));
+
+  labelBoxes.forEach((labelBox, index) => {
+    const labelText = labelTextNode[index]?.textContent || "";
+    const container = createContainerElement(labelBox, "rectangle", labelText);
+    container.strokeColor = "#adb5bd";
+    container.bgColor = "#e9ecef";
+    // So width is calculated based on label
+    container.width = undefined;
+
+    nodes.push(container);
+  });
+
   return { lines, texts, nodes };
 };
 
@@ -468,8 +478,8 @@ export const parseMermaidSequenceDiagram = (
   const actorData = mermaidParser.getActors();
   const { nodes, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
-  const arrows = parseMessages(messages, containerEl);
-  const notes = parseNotes(containerEl);
+  const arrows = computeArrows(messages, containerEl);
+  const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(containerEl);
   const bgHightlights = computeHighlights(containerEl);
