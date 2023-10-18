@@ -166,10 +166,10 @@ const createLineElement = (
 
 const createArrowElement = (
   arrowNode: SVGLineElement | SVGPathElement,
-  message: string | null
+  message: Message
 ) => {
   const arrow = {} as Arrow;
-  arrow.label = { text: message, fontSize: 16 };
+  arrow.label = { text: message.message, fontSize: 16 };
   const tagName = arrowNode.tagName;
 
   if (tagName === "line") {
@@ -353,13 +353,13 @@ const parseMessages = (messages: Message[], containerEl: Element) => {
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
-
-  const arrowMessages = Array.from(
-    containerEl.querySelectorAll('[class*="messageText"]')
-  ) as SVGTextElement[];
+  const supportedMessageTypes = Object.keys(SUPPORTED_SEQUENCE_ARROW_TYPES);
+  const arrowMessages = messages.filter((message) =>
+    supportedMessageTypes.includes(message.type.toString())
+  );
 
   arrowNodes.forEach((arrowNode, index) => {
-    const message = arrowMessages[index].textContent;
+    const message = arrowMessages[index];
     const arrow = createArrowElement(arrowNode, message);
 
     arrows.push(arrow);
