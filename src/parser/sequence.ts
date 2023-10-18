@@ -23,6 +23,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
     fontSize: number;
   };
   strokeStyle: (typeof SUPPORTED_SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
+  points?: number[][];
 };
 
 export type Text = {
@@ -150,15 +151,53 @@ const createLineElement = (
   return line;
 };
 
-const createArrowElement = (arrowNode: SVGLineElement, message: Message) => {
+const createArrowElement = (
+  arrowNode: SVGLineElement | SVGPathElement,
+  message: Message
+) => {
   const arrow = {} as Arrow;
   arrow.label = { text: message.message, fontSize: 16 };
+  const tagName = arrowNode.tagName;
 
-  arrow.startX = Number(arrowNode.getAttribute("x1"));
-  arrow.startY = Number(arrowNode.getAttribute("y1"));
-  arrow.endX = Number(arrowNode.getAttribute("x2"));
-  arrow.endY = Number(arrowNode.getAttribute("y2"));
+  if (tagName === "line") {
+    arrow.startX = Number(arrowNode.getAttribute("x1"));
+    arrow.startY = Number(arrowNode.getAttribute("y1"));
+    arrow.endX = Number(arrowNode.getAttribute("x2"));
+    arrow.endY = Number(arrowNode.getAttribute("y2"));
+  } else if (tagName === "path") {
+    const dAttr = arrowNode.getAttribute("d");
+    if (!dAttr) {
+      throw new Error('Path element does not contain a "d" attribute');
+    }
+    // Split the d attribute based on M (Move To)  and C (Curve) commands
+    const commands = dAttr.split(/(?=[LC])/);
 
+    const startPosition = commands[0]
+      .substring(1)
+      .split(",")
+      .map((coord) => parseFloat(coord));
+    const points: Arrow["points"] = [];
+    commands.forEach((command) => {
+      const currPoints = command
+        .substring(1)
+        .trim()
+        .split(" ")
+        .map((pos) => {
+          return pos
+            .split(",")
+            .map((coord, index) => parseFloat(coord) - startPosition[index]);
+        });
+      points.push(...currPoints);
+    });
+
+    const endPosition = points[points.length - 1];
+
+    arrow.startX = startPosition[0];
+    arrow.startY = startPosition[1];
+    arrow.endX = endPosition[0];
+    arrow.endY = endPosition[1];
+    arrow.points = points;
+  }
   if (message.message) {
     // In mermaid the text is positioned above arrow but in Excalidraw
     // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
@@ -238,6 +277,9 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
         "rectangle",
         text
       );
+      if (!topNodeElement) {
+        throw "Top Node element not found!";
+      }
       nodes.push([topNodeElement]);
 
       // creating bottom actor node element
@@ -255,6 +297,9 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
         throw "Line not found";
       }
       const startX = Number(lineNode.getAttribute("x1"));
+      if (!topNodeElement.height) {
+        throw "Top node element height is null";
+      }
       const startY = topNodeElement.y + topNodeElement.height;
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const endY = bottomNodeElement.y;

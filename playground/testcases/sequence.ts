@@ -80,6 +80,18 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     end`,
   },
   {
+    name: "Critical Regions",
+    defination: `
+  sequenceDiagram
+    critical Establish a connection to the DB
+        Service-->DB: connect
+    option Network timeout
+        Service-->Service: Log error
+    option Credentials rejected
+        Service-->Service: Log different error
+    end`,
+  },
+  {
     name: "Parallel Actions",
     defination: `sequenceDiagram
     par Alice to Bob

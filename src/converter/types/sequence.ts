@@ -85,7 +85,7 @@ const createArrow = (arrow: Arrow) => {
     type: "arrow",
     x: arrow.startX,
     y: arrow.startY,
-    points: [
+    points: arrow.points || [
       [0, 0],
       [arrow.endX - arrow.startX, arrow.endY - arrow.startY],
     ],
@@ -99,6 +99,9 @@ const createArrow = (arrow: Arrow) => {
     label: {
       text: arrow?.label?.text || "",
       fontSize: 16,
+    },
+    roundness: {
+      type: 2,
     },
   };
   return arrowElement;
