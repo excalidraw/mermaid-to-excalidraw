@@ -69,7 +69,7 @@ export interface Sequence {
 }
 
 type Message = {
-  type: ARROW_KEYS & typeof MESSAGE_TYPE;
+  type: ARROW_KEYS & (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
   to: string;
   from: string;
   message: string;
@@ -94,7 +94,36 @@ const SEQUENCE_ARROW_TYPES = {
 };
 
 const MESSAGE_TYPE = {
+  SOLID: 0,
+  DOTTED: 1,
   NOTE: 2,
+  SOLID_CROSS: 3,
+  DOTTED_CROSS: 4,
+  SOLID_OPEN: 5,
+  DOTTED_OPEN: 6,
+  LOOP_START: 10,
+  LOOP_END: 11,
+  ALT_START: 12,
+  ALT_ELSE: 13,
+  ALT_END: 14,
+  OPT_START: 15,
+  OPT_END: 16,
+  ACTIVE_START: 17,
+  ACTIVE_END: 18,
+  PAR_START: 19,
+  PAR_AND: 20,
+  PAR_END: 21,
+  RECT_START: 22,
+  RECT_END: 23,
+  SOLID_POINT: 24,
+  DOTTED_POINT: 25,
+  AUTONUMBER: 26,
+  CRITICAL_START: 27,
+  CRITICAL_OPTION: 28,
+  CRITICAL_END: 29,
+  BREAK_START: 30,
+  BREAK_END: 31,
+  PAR_OVER_START: 32,
 };
 
 const createContainerElement = (
@@ -193,6 +222,7 @@ const createArrowElement = (
       .substring(1)
       .split(",")
       .map((coord) => parseFloat(coord));
+
     const points: Arrow["points"] = [];
     commands.forEach((command) => {
       const currPoints = command
@@ -200,9 +230,11 @@ const createArrowElement = (
         .trim()
         .split(" ")
         .map((pos) => {
-          return pos
-            .split(",")
-            .map((coord, index) => parseFloat(coord) - startPosition[index]);
+          const [x, y] = pos.split(",");
+          return [
+            parseFloat(x) - startPosition[0],
+            parseFloat(y) - startPosition[1],
+          ];
         });
       points.push(...currPoints);
     });
@@ -404,13 +436,14 @@ const parseActivations = (containerEl: Element) => {
   return activations;
 };
 
-const parseLoops = (containerEl: Element) => {
+const parseLoops = (messages: Message[], containerEl: Element) => {
   const lineNodes = Array.from(
     containerEl.querySelectorAll(".loopLine")
   ) as SVGLineElement[];
   const lines: Line[] = [];
   const texts: Text[] = [];
   const nodes: Container[] = [];
+
   lineNodes.forEach((node) => {
     const startX = Number(node.getAttribute("x1"));
     const startY = Number(node.getAttribute("y1"));
@@ -423,14 +456,25 @@ const parseLoops = (containerEl: Element) => {
     lines.push(line);
   });
 
-  const loopText = Array.from(
+  const loopTextNodes = Array.from(
     containerEl.querySelectorAll(".loopText")
   ) as SVGTextElement[];
 
-  loopText.forEach((node) => {
+  const criticalMessages = messages
+    .filter((message) => message.type === MESSAGE_TYPE.CRITICAL_START)
+    .map((message) => message.message);
+
+  loopTextNodes.forEach((node) => {
     const text = node.textContent || "";
     const textElement = createTextElement(node, text);
-
+    // The text is rendered between [ ] in DOM hence getting the text excluding the [ ]
+    const rawText = text.match(/\[(.*?)\]/)?.[1] || "";
+    const isCritical = criticalMessages.includes(rawText);
+    // For critical label the coordinates are not accurate in mermaid as there is
+    // no padding left hence shifting the text next to critical label by 16px (font size)
+    if (isCritical) {
+      textElement.x += 16;
+    }
     texts.push(textElement);
   });
 
@@ -481,7 +525,7 @@ export const parseMermaidSequenceDiagram = (
   const arrows = computeArrows(messages, containerEl);
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
-  const loops = parseLoops(containerEl);
+  const loops = parseLoops(messages, containerEl);
   const bgHightlights = computeHighlights(containerEl);
   nodes.push(bgHightlights);
   nodes.push(notes);
