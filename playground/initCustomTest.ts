@@ -14,31 +14,27 @@ btn.addEventListener("click", async () => {
     const mermaidInput = document.getElementById(
       "mermaid-input"
     ) as HTMLInputElement;
-    const fontSizeInput = document.getElementById(
-      "font-size-input"
-    ) as HTMLInputElement;
 
     const diagramDefinition = mermaidInput.value;
-    const customFontSize = Number(fontSizeInput.value);
 
     // Render Mermaid diagram
     const diagramEl = document.getElementById("custom-diagram")!;
     const { svg } = await mermaid.render(
       `custom-digaram`,
-      `%%{init: {"themeVariables": {"fontSize": "${customFontSize}px"}} }%%\n${diagramDefinition}`
+      `%%{init: {"themeVariables": {"fontSize": "20px"}} }%%\n${diagramDefinition}`
     );
     diagramEl.innerHTML = svg;
 
     // Parse Mermaid diagram and render to Excalidraw
     const parsedData = await parseMermaid(diagramDefinition, {
-      fontSize: customFontSize,
+      fontSize: 20,
     });
 
     const parsedDataEl = document.getElementById("custom-parsed-data")!;
     parsedDataEl.parentElement!.style.display = "block";
     parsedDataEl.innerText = JSON.stringify(parsedData, null, 2);
 
-    renderExcalidraw(JSON.stringify(parsedData), customFontSize);
+    renderExcalidraw(JSON.stringify(parsedData));
   } catch (e) {
     errorEl.setAttribute("style", "display: block");
     errorEl.innerHTML = String(e);

@@ -8,7 +8,6 @@ import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
 
 interface MermaidDefinitionOptions {
   curve?: "linear" | "basis";
-  fontSize?: number;
 }
 
 const processMermaidTextWithOptions = (
@@ -22,7 +21,7 @@ const processMermaidTextWithOptions = (
     },
     // Increase the Mermaid's font size by multiplying with 1.25 to match the Excalidraw Virgil font
     themeVariables: {
-      fontSize: `${(options?.fontSize || DEFAULT_FONT_SIZE) * 1.25}px`,
+      fontSize: `${DEFAULT_FONT_SIZE * 1.25}px`,
     },
   };
   const fullDefinition = `%%{init: ${JSON.stringify(
