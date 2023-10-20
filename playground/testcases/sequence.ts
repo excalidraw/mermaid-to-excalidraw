@@ -49,6 +49,23 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     Note right of Alice: Hey I am coming soon!`,
   },
   {
+    name: "Grouping",
+    defination: `
+    sequenceDiagram
+    box rgb(191, 223, 255) Alice & John
+    participant Alice
+    participant John
+    end
+    box Another Group
+    participant Bob
+    participant June
+    end
+    Alice->>John: Hello John, how are you?
+    John->>Alice: Great!
+    Alice->>Bob: Hello Bob, how is June?
+    Bob->>June: Hello June, how are you?`,
+  },
+  {
     name: "Activations",
     defination: `sequenceDiagram
     Alice->>+John: Hello John, how are you?

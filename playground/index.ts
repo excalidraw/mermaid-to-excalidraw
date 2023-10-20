@@ -83,7 +83,7 @@ async function renderDiagram(
   btn.addEventListener("click", async () => {
     const data = btn.getAttribute("data");
     const pd = document.getElementById(`parsed-${data}`)!;
-    renderExcalidraw(pd.innerHTML);
+    renderExcalidraw(pd.textContent!);
   });
 
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${i}`)!;
@@ -103,10 +103,7 @@ async function renderDiagram(
 
   // Get parsed data
   try {
-    const data = await parseMermaid(diagramDefinition, {
-      fontSize: DEFAULT_FONT_SIZE,
-    });
-
+    const data = await parseMermaid(diagramDefinition);
     const parsedDataViewerEl = diagramContainerEl.querySelector(
       `#parsed-${i}`
     )!;

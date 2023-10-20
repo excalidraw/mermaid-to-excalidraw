@@ -27,6 +27,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
 };
 
 export type Text = {
+  id?: string;
   type: "text";
   text: string;
   x: number;
@@ -37,7 +38,7 @@ export type Text = {
 };
 
 export type Container = {
-  id: string;
+  id?: string;
   type: "rectangle" | "ellipse";
   label?: {
     text: string | null;
@@ -51,7 +52,7 @@ export type Container = {
   strokeWidth?: number;
   strokeColor?: string;
   bgColor?: string;
-  subtype?: "activation" | "highlight" | "note";
+  subtype?: "actor" | "activation" | "highlight" | "note";
 };
 export type Node = Container | Line | Arrow | Text;
 
@@ -60,12 +61,18 @@ type Loop = {
   texts: Text[];
   nodes: Container[];
 };
+
+type Group = {
+  name: string;
+  actorKeys: Array<string>;
+};
 export interface Sequence {
   type: "sequence";
   nodes: Array<Node[]>;
   lines: Line[];
   arrows: Arrow[];
   loops: Loop | undefined;
+  groups: Group[];
 }
 
 type Message = {
@@ -127,39 +134,45 @@ const MESSAGE_TYPE = {
 };
 
 const createContainerElement = (
-  actorNode: SVGSVGElement | SVGRectElement,
+  node: SVGSVGElement | SVGRectElement,
   type: Container["type"],
-  text?: string,
-  subtype?: Container["subtype"]
+  opts: {
+    id?: string;
+    text?: string;
+    subtype?: Container["subtype"];
+  } = {}
 ) => {
-  const node = {} as Container;
-  node.type = type;
+  const container = {} as Container;
+  container.type = type;
+  const { text, subtype, id } = opts;
+  container.id = id;
+
   if (text) {
-    node.label = {
+    container.label = {
       text,
       fontSize: 16,
     };
   }
-  const boundingBox = actorNode.getBBox();
-  node.x = boundingBox.x;
-  node.y = boundingBox.y;
-  node.width = boundingBox.width;
-  node.height = boundingBox.height;
-  node.subtype = subtype;
+  const boundingBox = node.getBBox();
+  container.x = boundingBox.x;
+  container.y = boundingBox.y;
+  container.width = boundingBox.width;
+  container.height = boundingBox.height;
+  container.subtype = subtype;
 
   switch (subtype) {
     case "highlight":
-      const bgColor = actorNode.getAttribute("fill");
+      const bgColor = node.getAttribute("fill");
       if (bgColor) {
-        node.bgColor = bgColor;
+        container.bgColor = bgColor;
       }
       break;
     case "note":
-      node.strokeStyle = "dashed";
+      container.strokeStyle = "dashed";
       break;
   }
 
-  return node;
+  return container;
 };
 
 const createTextElement = (textNode: SVGTextElement, text: string) => {
@@ -189,6 +202,7 @@ const createLineElement = (
   line.startX = startX;
   line.startY = startY;
   line.endX = endX;
+
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
   line.strokeColor = lineNode.getAttribute("stroke");
@@ -292,7 +306,7 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
         ele = createContainerElement(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
-          child.textContent || undefined
+          { text: child.textContent || undefined }
         );
     }
     nodeElements.push(ele);
@@ -324,7 +338,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const topNodeElement = createContainerElement(
         topRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        text
+        { id: `${actor.name}-top`, text, subtype: "actor" }
       );
       if (!topNodeElement) {
         throw "Top Node element not found!";
@@ -335,7 +349,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const bottomNodeElement = createContainerElement(
         bottomRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        text
+        { id: `${actor.name}-bottom`, text, subtype: "actor" }
       );
       nodes.push([bottomNodeElement]);
 
@@ -417,7 +431,10 @@ const computeNotes = (messages: Message[], containerEl: Element) => {
     }
     const rect = node.firstChild as SVGSVGElement;
     const text = noteText[index].message;
-    const note = createContainerElement(rect, "rectangle", text, "note");
+    const note = createContainerElement(rect, "rectangle", {
+      text,
+      subtype: "note",
+    });
     notes.push(note);
   });
   return notes;
@@ -429,7 +446,10 @@ const parseActivations = (containerEl: Element) => {
   ) as SVGSVGElement[];
   const activations: Container[] = [];
   activationNodes.forEach((node) => {
-    const rect = createContainerElement(node, "rectangle", "", "activation");
+    const rect = createContainerElement(node, "rectangle", {
+      text: "",
+      subtype: "activation",
+    });
     activations.push(rect);
   });
 
@@ -485,7 +505,9 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 
   labelBoxes.forEach((labelBox, index) => {
     const labelText = labelTextNode[index]?.textContent || "";
-    const container = createContainerElement(labelBox, "rectangle", labelText);
+    const container = createContainerElement(labelBox, "rectangle", {
+      text: labelText,
+    });
     container.strokeColor = "#adb5bd";
     container.bgColor = "#e9ecef";
     // So width is calculated based on label
@@ -504,7 +526,10 @@ const computeHighlights = (containerEl: Element) => {
   const nodes: Container[] = [];
 
   rects.forEach((rect) => {
-    const node = createContainerElement(rect, "rectangle", "", "highlight");
+    const node = createContainerElement(rect, "rectangle", {
+      text: "",
+      subtype: "highlight",
+    });
     nodes.push(node);
   });
   return nodes;
@@ -518,18 +543,20 @@ export const parseMermaidSequenceDiagram = (
 
   // Get mermaid parsed data from parser shared variable `yy`
   const mermaidParser = diagram.parser.yy;
-
+  const nodes: Array<Node[]> = [];
+  const groups = mermaidParser.getBoxes();
+  const bgHightlights = computeHighlights(containerEl);
   const actorData = mermaidParser.getActors();
-  const { nodes, lines } = parseActor(actorData, containerEl);
+  const { nodes: actors, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
   const arrows = computeArrows(messages, containerEl);
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(messages, containerEl);
-  const bgHightlights = computeHighlights(containerEl);
   nodes.push(bgHightlights);
+  nodes.push(...actors);
   nodes.push(notes);
   nodes.push(activations);
 
-  return { type: "sequence", lines, arrows, nodes, loops };
+  return { type: "sequence", lines, arrows, nodes, loops, groups };
 };

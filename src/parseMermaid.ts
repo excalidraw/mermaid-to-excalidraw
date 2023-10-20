@@ -68,14 +68,12 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 };
 
 export const parseMermaid = async (
-  definition: string,
-  options: MermaidOptions = {}
+  definition: string
 ): Promise<Flowchart | GraphImage | Sequence> => {
   mermaid.initialize({ startOnLoad: false });
 
   const fullDefinition = processMermaidTextWithOptions(definition, {
     curve: isSupportedDiagram(definition) ? "linear" : "basis",
-    fontSize: options.fontSize,
   });
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(fullDefinition);

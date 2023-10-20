@@ -8,7 +8,7 @@ const parseMermaidToExcalidraw = async (
   definition: string,
   options: MermaidOptions = {}
 ) => {
-  const parsedMermaidData = await parseMermaid(definition, options);
+  const parsedMermaidData = await parseMermaid(definition);
   const excalidrawElements = graphToExcalidraw(parsedMermaidData, options);
   return excalidrawElements;
 };
