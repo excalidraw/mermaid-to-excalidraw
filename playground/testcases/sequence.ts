@@ -157,6 +157,15 @@ sequenceDiagram
   Alice ->>+ John: Did you want to go to the game tonight?
   John -->>- Alice: Yeah! See you there.`,
   },
+  {
+    name: "Sequence Numbers",
+    defination: `sequenceDiagram
+    autonumber
+    Alice->>John: Hello John, how are you?
+    John-->>Alice: Great!
+    John->>Bob: How about you?
+    Bob-->>John: Jolly good!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };

@@ -77,7 +77,7 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
       text: element?.label?.text || "",
       fontSize: element?.label?.fontSize,
       verticalAlign: "middle",
-      strokeColor: "#000",
+      strokeColor: element.label?.color || "#000",
     },
     strokeStyle: element?.strokeStyle,
     strokeWidth: element?.strokeWidth,
@@ -173,6 +173,9 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
       }
 
       elements.push(createArrow(arrow));
+      if (arrow.sequenceNumber) {
+        elements.push(createContainer(arrow.sequenceNumber));
+      }
     });
     elements.push(...activations);
 

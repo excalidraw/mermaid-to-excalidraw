@@ -1,7 +1,6 @@
 import mermaid from "mermaid";
 import { GraphImage } from "./interfaces.js";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
-import { MermaidOptions } from "./index.js";
 import { isSupportedDiagram } from "./utils.js";
 import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";

@@ -2,6 +2,7 @@ import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
+import { entityCodesToText } from "../utils.js";
 
 export type Line = {
   id?: string;
@@ -26,6 +27,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   };
   strokeStyle: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
   points?: number[][];
+  sequenceNumber: Container;
 };
 
 export type Text = {
@@ -46,6 +48,7 @@ export type Container = {
   label?: {
     text: string | null;
     fontSize: number;
+    color?: string;
   };
   x: number;
   y: number;
@@ -55,9 +58,10 @@ export type Container = {
   strokeWidth?: number;
   strokeColor?: string;
   bgColor?: string;
-  subtype?: "actor" | "activation" | "highlight" | "note";
+  subtype?: "actor" | "activation" | "highlight" | "note" | "sequence";
   groupId?: string;
 };
+
 export type Node = Container | Line | Arrow | Text;
 
 type Loop = {
@@ -286,6 +290,26 @@ const createArrowElement = (
     arrow.endY = arrow.endY - offset;
   }
 
+  const showSequenceNumber =
+    !!arrowNode.nextElementSibling?.classList.contains("sequenceNumber");
+
+  if (showSequenceNumber) {
+    const text = arrowNode.nextElementSibling?.textContent!;
+    const height = 30;
+    const yOffset = height / 2;
+    const xOffset = 10;
+    const sequenceNumber: Container = {
+      type: "rectangle",
+      x: arrow.startX - xOffset,
+      y: arrow.startY - yOffset,
+      label: { text, fontSize: 14 },
+      bgColor: "#e9ecef",
+      height,
+      subtype: "sequence",
+    };
+    arrow.sequenceNumber = sequenceNumber;
+  }
+
   arrow.strokeColor = arrowNode.getAttribute("stroke");
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   arrow.type = "arrow";
@@ -424,6 +448,8 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 
 const computeArrows = (messages: Message[], containerEl: Element) => {
   const arrows: Arrow[] = [];
+  const sequenceNumbers: Container[] = [];
+
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')
   ) as SVGLineElement[];
