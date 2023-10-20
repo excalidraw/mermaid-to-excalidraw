@@ -35,6 +35,9 @@ const createLine = (line: Line) => {
     strokeColor: line.strokeColor || "#000",
     strokeWidth: line.strokeWidth || 1,
   };
+  if (line.groupId) {
+    Object.assign(lineElement, { groupIds: [line.groupId] });
+  }
   return lineElement;
 };
 
@@ -49,6 +52,9 @@ const createText = (element: Text) => {
     fontSize: element.fontSize,
     verticalAlign: "middle",
   };
+  if (element.groupId) {
+    Object.assign(textElement, { groupIds: [element.groupId] });
+  }
   return textElement;
 };
 
@@ -80,6 +86,9 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
     fillStyle: "solid",
     ...extraProps,
   };
+  if (element.groupId) {
+    Object.assign(container, { groupIds: [element.groupId] });
+  }
 
   return container;
 };
@@ -109,6 +118,9 @@ const createArrow = (arrow: Arrow) => {
       type: 2,
     },
   };
+  if (arrow.groupId) {
+    Object.assign(arrowElement, { groupIds: [arrow.groupId] });
+  }
   return arrowElement;
 };
 

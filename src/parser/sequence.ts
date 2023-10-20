@@ -1,6 +1,7 @@
 import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
+import { nanoid } from "nanoid";
 
 export type Line = {
   id?: string;
@@ -12,6 +13,7 @@ export type Line = {
   strokeWidth: number | null;
   strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
   type: "line";
+  groupId?: string;
 };
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
@@ -35,6 +37,7 @@ export type Text = {
   width: number;
   height: number;
   fontSize: number;
+  groupId?: string;
 };
 
 export type Container = {
@@ -53,6 +56,7 @@ export type Container = {
   strokeColor?: string;
   bgColor?: string;
   subtype?: "actor" | "activation" | "highlight" | "note";
+  groupId?: string;
 };
 export type Node = Container | Line | Arrow | Text;
 
@@ -140,13 +144,16 @@ const createContainerElement = (
     id?: string;
     text?: string;
     subtype?: Container["subtype"];
+    groupId?: string;
   } = {}
 ) => {
   const container = {} as Container;
   container.type = type;
-  const { text, subtype, id } = opts;
+  const { text, subtype, id, groupId } = opts;
   container.id = id;
-
+  if (groupId) {
+    container.groupId = groupId;
+  }
   if (text) {
     container.label = {
       text,
@@ -175,12 +182,19 @@ const createContainerElement = (
   return container;
 };
 
-const createTextElement = (textNode: SVGTextElement, text: string) => {
+const createTextElement = (
+  textNode: SVGTextElement,
+  text: string,
+  opts?: { groupId?: string }
+) => {
   const node = {} as Text;
   const x = Number(textNode.getAttribute("x"));
   const y = Number(textNode.getAttribute("y"));
   node.type = "text";
   node.text = text;
+  if (opts?.groupId) {
+    node.groupId = opts.groupId;
+  }
   const boundingBox = textNode.getBBox();
   node.width = boundingBox.width;
   node.height = boundingBox.height;
@@ -196,13 +210,16 @@ const createLineElement = (
   startX: number,
   startY: number,
   endX: number,
-  endY: number
+  endY: number,
+  opts?: { groupId?: string }
 ) => {
   const line = {} as Line;
   line.startX = startX;
   line.startY = startY;
   line.endX = endX;
-
+  if (opts?.groupId) {
+    line.groupId = opts.groupId;
+  }
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
   line.strokeColor = lineNode.getAttribute("stroke");
@@ -280,6 +297,7 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
   if (!rootNode) {
     throw "root node not found";
   }
+  const groupId = nanoid();
   const children = Array.from(rootNode.children) as SVGElement[];
   const nodeElements: Node[] = [];
   children.forEach((child) => {
@@ -296,17 +314,23 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
           startX,
           startY,
           endX,
-          endY
+          endY,
+          { groupId }
         );
         break;
       case "text":
-        ele = createTextElement(child as SVGTextElement, text);
+        ele = createTextElement(child as SVGTextElement, text, { groupId });
         break;
+      case "circle":
+        ele = createContainerElement(child as SVGSVGElement, "ellipse", {
+          text: child.textContent || undefined,
+          groupId,
+        });
       default:
         ele = createContainerElement(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
-          { text: child.textContent || undefined }
+          { text: child.textContent || undefined, groupId }
         );
     }
     nodeElements.push(ele);
