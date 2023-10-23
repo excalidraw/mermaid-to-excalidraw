@@ -2,7 +2,6 @@ import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
-import { entityCodesToText } from "../utils.js";
 
 export type Line = {
   id?: string;
@@ -73,6 +72,7 @@ type Loop = {
 type Group = {
   name: string;
   actorKeys: Array<string>;
+  fill: string;
 };
 export interface Sequence {
   type: "sequence";
@@ -189,13 +189,16 @@ const createContainerElement = (
 const createTextElement = (
   textNode: SVGTextElement,
   text: string,
-  opts?: { groupId?: string }
+  opts?: { groupId?: string; id?: string }
 ) => {
   const node = {} as Text;
   const x = Number(textNode.getAttribute("x"));
   const y = Number(textNode.getAttribute("y"));
   node.type = "text";
   node.text = text;
+  if (opts?.id) {
+    node.id = opts.id;
+  }
   if (opts?.groupId) {
     node.groupId = opts.groupId;
   }
@@ -215,7 +218,7 @@ const createLineElement = (
   startY: number,
   endX: number,
   endY: number,
-  opts?: { groupId?: string }
+  opts?: { groupId?: string; id?: string }
 ) => {
   const line = {} as Line;
   line.startX = startX;
@@ -223,6 +226,9 @@ const createLineElement = (
   line.endX = endX;
   if (opts?.groupId) {
     line.groupId = opts.groupId;
+  }
+  if (opts?.id) {
+    line.id = opts.id;
   }
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
@@ -317,14 +323,19 @@ const createArrowElement = (
   return arrow;
 };
 
-const createActorSymbol = (rootNode: SVGGElement, text: string) => {
+const createActorSymbol = (
+  rootNode: SVGGElement,
+  text: string,
+  opts?: { id?: string }
+) => {
   if (!rootNode) {
     throw "root node not found";
   }
   const groupId = nanoid();
   const children = Array.from(rootNode.children) as SVGElement[];
   const nodeElements: Node[] = [];
-  children.forEach((child) => {
+  children.forEach((child, index) => {
+    const id = `${opts?.id}-${index}`;
     let ele;
     switch (child.tagName) {
       case "line":
@@ -339,22 +350,23 @@ const createActorSymbol = (rootNode: SVGGElement, text: string) => {
           startY,
           endX,
           endY,
-          { groupId }
+          { groupId, id }
         );
         break;
       case "text":
-        ele = createTextElement(child as SVGTextElement, text, { groupId });
+        ele = createTextElement(child as SVGTextElement, text, { groupId, id });
         break;
       case "circle":
         ele = createContainerElement(child as SVGSVGElement, "ellipse", {
           text: child.textContent || undefined,
           groupId,
+          id,
         });
       default:
         ele = createContainerElement(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
-          { text: child.textContent || undefined, groupId }
+          { text: child.textContent || undefined, groupId, id }
         );
     }
     nodeElements.push(ele);
@@ -418,9 +430,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const line = createLineElement(lineNode, startX, startY, endX, endY);
       lines.push(line);
     } else if (actor.type === "actor") {
-      const topNodeElement = createActorSymbol(topRootNode, text);
+      const topNodeElement = createActorSymbol(topRootNode, text, {
+        id: `${actor.name}-top`,
+      });
       nodes.push(topNodeElement);
-      const bottomNodeElement = createActorSymbol(bottomRootNode, text);
+      const bottomNodeElement = createActorSymbol(bottomRootNode, text, {
+        id: `${actor.name}-bottom`,
+      });
       nodes.push(bottomNodeElement);
 
       // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as first child of parent element
@@ -570,9 +586,12 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 };
 
 const computeHighlights = (containerEl: Element) => {
-  const rects = Array.from(
-    containerEl.querySelectorAll(".rect")
-  ) as SVGRectElement[];
+  const rects = (
+    Array.from(containerEl.querySelectorAll(".rect")) as SVGRectElement[]
+  )
+    // Only drawing specifically for highlights as the same selector is for grouping as well. For grouping we
+    // draw it ourselves
+    .filter((node) => node.parentElement?.tagName !== "g");
   const nodes: Container[] = [];
 
   rects.forEach((rect) => {

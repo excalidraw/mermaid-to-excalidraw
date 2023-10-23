@@ -57,8 +57,8 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     participant John
     end
     box Another Group
-    participant Bob
-    participant June
+    actor Bob
+    actor June
     end
     Alice->>John: Hello John, how are you?
     John->>Alice: Great!
@@ -156,6 +156,20 @@ sequenceDiagram
   end
   Alice ->>+ John: Did you want to go to the game tonight?
   John -->>- Alice: Yeah! See you there.`,
+  },
+  {
+    name: "Grouping with Background Highlights",
+    defination: `sequenceDiagram
+    rect rgb(191, 223, 255)
+    box rgb(252, 194, 215) Alice and John
+      participant Alice
+      actor John
+    end
+    note right of Alice: Alice calls John.
+    Alice->>+John: Hello John, how are you?
+    John-->>-Alice: I feel great!
+    end
+   `,
   },
   {
     name: "Sequence Numbers",

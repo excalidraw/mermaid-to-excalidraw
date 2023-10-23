@@ -38,6 +38,9 @@ const createLine = (line: Line) => {
   if (line.groupId) {
     Object.assign(lineElement, { groupIds: [line.groupId] });
   }
+  if (line.id) {
+    Object.assign(lineElement, { id: line.id });
+  }
   return lineElement;
 };
 
@@ -54,6 +57,9 @@ const createText = (element: Text) => {
   };
   if (element.groupId) {
     Object.assign(textElement, { groupIds: [element.groupId] });
+  }
+  if (element.id) {
+    Object.assign(textElement, { id: element.id });
   }
   return textElement;
 };
@@ -216,24 +222,38 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           maxX = Math.max(maxX, actor.x + actor.width!);
           maxY = Math.max(maxY, actor.y + actor.height!);
         });
+        // Draw the outer rectangle enclosing the group elements
+        const PADDING = 10;
+        const groupRectX = minX - PADDING;
+        const groupRectY = minY - PADDING;
+        const groupRectWidth = maxX - minX + PADDING * 2;
+        const groupRectHeight = maxY - minY + PADDING * 2;
 
+        const groupRect = createContainer({
+          type: "rectangle",
+          x: groupRectX,
+          y: groupRectY,
+          width: groupRectWidth,
+          height: groupRectHeight,
+          bgColor: group.fill,
+        });
+        elements.unshift(groupRect);
         const frameId = nanoid();
-        // There is a outer rectangle drawn to enclose the group/box in mermaid, these calculations are so we can include that rectangle inside the frame as well.
-        // Later we will remove this and draw our own rectangle instead to simplify. Currently that isn't possible as we want to support background highlight as well and there is no clear distinction between group and highlight on DOM.
-        const padding = 20;
-        const yOffset = 25;
-        minX -= padding;
-        minY -= yOffset + padding;
-        maxX += padding;
-        maxY += yOffset;
-        const width = maxX - minX;
-        const height = maxY - minY;
+
+        // compute frame coordinates and dimensions
+        const frameWidth = groupRectWidth + PADDING * 2;
+        const frameHeight = groupRectHeight + PADDING * 2;
+        const frameX1 = groupRectX - PADDING;
+        const frameY1 = groupRectY - PADDING;
+        const frameX2 = frameX1 + frameWidth;
+        const frameY2 = frameY1 + frameHeight;
+
         elements.forEach((ele) => {
           if (
-            ele.x >= minX &&
-            ele.x + ele.width! <= maxX &&
-            ele.y >= minY &&
-            ele.y + ele.height! <= maxY
+            ele.x >= frameX1 &&
+            ele.x + ele.width! <= frameX2 &&
+            ele.y >= frameY1 &&
+            ele.y + ele.height! <= frameY2
           ) {
             Object.assign(ele, { frameId });
           }
@@ -251,12 +271,12 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           roughness: 0,
           opacity: 100,
           angle: 0,
-          x: minX,
-          y: minY,
+          x: frameX1,
+          y: frameY1,
           strokeColor: "#bbb",
           backgroundColor: "transparent",
-          width,
-          height,
+          width: frameWidth,
+          height: frameHeight,
           seed: 1792453604,
           groupIds: [],
           frameId: null,
