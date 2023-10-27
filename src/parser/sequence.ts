@@ -452,7 +452,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const bottomEllipseNode = bottomNodeElement.find(
         (node) => node.type === "ellipse"
-      )!;
+      )! as Container;
       const endY = bottomEllipseNode.y;
       const line = createLineElement(lineNode, startX, startY, endX, endY);
       lines.push(line);
@@ -464,7 +464,6 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 
 const computeArrows = (messages: Message[], containerEl: Element) => {
   const arrows: Arrow[] = [];
-  const sequenceNumbers: Container[] = [];
 
   const arrowNodes = Array.from(
     containerEl.querySelectorAll('[class*="messageLine"]')

@@ -1,4 +1,7 @@
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import {
+  ExcalidrawElementSkeleton,
+  ValidContainer,
+} from "@excalidraw/excalidraw/types/data/transform.js";
 import { GraphConverter } from "../GraphConverter.js";
 
 import { Arrow, Line, Node, Sequence, Text } from "../../parser/sequence.js";
@@ -256,6 +259,11 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
             ele.y + ele.height! <= frameY2
           ) {
             Object.assign(ele, { frameId });
+            if ((ele as ValidContainer)?.label?.text) {
+              Object.assign(ele, {
+                label: { ...(ele as ValidContainer).label, frameId },
+              });
+            }
           }
         });
         // TODO remove extra attributes once we support frames in programmatic API
@@ -290,6 +298,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         elements.push(frame);
       });
     }
+    console.log(elements, "excalidraw elements");
     return { elements };
   },
 });
