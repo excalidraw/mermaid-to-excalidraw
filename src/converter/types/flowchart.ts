@@ -2,7 +2,6 @@ import { GraphConverter } from "../GraphConverter.js";
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 
 import {
-  computeGroupIds,
   getText,
   computeExcalidrawVertexStyle,
   computeExcalidrawVertexLabelStyle,
@@ -10,6 +9,71 @@ import {
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
+
+const computeGroupIds = (
+  graph: Flowchart
+): {
+  getGroupIds: (elementId: string) => string[];
+  getParentId: (elementId: string) => string | null;
+} => {
+  // Parse the diagram into a tree for rendering and grouping
+  const tree: {
+    [key: string]: {
+      id: string;
+      parent: string | null;
+      isLeaf: boolean; // true = vertex, false = subGraph
+    };
+  } = {};
+  graph.subGraphs.map((subGraph) => {
+    subGraph.nodeIds.forEach((nodeId) => {
+      tree[subGraph.id] = {
+        id: subGraph.id,
+        parent: null,
+        isLeaf: false,
+      };
+      tree[nodeId] = {
+        id: nodeId,
+        parent: subGraph.id,
+        isLeaf: graph.vertices[nodeId] !== undefined,
+      };
+    });
+  });
+  const mapper: {
+    [key: string]: string[];
+  } = {};
+  [...Object.keys(graph.vertices), ...graph.subGraphs.map((c) => c.id)].forEach(
+    (id) => {
+      if (!tree[id]) {
+        return;
+      }
+      let curr = tree[id];
+      const groupIds: string[] = [];
+      if (!curr.isLeaf) {
+        groupIds.push(`subgraph_group_${curr.id}`);
+      }
+
+      while (true) {
+        if (curr.parent) {
+          groupIds.push(`subgraph_group_${curr.parent}`);
+          curr = tree[curr.parent];
+        } else {
+          break;
+        }
+      }
+
+      mapper[id] = groupIds;
+    }
+  );
+
+  return {
+    getGroupIds: (elementId) => {
+      return mapper[elementId] || [];
+    },
+    getParentId: (elementId) => {
+      return tree[elementId] ? tree[elementId].parent : null;
+    },
+  };
+};
 
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
