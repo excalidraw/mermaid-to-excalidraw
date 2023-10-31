@@ -298,7 +298,6 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         elements.push(frame);
       });
     }
-    console.log(elements, "excalidraw elements");
     return { elements };
   },
 });

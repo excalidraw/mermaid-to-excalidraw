@@ -71,7 +71,7 @@ async function renderDiagram(
   <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;width:40vw;padding:5px" id="mermaid-syntax-${i}"></pre>
 
   <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
-  <div id="diagram-${i}"></div>
+  <div id="diagram-${i}" style="width:50%"></div>
 
   <details style="margin-top: 10px">
     <summary>View Parsed data from parseMermaid</summary>

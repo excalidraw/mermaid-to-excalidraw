@@ -28,120 +28,113 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   {
     name: "Actor symbols",
     defination: `sequenceDiagram
-    actor Alice
-    actor Bob
-    Alice->>Bob: Hi Bob
-    Bob->>Alice: Hi Alice`,
+  actor Alice
+  actor Bob
+  Alice->>Bob: Hi Bob
+  Bob->>Alice: Hi Alice`,
   },
   {
     name: "Aliases",
     defination: `sequenceDiagram
-    participant A as Alice
-    participant J as John
-    A->>J: Hello John, how are you?
-    J->>A: Great!`,
+  participant A as Alice
+  participant J as John
+  A->>J: Hello John, how are you?
+  J->>A: Great!`,
   },
   {
     name: "Notes",
     defination: `sequenceDiagram
-    participant Alice
-    Note left of Alice: This is a note
-    Note right of Alice: Hey I am coming soon!`,
+  participant Alice
+  Note left of Alice: This is a note
+  Note right of Alice: Hey I am coming soon!`,
   },
   {
     name: "Grouping",
-    defination: `
-    sequenceDiagram
-    box rgb(191, 223, 255) Alice & John
+    defination: `sequenceDiagram
+  box rgb(191, 223, 255) Alice & John
     participant Alice
     participant John
-    end
-    box Another Group
+  end
+  box Another Group
     actor Bob
     actor June
-    end
-    Alice->>John: Hello John, how are you?
-    John->>Alice: Great!
-    Alice->>Bob: Hello Bob, how is June?
-    Bob->>June: Hello June, how are you?`,
+  end
+  Alice->>John: Hello John, how are you?
+  John->>Alice: Great!
+  Alice->>Bob: Hello Bob, how is June?
+  Bob->>June: Hello June, how are you?`,
   },
   {
     name: "Activations",
     defination: `sequenceDiagram
-    Alice->>+John: Hello John, how are you?
-    Alice->>+John: John, can you hear me?
-    John-->>-Alice: Hi Alice, I can hear you!
-    John-->>-Alice: I feel great!`,
+  Alice->>+John: Hello John, how are you?
+  Alice->>+John: John, can you hear me?
+  John-->>-Alice: Hi Alice, I can hear you!
+  John-->>-Alice: I feel great!`,
   },
   {
     name: "Loops",
-    defination: `
-    sequenceDiagram
-    Alice->John: Hi John, how are you?
-    loop Every minute
-        John-->Alice: Great!
-    end`,
+    defination: `sequenceDiagram
+  Alice->John: Hi John, how are you?
+  loop Every minute
+    John-->Alice: Great!
+  end`,
   },
   {
     name: "Alternate Paths",
-    defination: `
-    sequenceDiagram
-    Alice->>Bob: Hello Bob, how are you?
-    alt is sick
-        Bob->>Alice: Not so good :(
-    else is well
-        Bob->>Alice: Feeling fresh like a daisy
-    end
-    opt Extra response
-        Bob->>Alice: Thanks for asking
-    end`,
+    defination: `sequenceDiagram
+  Alice->>Bob: Hello Bob, how are you?
+  alt is sick
+      Bob->>Alice: Not so good :(
+  else is well
+      Bob->>Alice: Feeling fresh like a daisy
+  end
+  opt Extra response
+      Bob->>Alice: Thanks for asking
+  end`,
   },
   {
     name: "Critical Regions",
-    defination: `
-  sequenceDiagram
-    critical Establish a connection to the DB
-        Service-->DB: connect
-    option Network timeout
-        Service-->Service: Log error
-    option Credentials rejected
-        Service-->Service: Log different error
-    end`,
+    defination: `sequenceDiagram
+  critical Establish a connection to the DB
+      Service-->DB: connect
+  option Network timeout
+      Service-->Service: Log error
+  option Credentials rejected
+      Service-->Service: Log different error
+  end`,
   },
   {
     name: "Parallel Actions",
     defination: `sequenceDiagram
-    par Alice to Bob
-        Alice->>Bob: Hello Folks!
-    and Alice to John
-        Alice->>John: Hello Folks!
-    end
-    Bob-->>Alice: Hi Alice!
-    John-->>Alice: Hi Alice!`,
+  par Alice to Bob
+    Alice->>Bob: Hello Folks!
+  and Alice to John
+    Alice->>John: Hello Folks!
+  end
+  Bob-->>Alice: Hi Alice!
+  John-->>Alice: Hi Alice!`,
   },
   {
     name: "Break",
-    defination: `
-sequenceDiagram
-    Consumer-->API: Book something
-    API-->BookingService: Start booking process
-    break when the booking process fails
-        API-->Consumer: show failure
-    end
-    API-->BillingService: Start billing process`,
+    defination: `sequenceDiagram
+  Consumer-->API: Book something
+  API-->BookingService: Start booking process
+  break when the booking process fails
+      API-->Consumer: show failure
+  end
+  API-->BillingService: Start billing process`,
   },
   {
     name: "Comments",
-    defination: `
-    sequenceDiagram
-    Alice->>John: Hi John, whats up?
-    %% this is a comment
-    John-->>Alice: Great!`,
+    defination: `sequenceDiagram
+  Alice->>John: Hi John, whats up?
+  %% this is a comment
+  John-->>Alice: Great!`,
   },
   {
     name: "Background Hightlights",
-    defination: `
-    sequenceDiagram
+    defination: `sequenceDiagram
   participant Alice
   participant John
 
@@ -160,25 +153,25 @@ sequenceDiagram
   {
     name: "Grouping with Background Highlights",
     defination: `sequenceDiagram
-    rect rgb(191, 223, 255)
-    box rgb(252, 194, 215) Alice and John
-      participant Alice
-      actor John
-    end
-    note right of Alice: Alice calls John.
-    Alice->>+John: Hello John, how are you?
-    John-->>-Alice: I feel great!
-    end
+  rect rgb(191, 223, 255)
+  box rgb(252, 194, 215) Alice and John
+    participant Alice
+    actor John
+  end
+  note right of Alice: Alice calls John.
+  Alice->>+John: Hello John, how are you?
+  John-->>-Alice: I feel great!
+  end
    `,
   },
   {
     name: "Sequence Numbers",
     defination: `sequenceDiagram
-    autonumber
-    Alice->>John: Hello John, how are you?
-    John-->>Alice: Great!
-    John->>Bob: How about you?
-    Bob-->>John: Jolly good!`,
+  autonumber
+  Alice->>John: Hello John, how are you?
+  John-->>Alice: Great!
+  John->>Bob: How about you?
+  Bob-->>John: Jolly good!`,
   },
 ];
 
