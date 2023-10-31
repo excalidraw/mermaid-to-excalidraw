@@ -9,25 +9,23 @@
   <body>
     <section id="custom-test">
       <h1>Custom Test</h1>
-      <ul>
-        <li>
-          Support only flowchart diagram (the input must started with
-          "flowchart")
-        </li>
-        <li>
-          See supported and unsupported features at
-          <a
-            target="_blank"
-            href="https://github.com/excalidraw/mermaid-to-excalidraw/pull/1#issue-1686226562"
-            >PR's description</a
-          >
-        </li>
-      </ul>
+      Supports only
+      <a target="_blank" href="https://mermaid.js.org/syntax/flowchart.html"
+        >Flowchart</a
+      >
+      and
+      <a
+        target="_blank"
+        href="https://mermaid.js.org/syntax/sequenceDiagram.html"
+      >
+        Sequence </a
+      >diagrams.
       <br />
       <textarea
         id="mermaid-input"
         rows="10"
         cols="50"
+        style="margin-top: 1rem"
         placeholder="Input Mermaid Syntax"
       ></textarea
       ><br />
@@ -59,7 +57,7 @@
     </details>
     <h2 style="margin-top: 50px">Unsupported diagrams</h2>
     <details>
-      <summary>Unsupported Examples</summary>
+      <summary>Unsupported Diagram Examples</summary>
       <div id="unsupported"></div>
     </details>
 

@@ -41,13 +41,13 @@ let indexOffset = 0;
       <p>Unsupported diagram will be rendered as SVG image.</p>
     `;
   await Promise.all(
-    UNSUPPORTED_DIAGRAM_TESTCASES.map((diagramDefinition, index) => {
-      const name = `Test ${index + 1}`;
+    UNSUPPORTED_DIAGRAM_TESTCASES.map((testcase, index) => {
+      const { name, defination } = testcase;
 
       return renderDiagram(
         unsupportedContainer,
         name,
-        diagramDefinition,
+        defination,
         index + indexOffset
       );
     })
