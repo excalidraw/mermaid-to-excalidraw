@@ -173,6 +173,12 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   John->>Bob: How about you?
   Bob-->>John: Jolly good!`,
   },
+  {
+    name: "Entity codes",
+    defination: `sequenceDiagram
+    Alice->>Bob: I #9829; you!
+    Bob->>Alice: I #9829; you #infin; times more!`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };

@@ -2,6 +2,7 @@ import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
+import { entityCodesToText } from "../utils.js";
 
 export type Line = {
   id?: string;
@@ -160,7 +161,7 @@ const createContainerElement = (
   }
   if (text) {
     container.label = {
-      text,
+      text: entityCodesToText(text),
       fontSize: 16,
     };
   }
@@ -195,7 +196,7 @@ const createTextElement = (
   const x = Number(textNode.getAttribute("x"));
   const y = Number(textNode.getAttribute("y"));
   node.type = "text";
-  node.text = text;
+  node.text = entityCodesToText(text);
   if (opts?.id) {
     node.id = opts.id;
   }
@@ -243,9 +244,8 @@ const createArrowElement = (
   message: Message
 ) => {
   const arrow = {} as Arrow;
-  arrow.label = { text: message.message, fontSize: 16 };
+  arrow.label = { text: entityCodesToText(message.message), fontSize: 16 };
   const tagName = arrowNode.tagName;
-
   if (tagName === "line") {
     arrow.startX = Number(arrowNode.getAttribute("x1"));
     arrow.startY = Number(arrowNode.getAttribute("y1"));
