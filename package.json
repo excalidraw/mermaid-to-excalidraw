@@ -1,6 +1,6 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "0.1.1-sequence1",
+  "version": "0.1.1-sequence2",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
-    "@excalidraw/excalidraw": "0.16.1-6920-3a6028b",
+    "@excalidraw/excalidraw": "0.16.1-6920-d3d0bd0",
     "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "9.2.0",
     "@types/react": "18.2.14",

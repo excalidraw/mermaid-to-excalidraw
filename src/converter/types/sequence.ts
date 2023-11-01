@@ -1,15 +1,10 @@
-import {
-  ExcalidrawElementSkeleton,
-  ValidContainer,
-} from "@excalidraw/excalidraw/types/data/transform.js";
+import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 import { GraphConverter } from "../GraphConverter.js";
 
 import { Arrow, Line, Node, Sequence, Text } from "../../parser/sequence.js";
-import {
-  ExcalidrawFrameElement,
-  StrokeStyle,
-} from "@excalidraw/excalidraw/types/element/types.js";
+import { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
+import { ExcalidrawElement } from "../../types.js";
 
 // Arrow mapper for the supported sequence arrow types
 const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
@@ -220,10 +215,10 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           }
         });
         actors.forEach((actor) => {
-          minX = Math.min(minX, actor.x);
-          minY = Math.min(minY, actor.y);
-          maxX = Math.max(maxX, actor.x + actor.width!);
-          maxY = Math.max(maxY, actor.y + actor.height!);
+          minX = Math.min(minX, actor.x!);
+          minY = Math.min(minY, actor.y!);
+          maxX = Math.max(maxX, actor.x! + actor.width!);
+          maxY = Math.max(maxY, actor.y! + actor.height!);
         });
         // Draw the outer rectangle enclosing the group elements
         const PADDING = 10;
@@ -239,61 +234,32 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           width: groupRectWidth,
           height: groupRectHeight,
           bgColor: group.fill,
+          id: nanoid(),
         });
         elements.unshift(groupRect);
         const frameId = nanoid();
 
-        // compute frame coordinates and dimensions
-        const frameWidth = groupRectWidth + PADDING * 2;
-        const frameHeight = groupRectHeight + PADDING * 2;
-        const frameX1 = groupRectX - PADDING;
-        const frameY1 = groupRectY - PADDING;
-        const frameX2 = frameX1 + frameWidth;
-        const frameY2 = frameY1 + frameHeight;
+        const frameChildren: ExcalidrawElement["id"][] = [groupRect.id!];
 
         elements.forEach((ele) => {
           if (
-            ele.x >= frameX1 &&
-            ele.x + ele.width! <= frameX2 &&
-            ele.y >= frameY1 &&
-            ele.y + ele.height! <= frameY2
+            ele.x! >= minX &&
+            ele.x! + ele.width! <= maxX &&
+            ele.y! >= minY &&
+            ele.y! + ele.height! <= maxY
           ) {
-            Object.assign(ele, { frameId });
-            if ((ele as ValidContainer)?.label?.text) {
-              Object.assign(ele, {
-                label: { ...(ele as ValidContainer).label, frameId },
-              });
+            if (!ele.id) {
+              Object.assign(ele, { id: nanoid() });
             }
+            frameChildren.push(ele.id!);
           }
         });
-        // TODO remove extra attributes once we support frames in programmatic API
-        const frame: ExcalidrawFrameElement = {
+
+        const frame: ExcalidrawElementSkeleton = {
           type: "frame",
-          version: 262,
-          versionNonce: 1383486180,
-          isDeleted: false,
           id: frameId,
-          fillStyle: "solid",
-          strokeWidth: 1,
-          strokeStyle: "solid",
-          roughness: 0,
-          opacity: 100,
-          angle: 0,
-          x: frameX1,
-          y: frameY1,
-          strokeColor: "#bbb",
-          backgroundColor: "transparent",
-          width: frameWidth,
-          height: frameHeight,
-          seed: 1792453604,
-          groupIds: [],
-          frameId: null,
-          roundness: null,
-          boundElements: [],
-          updated: 1697731885168,
-          link: null,
-          locked: false,
           name,
+          children: frameChildren,
         };
         elements.push(frame);
       });
