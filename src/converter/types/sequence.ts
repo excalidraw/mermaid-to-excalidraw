@@ -215,10 +215,18 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           }
         });
         actors.forEach((actor) => {
-          minX = Math.min(minX, actor.x!);
-          minY = Math.min(minY, actor.y!);
-          maxX = Math.max(maxX, actor.x! + actor.width!);
-          maxY = Math.max(maxY, actor.y! + actor.height!);
+          if (
+            actor.x === undefined ||
+            actor.y === undefined ||
+            actor.width === undefined ||
+            actor.height === undefined
+          ) {
+            throw new Error(`Actor attributes missing ${actor}`);
+          }
+          minX = Math.min(minX, actor.x);
+          minY = Math.min(minY, actor.y);
+          maxX = Math.max(maxX, actor.x + actor.width);
+          maxY = Math.max(maxY, actor.y + actor.height);
         });
         // Draw the outer rectangle enclosing the group elements
         const PADDING = 10;
@@ -226,7 +234,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         const groupRectY = minY - PADDING;
         const groupRectWidth = maxX - minX + PADDING * 2;
         const groupRectHeight = maxY - minY + PADDING * 2;
-
+        const groupRectId = nanoid();
         const groupRect = createContainer({
           type: "rectangle",
           x: groupRectX,
@@ -234,24 +242,36 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           width: groupRectWidth,
           height: groupRectHeight,
           bgColor: group.fill,
-          id: nanoid(),
+          id: groupRectId,
         });
         elements.unshift(groupRect);
         const frameId = nanoid();
 
-        const frameChildren: ExcalidrawElement["id"][] = [groupRect.id!];
+        const frameChildren: ExcalidrawElement["id"][] = [groupRectId];
 
         elements.forEach((ele) => {
+          if (ele.type === "frame") {
+            return;
+          }
           if (
-            ele.x! >= minX &&
-            ele.x! + ele.width! <= maxX &&
-            ele.y! >= minY &&
-            ele.y! + ele.height! <= maxY
+            ele.x === undefined ||
+            ele.y === undefined ||
+            ele.width === undefined ||
+            ele.height === undefined
           ) {
+            throw new Error(`Element attributes missing ${ele}`);
+          }
+          if (
+            ele.x >= minX &&
+            ele.x + ele.width <= maxX &&
+            ele.y >= minY &&
+            ele.y + ele.height <= maxY
+          ) {
+            const elementId = ele.id || nanoid();
             if (!ele.id) {
-              Object.assign(ele, { id: nanoid() });
+              Object.assign(ele, { id: elementId });
             }
-            frameChildren.push(ele.id!);
+            frameChildren.push(elementId);
           }
         });
 

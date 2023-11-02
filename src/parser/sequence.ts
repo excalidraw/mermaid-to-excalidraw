@@ -300,7 +300,10 @@ const createArrowElement = (
     !!arrowNode.nextElementSibling?.classList.contains("sequenceNumber");
 
   if (showSequenceNumber) {
-    const text = arrowNode.nextElementSibling?.textContent!;
+    const text = arrowNode.nextElementSibling?.textContent;
+    if (!text) {
+      throw new Error("sequence number not present");
+    }
     const height = 30;
     const yOffset = height / 2;
     const xOffset = 10;
@@ -377,7 +380,7 @@ const createActorSymbol = (
 const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
   const actorRootNodes = Array.from(containerEl.querySelectorAll(".actor"))
     .filter((node) => node.tagName === "text")
-    .map((actor) => actor.tagName === "text" && actor.parentElement)!;
+    .map((actor) => actor.tagName === "text" && actor.parentElement);
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
@@ -452,7 +455,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const bottomEllipseNode = bottomNodeElement.find(
         (node) => node.type === "ellipse"
-      )! as Container;
+      ) as Container;
       const endY = bottomEllipseNode.y;
       const line = createLineElement(lineNode, startX, startY, endX, endY);
       lines.push(line);
@@ -565,7 +568,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 
   const labelBoxes = Array.from(
     containerEl?.querySelectorAll(".labelBox")
-  )! as SVGSVGElement[];
+  ) as SVGSVGElement[];
   const labelTextNode = Array.from(containerEl?.querySelectorAll(".labelText"));
 
   labelBoxes.forEach((labelBox, index) => {
