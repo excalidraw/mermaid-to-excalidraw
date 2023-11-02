@@ -1,12 +1,3 @@
-import { SUPPORTED_DIAGRAM_TYPES } from "./constants.js";
-
-// Check if the definition is a supported diagram
-export const isSupportedDiagram = (definition: string): boolean => {
-  return SUPPORTED_DIAGRAM_TYPES.some((chartType) =>
-    definition.trim().startsWith(chartType)
-  );
-};
-
 // Convert mermaid entity codes to text e.g. "#9829;" to "♥"
 export const entityCodesToText = (input: string): string => {
   input = decodeEntities(input);
