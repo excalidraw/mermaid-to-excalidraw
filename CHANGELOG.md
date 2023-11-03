@@ -1,3 +1,7 @@
+## Unreleased
+
+- Support Sequence Diagrams [#34](https://github.com/excalidraw/mermaid-to-excalidraw/pull/34).
+
 ## 0.1.1 (2023-09-21)
 
 ### Fixes

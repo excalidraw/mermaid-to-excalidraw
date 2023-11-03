@@ -454,11 +454,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const endX = Number(lineNode.getAttribute("x2"));
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const bottomEllipseNode = bottomNodeElement.find(
-        (node) => node.type === "ellipse"
-      ) as Container;
-      const endY = bottomEllipseNode.y;
-      const line = createLineElement(lineNode, startX, startY, endX, endY);
-      lines.push(line);
+        (node): node is Container => node.type === "ellipse"
+      );
+      if (bottomEllipseNode) {
+        const endY = bottomEllipseNode.y;
+        const line = createLineElement(lineNode, startX, startY, endX, endY);
+        lines.push(line);
+      }
     }
   });
 
@@ -468,9 +470,9 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 const computeArrows = (messages: Message[], containerEl: Element) => {
   const arrows: Arrow[] = [];
 
-  const arrowNodes = Array.from(
+  const arrowNodes = Array.from<SVGLineElement>(
     containerEl.querySelectorAll('[class*="messageLine"]')
-  ) as SVGLineElement[];
+  );
   const supportedMessageTypes = Object.keys(SEQUENCE_ARROW_TYPES);
   const arrowMessages = messages.filter((message) =>
     supportedMessageTypes.includes(message.type.toString())
