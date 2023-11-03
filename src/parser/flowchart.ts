@@ -1,8 +1,6 @@
 import { entityCodesToText, getTransformAttr } from "../utils.js";
 import {
   CONTAINER_STYLE_PROPERTY,
-  Edge,
-  Graph,
   LABEL_STYLE_PROPERTY,
   Position,
   SubGraph,
@@ -10,6 +8,28 @@ import {
 } from "../interfaces.js";
 
 import { Diagram } from "mermaid/dist/Diagram.js";
+
+export interface Flowchart {
+  type: "flowchart";
+  subGraphs: SubGraph[];
+  vertices: { [key: string]: Vertex | undefined };
+  edges: Edge[];
+}
+
+export interface Edge {
+  id?: string;
+  start: string;
+  end: string;
+  type: string;
+  text: string;
+  labelType: string;
+  stroke: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  reflectionPoints: Position[];
+}
 
 const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference
@@ -256,7 +276,7 @@ const computeEdgePositions = (
 export const parseMermaidFlowChartDiagram = (
   diagram: Diagram,
   containerEl: Element
-): Graph => {
+): Flowchart => {
   // This does some cleanup and initialization making sure
   // diagram is parsed correctly. Useful when multiple diagrams are
   // parsed together one after another, eg in playground

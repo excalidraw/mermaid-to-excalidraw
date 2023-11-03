@@ -6,7 +6,16 @@ body {
     max-width: 48%;
   }
 }
-
+button {
+  height: 40px;
+  font-size: 16px;
+  background: #4dabf7;
+  border: 1px solid #a5d8ff;
+  box-shadow: none;
+  border-radius: 2px;
+  color: white;
+  cursor: pointer;
+}
 #excalidraw {
   width: 50vw;
   height: 100vh;
@@ -45,4 +54,10 @@ body {
     color: red;
     margin-top: 20px;
   }
+}
+
+a {
+  color: #0071ce;
+  font-weight: 600;
+  text-decoration: none;
 }
