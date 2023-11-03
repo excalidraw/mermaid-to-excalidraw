@@ -19,10 +19,7 @@ btn.addEventListener("click", async () => {
 
     // Render Mermaid diagram
     const diagramEl = document.getElementById("custom-diagram")!;
-    const { svg } = await mermaid.render(
-      `custom-digaram`,
-      `%%{init: {"themeVariables": {"fontSize": "20px"}} }%%\n${diagramDefinition}`
-    );
+    const { svg } = await mermaid.render("custom-digaram", diagramDefinition);
     diagramEl.innerHTML = svg;
 
     // Parse Mermaid diagram and render to Excalidraw
