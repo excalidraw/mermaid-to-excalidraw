@@ -1,6 +1,7 @@
 import mermaid from "mermaid";
 import { GraphImage } from "./interfaces.js";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
+import { encodeEntities } from "./utils.js";
 import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
 
@@ -52,7 +53,10 @@ export const parseMermaid = async (
   });
 
   // Parse the diagram
-  const diagram = await mermaid.mermaidAPI.getDiagramFromText(definition);
+  const diagram = await mermaid.mermaidAPI.getDiagramFromText(
+    encodeEntities(definition)
+  );
+
   // Render the SVG diagram
   const { svg } = await mermaid.render("mermaid-to-excalidraw", definition);
 
