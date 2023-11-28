@@ -1,7 +1,6 @@
 export default [
-  `flowchart LR
-  %% this is a comment A -- text --> B{node}
-  A -- text --> B -- text2 --> C
+  `flowchart TD
+Start --> Stop
 `,
   `flowchart LR
 Start --> Stop
