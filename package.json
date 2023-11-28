@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
-    "mermaid": "10.5.0",
+    "mermaid": "10.2.3",
     "nanoid": "4.0.2"
   },
   "devDependencies": {
