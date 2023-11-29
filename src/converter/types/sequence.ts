@@ -18,7 +18,7 @@ const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
   DOTTED_POINT: "dotted",
 };
 
-const createLine = (line: Line) => {
+export const createLine = (line: Line) => {
   const lineElement: ExcalidrawElementSkeleton = {
     type: "line",
     x: line.startX,
@@ -42,7 +42,7 @@ const createLine = (line: Line) => {
   return lineElement;
 };
 
-const createText = (element: Text) => {
+export const createText = (element: Text) => {
   const textElement: ExcalidrawElementSkeleton = {
     type: "text",
     x: element.x,
@@ -62,7 +62,9 @@ const createText = (element: Text) => {
   return textElement;
 };
 
-const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
+export const createContainer = (
+  element: Exclude<Node, Line | Arrow | Text>
+) => {
   let extraProps = {};
   if (element.type === "rectangle" && element.subtype === "activation") {
     extraProps = {
@@ -80,8 +82,9 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
     label: {
       text: element?.label?.text || "",
       fontSize: element?.label?.fontSize,
-      verticalAlign: "middle",
+      verticalAlign: element.label?.verticalAlign || "middle",
       strokeColor: element.label?.color || "#000",
+      groupIds: element.groupId ? [element.groupId] : [],
     },
     strokeStyle: element?.strokeStyle,
     strokeWidth: element?.strokeWidth,
@@ -97,7 +100,7 @@ const createContainer = (element: Exclude<Node, Line | Arrow | Text>) => {
   return container;
 };
 
-const createArrow = (arrow: Arrow) => {
+export const createArrow = (arrow: Arrow) => {
   const strokeStyle = EXCALIDRAW_STROKE_STYLE_FOR_ARROW[arrow.strokeStyle];
   const arrowElement: ExcalidrawElementSkeleton = {
     type: "arrow",
@@ -110,10 +113,8 @@ const createArrow = (arrow: Arrow) => {
     width: arrow.endX - arrow.startX,
     height: arrow.endY - arrow.startY,
     strokeStyle,
-    endArrowhead:
-      arrow.strokeStyle === "SOLID_OPEN" || arrow.strokeStyle === "DOTTED_OPEN"
-        ? null
-        : "arrow",
+    endArrowhead: arrow?.endArrowhead || null,
+    startArrowhead: arrow?.startArrowhead || null,
     label: {
       text: arrow?.label?.text || "",
       fontSize: 16,
@@ -125,6 +126,7 @@ const createArrow = (arrow: Arrow) => {
   if (arrow.groupId) {
     Object.assign(arrowElement, { groupIds: [arrow.groupId] });
   }
+
   return arrowElement;
 };
 

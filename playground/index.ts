@@ -1,6 +1,8 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src/parseMermaid.js";
 import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart.js";
+import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
+import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.js";
 import UNSUPPORTED_DIAGRAM_TESTCASES from "./testcases/unsupported.js";
 
 // Initialize Mermaid
@@ -8,7 +10,6 @@ mermaid.initialize({ startOnLoad: false });
 
 import "./initCustomTest";
 import { renderExcalidraw } from "./initExcalidraw.js";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
 
 let indexOffset = 0;
 (async () => {
@@ -34,6 +35,21 @@ let indexOffset = 0;
     })
   );
   indexOffset += SEQUENCE_DIAGRAM_TESTCASES.length;
+
+  // Render Class diagrams
+  const classContainer = document.getElementById("class-container")!;
+  await Promise.all(
+    CLASS_DIAGRAM_TESTCASES.map(({ name, defination }, index) => {
+      return renderDiagram(
+        classContainer,
+        name,
+        defination,
+        index + indexOffset
+      );
+    })
+  );
+  indexOffset += CLASS_DIAGRAM_TESTCASES.length;
+
   // Render unsupported diagrams
   const unsupportedContainer = document.getElementById("unsupported")!;
   unsupportedContainer.innerHTML = `

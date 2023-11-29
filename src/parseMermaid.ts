@@ -4,6 +4,7 @@ import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { encodeEntities } from "./utils.js";
 import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
+import { parseMermaidClassDiagram } from "./parser/class.js";
 
 // Fallback to Svg
 const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
@@ -69,7 +70,7 @@ export const parseMermaid = async (
   svgContainer.innerHTML = svg;
   svgContainer.id = "mermaid-diagram";
   document.body.appendChild(svgContainer);
-
+  console.log(diagram, "DIAGRAM");
   let data;
   switch (diagram.type) {
     case "flowchart-v2": {
@@ -80,6 +81,12 @@ export const parseMermaid = async (
     case "sequence": {
       data = parseMermaidSequenceDiagram(diagram, svgContainer);
 
+      break;
+    }
+
+    case "classDiagram": {
+      data = parseMermaidClassDiagram(diagram, svgContainer);
+      console.log("DATA=", data);
       break;
     }
     // fallback to image if diagram type not-supported

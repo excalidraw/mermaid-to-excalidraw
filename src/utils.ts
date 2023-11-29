@@ -12,7 +12,7 @@ export const entityCodesToText = (input: string): string => {
 export const getTransformAttr = (el: Element) => {
   const transformAttr = el.getAttribute("transform");
   const translateMatch = transformAttr?.match(
-    /translate\(([\d.-]+),\s*([\d.-]+)\)/
+    /translate\(([ \d.-]+),\s*([\d.-]+)\)/
   );
   let transformX = 0;
   let transformY = 0;

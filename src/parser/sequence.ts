@@ -1,8 +1,13 @@
 import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
-import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
+import {
+  ExcalidrawArrowElement,
+  ExcalidrawLinearElement,
+  ExcalidrawTextElement,
+} from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import { entityCodesToText } from "../utils.js";
+import { createArrowSkeleton } from "../elementSkeleton.js";
 
 export type Line = {
   id?: string;
@@ -28,6 +33,8 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   strokeStyle: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
   points?: number[][];
   sequenceNumber: Container;
+  startArrowhead: ExcalidrawArrowElement["startArrowhead"];
+  endArrowhead: ExcalidrawArrowElement["endArrowhead"];
 };
 
 export type Text = {
@@ -49,6 +56,7 @@ export type Container = {
     text: string | null;
     fontSize: number;
     color?: string;
+    verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
   x: number;
   y: number;
@@ -142,27 +150,31 @@ const MESSAGE_TYPE = {
   PAR_OVER_START: 32,
 };
 
-const createContainerElement = (
+export const createContainerElement = (
   node: SVGSVGElement | SVGRectElement,
   type: Container["type"],
   opts: {
     id?: string;
-    text?: string;
+    label?: {
+      text: string;
+      verticalAlign?: ExcalidrawTextElement["verticalAlign"];
+    };
     subtype?: Container["subtype"];
     groupId?: string;
   } = {}
 ) => {
   const container = {} as Container;
   container.type = type;
-  const { text, subtype, id, groupId } = opts;
+  const { label, subtype, id, groupId } = opts;
   container.id = id;
   if (groupId) {
     container.groupId = groupId;
   }
-  if (text) {
+  if (label) {
     container.label = {
-      text: entityCodesToText(text),
+      text: entityCodesToText(label.text),
       fontSize: 16,
+      verticalAlign: label?.verticalAlign,
     };
   }
   const boundingBox = node.getBBox();
@@ -171,7 +183,7 @@ const createContainerElement = (
   container.width = boundingBox.width;
   container.height = boundingBox.height;
   container.subtype = subtype;
-
+  console.log(boundingBox, "BOUNDING BOX", node);
   switch (subtype) {
     case "highlight":
       const bgColor = node.getAttribute("fill");
@@ -187,7 +199,7 @@ const createContainerElement = (
   return container;
 };
 
-const createTextElement = (
+export const createTextElement = (
   textNode: SVGTextElement,
   text: string,
   opts?: { groupId?: string; id?: string }
@@ -213,7 +225,7 @@ const createTextElement = (
   return node;
 };
 
-const createLineElement = (
+export const createLineElement = (
   lineNode: SVGLineElement,
   startX: number,
   startY: number,
@@ -239,62 +251,19 @@ const createLineElement = (
   return line;
 };
 
-const createArrowElement = (
+export const createArrowElement = (
   arrowNode: SVGLineElement | SVGPathElement,
   message: Message
 ) => {
-  const arrow = {} as Arrow;
-  arrow.label = { text: entityCodesToText(message.message), fontSize: 16 };
-  const tagName = arrowNode.tagName;
-  if (tagName === "line") {
-    arrow.startX = Number(arrowNode.getAttribute("x1"));
-    arrow.startY = Number(arrowNode.getAttribute("y1"));
-    arrow.endX = Number(arrowNode.getAttribute("x2"));
-    arrow.endY = Number(arrowNode.getAttribute("y2"));
-  } else if (tagName === "path") {
-    const dAttr = arrowNode.getAttribute("d");
-    if (!dAttr) {
-      throw new Error('Path element does not contain a "d" attribute');
-    }
-    // Split the d attribute based on M (Move To)  and C (Curve) commands
-    const commands = dAttr.split(/(?=[LC])/);
-
-    const startPosition = commands[0]
-      .substring(1)
-      .split(",")
-      .map((coord) => parseFloat(coord));
-
-    const points: Arrow["points"] = [];
-    commands.forEach((command) => {
-      const currPoints = command
-        .substring(1)
-        .trim()
-        .split(" ")
-        .map((pos) => {
-          const [x, y] = pos.split(",");
-          return [
-            parseFloat(x) - startPosition[0],
-            parseFloat(y) - startPosition[1],
-          ];
-        });
-      points.push(...currPoints);
-    });
-
-    const endPosition = points[points.length - 1];
-
-    arrow.startX = startPosition[0];
-    arrow.startY = startPosition[1];
-    arrow.endX = endPosition[0];
-    arrow.endY = endPosition[1];
-    arrow.points = points;
-  }
-  if (message) {
-    // In mermaid the text is positioned above arrow but in Excalidraw
-    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
-    const offset = 10;
-    arrow.startY = arrow.startY - offset;
-    arrow.endY = arrow.endY - offset;
-  }
+  const messageType = SEQUENCE_ARROW_TYPES[message.type];
+  const arrow = createArrowSkeleton(arrowNode, {
+    label: message?.message,
+    strokeStyle: messageType,
+    endArrowhead:
+      messageType === "SOLID_OPEN" || messageType === "DOTTED_OPEN"
+        ? null
+        : "arrow",
+  });
 
   const showSequenceNumber =
     !!arrowNode.nextElementSibling?.classList.contains("sequenceNumber");
@@ -319,10 +288,6 @@ const createArrowElement = (
     arrow.sequenceNumber = sequenceNumber;
   }
 
-  arrow.strokeColor = arrowNode.getAttribute("stroke");
-  arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
-  arrow.type = "arrow";
-  arrow.strokeStyle = SEQUENCE_ARROW_TYPES[message.type];
   return arrow;
 };
 
@@ -361,7 +326,7 @@ const createActorSymbol = (
         break;
       case "circle":
         ele = createContainerElement(child as SVGSVGElement, "ellipse", {
-          text: child.textContent || undefined,
+          label: child.textContent ? { text: child.textContent } : undefined,
           groupId,
           id,
         });
@@ -369,7 +334,12 @@ const createActorSymbol = (
         ele = createContainerElement(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
-          { text: child.textContent || undefined, groupId, id }
+
+          {
+            label: child.textContent ? { text: child.textContent } : undefined,
+            groupId,
+            id,
+          }
         );
     }
     nodeElements.push(ele);
@@ -401,7 +371,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const topNodeElement = createContainerElement(
         topRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        { id: `${actor.name}-top`, text, subtype: "actor" }
+        { id: `${actor.name}-top`, label: { text }, subtype: "actor" }
       );
       if (!topNodeElement) {
         throw "Top Node element not found!";
@@ -412,7 +382,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       const bottomNodeElement = createContainerElement(
         bottomRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        { id: `${actor.name}-bottom`, text, subtype: "actor" }
+        { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
       );
       nodes.push([bottomNodeElement]);
 
@@ -502,7 +472,7 @@ const computeNotes = (messages: Message[], containerEl: Element) => {
     const rect = node.firstChild as SVGSVGElement;
     const text = noteText[index].message;
     const note = createContainerElement(rect, "rectangle", {
-      text,
+      label: { text },
       subtype: "note",
     });
     notes.push(note);
@@ -517,7 +487,7 @@ const parseActivations = (containerEl: Element) => {
   const activations: Container[] = [];
   activationNodes.forEach((node) => {
     const rect = createContainerElement(node, "rectangle", {
-      text: "",
+      label: { text: "" },
       subtype: "activation",
     });
     activations.push(rect);
@@ -574,9 +544,9 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
   const labelTextNode = Array.from(containerEl?.querySelectorAll(".labelText"));
 
   labelBoxes.forEach((labelBox, index) => {
-    const labelText = labelTextNode[index]?.textContent || "";
+    const text = labelTextNode[index]?.textContent || "";
     const container = createContainerElement(labelBox, "rectangle", {
-      text: labelText,
+      label: { text },
     });
     container.strokeColor = "#adb5bd";
     container.bgColor = "#e9ecef";
@@ -600,7 +570,7 @@ const computeHighlights = (containerEl: Element) => {
 
   rects.forEach((rect) => {
     const node = createContainerElement(rect, "rectangle", {
-      text: "",
+      label: { text: "" },
       subtype: "highlight",
     });
     nodes.push(node);
