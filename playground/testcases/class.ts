@@ -12,14 +12,14 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Vehicle <|-- Car`,
   },
   {
-    name: "Class with labels",
+    name: "Class with Labels",
     defination: `classDiagram
   class Animal["Animal with a label"]
   class Car["Car with *! symbols"]
   Animal --> Car`,
   },
   {
-    name: "Class with members",
+    name: "Class with Members",
     defination: `classDiagram
   class BankAccount
   BankAccount : +String owner
@@ -28,17 +28,17 @@ export const CLASS_DIAGRAM_TESTCASES = [
   BankAccount : +withdrawal(amount)`,
   },
   {
-    name: "Class with members using curly braces ({})",
+    name: "Class with Members using Curly braces ({})",
     defination: `classDiagram
   class BankAccount{
     +String owner
     +BigDecimal balance
-    +deposit(amount) bool
-    +withdrawal(amount) int
+    +deposit(amount)
+    +withdrawal(amount)
   }`,
   },
   {
-    name: "Class with members and return type",
+    name: "Class with Members and Return type",
     defination: `classDiagram
   class BankAccount{
     +String owner
@@ -63,7 +63,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
     Square : +getDistanceMatrix() List~List~int~~`,
   },
   {
-    name: "Multiple Classes with members",
+    name: "Multiple Classes with Members",
     defination: `classDiagram
   class Duck
   Duck : +String beakColor
@@ -75,5 +75,35 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Zebra : +bool is_wild
   Zebra : +run()
   `,
+  },
+  {
+    name: "Class with Relations",
+    defination: `classDiagram
+  classA <|-- classB
+  classC *-- classD
+  classE o-- classF
+  classG <-- classH
+  classI -- classJ
+  classK <.. classL
+  classM <|.. classN
+  classO .. classP`,
+  },
+  {
+    name: "Class with labelled Relations",
+    defination: `classDiagram
+  classA --|> classB : Inheritance
+  classC --* classD : Composition
+  classE --o classF : Aggregation
+  classG --> classH : Association
+  classI -- classJ : Link(Solid)
+  classK ..> classL : Dependency
+  classM ..|> classN : Realization
+  classO .. classP : Link(Dashed)`,
+  },
+  {
+    name: "Class with 2 way Relations",
+    defination: `classDiagram
+  Animal <|--|> Zebra
+  Bird o..\* Peacock`,
   },
 ];

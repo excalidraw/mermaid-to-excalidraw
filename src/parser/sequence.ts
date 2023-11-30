@@ -4,6 +4,7 @@ import {
   ExcalidrawArrowElement,
   ExcalidrawLinearElement,
   ExcalidrawTextElement,
+  StrokeStyle,
 } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import { entityCodesToText } from "../utils.js";
@@ -30,7 +31,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
     text: string | null;
     fontSize: number;
   };
-  strokeStyle: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
+  strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
   points?: number[][];
   sequenceNumber: Container;
   startArrowhead: ExcalidrawArrowElement["startArrowhead"];
@@ -150,6 +151,28 @@ const MESSAGE_TYPE = {
   PAR_OVER_START: 32,
 };
 
+const getStrokeStyle = (type: number) => {
+  let strokeStyle: StrokeStyle;
+  switch (type) {
+    case MESSAGE_TYPE.SOLID:
+    case MESSAGE_TYPE.SOLID_CROSS:
+    case MESSAGE_TYPE.SOLID_OPEN:
+    case MESSAGE_TYPE.SOLID_POINT:
+      strokeStyle = "solid";
+      break;
+    case MESSAGE_TYPE.DOTTED:
+    case MESSAGE_TYPE.DOTTED_CROSS:
+    case MESSAGE_TYPE.DOTTED_OPEN:
+    case MESSAGE_TYPE.DOTTED_POINT:
+      strokeStyle = "dotted";
+      break;
+    default:
+      strokeStyle = "solid";
+      break;
+  }
+  return strokeStyle;
+};
+
 export const createContainerElement = (
   node: SVGSVGElement | SVGRectElement,
   type: Container["type"],
@@ -183,7 +206,6 @@ export const createContainerElement = (
   container.width = boundingBox.width;
   container.height = boundingBox.height;
   container.subtype = subtype;
-  console.log(boundingBox, "BOUNDING BOX", node);
   switch (subtype) {
     case "highlight":
       const bgColor = node.getAttribute("fill");
@@ -258,7 +280,7 @@ export const createArrowElement = (
   const messageType = SEQUENCE_ARROW_TYPES[message.type];
   const arrow = createArrowSkeleton(arrowNode, {
     label: message?.message,
-    strokeStyle: messageType,
+    strokeStyle: getStrokeStyle(message.type),
     endArrowhead:
       messageType === "SOLID_OPEN" || messageType === "DOTTED_OPEN"
         ? null

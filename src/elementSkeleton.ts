@@ -6,7 +6,7 @@ export const createArrowSkeleton = (
   arrowNode: SVGLineElement | SVGPathElement,
   opts?: {
     label?: string;
-    strokeStyle?: string;
+    strokeStyle?: ExcalidrawArrowElement["strokeStyle"];
     startArrowhead?: ExcalidrawArrowElement["startArrowhead"];
     endArrowhead?: ExcalidrawArrowElement["endArrowhead"];
   }
@@ -71,7 +71,7 @@ export const createArrowSkeleton = (
   arrow.type = "arrow";
   arrow.strokeStyle = opts?.strokeStyle || "solid";
   arrow.startArrowhead = opts?.startArrowhead || null;
-  arrow.endArrowhead = opts?.endArrowhead || null ;
+  arrow.endArrowhead = opts?.endArrowhead || null;
   arrow.strokeColor = arrowNode.getAttribute("stroke");
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   return arrow;

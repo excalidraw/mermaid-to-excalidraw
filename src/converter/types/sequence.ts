@@ -2,21 +2,8 @@ import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/tra
 import { GraphConverter } from "../GraphConverter.js";
 
 import { Arrow, Line, Node, Sequence, Text } from "../../parser/sequence.js";
-import { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import { ExcalidrawElement } from "../../types.js";
-
-// Arrow mapper for the supported sequence arrow types
-const EXCALIDRAW_STROKE_STYLE_FOR_ARROW: { [key: string]: StrokeStyle } = {
-  SOLID: "solid",
-  DOTTED: "dotted",
-  SOLID_CROSS: "solid",
-  DOTTED_CROSS: "dotted",
-  SOLID_OPEN: "solid",
-  DOTTED_OPEN: "dotted",
-  SOLID_POINT: "solid",
-  DOTTED_POINT: "dotted",
-};
 
 export const createLine = (line: Line) => {
   const lineElement: ExcalidrawElementSkeleton = {
@@ -101,7 +88,6 @@ export const createContainer = (
 };
 
 export const createArrow = (arrow: Arrow) => {
-  const strokeStyle = EXCALIDRAW_STROKE_STYLE_FOR_ARROW[arrow.strokeStyle];
   const arrowElement: ExcalidrawElementSkeleton = {
     type: "arrow",
     x: arrow.startX,
@@ -112,7 +98,7 @@ export const createArrow = (arrow: Arrow) => {
     ],
     width: arrow.endX - arrow.startX,
     height: arrow.endY - arrow.startY,
-    strokeStyle,
+    strokeStyle: arrow?.strokeStyle || "solid",
     endArrowhead: arrow?.endArrowhead || null,
     startArrowhead: arrow?.startArrowhead || null,
     label: {

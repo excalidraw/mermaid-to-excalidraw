@@ -1,10 +1,10 @@
 import { Diagram } from "mermaid/dist/Diagram.js";
 import {
   Arrow,
+  Container,
   Line,
   Node,
   Text,
-  createArrowElement,
   createContainerElement,
   createLineElement,
 } from "./sequence.js";
@@ -14,8 +14,8 @@ import {
 } from "mermaid/dist/diagrams/class/classTypes.js";
 import { getTransformAttr } from "../utils.js";
 import { nanoid } from "nanoid";
-import { createArrow } from "../converter/types/sequence.js";
 import { createArrowSkeleton } from "../elementSkeleton.js";
+import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 
 // Taken from mermaidParser.relationType
 const RELATION_TYPE = {
@@ -26,6 +26,9 @@ const RELATION_TYPE = {
   LOLLIPOP: 4,
 };
 
+type RELATION_TYPE_VALUES =
+  | (typeof RELATION_TYPE)[keyof typeof RELATION_TYPE]
+  | "none";
 // Taken from mermaidParser.lineType
 const LINE_TYPE = {
   LINE: 0,
@@ -40,8 +43,41 @@ export interface Class {
   text: Text[];
 }
 
-const getLineType = (type: number) => {
-  Object.keys(LINE_TYPE).find((key) => LINE_TYPE[key] === type);
+const getStrokeStyle = (type: number) => {
+  let lineType: ExcalidrawLinearElement["strokeStyle"];
+  switch (type) {
+    case LINE_TYPE.LINE:
+      lineType = "solid";
+      break;
+    case LINE_TYPE.DOTTED_LINE:
+      lineType = "dotted";
+      break;
+    default:
+      lineType = "solid";
+  }
+  return lineType;
+};
+
+const getArrowhead = (type: RELATION_TYPE_VALUES) => {
+  let arrowhead: ExcalidrawLinearElement["startArrowhead"];
+
+  switch (type) {
+    case RELATION_TYPE.AGGREGATION:
+    case RELATION_TYPE.DEPENDENCY:
+      arrowhead = "arrow";
+      break;
+    case RELATION_TYPE.EXTENSION:
+    case RELATION_TYPE.COMPOSITION:
+      arrowhead = "triangle";
+      break;
+    case "none":
+      arrowhead = null;
+      break;
+    default:
+      arrowhead = "arrow";
+      break;
+  }
+  return arrowhead;
 };
 
 const createTextElement = (
@@ -68,7 +104,7 @@ const parseClasses = (
   classes: { [key: string]: ClassNode },
   containerEl: Element
 ) => {
-  const nodes: Node[] = [];
+  const nodes: Container[] = [];
   const lines: Line[] = [];
   const text: Text[] = [];
 
@@ -129,16 +165,35 @@ const parseClasses = (
   return { nodes, lines, text };
 };
 
-const parseRelations = (relations: ClassRelation[], containerEl: Element) => {
+const parseRelations = (
+  relations: ClassRelation[],
+  classNodes: Container[],
+  containerEl: Element
+) => {
   const edges = containerEl.querySelector(".edgePaths")?.children;
+  if (!edges) {
+    throw new Error("No Edges found!");
+  }
   const arrows: Arrow[] = [];
   relations.forEach((relationNode, index) => {
     const { id1, id2, relation } = relationNode;
-    const strokeStyle = getLineType(relation.lineType);
-    const arrow = createArrowSkeleton(edges[index], {
+    const node1 = classNodes.find((node) => node.id === id1)!;
+    const node2 = classNodes.find((node) => node.id === id2)!;
+    const startX = node1.x + (node1?.width || 0) / 2;
+    const startY = node1.y + (node1?.height || 0);
+    const endX = startX;
+    const endY = node2.y;
+    const strokeStyle = getStrokeStyle(relation.lineType);
+    const startArrowhead = getArrowhead(relation.type1);
+    const endArrowhead = getArrowhead(relation.type2);
+    const arrow = createArrowSkeleton(edges[index] as SVGPathElement, {
       strokeStyle,
-      startArrowhead: "arrow",
+      startArrowhead,
+      endArrowhead,
+      label: relationNode.title,
     });
+    // Since the arrows are from one container to another hence updating it here since from path attribute we aren't able to compute it
+    Object.assign(arrow, { startX, startY, endX, endY, points: undefined });
     arrows.push(arrow);
   });
   return arrows;
@@ -156,6 +211,6 @@ export const parseMermaidClassDiagram = (
   nodes.push(classNodes);
 
   const relations = mermaidParser.getRelations();
-  const arrows = parseRelations(relations, containerEl);
+  const arrows = parseRelations(relations, classNodes, containerEl);
   return { type: "class", nodes, lines, arrows, text };
 };
