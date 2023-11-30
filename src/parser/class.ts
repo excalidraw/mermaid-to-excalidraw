@@ -11,6 +11,7 @@ import {
 import {
   ClassNode,
   ClassRelation,
+  NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
 import { getTransformAttr } from "../utils.js";
 import { nanoid } from "nanoid";
@@ -41,6 +42,7 @@ export interface Class {
   lines: Line[];
   arrows: Arrow[];
   text: Text[];
+  namespaces: NamespaceNode[];
 }
 
 const getStrokeStyle = (type: number) => {
@@ -95,6 +97,7 @@ const createTextElement = (
   const offsetY = 10;
   node.x = transformX;
   node.y = transformY + offsetY;
+  node.id = nanoid();
   if (opts.groupId) {
     node.groupId = opts.groupId;
   }
@@ -124,6 +127,7 @@ const parseClasses = (
     );
     container.x += transformX;
     container.y += transformY;
+    container.metadata = { classId: id };
     nodes.push(container);
 
     const lineNodes = Array.from(
@@ -137,11 +141,13 @@ const parseClasses = (
       const endY = Number(lineNode.getAttribute("y2"));
       const line = createLineElement(lineNode, startX, startY, endX, endY, {
         groupId,
+        id: nanoid(),
       });
       line.startX += transformX;
       line.startY += transformY;
       line.endX += transformX;
       line.endY += transformY;
+      line.metadata = { classId: id };
       lines.push(line);
     });
 
@@ -158,6 +164,7 @@ const parseClasses = (
       const textElement = createTextElement(node, label, { groupId });
       textElement.x += transformX;
       textElement.y += transformY;
+      textElement.metadata = { classId: id };
       text.push(textElement);
     });
   });
@@ -202,15 +209,36 @@ const parseRelations = (
 export const parseMermaidClassDiagram = (
   diagram: Diagram,
   containerEl: Element
-) => {
+): Class => {
   diagram.parse();
   const mermaidParser = diagram.parser.yy;
   const nodes: Array<Node[]> = [];
-  const classes = mermaidParser.getClasses();
-  const { nodes: classNodes, lines, text } = parseClasses(classes, containerEl);
-  nodes.push(classNodes);
+  const lines: Array<Line> = [];
+  const text: Array<Text> = [];
+  const allClasses: Array<Container> = [];
 
+  const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
+
+  if (Object.keys(namespaces).length) {
+    Object.values(namespaces).forEach((namespace) => {
+      const namespaceClassData = parseClasses(namespace.classes, containerEl);
+      nodes.push(namespaceClassData.nodes);
+      lines.push(...namespaceClassData.lines);
+      text.push(...namespaceClassData.text);
+      allClasses.push(...namespaceClassData.nodes);
+    });
+  }
+
+  const classes = mermaidParser.getClasses();
+  if (Object.keys(classes).length) {
+    const classData = parseClasses(classes, containerEl);
+    nodes.push(classData.nodes);
+    lines.push(...classData.lines);
+    text.push(...classData.text);
+    allClasses.push(...classData.nodes);
+  }
   const relations = mermaidParser.getRelations();
-  const arrows = parseRelations(relations, classNodes, containerEl);
-  return { type: "class", nodes, lines, arrows, text };
+  const arrows = parseRelations(relations, allClasses, containerEl);
+
+  return { type: "class", nodes, lines, arrows, text, namespaces };
 };

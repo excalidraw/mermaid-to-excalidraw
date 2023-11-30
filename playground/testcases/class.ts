@@ -77,33 +77,37 @@ export const CLASS_DIAGRAM_TESTCASES = [
   `,
   },
   {
-    name: "Class with Relations",
+    name: "Class with Relations [1]",
     defination: `classDiagram
   classA <|-- classB
   classC *-- classD
   classE o-- classF
   classG <-- classH
+  `,
+  },
+  {
+    name: "Class with Relations [2]",
+    defination: `classDiagram
   classI -- classJ
   classK <.. classL
   classM <|.. classN
   classO .. classP`,
   },
   {
-    name: "Class with labelled Relations",
-    defination: `classDiagram
-  classA --|> classB : Inheritance
-  classC --* classD : Composition
-  classE --o classF : Aggregation
-  classG --> classH : Association
-  classI -- classJ : Link(Solid)
-  classK ..> classL : Dependency
-  classM ..|> classN : Realization
-  classO .. classP : Link(Dashed)`,
-  },
-  {
     name: "Class with 2 way Relations",
     defination: `classDiagram
   Animal <|--|> Zebra
   Bird o..\* Peacock`,
+  },
+  {
+    name: "Class with Namespace",
+    defination: `classDiagram
+  namespace BaseShapes {
+    class Triangle
+    class Rectangle {
+      double width
+      double height
+    }
+  }`,
   },
 ];

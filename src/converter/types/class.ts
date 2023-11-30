@@ -7,6 +7,7 @@ import {
   createLine,
   createText,
 } from "./sequence.js";
+import { nanoid } from "nanoid";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
@@ -51,12 +52,37 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
       if (!arrow) {
         return;
       }
-      elements.push(createArrow(arrow));
+      const excalidrawElement = createArrow(arrow);
+      elements.push(excalidrawElement);
     });
 
     Object.values(chart.text).forEach((ele) => {
       const excalidrawElement = createText(ele);
+
       elements.push(excalidrawElement);
+    });
+
+    Object.values(chart.namespaces).forEach((namespace) => {
+      const classIds = Object.keys(namespace.classes);
+      const children = [...classIds];
+      const chartElements = [...chart.lines, ...chart.arrows, ...chart.text];
+      classIds.forEach((classId) => {
+        const childIds = chartElements
+          .filter((ele) => ele.metadata?.classId === classId)
+          .map((ele) => ele.id);
+
+        if (childIds) {
+          children.push(...childIds);
+        }
+      });
+
+      const frame: ExcalidrawElementSkeleton = {
+        type: "frame",
+        id: nanoid(),
+        name: namespace.id,
+        children,
+      };
+      elements.push(frame);
     });
     return { elements };
   },

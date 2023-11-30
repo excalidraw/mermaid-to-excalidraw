@@ -21,6 +21,7 @@ export type Line = {
   strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
   type: "line";
   groupId?: string;
+  metadata?: Object;
 };
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
@@ -48,6 +49,7 @@ export type Text = {
   height: number;
   fontSize: number;
   groupId?: string;
+  metadata?: Object;
 };
 
 export type Container = {
@@ -69,6 +71,7 @@ export type Container = {
   bgColor?: string;
   subtype?: "actor" | "activation" | "highlight" | "note" | "sequence";
   groupId?: string;
+  metadata?: Object;
 };
 
 export type Node = Container | Line | Arrow | Text;
