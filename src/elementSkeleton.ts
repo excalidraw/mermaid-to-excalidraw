@@ -81,7 +81,7 @@ export const createArrowSkeletion = (
   endX: number,
   endY: number,
   opts?: {
-    label?: string;
+    label?: Arrow["label"];
     strokeColor?: Arrow["strokeColor"];
     strokeStyle?: Arrow["strokeStyle"];
     startArrowhead?: Arrow["startArrowhead"];

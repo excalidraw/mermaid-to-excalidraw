@@ -29,7 +29,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
   label?: {
     text: string | null;
-    fontSize: number;
+    fontSize?: number;
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];

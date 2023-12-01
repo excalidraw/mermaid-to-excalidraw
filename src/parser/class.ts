@@ -202,7 +202,7 @@ const parseRelations = (
       strokeStyle,
       startArrowhead,
       endArrowhead,
-      label: relationNode.title,
+      label: { text: relationNode.title },
       start: { type: "rectangle", id: node1.id },
       end: { type: "rectangle", id: node2.id },
     });
