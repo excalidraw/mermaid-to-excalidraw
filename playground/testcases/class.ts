@@ -110,4 +110,11 @@ export const CLASS_DIAGRAM_TESTCASES = [
     }
   }`,
   },
+  {
+    name: "Class with Cardinality / Multiplicity on Relations",
+    defination: `classDiagram
+  Customer "1" --> "*" Ticket
+  Student "1" --> "1..*" Course
+  Galaxy --> "many" Star : Contains`,
+  },
 ];

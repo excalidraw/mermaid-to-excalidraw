@@ -15,7 +15,10 @@ import {
 } from "mermaid/dist/diagrams/class/classTypes.js";
 import { getTransformAttr } from "../utils.js";
 import { nanoid } from "nanoid";
-import { createArrowSkeleton } from "../elementSkeleton.js";
+import {
+  createArrowSkeletonFromSVG,
+  createTextSkeleton,
+} from "../elementSkeleton.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 
 // Taken from mermaidParser.relationType
@@ -182,6 +185,8 @@ const parseRelations = (
     throw new Error("No Edges found!");
   }
   const arrows: Arrow[] = [];
+  const text: Text[] = [];
+
   relations.forEach((relationNode, index) => {
     const { id1, id2, relation } = relationNode;
     const node1 = classNodes.find((node) => node.id === id1)!;
@@ -193,7 +198,7 @@ const parseRelations = (
     const strokeStyle = getStrokeStyle(relation.lineType);
     const startArrowhead = getArrowhead(relation.type1);
     const endArrowhead = getArrowhead(relation.type2);
-    const arrow = createArrowSkeleton(edges[index] as SVGPathElement, {
+    const arrow = createArrowSkeletonFromSVG(edges[index] as SVGPathElement, {
       strokeStyle,
       startArrowhead,
       endArrowhead,
@@ -202,8 +207,27 @@ const parseRelations = (
     // Since the arrows are from one container to another hence updating it here since from path attribute we aren't able to compute it
     Object.assign(arrow, { startX, startY, endX, endY, points: undefined });
     arrows.push(arrow);
+
+    // Add cardianlities and Multiplicities
+    const { relationTitle1, relationTitle2 } = relationNode;
+    const offsetX = 20;
+    const offsetY = 15;
+    if (relationTitle1 && relationTitle1 !== "none") {
+      const x = startX - offsetX;
+      const y = startY + offsetY;
+      const relationTitleElement = createTextSkeleton(x, y, relationTitle1);
+
+      text.push(relationTitleElement);
+    }
+    if (relationTitle2 && relationTitle2 !== "none") {
+      const x = endX + offsetX;
+      const y = endY - offsetY;
+      const relationTitleElement = createTextSkeleton(x, y, relationTitle2);
+
+      text.push(relationTitleElement);
+    }
   });
-  return arrows;
+  return { arrows, text };
 };
 
 export const parseMermaidClassDiagram = (
@@ -238,7 +262,13 @@ export const parseMermaidClassDiagram = (
     allClasses.push(...classData.nodes);
   }
   const relations = mermaidParser.getRelations();
-  const arrows = parseRelations(relations, allClasses, containerEl);
+  const { arrows, text: relationTitles } = parseRelations(
+    relations,
+    allClasses,
+    containerEl
+  );
+
+  text.push(...relationTitles);
 
   return { type: "class", nodes, lines, arrows, text, namespaces };
 };

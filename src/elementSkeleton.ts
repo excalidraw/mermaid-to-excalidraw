@@ -1,8 +1,8 @@
 import { ExcalidrawArrowElement } from "@excalidraw/excalidraw/types/element/types.js";
-import { Arrow } from "./parser/sequence.js";
+import { Arrow, Text } from "./parser/sequence.js";
 import { entityCodesToText } from "./utils.js";
 
-export const createArrowSkeleton = (
+export const createArrowSkeletonFromSVG = (
   arrowNode: SVGLineElement | SVGPathElement,
   opts?: {
     label?: string;
@@ -75,4 +75,30 @@ export const createArrowSkeleton = (
   arrow.strokeColor = arrowNode.getAttribute("stroke");
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   return arrow;
+};
+
+export const createTextSkeleton = (
+  x: number,
+  y: number,
+  text: string,
+  opts?: {
+    id?: string;
+    width?: number;
+    height?: number;
+    fontSize?: number;
+    groupId?: string;
+  }
+) => {
+  const textElement: Text = {
+    type: "text",
+    x,
+    y,
+    width: opts?.width || 20,
+    height: opts?.height || 20,
+    text,
+    fontSize: opts?.fontSize || 16,
+    id: opts?.id,
+    groupId: opts?.groupId,
+  };
+  return textElement;
 };

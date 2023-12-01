@@ -8,7 +8,7 @@ import {
 } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import { entityCodesToText } from "../utils.js";
-import { createArrowSkeleton } from "../elementSkeleton.js";
+import { createArrowSkeletonFromSVG } from "../elementSkeleton.js";
 
 export type Line = {
   id?: string;
@@ -45,8 +45,8 @@ export type Text = {
   text: string;
   x: number;
   y: number;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   fontSize: number;
   groupId?: string;
   metadata?: Object;
@@ -281,7 +281,7 @@ export const createArrowElement = (
   message: Message
 ) => {
   const messageType = SEQUENCE_ARROW_TYPES[message.type];
-  const arrow = createArrowSkeleton(arrowNode, {
+  const arrow = createArrowSkeletonFromSVG(arrowNode, {
     label: message?.message,
     strokeStyle: getStrokeStyle(message.type),
     endArrowhead:
