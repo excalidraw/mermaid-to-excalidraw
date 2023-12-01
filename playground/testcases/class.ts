@@ -137,11 +137,11 @@ export const CLASS_DIAGRAM_TESTCASES = [
   {
     name: "Comments",
     defination: `classDiagram
-    %% This whole line is a comment classDiagram class Shape <<interface>>
-    class Shape{
-      <<interface>>
-      noOfVertices
-      draw()
-    }`,
+  %% This whole line is a comment classDiagram class Shape <&lt;interface&gt;>
+  class Shape{
+    <<interface>>
+    noOfVertices
+    draw()
+  }`,
   },
 ];

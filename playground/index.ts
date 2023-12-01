@@ -83,7 +83,7 @@ async function renderDiagram(
   diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px; color:#f06595;">${name}
   </h2>
   
-  <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;width:40vw;padding:5px" id="mermaid-syntax-${i}"></pre>
+  <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;white-space:pre-wrap;width:45vw;padding:5px" id="mermaid-syntax-${i}"></pre>
 
   <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
   <div id="diagram-${i}" style="width:50%"></div>`;
