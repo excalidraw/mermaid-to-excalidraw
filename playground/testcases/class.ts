@@ -117,4 +117,31 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Student "1" --> "1..*" Course
   Galaxy --> "many" Star : Contains`,
   },
+  {
+    name: "Annotations on Classes",
+    defination: `classDiagram
+  class Shape{
+    <<interface>>
+    noOfVertices
+    draw()
+  }
+  class Color{
+    <<enumeration>>
+    RED
+    BLUE
+    GREEN
+    WHITE
+    BLACK
+  }`,
+  },
+  {
+    name: "Comments",
+    defination: `classDiagram
+    %% This whole line is a comment classDiagram class Shape <<interface>>
+    class Shape{
+      <<interface>>
+      noOfVertices
+      draw()
+    }`,
+  },
 ];

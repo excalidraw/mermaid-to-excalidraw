@@ -193,7 +193,7 @@ const parseRelations = (
     const node2 = classNodes.find((node) => node.id === id2)!;
     const startX = node1.x + (node1?.width || 0) / 2;
     const startY = node1.y + (node1?.height || 0);
-    const endX = startX;
+    const endX = node2.x + (node2?.width || 0) / 2;
     const endY = node2.y;
     const strokeStyle = getStrokeStyle(relation.lineType);
     const startArrowhead = getArrowhead(relation.type1);
