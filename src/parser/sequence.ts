@@ -1,14 +1,13 @@
 import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
 import {
-  ExcalidrawArrowElement,
-  ExcalidrawLinearElement,
   ExcalidrawTextElement,
   StrokeStyle,
 } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import { entityCodesToText } from "../utils.js";
 import { createArrowSkeletonFromSVG } from "../elementSkeleton.js";
+import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
 
 export type Line = {
   id?: string;
@@ -18,7 +17,7 @@ export type Line = {
   endY: number;
   strokeColor: string | null;
   strokeWidth: number | null;
-  strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
+  strokeStyle: ValidLinearElement["strokeStyle"] | null;
   type: "line";
   groupId?: string;
   metadata?: Object;
@@ -32,11 +31,14 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
     text: string | null;
     fontSize: number;
   };
-  strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
+  strokeStyle?: ValidLinearElement["strokeStyle"] | null;
+  strokeWidth?: ValidLinearElement["strokeWidth"];
   points?: number[][];
-  sequenceNumber: Container;
-  startArrowhead: ExcalidrawArrowElement["startArrowhead"];
-  endArrowhead: ExcalidrawArrowElement["endArrowhead"];
+  sequenceNumber?: Container;
+  startArrowhead?: ValidLinearElement["startArrowhead"];
+  endArrowhead?: ValidLinearElement["endArrowhead"];
+  start?: ValidLinearElement["start"];
+  end?: ValidLinearElement["end"];
 };
 
 export type Text = {

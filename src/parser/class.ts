@@ -16,7 +16,7 @@ import {
 import { getTransformAttr } from "../utils.js";
 import { nanoid } from "nanoid";
 import {
-  createArrowSkeletonFromSVG,
+  createArrowSkeletion,
   createTextSkeleton,
 } from "../elementSkeleton.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
@@ -187,7 +187,7 @@ const parseRelations = (
   const arrows: Arrow[] = [];
   const text: Text[] = [];
 
-  relations.forEach((relationNode, index) => {
+  relations.forEach((relationNode) => {
     const { id1, id2, relation } = relationNode;
     const node1 = classNodes.find((node) => node.id === id1)!;
     const node2 = classNodes.find((node) => node.id === id2)!;
@@ -198,11 +198,13 @@ const parseRelations = (
     const strokeStyle = getStrokeStyle(relation.lineType);
     const startArrowhead = getArrowhead(relation.type1);
     const endArrowhead = getArrowhead(relation.type2);
-    const arrow = createArrowSkeletonFromSVG(edges[index] as SVGPathElement, {
+    const arrow = createArrowSkeletion(startX, startY, endX, endY, {
       strokeStyle,
       startArrowhead,
       endArrowhead,
       label: relationNode.title,
+      start: { type: "rectangle", id: node1.id },
+      end: { type: "rectangle", id: node2.id },
     });
     // Since the arrows are from one container to another hence updating it here since from path attribute we aren't able to compute it
     Object.assign(arrow, { startX, startY, endX, endY, points: undefined });

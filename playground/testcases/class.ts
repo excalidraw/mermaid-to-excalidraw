@@ -6,7 +6,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
     `,
   },
   {
-    name: "Class with relation",
+    name: "Class with Relations",
     defination: `classDiagram
   class Animal
   Vehicle <|-- Car`,

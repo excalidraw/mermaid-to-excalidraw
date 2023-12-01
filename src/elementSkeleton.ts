@@ -72,11 +72,41 @@ export const createArrowSkeletonFromSVG = (
   arrow.strokeStyle = opts?.strokeStyle || "solid";
   arrow.startArrowhead = opts?.startArrowhead || null;
   arrow.endArrowhead = opts?.endArrowhead || null;
-  arrow.strokeColor = arrowNode.getAttribute("stroke");
-  arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   return arrow;
 };
 
+export const createArrowSkeletion = (
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  opts?: {
+    label?: string;
+    strokeColor?: Arrow["strokeColor"];
+    strokeStyle?: Arrow["strokeStyle"];
+    startArrowhead?: Arrow["startArrowhead"];
+    endArrowhead?: Arrow["endArrowhead"];
+    start?: Arrow["start"];
+    end?: Arrow["end"];
+  }
+) => {
+  const arrow = {} as Arrow;
+  arrow.type = "arrow";
+  arrow.startX = startX;
+  arrow.startY = startY;
+  arrow.endX = endX;
+  arrow.endY = endY;
+
+  if (opts?.label) {
+    // In mermaid the text is positioned above arrow but in Excalidraw
+    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
+    const offset = 10;
+    arrow.startY = arrow.startY - offset;
+    arrow.endY = arrow.endY - offset;
+  }
+  Object.assign(arrow, { ...opts });
+  return arrow;
+};
 export const createTextSkeleton = (
   x: number,
   y: number,

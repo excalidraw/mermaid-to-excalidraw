@@ -108,6 +108,8 @@ export const createArrow = (arrow: Arrow) => {
     roundness: {
       type: 2,
     },
+    start: arrow.start,
+    end: arrow.end,
   };
   if (arrow.groupId) {
     Object.assign(arrowElement, { groupIds: [arrow.groupId] });
