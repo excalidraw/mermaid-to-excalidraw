@@ -51,7 +51,7 @@ export type Text = {
   height?: number;
   fontSize: number;
   groupId?: string;
-  metadata?: Object;
+  metadata?: { [key: string]: any };
 };
 
 export type Container = {

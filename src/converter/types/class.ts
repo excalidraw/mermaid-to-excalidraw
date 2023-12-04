@@ -68,11 +68,12 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
       const chartElements = [...chart.lines, ...chart.arrows, ...chart.text];
       classIds.forEach((classId) => {
         const childIds = chartElements
+          //@ts-ignore
           .filter((ele) => ele.metadata?.classId === classId)
           .map((ele) => ele.id);
 
-        if (childIds) {
-          children.push(...childIds);
+        if (childIds.length) {
+          children.push(...(childIds as string[]));
         }
       });
 
