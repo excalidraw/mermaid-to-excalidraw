@@ -178,9 +178,11 @@ const parseClasses = (
 const parseRelations = (
   relations: ClassRelation[],
   classNodes: Container[],
-  containerEl: Element
+  containerEl: Element,
+  direction: "LR" | "RL" | "TB" | "BT"
 ) => {
   const edges = containerEl.querySelector(".edgePaths")?.children;
+
   if (!edges) {
     throw new Error("No Edges found!");
   }
@@ -216,16 +218,83 @@ const parseRelations = (
     const { relationTitle1, relationTitle2 } = relationNode;
     const offsetX = 20;
     const offsetY = 15;
+    const directionOffset = 15;
+    let x;
+    let y;
     if (relationTitle1 && relationTitle1 !== "none") {
-      const x = startX - offsetX;
-      const y = startY + offsetY;
+      switch (direction) {
+        case "TB":
+          x = startX - offsetX;
+          if (endX < startX) {
+            x -= directionOffset;
+          }
+          y = startY + offsetY;
+          break;
+        case "BT":
+          x = startX + offsetX;
+          if (endX > startX) {
+            x += directionOffset;
+          }
+          y = startY - offsetY;
+          break;
+        case "LR":
+          x = startX + offsetX;
+          y = startY + offsetY;
+          if (endY > startY) {
+            y += directionOffset;
+          }
+          break;
+        case "RL":
+          x = startX - offsetX;
+          y = startY - offsetY;
+          if (startY > endY) {
+            y -= directionOffset;
+          }
+          break;
+        default:
+          x = startX - offsetX;
+          y = startY + offsetY;
+      }
+
       const relationTitleElement = createTextSkeleton(x, y, relationTitle1);
 
       text.push(relationTitleElement);
     }
     if (relationTitle2 && relationTitle2 !== "none") {
-      const x = endX + offsetX;
-      const y = endY - offsetY;
+      switch (direction) {
+        case "TB":
+          x = endX + offsetX;
+          if (endX < startX) {
+            x += directionOffset;
+          }
+          y = endY - offsetY;
+          break;
+        case "BT":
+          x = endX - offsetX;
+          if (endX > startX) {
+            x -= directionOffset;
+          }
+          y = endY + offsetY;
+          break;
+        case "LR":
+          x = endX - offsetX;
+          y = endY - offsetY;
+          if (endY > startY) {
+            y -= directionOffset;
+          }
+          break;
+        case "RL":
+          x = endX + offsetX;
+          y = endY + offsetY;
+          if (startY > endY) {
+            y += directionOffset;
+          }
+          break;
+        default:
+          x = endX + offsetX;
+          y = endY - offsetY;
+      }
+
       const relationTitleElement = createTextSkeleton(x, y, relationTitle2);
 
       text.push(relationTitleElement);
@@ -240,6 +309,8 @@ export const parseMermaidClassDiagram = (
 ): Class => {
   diagram.parse();
   const mermaidParser = diagram.parser.yy;
+  const direction = mermaidParser.getDirection();
+
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const text: Array<Text> = [];
@@ -269,7 +340,8 @@ export const parseMermaidClassDiagram = (
   const { arrows, text: relationTitles } = parseRelations(
     relations,
     allClasses,
-    containerEl
+    containerEl,
+    direction
   );
 
   text.push(...relationTitles);

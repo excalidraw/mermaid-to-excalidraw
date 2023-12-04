@@ -4,12 +4,17 @@ import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart.js";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.js";
 import UNSUPPORTED_DIAGRAM_TESTCASES from "./testcases/unsupported.js";
-
-// Initialize Mermaid
-mermaid.initialize({ startOnLoad: false });
-
 import "./initCustomTest";
 import { renderExcalidraw } from "./initExcalidraw.js";
+import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants.js";
+
+// Initialize Mermaid
+mermaid.initialize({
+  ...MERMAID_CONFIG,
+  themeVariables: {
+    fontSize: `${DEFAULT_FONT_SIZE}px`,
+  },
+});
 
 let indexOffset = 0;
 (async () => {

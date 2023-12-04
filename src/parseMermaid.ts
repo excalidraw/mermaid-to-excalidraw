@@ -1,6 +1,6 @@
 import mermaid from "mermaid";
 import { GraphImage } from "./interfaces.js";
-import { DEFAULT_FONT_SIZE } from "./constants.js";
+import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "./constants.js";
 import { encodeEntities } from "./utils.js";
 import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
@@ -45,13 +45,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 export const parseMermaid = async (
   definition: string
 ): Promise<Flowchart | GraphImage | Sequence | Class> => {
-  mermaid.initialize({
-    startOnLoad: false,
-    flowchart: { curve: "linear" },
-    themeVariables: {
-      fontSize: `${DEFAULT_FONT_SIZE * 1.25}px`,
-    },
-  });
+  mermaid.initialize(MERMAID_CONFIG);
 
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(
