@@ -144,4 +144,77 @@ export const CLASS_DIAGRAM_TESTCASES = [
     draw()
   }`,
   },
+  {
+    name: "Setting the direction of Diagram -> Left to Right ",
+    defination: `classDiagram
+  direction LR
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides`,
+  },
+  {
+    name: "Setting the direction of Diagram -> Right to Left ",
+    defination: `classDiagram
+  direction RL
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides`,
+  },
+
+  {
+    name: "Setting the direction of Diagram -> Bottom to Top ",
+    defination: `classDiagram
+  direction BT
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides`,
+  },
+  {
+    name: "Setting the direction of Diagram -> Top to Bottom ",
+    defination: `classDiagram
+  direction TB
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard{
+    -id : int
+    -name : string
+  }
+  class Bike{
+    -id : int
+    -name : string
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --o "1" Bike : rides`,
+  },
 ];

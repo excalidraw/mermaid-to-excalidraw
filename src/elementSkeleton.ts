@@ -88,6 +88,7 @@ export const createArrowSkeletion = (
     endArrowhead?: Arrow["endArrowhead"];
     start?: Arrow["start"];
     end?: Arrow["end"];
+    points?: Arrow["points"];
   }
 ) => {
   const arrow = {} as Arrow;
@@ -97,13 +98,6 @@ export const createArrowSkeletion = (
   arrow.endX = endX;
   arrow.endY = endY;
 
-  if (opts?.label) {
-    // In mermaid the text is positioned above arrow but in Excalidraw
-    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
-    const offset = 10;
-    arrow.startY = arrow.startY - offset;
-    arrow.endY = arrow.endY - offset;
-  }
   Object.assign(arrow, { ...opts });
   return arrow;
 };

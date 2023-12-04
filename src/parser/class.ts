@@ -13,7 +13,7 @@ import {
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
-import { getTransformAttr } from "../utils.js";
+import { computeEdgePositions, getTransformAttr } from "../utils.js";
 import { nanoid } from "nanoid";
 import {
   createArrowSkeletion,
@@ -187,27 +187,29 @@ const parseRelations = (
   const arrows: Arrow[] = [];
   const text: Text[] = [];
 
-  relations.forEach((relationNode) => {
+  relations.forEach((relationNode, index) => {
     const { id1, id2, relation } = relationNode;
     const node1 = classNodes.find((node) => node.id === id1)!;
     const node2 = classNodes.find((node) => node.id === id2)!;
-    const startX = node1.x + (node1?.width || 0) / 2;
-    const startY = node1.y + (node1?.height || 0);
-    const endX = node2.x + (node2?.width || 0) / 2;
-    const endY = node2.y;
+
     const strokeStyle = getStrokeStyle(relation.lineType);
     const startArrowhead = getArrowhead(relation.type1);
     const endArrowhead = getArrowhead(relation.type2);
+
+    const edgePositionData = computeEdgePositions(
+      edges[index] as SVGPathElement
+    );
+    const { startX, startY, endX, endY } = edgePositionData;
+
     const arrow = createArrowSkeletion(startX, startY, endX, endY, {
       strokeStyle,
       startArrowhead,
       endArrowhead,
-      label: { text: relationNode.title },
+      label: relationNode.title ? { text: relationNode.title } : undefined,
       start: { type: "rectangle", id: node1.id },
       end: { type: "rectangle", id: node2.id },
     });
-    // Since the arrows are from one container to another hence updating it here since from path attribute we aren't able to compute it
-    Object.assign(arrow, { startX, startY, endX, endY, points: undefined });
+
     arrows.push(arrow);
 
     // Add cardianlities and Multiplicities
