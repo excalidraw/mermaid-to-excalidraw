@@ -1,6 +1,77 @@
-import { ExcalidrawArrowElement } from "@excalidraw/excalidraw/types/element/types.js";
-import { Arrow, Text } from "./parser/sequence.js";
+import {
+  ExcalidrawArrowElement,
+  ExcalidrawTextElement,
+} from "@excalidraw/excalidraw/types/element/types.js";
 import { entityCodesToText } from "./utils.js";
+import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
+import { DEFAULT_FONT_SIZE } from "./constants.js";
+
+export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
+  type: "arrow";
+  label?: {
+    text: string | null;
+    fontSize?: number;
+  };
+  strokeStyle?: ValidLinearElement["strokeStyle"] | null;
+  strokeWidth?: ValidLinearElement["strokeWidth"];
+  points?: number[][];
+  sequenceNumber?: Container;
+  startArrowhead?: ValidLinearElement["startArrowhead"];
+  endArrowhead?: ValidLinearElement["endArrowhead"];
+  start?: ValidLinearElement["start"];
+  end?: ValidLinearElement["end"];
+};
+
+export type Line = {
+  id?: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  strokeColor: string | null;
+  strokeWidth: number | null;
+  strokeStyle: ValidLinearElement["strokeStyle"] | null;
+  type: "line";
+  groupId?: string;
+  metadata?: Object;
+};
+
+export type Text = {
+  id?: string;
+  type: "text";
+  text: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  fontSize: number;
+  groupId?: string;
+  metadata?: { [key: string]: any };
+};
+
+export type Container = {
+  id?: string;
+  type: "rectangle" | "ellipse";
+  label?: {
+    text: string | null;
+    fontSize: number;
+    color?: string;
+    verticalAlign?: ExcalidrawTextElement["verticalAlign"];
+  };
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  strokeStyle?: "dashed" | "solid";
+  strokeWidth?: number;
+  strokeColor?: string;
+  bgColor?: string;
+  subtype?: "actor" | "activation" | "highlight" | "note" | "sequence";
+  groupId?: string;
+  metadata?: Object;
+};
+
+export type Node = Container | Line | Arrow | Text;
 
 export const createArrowSkeletonFromSVG = (
   arrowNode: SVGLineElement | SVGPathElement,
@@ -101,6 +172,7 @@ export const createArrowSkeletion = (
   Object.assign(arrow, { ...opts });
   return arrow;
 };
+
 export const createTextSkeleton = (
   x: number,
   y: number,
@@ -111,18 +183,121 @@ export const createTextSkeleton = (
     height?: number;
     fontSize?: number;
     groupId?: string;
+    metadata?: { [key: string]: any };
   }
 ) => {
   const textElement: Text = {
     type: "text",
     x,
     y,
+    text,
     width: opts?.width || 20,
     height: opts?.height || 20,
-    text,
-    fontSize: opts?.fontSize || 16,
+
+    fontSize: opts?.fontSize || DEFAULT_FONT_SIZE,
     id: opts?.id,
     groupId: opts?.groupId,
+    metadata: opts?.metadata,
   };
   return textElement;
+};
+
+export const createTextElementFromSVG = (
+  textNode: SVGTextElement,
+  text: string,
+  opts?: { groupId?: string; id?: string }
+) => {
+  const node = {} as Text;
+  const x = Number(textNode.getAttribute("x"));
+  const y = Number(textNode.getAttribute("y"));
+  node.type = "text";
+  node.text = entityCodesToText(text);
+  if (opts?.id) {
+    node.id = opts.id;
+  }
+  if (opts?.groupId) {
+    node.groupId = opts.groupId;
+  }
+  const boundingBox = textNode.getBBox();
+  node.width = boundingBox.width;
+  node.height = boundingBox.height;
+  node.x = x - boundingBox.width / 2;
+  node.y = y;
+  const fontSize = parseInt(getComputedStyle(textNode).fontSize);
+  node.fontSize = fontSize;
+  return node;
+};
+
+export const createContainerSkeleton = (
+  node: SVGSVGElement | SVGRectElement,
+  type: Container["type"],
+  opts: {
+    id?: string;
+    label?: {
+      text: string;
+      verticalAlign?: ExcalidrawTextElement["verticalAlign"];
+    };
+    subtype?: Container["subtype"];
+    groupId?: string;
+  } = {}
+) => {
+  const container = {} as Container;
+  container.type = type;
+  const { label, subtype, id, groupId } = opts;
+  container.id = id;
+  if (groupId) {
+    container.groupId = groupId;
+  }
+  if (label) {
+    container.label = {
+      text: entityCodesToText(label.text),
+      fontSize: 16,
+      verticalAlign: label?.verticalAlign,
+    };
+  }
+  const boundingBox = node.getBBox();
+  container.x = boundingBox.x;
+  container.y = boundingBox.y;
+  container.width = boundingBox.width;
+  container.height = boundingBox.height;
+  container.subtype = subtype;
+  switch (subtype) {
+    case "highlight":
+      const bgColor = node.getAttribute("fill");
+      if (bgColor) {
+        container.bgColor = bgColor;
+      }
+      break;
+    case "note":
+      container.strokeStyle = "dashed";
+      break;
+  }
+
+  return container;
+};
+
+export const createLineSkeleton = (
+  lineNode: SVGLineElement,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  opts?: { groupId?: string; id?: string }
+) => {
+  const line = {} as Line;
+  line.startX = startX;
+  line.startY = startY;
+  line.endX = endX;
+  if (opts?.groupId) {
+    line.groupId = opts.groupId;
+  }
+  if (opts?.id) {
+    line.id = opts.id;
+  }
+  // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
+  line.endY = endY;
+  line.strokeColor = lineNode.getAttribute("stroke");
+  line.strokeWidth = Number(lineNode.getAttribute("stroke-width"));
+  line.type = "line";
+  return line;
 };

@@ -1,24 +1,24 @@
-import { Diagram } from "mermaid/dist/Diagram.js";
+import { nanoid } from "nanoid";
+
+import { computeEdgePositions, getTransformAttr } from "../utils.js";
 import {
   Arrow,
   Container,
   Line,
   Node,
   Text,
-  createContainerElement,
-  createLineElement,
-} from "./sequence.js";
+  createArrowSkeletion,
+  createContainerSkeleton,
+  createLineSkeleton,
+  createTextSkeleton,
+} from "../elementSkeleton.js";
+
+import { Diagram } from "mermaid/dist/Diagram.js";
 import {
   ClassNode,
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
-import { computeEdgePositions, getTransformAttr } from "../utils.js";
-import { nanoid } from "nanoid";
-import {
-  createArrowSkeletion,
-  createTextSkeleton,
-} from "../elementSkeleton.js";
 import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 
 // Taken from mermaidParser.relationType
@@ -85,27 +85,6 @@ const getArrowhead = (type: RELATION_TYPE_VALUES) => {
   return arrowhead;
 };
 
-const createTextElement = (
-  textNode: SVGForeignObjectElement,
-  text: string,
-  opts: { groupId?: string }
-) => {
-  const node = {} as Text;
-  const { transformX, transformY } = getTransformAttr(textNode);
-  node.type = "text";
-  node.text = text;
-  const boundingBox = textNode.getBBox();
-  node.width = boundingBox.width;
-  node.height = boundingBox.height;
-  const offsetY = 10;
-  node.x = transformX;
-  node.y = transformY + offsetY;
-  node.id = nanoid();
-  if (opts.groupId) {
-    node.groupId = opts.groupId;
-  }
-  return node;
-};
 const parseClasses = (
   classes: { [key: string]: ClassNode },
   containerEl: Element
@@ -123,7 +102,7 @@ const parseClasses = (
     }
     const { transformX, transformY } = getTransformAttr(domNode);
 
-    const container = createContainerElement(
+    const container = createContainerSkeleton(
       domNode.firstChild as SVGRectElement,
       "rectangle",
       { id, groupId }
@@ -142,7 +121,7 @@ const parseClasses = (
       const startY = Number(lineNode.getAttribute("y1"));
       const endX = Number(lineNode.getAttribute("x2"));
       const endY = Number(lineNode.getAttribute("y2"));
-      const line = createLineElement(lineNode, startX, startY, endX, endY, {
+      const line = createLineSkeleton(lineNode, startX, startY, endX, endY, {
         groupId,
         id: nanoid(),
       });
@@ -159,15 +138,32 @@ const parseClasses = (
     if (!labelNodes) {
       throw "label nodes not found";
     }
+
     Array.from(labelNodes).forEach((node) => {
       const label = node.textContent;
       if (!label) {
         return;
       }
-      const textElement = createTextElement(node, label, { groupId });
-      textElement.x += transformX;
-      textElement.y += transformY;
-      textElement.metadata = { classId: id };
+
+      const id = nanoid();
+      const { transformX: textTransformX, transformY: textTransformY } =
+        getTransformAttr(node);
+      const boundingBox = (node as SVGForeignObjectElement).getBBox();
+      const offsetY = 10;
+
+      const textElement = createTextSkeleton(
+        transformX + textTransformX,
+        transformY + textTransformY + offsetY,
+        label,
+        {
+          width: boundingBox.width,
+          height: boundingBox.height,
+          id,
+          groupId,
+          metadata: { classId: id },
+        }
+      );
+
       text.push(textElement);
     });
   });
@@ -256,7 +252,9 @@ const parseRelations = (
           y = startY + offsetY;
       }
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle1);
+      const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
+        fontSize: 16,
+      });
 
       text.push(relationTitleElement);
     }
@@ -295,7 +293,9 @@ const parseRelations = (
           y = endY - offsetY;
       }
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle2);
+      const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
+        fontSize: 16,
+      });
 
       text.push(relationTitleElement);
     }

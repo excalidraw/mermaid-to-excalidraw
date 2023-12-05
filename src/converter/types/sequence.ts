@@ -1,9 +1,10 @@
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 import { GraphConverter } from "../GraphConverter.js";
 
-import { Arrow, Line, Node, Sequence, Text } from "../../parser/sequence.js";
+import { Sequence } from "../../parser/sequence.js";
 import { nanoid } from "nanoid";
 import { ExcalidrawElement } from "../../types.js";
+import { Arrow, Line, Node, Text } from "../../elementSkeleton.js";
 
 export const createLine = (line: Line) => {
   const lineElement: ExcalidrawElementSkeleton = {
