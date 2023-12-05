@@ -1,13 +1,14 @@
+import { nanoid } from "nanoid";
+import {
+  transformToExcalidrawArrowSkeleton,
+  transformToExcalidrawContainerSkeleton,
+  transformToExcalidrawLineSkeleton,
+  transformToExcalidrawTextSkeleton,
+} from "../transformToExcalidrawSkeleton.js";
+
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 import { Class } from "../../parser/class.js";
 import { GraphConverter } from "../GraphConverter.js";
-import {
-  createArrow,
-  createContainer,
-  createLine,
-  createText,
-} from "./sequence.js";
-import { nanoid } from "nanoid";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
@@ -22,16 +23,16 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
 
         switch (element.type) {
           case "line":
-            excalidrawElement = createLine(element);
+            excalidrawElement = transformToExcalidrawLineSkeleton(element);
             break;
 
           case "rectangle":
           case "ellipse":
-            excalidrawElement = createContainer(element);
+            excalidrawElement = transformToExcalidrawContainerSkeleton(element);
             break;
 
           case "text":
-            excalidrawElement = createText(element);
+            excalidrawElement = transformToExcalidrawTextSkeleton(element);
             break;
           default:
             throw `unknown type ${element.type}`;
@@ -45,19 +46,19 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
       if (!line) {
         return;
       }
-      elements.push(createLine(line));
+      elements.push(transformToExcalidrawLineSkeleton(line));
     });
 
     Object.values(chart.arrows).forEach((arrow) => {
       if (!arrow) {
         return;
       }
-      const excalidrawElement = createArrow(arrow);
+      const excalidrawElement = transformToExcalidrawArrowSkeleton(arrow);
       elements.push(excalidrawElement);
     });
 
     Object.values(chart.text).forEach((ele) => {
-      const excalidrawElement = createText(ele);
+      const excalidrawElement = transformToExcalidrawTextSkeleton(ele);
 
       elements.push(excalidrawElement);
     });
