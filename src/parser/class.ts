@@ -16,6 +16,7 @@ import {
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import type {
   ClassNode,
+  ClassNote,
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
@@ -303,6 +304,53 @@ const parseRelations = (
   return { arrows, text };
 };
 
+const parseNotes = (
+  notes: ClassNote[],
+  containerEl: Element,
+  classNodes: Container[]
+) => {
+  const noteContainers: Container[] = [];
+  const connectors: Arrow[] = [];
+  notes.forEach((note) => {
+    const { id, text, class: classId } = note;
+    const node = containerEl.querySelector<SVGSVGElement>(`#${id}`);
+    if (!node) {
+      throw new Error(`Node with id ${id} not found!`);
+    }
+    const { transformX, transformY } = getTransformAttr(node);
+    const rect = node.firstChild as SVGRectElement;
+    const container = createContainerSkeleton(rect, "rectangle", {
+      id,
+      subtype: "note",
+      label: { text },
+    });
+    Object.assign(container, {
+      x: container.x + transformX,
+      y: container.y + transformY,
+    });
+    noteContainers.push(container);
+    if (classId) {
+      const classNode = classNodes.find((node) => node.id === classId);
+      if (!classNode) {
+        throw new Error(`class node with id ${classId} not found!`);
+      }
+      const startX = container.x + (container.width || 0) / 2;
+      const startY = container.y + (container.height || 0);
+      const endX = startX;
+      const endY = classNode.y;
+      const connector = createArrowSkeletion(startX, startY, endX, endY, {
+        strokeStyle: "dotted",
+        startArrowhead: null,
+        endArrowhead: null,
+        start: { id: container.id, type: "rectangle" },
+        end: { id: classNode.id, type: "rectangle" },
+      });
+      connectors.push(connector);
+    }
+  });
+  return { notes: noteContainers, connectors };
+};
+
 export const parseMermaidClassDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -314,7 +362,7 @@ export const parseMermaidClassDiagram = (
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const text: Array<Text> = [];
-  const allClasses: Array<Container> = [];
+  const classNodes: Array<Container> = [];
 
   const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
 
@@ -324,7 +372,7 @@ export const parseMermaidClassDiagram = (
       nodes.push(namespaceClassData.nodes);
       lines.push(...namespaceClassData.lines);
       text.push(...namespaceClassData.text);
-      allClasses.push(...namespaceClassData.nodes);
+      classNodes.push(...namespaceClassData.nodes);
     });
   }
 
@@ -334,16 +382,23 @@ export const parseMermaidClassDiagram = (
     nodes.push(classData.nodes);
     lines.push(...classData.lines);
     text.push(...classData.text);
-    allClasses.push(...classData.nodes);
+    classNodes.push(...classData.nodes);
   }
   const relations = mermaidParser.getRelations();
   const { arrows, text: relationTitles } = parseRelations(
     relations,
-    allClasses,
+    classNodes,
     containerEl,
     direction
   );
 
+  const { notes, connectors } = parseNotes(
+    mermaidParser.getNotes(),
+    containerEl,
+    classNodes
+  );
+  nodes.push(notes);
+  arrows.push(...connectors);
   text.push(...relationTitles);
 
   return { type: "class", nodes, lines, arrows, text, namespaces };

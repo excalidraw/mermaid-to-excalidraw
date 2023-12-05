@@ -217,4 +217,12 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Student "1" --o "1" IdCard : carries
   Student "1" --o "1" Bike : rides`,
   },
+  {
+    name: "Class with Notes",
+    defination: `classDiagram
+  note "This is a general note"
+  note for MyClass "This is a note for a class"
+  class MyClass{
+  }`,
+  },
 ];

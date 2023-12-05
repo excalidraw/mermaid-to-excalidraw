@@ -28,9 +28,9 @@ export type Line = {
   startY: number;
   endX: number;
   endY: number;
-  strokeColor: string | null;
-  strokeWidth: number | null;
-  strokeStyle: ValidLinearElement["strokeStyle"] | null;
+  strokeColor?: string | null;
+  strokeWidth?: number | null;
+  strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   type: "line";
   groupId?: string;
   metadata?: Object;
