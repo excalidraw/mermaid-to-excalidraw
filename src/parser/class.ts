@@ -66,21 +66,24 @@ const getStrokeStyle = (type: number) => {
 
 const getArrowhead = (type: RELATION_TYPE_VALUES) => {
   let arrowhead: ExcalidrawLinearElement["startArrowhead"];
-
   switch (type) {
     case RELATION_TYPE.AGGREGATION:
-    case RELATION_TYPE.DEPENDENCY:
-      arrowhead = "arrow";
+      arrowhead = "uml_diamond";
+      break;
+
+    case RELATION_TYPE.COMPOSITION:
+      arrowhead = "uml_diamond_filled";
       break;
     case RELATION_TYPE.EXTENSION:
-    case RELATION_TYPE.COMPOSITION:
-      arrowhead = "triangle";
+      arrowhead = "uml_triangle";
       break;
     case "none":
       arrowhead = null;
       break;
+
+    case RELATION_TYPE.DEPENDENCY:
     default:
-      arrowhead = "arrow";
+      arrowhead = "uml_arrow";
       break;
   }
   return arrowhead;
