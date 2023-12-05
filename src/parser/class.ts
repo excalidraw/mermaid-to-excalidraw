@@ -13,13 +13,13 @@ import {
   createTextSkeleton,
 } from "../elementSkeleton.js";
 
-import { Diagram } from "mermaid/dist/Diagram.js";
-import {
+import type { Diagram } from "mermaid/dist/Diagram.js";
+import type {
   ClassNode,
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
-import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
+import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 
 // Taken from mermaidParser.relationType
 const RELATION_TYPE = {

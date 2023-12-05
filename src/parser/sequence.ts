@@ -1,6 +1,4 @@
-import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
-import { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
 import {
   Arrow,
@@ -13,6 +11,9 @@ import {
   createLineSkeleton,
   createTextElementFromSVG,
 } from "../elementSkeleton.js";
+
+import type { Diagram } from "mermaid/dist/Diagram.js";
+import type { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
 
@@ -145,7 +146,7 @@ const attachSequenceNumberToArrow = (
 };
 
 const createActorSymbol = (
-  rootNode: SVGGElement,
+  rootNode: HTMLElement,
   text: string,
   opts?: { id?: string }
 ) => {
@@ -153,7 +154,7 @@ const createActorSymbol = (
     throw "root node not found";
   }
   const groupId = nanoid();
-  const children = Array.from(rootNode.children) as SVGElement[];
+  const children = Array.from(rootNode.children);
   const nodeElements: Node[] = [];
   children.forEach((child, index) => {
     const id = `${opts?.id}-${index}`;
@@ -204,21 +205,21 @@ const createActorSymbol = (
 };
 
 const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
-  const actorRootNodes = Array.from(containerEl.querySelectorAll(".actor"))
+  const actorRootNodes = Array.from(
+    containerEl.querySelectorAll<SVGElement>(".actor")
+  )
     .filter((node) => node.tagName === "text")
-    .map((actor) => actor.tagName === "text" && actor.parentElement);
+    .map((actor) => actor.parentElement);
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const actorsLength = Object.keys(actors).length;
   Object.values(actors).forEach((actor, index) => {
-    //@ts-ignore
     // For each actor there are two nodes top and bottom which is connected by a line
-    const topRootNode = actorRootNodes[index] as SVGGElement;
-    //@ts-ignore
-    const bottomRootNode = actorRootNodes[actorsLength + index] as SVGGElement;
+    const topRootNode = actorRootNodes[index];
+    const bottomRootNode = actorRootNodes[actorsLength + index];
 
-    if (!topRootNode) {
+    if (!topRootNode || !bottomRootNode) {
       throw "root not found";
     }
     const text = actor.description;

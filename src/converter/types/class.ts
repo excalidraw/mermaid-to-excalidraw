@@ -5,10 +5,10 @@ import {
   transformToExcalidrawLineSkeleton,
   transformToExcalidrawTextSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
-
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
-import { Class } from "../../parser/class.js";
 import { GraphConverter } from "../GraphConverter.js";
+
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { Class } from "../../parser/class.js";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
@@ -69,8 +69,12 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
       const chartElements = [...chart.lines, ...chart.arrows, ...chart.text];
       classIds.forEach((classId) => {
         const childIds = chartElements
-          //@ts-ignore
-          .filter((ele) => ele.metadata?.classId === classId)
+          .filter(
+            (ele) =>
+              ele.metadata &&
+              "class" in ele.metadata &&
+              ele.metadata.classId === classId
+          )
           .map((ele) => ele.id);
 
         if (childIds.length) {

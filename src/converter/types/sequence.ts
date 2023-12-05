@@ -1,15 +1,16 @@
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
-import { GraphConverter } from "../GraphConverter.js";
-
-import { Sequence } from "../../parser/sequence.js";
 import { nanoid } from "nanoid";
-import { ExcalidrawElement } from "../../types.js";
+
+import { GraphConverter } from "../GraphConverter.js";
+import { Sequence } from "../../parser/sequence.js";
 import {
   transformToExcalidrawLineSkeleton,
   transformToExcalidrawTextSkeleton,
   transformToExcalidrawContainerSkeleton,
   transformToExcalidrawArrowSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
+
+import type { ExcalidrawElement } from "../../types.js";
 
 export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Sequence) => {
