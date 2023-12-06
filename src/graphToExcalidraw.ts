@@ -5,21 +5,30 @@ import { GraphImage, MermaidToExcalidrawResult } from "./interfaces.js";
 import { SequenceToExcalidrawSkeletonConvertor } from "./converter/types/sequence.js";
 import { Sequence } from "./parser/sequence.js";
 import { Flowchart } from "./parser/flowchart.js";
+import { Class } from "./parser/class.js";
+import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
 
 export const graphToExcalidraw = (
-  graph: Flowchart | GraphImage | Sequence,
+  graph: Flowchart | GraphImage | Sequence | Class,
   options: MermaidOptions = {}
 ): MermaidToExcalidrawResult => {
   switch (graph.type) {
     case "graphImage": {
       return GraphImageConverter.convert(graph, options);
     }
+
     case "flowchart": {
       return FlowchartToExcalidrawSkeletonConverter.convert(graph, options);
     }
+
     case "sequence": {
       return SequenceToExcalidrawSkeletonConvertor.convert(graph, options);
     }
+
+    case "class": {
+      return classToExcalidrawSkeletonConvertor.convert(graph, options);
+    }
+
     default: {
       throw new Error(
         `graphToExcalidraw: unknown graph type "${

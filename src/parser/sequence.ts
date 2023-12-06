@@ -1,68 +1,21 @@
-import { Diagram } from "mermaid/dist/Diagram.js";
 import { SVG_TO_SHAPE_MAPPER } from "../constants.js";
-import { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
 import { nanoid } from "nanoid";
-import { entityCodesToText } from "../utils.js";
+import {
+  Arrow,
+  Container,
+  Line,
+  Node,
+  Text,
+  createArrowSkeletonFromSVG,
+  createContainerSkeletonFromSVG,
+  createLineSkeletonFromSVG,
+  createTextSkeletonFromSVG,
+} from "../elementSkeleton.js";
 
-export type Line = {
-  id?: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  strokeColor: string | null;
-  strokeWidth: number | null;
-  strokeStyle: ExcalidrawLinearElement["strokeStyle"] | null;
-  type: "line";
-  groupId?: string;
-};
+import type { Diagram } from "mermaid/dist/Diagram.js";
+import type { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
-
-export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
-  type: "arrow";
-  label?: {
-    text: string | null;
-    fontSize: number;
-  };
-  strokeStyle: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS];
-  points?: number[][];
-  sequenceNumber: Container;
-};
-
-export type Text = {
-  id?: string;
-  type: "text";
-  text: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  fontSize: number;
-  groupId?: string;
-};
-
-export type Container = {
-  id?: string;
-  type: "rectangle" | "ellipse";
-  label?: {
-    text: string | null;
-    fontSize: number;
-    color?: string;
-  };
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  strokeStyle?: "dashed" | "solid";
-  strokeWidth?: number;
-  strokeColor?: string;
-  bgColor?: string;
-  subtype?: "actor" | "activation" | "highlight" | "note" | "sequence";
-  groupId?: string;
-};
-
-export type Node = Container | Line | Arrow | Text;
 
 type Loop = {
   lines: Line[];
@@ -142,165 +95,37 @@ const MESSAGE_TYPE = {
   PAR_OVER_START: 32,
 };
 
-const createContainerElement = (
-  node: SVGSVGElement | SVGRectElement,
-  type: Container["type"],
-  opts: {
-    id?: string;
-    text?: string;
-    subtype?: Container["subtype"];
-    groupId?: string;
-  } = {}
-) => {
-  const container = {} as Container;
-  container.type = type;
-  const { text, subtype, id, groupId } = opts;
-  container.id = id;
-  if (groupId) {
-    container.groupId = groupId;
-  }
-  if (text) {
-    container.label = {
-      text: entityCodesToText(text),
-      fontSize: 16,
-    };
-  }
-  const boundingBox = node.getBBox();
-  container.x = boundingBox.x;
-  container.y = boundingBox.y;
-  container.width = boundingBox.width;
-  container.height = boundingBox.height;
-  container.subtype = subtype;
-
-  switch (subtype) {
-    case "highlight":
-      const bgColor = node.getAttribute("fill");
-      if (bgColor) {
-        container.bgColor = bgColor;
-      }
+const getStrokeStyle = (type: number) => {
+  let strokeStyle: StrokeStyle;
+  switch (type) {
+    case MESSAGE_TYPE.SOLID:
+    case MESSAGE_TYPE.SOLID_CROSS:
+    case MESSAGE_TYPE.SOLID_OPEN:
+    case MESSAGE_TYPE.SOLID_POINT:
+      strokeStyle = "solid";
       break;
-    case "note":
-      container.strokeStyle = "dashed";
+    case MESSAGE_TYPE.DOTTED:
+    case MESSAGE_TYPE.DOTTED_CROSS:
+    case MESSAGE_TYPE.DOTTED_OPEN:
+    case MESSAGE_TYPE.DOTTED_POINT:
+      strokeStyle = "dotted";
+      break;
+    default:
+      strokeStyle = "solid";
       break;
   }
-
-  return container;
+  return strokeStyle;
 };
 
-const createTextElement = (
-  textNode: SVGTextElement,
-  text: string,
-  opts?: { groupId?: string; id?: string }
+const attachSequenceNumberToArrow = (
+  node: SVGLineElement | SVGPathElement,
+  arrow: Arrow
 ) => {
-  const node = {} as Text;
-  const x = Number(textNode.getAttribute("x"));
-  const y = Number(textNode.getAttribute("y"));
-  node.type = "text";
-  node.text = entityCodesToText(text);
-  if (opts?.id) {
-    node.id = opts.id;
-  }
-  if (opts?.groupId) {
-    node.groupId = opts.groupId;
-  }
-  const boundingBox = textNode.getBBox();
-  node.width = boundingBox.width;
-  node.height = boundingBox.height;
-  node.x = x - boundingBox.width / 2;
-  node.y = y;
-  const fontSize = parseInt(getComputedStyle(textNode).fontSize);
-  node.fontSize = fontSize;
-  return node;
-};
-
-const createLineElement = (
-  lineNode: SVGLineElement,
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-  opts?: { groupId?: string; id?: string }
-) => {
-  const line = {} as Line;
-  line.startX = startX;
-  line.startY = startY;
-  line.endX = endX;
-  if (opts?.groupId) {
-    line.groupId = opts.groupId;
-  }
-  if (opts?.id) {
-    line.id = opts.id;
-  }
-  // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
-  line.endY = endY;
-  line.strokeColor = lineNode.getAttribute("stroke");
-  line.strokeWidth = Number(lineNode.getAttribute("stroke-width"));
-  line.type = "line";
-  return line;
-};
-
-const createArrowElement = (
-  arrowNode: SVGLineElement | SVGPathElement,
-  message: Message
-) => {
-  const arrow = {} as Arrow;
-  arrow.label = { text: entityCodesToText(message.message), fontSize: 16 };
-  const tagName = arrowNode.tagName;
-  if (tagName === "line") {
-    arrow.startX = Number(arrowNode.getAttribute("x1"));
-    arrow.startY = Number(arrowNode.getAttribute("y1"));
-    arrow.endX = Number(arrowNode.getAttribute("x2"));
-    arrow.endY = Number(arrowNode.getAttribute("y2"));
-  } else if (tagName === "path") {
-    const dAttr = arrowNode.getAttribute("d");
-    if (!dAttr) {
-      throw new Error('Path element does not contain a "d" attribute');
-    }
-    // Split the d attribute based on M (Move To)  and C (Curve) commands
-    const commands = dAttr.split(/(?=[LC])/);
-
-    const startPosition = commands[0]
-      .substring(1)
-      .split(",")
-      .map((coord) => parseFloat(coord));
-
-    const points: Arrow["points"] = [];
-    commands.forEach((command) => {
-      const currPoints = command
-        .substring(1)
-        .trim()
-        .split(" ")
-        .map((pos) => {
-          const [x, y] = pos.split(",");
-          return [
-            parseFloat(x) - startPosition[0],
-            parseFloat(y) - startPosition[1],
-          ];
-        });
-      points.push(...currPoints);
-    });
-
-    const endPosition = points[points.length - 1];
-
-    arrow.startX = startPosition[0];
-    arrow.startY = startPosition[1];
-    arrow.endX = endPosition[0];
-    arrow.endY = endPosition[1];
-    arrow.points = points;
-  }
-  if (message) {
-    // In mermaid the text is positioned above arrow but in Excalidraw
-    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
-    const offset = 10;
-    arrow.startY = arrow.startY - offset;
-    arrow.endY = arrow.endY - offset;
-  }
-
   const showSequenceNumber =
-    !!arrowNode.nextElementSibling?.classList.contains("sequenceNumber");
+    !!node.nextElementSibling?.classList.contains("sequenceNumber");
 
   if (showSequenceNumber) {
-    const text = arrowNode.nextElementSibling?.textContent;
+    const text = node.nextElementSibling?.textContent;
     if (!text) {
       throw new Error("sequence number not present");
     }
@@ -316,18 +141,12 @@ const createArrowElement = (
       height,
       subtype: "sequence",
     };
-    arrow.sequenceNumber = sequenceNumber;
+    Object.assign(arrow, { sequenceNumber });
   }
-
-  arrow.strokeColor = arrowNode.getAttribute("stroke");
-  arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
-  arrow.type = "arrow";
-  arrow.strokeStyle = SEQUENCE_ARROW_TYPES[message.type];
-  return arrow;
 };
 
 const createActorSymbol = (
-  rootNode: SVGGElement,
+  rootNode: HTMLElement,
   text: string,
   opts?: { id?: string }
 ) => {
@@ -335,7 +154,7 @@ const createActorSymbol = (
     throw "root node not found";
   }
   const groupId = nanoid();
-  const children = Array.from(rootNode.children) as SVGElement[];
+  const children = Array.from(rootNode.children);
   const nodeElements: Node[] = [];
   children.forEach((child, index) => {
     const id = `${opts?.id}-${index}`;
@@ -347,7 +166,7 @@ const createActorSymbol = (
         const endX = Number(child.getAttribute("x2"));
         const endY = Number(child.getAttribute("y2"));
 
-        ele = createLineElement(
+        ele = createLineSkeletonFromSVG(
           child as SVGLineElement,
           startX,
           startY,
@@ -357,19 +176,31 @@ const createActorSymbol = (
         );
         break;
       case "text":
-        ele = createTextElement(child as SVGTextElement, text, { groupId, id });
-        break;
-      case "circle":
-        ele = createContainerElement(child as SVGSVGElement, "ellipse", {
-          text: child.textContent || undefined,
+        ele = createTextSkeletonFromSVG(child as SVGTextElement, text, {
           groupId,
           id,
         });
+        break;
+      case "circle":
+        ele = createContainerSkeletonFromSVG(
+          child as SVGSVGElement,
+          "ellipse",
+          {
+            label: child.textContent ? { text: child.textContent } : undefined,
+            groupId,
+            id,
+          }
+        );
       default:
-        ele = createContainerElement(
+        ele = createContainerSkeletonFromSVG(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
-          { text: child.textContent || undefined, groupId, id }
+
+          {
+            label: child.textContent ? { text: child.textContent } : undefined,
+            groupId,
+            id,
+          }
         );
     }
     nodeElements.push(ele);
@@ -378,30 +209,30 @@ const createActorSymbol = (
 };
 
 const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
-  const actorRootNodes = Array.from(containerEl.querySelectorAll(".actor"))
+  const actorRootNodes = Array.from(
+    containerEl.querySelectorAll<SVGElement>(".actor")
+  )
     .filter((node) => node.tagName === "text")
-    .map((actor) => actor.tagName === "text" && actor.parentElement);
+    .map((actor) => actor.parentElement);
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const actorsLength = Object.keys(actors).length;
   Object.values(actors).forEach((actor, index) => {
-    //@ts-ignore
     // For each actor there are two nodes top and bottom which is connected by a line
-    const topRootNode = actorRootNodes[index] as SVGGElement;
-    //@ts-ignore
-    const bottomRootNode = actorRootNodes[actorsLength + index] as SVGGElement;
+    const topRootNode = actorRootNodes[index];
+    const bottomRootNode = actorRootNodes[actorsLength + index];
 
-    if (!topRootNode) {
+    if (!topRootNode || !bottomRootNode) {
       throw "root not found";
     }
     const text = actor.description;
     if (actor.type === "participant") {
       // creating top actor node element
-      const topNodeElement = createContainerElement(
+      const topNodeElement = createContainerSkeletonFromSVG(
         topRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        { id: `${actor.name}-top`, text, subtype: "actor" }
+        { id: `${actor.name}-top`, label: { text }, subtype: "actor" }
       );
       if (!topNodeElement) {
         throw "Top Node element not found!";
@@ -409,10 +240,10 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       nodes.push([topNodeElement]);
 
       // creating bottom actor node element
-      const bottomNodeElement = createContainerElement(
+      const bottomNodeElement = createContainerSkeletonFromSVG(
         bottomRootNode.firstChild as SVGSVGElement,
         "rectangle",
-        { id: `${actor.name}-bottom`, text, subtype: "actor" }
+        { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
       );
       nodes.push([bottomNodeElement]);
 
@@ -430,7 +261,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const endY = bottomNodeElement.y;
       const endX = Number(lineNode.getAttribute("x2"));
-      const line = createLineElement(lineNode, startX, startY, endX, endY);
+      const line = createLineSkeletonFromSVG(
+        lineNode,
+        startX,
+        startY,
+        endX,
+        endY
+      );
       lines.push(line);
     } else if (actor.type === "actor") {
       const topNodeElement = createActorSymbol(topRootNode, text, {
@@ -458,7 +295,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       );
       if (bottomEllipseNode) {
         const endY = bottomEllipseNode.y;
-        const line = createLineElement(lineNode, startX, startY, endX, endY);
+        const line = createLineSkeletonFromSVG(
+          lineNode,
+          startX,
+          startY,
+          endX,
+          endY
+        );
         lines.push(line);
       }
     }
@@ -480,8 +323,16 @@ const computeArrows = (messages: Message[], containerEl: Element) => {
 
   arrowNodes.forEach((arrowNode, index) => {
     const message = arrowMessages[index];
-    const arrow = createArrowElement(arrowNode, message);
-
+    const messageType = SEQUENCE_ARROW_TYPES[message.type];
+    const arrow = createArrowSkeletonFromSVG(arrowNode, {
+      label: message?.message,
+      strokeStyle: getStrokeStyle(message.type),
+      endArrowhead:
+        messageType === "SOLID_OPEN" || messageType === "DOTTED_OPEN"
+          ? null
+          : "arrow",
+    });
+    attachSequenceNumberToArrow(arrowNode, arrow);
     arrows.push(arrow);
   });
   return arrows;
@@ -501,8 +352,8 @@ const computeNotes = (messages: Message[], containerEl: Element) => {
     }
     const rect = node.firstChild as SVGSVGElement;
     const text = noteText[index].message;
-    const note = createContainerElement(rect, "rectangle", {
-      text,
+    const note = createContainerSkeletonFromSVG(rect, "rectangle", {
+      label: { text },
       subtype: "note",
     });
     notes.push(note);
@@ -516,8 +367,8 @@ const parseActivations = (containerEl: Element) => {
   ) as SVGSVGElement[];
   const activations: Container[] = [];
   activationNodes.forEach((node) => {
-    const rect = createContainerElement(node, "rectangle", {
-      text: "",
+    const rect = createContainerSkeletonFromSVG(node, "rectangle", {
+      label: { text: "" },
       subtype: "activation",
     });
     activations.push(rect);
@@ -539,7 +390,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
     const startY = Number(node.getAttribute("y1"));
     const endX = Number(node.getAttribute("x2"));
     const endY = Number(node.getAttribute("y2"));
-    const line = createLineElement(node, startX, startY, endX, endY);
+    const line = createLineSkeletonFromSVG(node, startX, startY, endX, endY);
     line.strokeStyle = "dotted";
     line.strokeColor = "#adb5bd";
     line.strokeWidth = 2;
@@ -556,7 +407,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 
   loopTextNodes.forEach((node) => {
     const text = node.textContent || "";
-    const textElement = createTextElement(node, text);
+    const textElement = createTextSkeletonFromSVG(node, text);
     // The text is rendered between [ ] in DOM hence getting the text excluding the [ ]
     const rawText = text.match(/\[(.*?)\]/)?.[1] || "";
     const isCritical = criticalMessages.includes(rawText);
@@ -574,9 +425,9 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
   const labelTextNode = Array.from(containerEl?.querySelectorAll(".labelText"));
 
   labelBoxes.forEach((labelBox, index) => {
-    const labelText = labelTextNode[index]?.textContent || "";
-    const container = createContainerElement(labelBox, "rectangle", {
-      text: labelText,
+    const text = labelTextNode[index]?.textContent || "";
+    const container = createContainerSkeletonFromSVG(labelBox, "rectangle", {
+      label: { text },
     });
     container.strokeColor = "#adb5bd";
     container.bgColor = "#e9ecef";
@@ -599,8 +450,8 @@ const computeHighlights = (containerEl: Element) => {
   const nodes: Container[] = [];
 
   rects.forEach((rect) => {
-    const node = createContainerElement(rect, "rectangle", {
-      text: "",
+    const node = createContainerSkeletonFromSVG(rect, "rectangle", {
+      label: { text: "" },
       subtype: "highlight",
     });
     nodes.push(node);

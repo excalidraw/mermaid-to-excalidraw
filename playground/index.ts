@@ -1,14 +1,20 @@
 import mermaid from "mermaid";
 import { parseMermaid } from "../src/parseMermaid.js";
 import FLOWCHART_DIAGRAM_TESTCASES from "./testcases/flowchart.js";
+import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
+import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.js";
 import UNSUPPORTED_DIAGRAM_TESTCASES from "./testcases/unsupported.js";
-
-// Initialize Mermaid
-mermaid.initialize({ startOnLoad: false });
-
 import "./initCustomTest";
 import { renderExcalidraw } from "./initExcalidraw.js";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.js";
+import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants.js";
+
+// Initialize Mermaid
+mermaid.initialize({
+  ...MERMAID_CONFIG,
+  themeVariables: {
+    fontSize: `${DEFAULT_FONT_SIZE}px`,
+  },
+});
 
 let indexOffset = 0;
 (async () => {
@@ -34,6 +40,21 @@ let indexOffset = 0;
     })
   );
   indexOffset += SEQUENCE_DIAGRAM_TESTCASES.length;
+
+  // Render Class diagrams
+  const classContainer = document.getElementById("class-container")!;
+  await Promise.all(
+    CLASS_DIAGRAM_TESTCASES.map(({ name, defination }, index) => {
+      return renderDiagram(
+        classContainer,
+        name,
+        defination,
+        index + indexOffset
+      );
+    })
+  );
+  indexOffset += CLASS_DIAGRAM_TESTCASES.length;
+
   // Render unsupported diagrams
   const unsupportedContainer = document.getElementById("unsupported")!;
   unsupportedContainer.innerHTML = `
@@ -67,7 +88,7 @@ async function renderDiagram(
   diagramContainerEl.innerHTML = `<h2 style="margin-top: 50px; color:#f06595;">${name}
   </h2>
   
-  <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;width:40vw;padding:5px" id="mermaid-syntax-${i}"></pre>
+  <pre style="font-size:16px; font-weight:600;font-style:italic;background:#eeeef1;white-space:pre-wrap;width:45vw;padding:5px" id="mermaid-syntax-${i}"></pre>
 
   <button id="diagram-btn-${i}" data="${i}">Render to Excalidraw</button>
   <div id="diagram-${i}" style="width:50%"></div>`;
