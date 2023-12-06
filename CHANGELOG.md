@@ -18,13 +18,13 @@
 
 ### Fixes
 
-- clear parcel cache before starting dev server [#39](https://github.com/excalidraw/mermaid-to-excalidraw/pull/39) by [@ad1992](https://github.com/ad1992).
+- Clear parcel cache before starting dev server [#39](https://github.com/excalidraw/mermaid-to-excalidraw/pull/39) by [@ad1992](https://github.com/ad1992).
 
-- trigger mermaid.render only once for each diagram in playground [#41](https://github.com/excalidraw/mermaid-to-excalidraw/pull/41) by @ad1992
+- Trigger mermaid.render only once for each diagram in playground [#41](https://github.com/excalidraw/mermaid-to-excalidraw/pull/41) by [@ad1992](https://github.com/ad1992).
 
 ### Chore
 
-- Adding Complex Decisions & Subprocesses Charts in playground [#31](https://github.com/excalidraw/mermaid-to-excalidraw/pull/31) by @DYNAMICMORTAL
+- Adding Complex Decisions & Subprocesses Charts in playground [#31](https://github.com/excalidraw/mermaid-to-excalidraw/pull/31) by [@DYNAMICMORTAL](https://github.com/DYNAMICMORTAL)
 
 ---
 
