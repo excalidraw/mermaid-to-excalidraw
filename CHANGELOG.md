@@ -1,3 +1,11 @@
+## Unreleased
+
+### Features
+
+- Support Mermaid Class Diagrams 🥳 [#42](https://github.com/excalidraw/mermaid-to-excalidraw/pull/42) by [@ad1992](https://github.com/ad1992).
+
+### Fixes
+
 ## 0.1.2 (2023-11-03)
 
 ## Library
