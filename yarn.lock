@@ -883,10 +883,10 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/eslint-config/-/eslint-config-1.0.3.tgz#2122ef7413ae77874ae9848ce0f1c6b3f0d8bbbd"
   integrity sha512-GemHNF5Z6ga0BWBSX7GJaNBUchLu6RwTcAB84eX1MeckRNhNasAsPCdelDlFalz27iS4RuYEQh0bPE8SRxJgbQ==
 
-"@excalidraw/excalidraw@0.17.1-7391-e65bf53":
-  version "0.17.1-7391-e65bf53"
-  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.17.1-7391-e65bf53.tgz#d19e6b0f1e49b41e1c62da09e77a5dc27ca6e3f4"
-  integrity sha512-FJW7D2I/KyXthA3MbwGwX0K9NIqY5L4Za2R+9TqlFjnBqLWIdnxRXqyKGYkT3LPBWubv2tOmrymzuAXfKRQbCQ==
+"@excalidraw/excalidraw@0.17.1-7381-cdf6d3e":
+  version "0.17.1-7381-cdf6d3e"
+  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.17.1-7381-cdf6d3e.tgz#ab01bc27639a7828edf5ebaba288969713477177"
+  integrity sha512-gRjaw9HQ5qzlhqvtnUK1ujakZnp5l4zgLmnskxG3WzmVXwEd+lK8etDEdXjAKmw7cmG+3e0jO0wFHKNqBxoKNA==
 
 "@excalidraw/markdown-to-text@0.1.2":
   version "0.1.2"
