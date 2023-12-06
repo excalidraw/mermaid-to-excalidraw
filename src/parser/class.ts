@@ -8,8 +8,8 @@ import {
   Node,
   Text,
   createArrowSkeletion,
-  createContainerSkeleton,
-  createLineSkeleton,
+  createContainerSkeletonFromSVG,
+  createLineSkeletonFromSVG,
   createTextSkeleton,
 } from "../elementSkeleton.js";
 
@@ -106,7 +106,7 @@ const parseClasses = (
     }
     const { transformX, transformY } = getTransformAttr(domNode);
 
-    const container = createContainerSkeleton(
+    const container = createContainerSkeletonFromSVG(
       domNode.firstChild as SVGRectElement,
       "rectangle",
       { id, groupId }
@@ -125,10 +125,17 @@ const parseClasses = (
       const startY = Number(lineNode.getAttribute("y1"));
       const endX = Number(lineNode.getAttribute("x2"));
       const endY = Number(lineNode.getAttribute("y2"));
-      const line = createLineSkeleton(lineNode, startX, startY, endX, endY, {
-        groupId,
-        id: nanoid(),
-      });
+      const line = createLineSkeletonFromSVG(
+        lineNode,
+        startX,
+        startY,
+        endX,
+        endY,
+        {
+          groupId,
+          id: nanoid(),
+        }
+      );
       line.startX += transformX;
       line.startY += transformY;
       line.endX += transformX;
@@ -322,7 +329,7 @@ const parseNotes = (
     }
     const { transformX, transformY } = getTransformAttr(node);
     const rect = node.firstChild as SVGRectElement;
-    const container = createContainerSkeleton(rect, "rectangle", {
+    const container = createContainerSkeletonFromSVG(rect, "rectangle", {
       id,
       subtype: "note",
       label: { text },

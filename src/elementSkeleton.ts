@@ -1,7 +1,4 @@
-import {
-  ExcalidrawArrowElement,
-  ExcalidrawTextElement,
-} from "@excalidraw/excalidraw/types/element/types.js";
+import { ExcalidrawTextElement } from "@excalidraw/excalidraw/types/element/types.js";
 import { entityCodesToText } from "./utils.js";
 import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
@@ -23,25 +20,25 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
 };
 
 export type Line = {
-  id?: string;
+  type: "line";
   startX: number;
   startY: number;
   endX: number;
   endY: number;
+  id?: string;
   strokeColor?: string | null;
   strokeWidth?: number | null;
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
-  type: "line";
   groupId?: string;
-  metadata?: Object;
+  metadata?: { [key: string]: any };
 };
 
 export type Text = {
-  id?: string;
   type: "text";
   text: string;
   x: number;
   y: number;
+  id?: string;
   width?: number;
   height?: number;
   fontSize: number;
@@ -50,16 +47,16 @@ export type Text = {
 };
 
 export type Container = {
-  id?: string;
   type: "rectangle" | "ellipse";
+  x: number;
+  y: number;
+  id?: string;
   label?: {
     text: string | null;
     fontSize: number;
     color?: string;
     verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
-  x: number;
-  y: number;
   width?: number;
   height?: number;
   strokeStyle?: "dashed" | "solid";
@@ -68,7 +65,7 @@ export type Container = {
   bgColor?: string;
   subtype?: "actor" | "activation" | "highlight" | "note" | "sequence";
   groupId?: string;
-  metadata?: Object;
+  metadata?: { [key: string]: any };
 };
 
 export type Node = Container | Line | Arrow | Text;
@@ -77,9 +74,9 @@ export const createArrowSkeletonFromSVG = (
   arrowNode: SVGLineElement | SVGPathElement,
   opts?: {
     label?: string;
-    strokeStyle?: ExcalidrawArrowElement["strokeStyle"];
-    startArrowhead?: ExcalidrawArrowElement["startArrowhead"];
-    endArrowhead?: ExcalidrawArrowElement["endArrowhead"];
+    strokeStyle?: ValidLinearElement["strokeStyle"];
+    startArrowhead?: ValidLinearElement["startArrowhead"];
+    endArrowhead?: ValidLinearElement["endArrowhead"];
   }
 ) => {
   const arrow = {} as Arrow;
@@ -152,6 +149,7 @@ export const createArrowSkeletion = (
   endX: number,
   endY: number,
   opts?: {
+    id?: string;
     label?: Arrow["label"];
     strokeColor?: Arrow["strokeColor"];
     strokeStyle?: Arrow["strokeStyle"];
@@ -202,7 +200,7 @@ export const createTextSkeleton = (
   return textElement;
 };
 
-export const createTextElementFromSVG = (
+export const createTextSkeletonFromSVG = (
   textNode: SVGTextElement,
   text: string,
   opts?: { groupId?: string; id?: string }
@@ -228,7 +226,7 @@ export const createTextElementFromSVG = (
   return node;
 };
 
-export const createContainerSkeleton = (
+export const createContainerSkeletonFromSVG = (
   node: SVGSVGElement | SVGRectElement,
   type: Container["type"],
   opts: {
@@ -276,7 +274,7 @@ export const createContainerSkeleton = (
   return container;
 };
 
-export const createLineSkeleton = (
+export const createLineSkeletonFromSVG = (
   lineNode: SVGLineElement,
   startX: number,
   startY: number,

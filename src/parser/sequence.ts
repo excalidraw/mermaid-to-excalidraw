@@ -7,9 +7,9 @@ import {
   Node,
   Text,
   createArrowSkeletonFromSVG,
-  createContainerSkeleton,
-  createLineSkeleton,
-  createTextElementFromSVG,
+  createContainerSkeletonFromSVG,
+  createLineSkeletonFromSVG,
+  createTextSkeletonFromSVG,
 } from "../elementSkeleton.js";
 
 import type { Diagram } from "mermaid/dist/Diagram.js";
@@ -166,7 +166,7 @@ const createActorSymbol = (
         const endX = Number(child.getAttribute("x2"));
         const endY = Number(child.getAttribute("y2"));
 
-        ele = createLineSkeleton(
+        ele = createLineSkeletonFromSVG(
           child as SVGLineElement,
           startX,
           startY,
@@ -176,19 +176,23 @@ const createActorSymbol = (
         );
         break;
       case "text":
-        ele = createTextElementFromSVG(child as SVGTextElement, text, {
+        ele = createTextSkeletonFromSVG(child as SVGTextElement, text, {
           groupId,
           id,
         });
         break;
       case "circle":
-        ele = createContainerSkeleton(child as SVGSVGElement, "ellipse", {
-          label: child.textContent ? { text: child.textContent } : undefined,
-          groupId,
-          id,
-        });
+        ele = createContainerSkeletonFromSVG(
+          child as SVGSVGElement,
+          "ellipse",
+          {
+            label: child.textContent ? { text: child.textContent } : undefined,
+            groupId,
+            id,
+          }
+        );
       default:
-        ele = createContainerSkeleton(
+        ele = createContainerSkeletonFromSVG(
           child as SVGSVGElement,
           SVG_TO_SHAPE_MAPPER[child.tagName],
 
@@ -225,7 +229,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
     const text = actor.description;
     if (actor.type === "participant") {
       // creating top actor node element
-      const topNodeElement = createContainerSkeleton(
+      const topNodeElement = createContainerSkeletonFromSVG(
         topRootNode.firstChild as SVGSVGElement,
         "rectangle",
         { id: `${actor.name}-top`, label: { text }, subtype: "actor" }
@@ -236,7 +240,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       nodes.push([topNodeElement]);
 
       // creating bottom actor node element
-      const bottomNodeElement = createContainerSkeleton(
+      const bottomNodeElement = createContainerSkeletonFromSVG(
         bottomRootNode.firstChild as SVGSVGElement,
         "rectangle",
         { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
@@ -257,7 +261,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
       const endY = bottomNodeElement.y;
       const endX = Number(lineNode.getAttribute("x2"));
-      const line = createLineSkeleton(lineNode, startX, startY, endX, endY);
+      const line = createLineSkeletonFromSVG(
+        lineNode,
+        startX,
+        startY,
+        endX,
+        endY
+      );
       lines.push(line);
     } else if (actor.type === "actor") {
       const topNodeElement = createActorSymbol(topRootNode, text, {
@@ -285,7 +295,13 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       );
       if (bottomEllipseNode) {
         const endY = bottomEllipseNode.y;
-        const line = createLineSkeleton(lineNode, startX, startY, endX, endY);
+        const line = createLineSkeletonFromSVG(
+          lineNode,
+          startX,
+          startY,
+          endX,
+          endY
+        );
         lines.push(line);
       }
     }
@@ -336,7 +352,7 @@ const computeNotes = (messages: Message[], containerEl: Element) => {
     }
     const rect = node.firstChild as SVGSVGElement;
     const text = noteText[index].message;
-    const note = createContainerSkeleton(rect, "rectangle", {
+    const note = createContainerSkeletonFromSVG(rect, "rectangle", {
       label: { text },
       subtype: "note",
     });
@@ -351,7 +367,7 @@ const parseActivations = (containerEl: Element) => {
   ) as SVGSVGElement[];
   const activations: Container[] = [];
   activationNodes.forEach((node) => {
-    const rect = createContainerSkeleton(node, "rectangle", {
+    const rect = createContainerSkeletonFromSVG(node, "rectangle", {
       label: { text: "" },
       subtype: "activation",
     });
@@ -374,7 +390,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
     const startY = Number(node.getAttribute("y1"));
     const endX = Number(node.getAttribute("x2"));
     const endY = Number(node.getAttribute("y2"));
-    const line = createLineSkeleton(node, startX, startY, endX, endY);
+    const line = createLineSkeletonFromSVG(node, startX, startY, endX, endY);
     line.strokeStyle = "dotted";
     line.strokeColor = "#adb5bd";
     line.strokeWidth = 2;
@@ -391,7 +407,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 
   loopTextNodes.forEach((node) => {
     const text = node.textContent || "";
-    const textElement = createTextElementFromSVG(node, text);
+    const textElement = createTextSkeletonFromSVG(node, text);
     // The text is rendered between [ ] in DOM hence getting the text excluding the [ ]
     const rawText = text.match(/\[(.*?)\]/)?.[1] || "";
     const isCritical = criticalMessages.includes(rawText);
@@ -410,7 +426,7 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
 
   labelBoxes.forEach((labelBox, index) => {
     const text = labelTextNode[index]?.textContent || "";
-    const container = createContainerSkeleton(labelBox, "rectangle", {
+    const container = createContainerSkeletonFromSVG(labelBox, "rectangle", {
       label: { text },
     });
     container.strokeColor = "#adb5bd";
@@ -434,7 +450,7 @@ const computeHighlights = (containerEl: Element) => {
   const nodes: Container[] = [];
 
   rects.forEach((rect) => {
-    const node = createContainerSkeleton(rect, "rectangle", {
+    const node = createContainerSkeletonFromSVG(rect, "rectangle", {
       label: { text: "" },
       subtype: "highlight",
     });
