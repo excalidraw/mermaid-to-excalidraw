@@ -68,14 +68,14 @@ const getArrowhead = (type: RELATION_TYPE_VALUES) => {
   let arrowhead: ExcalidrawLinearElement["startArrowhead"];
   switch (type) {
     case RELATION_TYPE.AGGREGATION:
-      arrowhead = "uml_diamond";
+      arrowhead = "d_diamond";
       break;
 
     case RELATION_TYPE.COMPOSITION:
-      arrowhead = "uml_diamond_filled";
+      arrowhead = "d_diamond_filled";
       break;
     case RELATION_TYPE.EXTENSION:
-      arrowhead = "uml_triangle";
+      arrowhead = "d_triangle";
       break;
     case "none":
       arrowhead = null;
@@ -83,7 +83,7 @@ const getArrowhead = (type: RELATION_TYPE_VALUES) => {
 
     case RELATION_TYPE.DEPENDENCY:
     default:
-      arrowhead = "uml_arrow";
+      arrowhead = "d_arrow";
       break;
   }
   return arrowhead;
