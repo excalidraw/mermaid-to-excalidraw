@@ -1,12 +1,32 @@
 ## 0.2.0 (2023-12-06)
 
+## Library
+
 ### Features
 
 - Support Mermaid Class Diagrams 🥳 [#42](https://github.com/excalidraw/mermaid-to-excalidraw/pull/42) by [@ad1992](https://github.com/ad1992).
 
+- Support Mermaid Sequence Diagrams 🥳 [#34](https://github.com/excalidraw/mermaid-to-excalidraw/pull/34) by [@ad1992](https://github.com/ad1992).
+
 ### Fixes
 
 - Update arrow types for class diagrams [#44](https://github.com/excalidraw/mermaid-to-excalidraw/pull/44) by [@ad1992](https://github.com/ad1992).
+
+## Playground
+
+**_This section lists the updates made to the playground and will not affect the integration._**
+
+### Fixes
+
+- clear parcel cache before starting dev server [#39](https://github.com/excalidraw/mermaid-to-excalidraw/pull/39) by [@ad1992](https://github.com/ad1992).
+
+- trigger mermaid.render only once for each diagram in playground [#41](https://github.com/excalidraw/mermaid-to-excalidraw/pull/41) by @ad1992
+
+### Chore
+
+- Adding Complex Decisions & Subprocesses Charts in playground [#31](https://github.com/excalidraw/mermaid-to-excalidraw/pull/31) by @DYNAMICMORTAL
+
+---
 
 ## 0.1.2 (2023-11-03)
 
