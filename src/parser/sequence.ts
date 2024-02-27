@@ -146,7 +146,7 @@ const attachSequenceNumberToArrow = (
 };
 
 const createActorSymbol = (
-  rootNode: HTMLElement,
+  rootNode: SVGRectElement,
   text: string,
   opts?: { id?: string }
 ) => {
@@ -209,19 +209,22 @@ const createActorSymbol = (
 };
 
 const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
-  const actorRootNodes = Array.from(
-    containerEl.querySelectorAll<SVGElement>(".actor")
-  )
-    .filter((node) => node.tagName === "text")
-    .map((actor) => actor.parentElement);
+  const actorTopNodes = Array.from(
+    containerEl.querySelectorAll<SVGElement>(".actor-top")
+  );
+  const actorBottomNodes = Array.from(
+    containerEl.querySelectorAll<SVGElement>(".actor-bottom")
+  );
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
-  const actorsLength = Object.keys(actors).length;
   Object.values(actors).forEach((actor, index) => {
-    // For each actor there are two nodes top and bottom which is connected by a line
-    const topRootNode = actorRootNodes[index];
-    const bottomRootNode = actorRootNodes[actorsLength + index];
+    const topRootNode = actorTopNodes.find(
+      (actorNode) => actorNode.getAttribute("name") === actor.name
+    ) as SVGRectElement;
+    const bottomRootNode = actorBottomNodes.find(
+      (actorNode) => actorNode.getAttribute("name") === actor.name
+    ) as SVGRectElement;
 
     if (!topRootNode || !bottomRootNode) {
       throw "root not found";
@@ -230,7 +233,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
     if (actor.type === "participant") {
       // creating top actor node element
       const topNodeElement = createContainerSkeletonFromSVG(
-        topRootNode.firstChild as SVGSVGElement,
+        topRootNode,
         "rectangle",
         { id: `${actor.name}-top`, label: { text }, subtype: "actor" }
       );
@@ -241,14 +244,15 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 
       // creating bottom actor node element
       const bottomNodeElement = createContainerSkeletonFromSVG(
-        bottomRootNode.firstChild as SVGSVGElement,
+        bottomRootNode,
         "rectangle",
         { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
       );
       nodes.push([bottomNodeElement]);
 
-      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as first child of parent element
-      const lineNode = topRootNode.previousElementSibling as SVGLineElement;
+      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as sibling parent of top root node
+      const lineNode = topRootNode?.parentElement
+        ?.previousElementSibling as SVGLineElement;
 
       if (lineNode?.tagName !== "line") {
         throw "Line not found";
@@ -279,7 +283,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
       });
       nodes.push(bottomNodeElement);
 
-      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as first child of parent element
+      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as sibling of the actor root element
       const lineNode = topRootNode.previousElementSibling as SVGLineElement;
 
       if (lineNode?.tagName !== "line") {

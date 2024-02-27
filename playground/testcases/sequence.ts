@@ -179,6 +179,20 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     Alice->>Bob: I #9829; you!
     Bob->>Alice: I #9829; you #infin; times more!`,
   },
+  {
+    name: "Actor creation and destruction",
+    defination: `sequenceDiagram
+    Alice->>Bob: Hello Bob, how are you ?
+    Bob->>Alice: Fine, thank you. And you?
+    create participant Carl
+    Alice->>Carl: Hi Carl!
+    create actor D as Donald
+    Carl->>D: Hi!
+    destroy Carl
+    Alice-xCarl: We are too many
+    destroy Bob
+    Bob->>Alice: I agree`,
+  },
 ];
 
 export { SEQUENCE_DIAGRAM_TESTCASES };
