@@ -3415,10 +3415,10 @@ mermaid@*:
     uuid "^9.0.0"
     web-worker "^1.2.0"
 
-mermaid@10.9.0-rc.1:
-  version "10.9.0-rc.1"
-  resolved "https://registry.yarnpkg.com/mermaid/-/mermaid-10.9.0-rc.1.tgz#a0d8aa2e6a53c1ebc0c1ab09a17fdc6af235bce6"
-  integrity sha512-qSs/dbLw5GBWgfneN90ihEWnJi4oHL82d1I4vr0AKokjazwtBbYj8uDFJPtTTv5bc5FKTwIIWwPSFmcov5H6BA==
+mermaid@10.9.0:
+  version "10.9.0"
+  resolved "https://registry.yarnpkg.com/mermaid/-/mermaid-10.9.0.tgz#4d1272fbe434bd8f3c2c150554dc8a23a9bf9361"
+  integrity sha512-swZju0hFox/B/qoLKK0rOxxgh8Cf7rJSfAUc1u8fezVihYMvrJAS45GzAxTVf4Q+xn9uMgitBcmWk7nWGXOs/g==
   dependencies:
     "@braintree/sanitize-url" "^6.0.1"
     "@types/d3-scale" "^4.0.3"
