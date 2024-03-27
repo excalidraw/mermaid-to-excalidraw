@@ -253,15 +253,20 @@ const parseRelations = (
     const edgePositionData = computeEdgePositions(
       edges[index] as SVGPathElement
     );
-    const { startX, startY, endX, endY } = edgePositionData;
-    const arrowSkeletion = createArrowSkeletion(startX, startY, endX, endY, {
-      strokeStyle,
-      startArrowhead,
-      endArrowhead,
-      label: relationNode.title ? { text: relationNode.title } : undefined,
-      start: { type: "rectangle", id: node1.id },
-      end: { type: "rectangle", id: node2.id },
-    });
+    const arrowSkeletion = createArrowSkeletion(
+      edgePositionData.startX,
+      edgePositionData.startY,
+      edgePositionData.endX,
+      edgePositionData.endY,
+      {
+        strokeStyle,
+        startArrowhead,
+        endArrowhead,
+        label: relationNode.title ? { text: relationNode.title } : undefined,
+        start: { type: "rectangle", id: node1.id },
+        end: { type: "rectangle", id: node2.id },
+      }
+    );
 
     const arrow = adjustArrowPosition(direction, arrowSkeletion);
     arrows.push(arrow);
