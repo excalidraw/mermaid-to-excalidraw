@@ -182,6 +182,52 @@ const parseClasses = (
   return { nodes, lines, text };
 };
 
+// update arrow position by certain offset for triangle and diamond arrow head types
+// as mermaid calculates the position until the start of arrowhead
+// for reference - https://github.com/mermaid-js/mermaid/issues/5417
+const adjustArrowPosition = (direction: string, arrow: Arrow) => {
+  // The arrowhead shapes where we need to update the position by a 16px offset
+  const arrowHeadShapes = ["triangle_outline", "diamond", "diamond_outline"];
+
+  const shouldUpdateStartArrowhead =
+    arrow.startArrowhead && arrowHeadShapes.includes(arrow.startArrowhead);
+
+  const shouldUpdateEndArrowhead =
+    arrow.endArrowhead && arrowHeadShapes.includes(arrow.endArrowhead);
+
+  if (!shouldUpdateEndArrowhead && !shouldUpdateStartArrowhead) {
+    return arrow;
+  }
+
+  // This is the offset to update the arrow head postition for rendering in excalidraw
+  const offset = 16;
+
+  if (shouldUpdateStartArrowhead) {
+    if (direction === "LR") {
+      arrow.startX -= offset;
+    } else if (direction === "RL") {
+      arrow.startX += offset;
+    } else if (direction === "TB") {
+      arrow.startY -= offset;
+    } else if (direction === "BT") {
+      arrow.startY += offset;
+    }
+  }
+
+  if (shouldUpdateEndArrowhead) {
+    if (direction === "LR") {
+      arrow.endX += offset;
+    } else if (direction === "RL") {
+      arrow.endX -= offset;
+    } else if (direction === "TB") {
+      arrow.endY += offset;
+    } else if (direction === "BT") {
+      arrow.endY -= offset;
+    }
+  }
+  return arrow;
+};
+
 const parseRelations = (
   relations: ClassRelation[],
   classNodes: Container[],
@@ -209,8 +255,7 @@ const parseRelations = (
       edges[index] as SVGPathElement
     );
     const { startX, startY, endX, endY } = edgePositionData;
-
-    const arrow = createArrowSkeletion(startX, startY, endX, endY, {
+    const arrowSkeletion = createArrowSkeletion(startX, startY, endX, endY, {
       strokeStyle,
       startArrowhead,
       endArrowhead,
@@ -219,6 +264,7 @@ const parseRelations = (
       end: { type: "rectangle", id: node2.id },
     });
 
+    const arrow = adjustArrowPosition(direction, arrowSkeletion);
     arrows.push(arrow);
 
     // Add cardianlities and Multiplicities
@@ -228,6 +274,7 @@ const parseRelations = (
     const directionOffset = 15;
     let x;
     let y;
+
     if (relationTitle1 && relationTitle1 !== "none") {
       switch (direction) {
         case "TB":
