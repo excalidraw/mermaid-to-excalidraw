@@ -40,6 +40,9 @@ const LINE_TYPE = {
   DOTTED_LINE: 1,
 };
 
+// This is the offset to update the arrow head postition for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
+const MERMAID_ARROW_HEAD_OFFSET = 16;
+
 export interface Class {
   type: "class";
   nodes: Array<Node[]>;
@@ -98,9 +101,9 @@ const parseClasses = (
   const text: Text[] = [];
 
   Object.values(classes).forEach((classNode) => {
-    const { domId, id } = classNode;
+    const { domId, id: classId } = classNode;
     const groupId = nanoid();
-    const domNode = containerEl.querySelector(`[id*=classId-${id}]`);
+    const domNode = containerEl.querySelector(`[id*=classId-${classId}]`);
     if (!domNode) {
       throw Error(`DOM Node with id ${domId} not found`);
     }
@@ -109,11 +112,11 @@ const parseClasses = (
     const container = createContainerSkeletonFromSVG(
       domNode.firstChild as SVGRectElement,
       "rectangle",
-      { id, groupId }
+      { id: classId, groupId }
     );
     container.x += transformX;
     container.y += transformY;
-    container.metadata = { classId: id };
+    container.metadata = { classId };
     nodes.push(container);
 
     const lineNodes = Array.from(
@@ -140,7 +143,7 @@ const parseClasses = (
       line.startY += transformY;
       line.endX += transformX;
       line.endY += transformY;
-      line.metadata = { classId: id };
+      line.metadata = { classId };
       lines.push(line);
     });
 
@@ -171,15 +174,57 @@ const parseClasses = (
           height: boundingBox.height,
           id,
           groupId,
-          metadata: { classId: id },
+          metadata: { classId },
         }
       );
 
       text.push(textElement);
     });
   });
-
   return { nodes, lines, text };
+};
+
+// update arrow position by certain offset for triangle and diamond arrow head types
+// as mermaid calculates the position until the start of arrowhead
+// for reference - https://github.com/mermaid-js/mermaid/issues/5417
+const adjustArrowPosition = (direction: string, arrow: Arrow) => {
+  // The arrowhead shapes where we need to update the position by a 16px offset
+  const arrowHeadShapes = ["triangle_outline", "diamond", "diamond_outline"];
+
+  const shouldUpdateStartArrowhead =
+    arrow.startArrowhead && arrowHeadShapes.includes(arrow.startArrowhead);
+
+  const shouldUpdateEndArrowhead =
+    arrow.endArrowhead && arrowHeadShapes.includes(arrow.endArrowhead);
+
+  if (!shouldUpdateEndArrowhead && !shouldUpdateStartArrowhead) {
+    return arrow;
+  }
+
+  if (shouldUpdateStartArrowhead) {
+    if (direction === "LR") {
+      arrow.startX -= MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "RL") {
+      arrow.startX += MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "TB") {
+      arrow.startY -= MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "BT") {
+      arrow.startY += MERMAID_ARROW_HEAD_OFFSET;
+    }
+  }
+
+  if (shouldUpdateEndArrowhead) {
+    if (direction === "LR") {
+      arrow.endX += MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "RL") {
+      arrow.endX -= MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "TB") {
+      arrow.endY += MERMAID_ARROW_HEAD_OFFSET;
+    } else if (direction === "BT") {
+      arrow.endY -= MERMAID_ARROW_HEAD_OFFSET;
+    }
+  }
+  return arrow;
 };
 
 const parseRelations = (
@@ -208,17 +253,22 @@ const parseRelations = (
     const edgePositionData = computeEdgePositions(
       edges[index] as SVGPathElement
     );
-    const { startX, startY, endX, endY } = edgePositionData;
+    const arrowSkeletion = createArrowSkeletion(
+      edgePositionData.startX,
+      edgePositionData.startY,
+      edgePositionData.endX,
+      edgePositionData.endY,
+      {
+        strokeStyle,
+        startArrowhead,
+        endArrowhead,
+        label: relationNode.title ? { text: relationNode.title } : undefined,
+        start: { type: "rectangle", id: node1.id },
+        end: { type: "rectangle", id: node2.id },
+      }
+    );
 
-    const arrow = createArrowSkeletion(startX, startY, endX, endY, {
-      strokeStyle,
-      startArrowhead,
-      endArrowhead,
-      label: relationNode.title ? { text: relationNode.title } : undefined,
-      start: { type: "rectangle", id: node1.id },
-      end: { type: "rectangle", id: node2.id },
-    });
-
+    const arrow = adjustArrowPosition(direction, arrowSkeletion);
     arrows.push(arrow);
 
     // Add cardianlities and Multiplicities
@@ -228,39 +278,40 @@ const parseRelations = (
     const directionOffset = 15;
     let x;
     let y;
+
     if (relationTitle1 && relationTitle1 !== "none") {
       switch (direction) {
         case "TB":
-          x = startX - offsetX;
-          if (endX < startX) {
+          x = arrow.startX - offsetX;
+          if (arrow.endX < arrow.startX) {
             x -= directionOffset;
           }
-          y = startY + offsetY;
+          y = arrow.startY + offsetY;
           break;
         case "BT":
-          x = startX + offsetX;
-          if (endX > startX) {
+          x = arrow.startX + offsetX;
+          if (arrow.endX > arrow.startX) {
             x += directionOffset;
           }
-          y = startY - offsetY;
+          y = arrow.startY - offsetY;
           break;
         case "LR":
-          x = startX + offsetX;
-          y = startY + offsetY;
-          if (endY > startY) {
+          x = arrow.startX + offsetX;
+          y = arrow.startY + offsetY;
+          if (arrow.endY > arrow.startY) {
             y += directionOffset;
           }
           break;
         case "RL":
-          x = startX - offsetX;
-          y = startY - offsetY;
-          if (startY > endY) {
+          x = arrow.startX - offsetX;
+          y = arrow.startY - offsetY;
+          if (arrow.startY > arrow.endY) {
             y -= directionOffset;
           }
           break;
         default:
-          x = startX - offsetX;
-          y = startY + offsetY;
+          x = arrow.startX - offsetX;
+          y = arrow.startY + offsetY;
       }
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
@@ -272,36 +323,36 @@ const parseRelations = (
     if (relationTitle2 && relationTitle2 !== "none") {
       switch (direction) {
         case "TB":
-          x = endX + offsetX;
-          if (endX < startX) {
+          x = arrow.endX + offsetX;
+          if (arrow.endX < arrow.startX) {
             x += directionOffset;
           }
-          y = endY - offsetY;
+          y = arrow.endY - offsetY;
           break;
         case "BT":
-          x = endX - offsetX;
-          if (endX > startX) {
+          x = arrow.endX - offsetX;
+          if (arrow.endX > arrow.startX) {
             x -= directionOffset;
           }
-          y = endY + offsetY;
+          y = arrow.endY + offsetY;
           break;
         case "LR":
-          x = endX - offsetX;
-          y = endY - offsetY;
-          if (endY > startY) {
+          x = arrow.endX - offsetX;
+          y = arrow.endY - offsetY;
+          if (arrow.endY > arrow.startY) {
             y -= directionOffset;
           }
           break;
         case "RL":
-          x = endX + offsetX;
-          y = endY + offsetY;
-          if (startY > endY) {
+          x = arrow.endX + offsetX;
+          y = arrow.endY + offsetY;
+          if (arrow.startY > arrow.endY) {
             y += directionOffset;
           }
           break;
         default:
-          x = endX + offsetX;
-          y = endY - offsetY;
+          x = arrow.endX + offsetX;
+          y = arrow.endY - offsetY;
       }
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
@@ -375,16 +426,6 @@ export const parseMermaidClassDiagram = (
   const classNodes: Array<Container> = [];
 
   const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
-
-  if (Object.keys(namespaces).length) {
-    Object.values(namespaces).forEach((namespace) => {
-      const namespaceClassData = parseClasses(namespace.classes, containerEl);
-      nodes.push(namespaceClassData.nodes);
-      lines.push(...namespaceClassData.lines);
-      text.push(...namespaceClassData.text);
-      classNodes.push(...namespaceClassData.nodes);
-    });
-  }
 
   const classes = mermaidParser.getClasses();
   if (Object.keys(classes).length) {

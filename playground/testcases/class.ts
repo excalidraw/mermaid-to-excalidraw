@@ -100,6 +100,15 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Bird o..\* Peacock`,
   },
   {
+    name: "Class with 2 way Relations and direction",
+    defination: `classDiagram
+    direction RL
+    classA <|--|> classB
+    classC *--* classD
+    classE o--o classF
+    classG <--> classH`,
+  },
+  {
     name: "Class with Namespace",
     defination: `classDiagram
   namespace BaseShapes {

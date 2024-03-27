@@ -69,19 +69,13 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
       const chartElements = [...chart.lines, ...chart.arrows, ...chart.text];
       classIds.forEach((classId) => {
         const childIds = chartElements
-          .filter(
-            (ele) =>
-              ele.metadata &&
-              "class" in ele.metadata &&
-              ele.metadata.classId === classId
-          )
+          .filter((ele) => ele.metadata && ele.metadata.classId === classId)
           .map((ele) => ele.id);
 
         if (childIds.length) {
           children.push(...(childIds as string[]));
         }
       });
-
       const frame: ExcalidrawElementSkeleton = {
         type: "frame",
         id: nanoid(),
