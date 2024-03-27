@@ -98,9 +98,9 @@ const parseClasses = (
   const text: Text[] = [];
 
   Object.values(classes).forEach((classNode) => {
-    const { domId, id } = classNode;
+    const { domId, id: classId } = classNode;
     const groupId = nanoid();
-    const domNode = containerEl.querySelector(`[id*=classId-${id}]`);
+    const domNode = containerEl.querySelector(`[id*=classId-${classId}]`);
     if (!domNode) {
       throw Error(`DOM Node with id ${domId} not found`);
     }
@@ -109,11 +109,11 @@ const parseClasses = (
     const container = createContainerSkeletonFromSVG(
       domNode.firstChild as SVGRectElement,
       "rectangle",
-      { id, groupId }
+      { id: classId, groupId }
     );
     container.x += transformX;
     container.y += transformY;
-    container.metadata = { classId: id };
+    container.metadata = { classId };
     nodes.push(container);
 
     const lineNodes = Array.from(
@@ -140,7 +140,7 @@ const parseClasses = (
       line.startY += transformY;
       line.endX += transformX;
       line.endY += transformY;
-      line.metadata = { classId: id };
+      line.metadata = { classId };
       lines.push(line);
     });
 
@@ -171,14 +171,13 @@ const parseClasses = (
           height: boundingBox.height,
           id,
           groupId,
-          metadata: { classId: id },
+          metadata: { classId },
         }
       );
 
       text.push(textElement);
     });
   });
-
   return { nodes, lines, text };
 };
 
@@ -422,16 +421,6 @@ export const parseMermaidClassDiagram = (
   const classNodes: Array<Container> = [];
 
   const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
-
-  if (Object.keys(namespaces).length) {
-    Object.values(namespaces).forEach((namespace) => {
-      const namespaceClassData = parseClasses(namespace.classes, containerEl);
-      nodes.push(namespaceClassData.nodes);
-      lines.push(...namespaceClassData.lines);
-      text.push(...namespaceClassData.text);
-      classNodes.push(...namespaceClassData.nodes);
-    });
-  }
 
   const classes = mermaidParser.getClasses();
   if (Object.keys(classes).length) {
