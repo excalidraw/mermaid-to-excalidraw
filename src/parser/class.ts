@@ -40,6 +40,9 @@ const LINE_TYPE = {
   DOTTED_LINE: 1,
 };
 
+// This is the offset to update the arrow head postition for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
+const MERMAID_ARROW_HEAD_OFFSET = 16;
+
 export interface Class {
   type: "class";
   nodes: Array<Node[]>;
@@ -198,30 +201,27 @@ const adjustArrowPosition = (direction: string, arrow: Arrow) => {
     return arrow;
   }
 
-  // This is the offset to update the arrow head postition for rendering in excalidraw
-  const offset = 16;
-
   if (shouldUpdateStartArrowhead) {
     if (direction === "LR") {
-      arrow.startX -= offset;
+      arrow.startX -= MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "RL") {
-      arrow.startX += offset;
+      arrow.startX += MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "TB") {
-      arrow.startY -= offset;
+      arrow.startY -= MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "BT") {
-      arrow.startY += offset;
+      arrow.startY += MERMAID_ARROW_HEAD_OFFSET;
     }
   }
 
   if (shouldUpdateEndArrowhead) {
     if (direction === "LR") {
-      arrow.endX += offset;
+      arrow.endX += MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "RL") {
-      arrow.endX -= offset;
+      arrow.endX -= MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "TB") {
-      arrow.endY += offset;
+      arrow.endY += MERMAID_ARROW_HEAD_OFFSET;
     } else if (direction === "BT") {
-      arrow.endY -= offset;
+      arrow.endY -= MERMAID_ARROW_HEAD_OFFSET;
     }
   }
   return arrow;
@@ -277,36 +277,36 @@ const parseRelations = (
     if (relationTitle1 && relationTitle1 !== "none") {
       switch (direction) {
         case "TB":
-          x = startX - offsetX;
-          if (endX < startX) {
+          x = arrow.startX - offsetX;
+          if (arrow.endX < arrow.startX) {
             x -= directionOffset;
           }
-          y = startY + offsetY;
+          y = arrow.startY + offsetY;
           break;
         case "BT":
-          x = startX + offsetX;
-          if (endX > startX) {
+          x = arrow.startX + offsetX;
+          if (arrow.endX > arrow.startX) {
             x += directionOffset;
           }
-          y = startY - offsetY;
+          y = arrow.startY - offsetY;
           break;
         case "LR":
-          x = startX + offsetX;
-          y = startY + offsetY;
-          if (endY > startY) {
+          x = arrow.startX + offsetX;
+          y = arrow.startY + offsetY;
+          if (arrow.endY > arrow.startY) {
             y += directionOffset;
           }
           break;
         case "RL":
-          x = startX - offsetX;
-          y = startY - offsetY;
-          if (startY > endY) {
+          x = arrow.startX - offsetX;
+          y = arrow.startY - offsetY;
+          if (arrow.startY > arrow.endY) {
             y -= directionOffset;
           }
           break;
         default:
-          x = startX - offsetX;
-          y = startY + offsetY;
+          x = arrow.startX - offsetX;
+          y = arrow.startY + offsetY;
       }
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
@@ -318,36 +318,36 @@ const parseRelations = (
     if (relationTitle2 && relationTitle2 !== "none") {
       switch (direction) {
         case "TB":
-          x = endX + offsetX;
-          if (endX < startX) {
+          x = arrow.endX + offsetX;
+          if (arrow.endX < arrow.startX) {
             x += directionOffset;
           }
-          y = endY - offsetY;
+          y = arrow.endY - offsetY;
           break;
         case "BT":
-          x = endX - offsetX;
-          if (endX > startX) {
+          x = arrow.endX - offsetX;
+          if (arrow.endX > arrow.startX) {
             x -= directionOffset;
           }
-          y = endY + offsetY;
+          y = arrow.endY + offsetY;
           break;
         case "LR":
-          x = endX - offsetX;
-          y = endY - offsetY;
-          if (endY > startY) {
+          x = arrow.endX - offsetX;
+          y = arrow.endY - offsetY;
+          if (arrow.endY > arrow.startY) {
             y -= directionOffset;
           }
           break;
         case "RL":
-          x = endX + offsetX;
-          y = endY + offsetY;
-          if (startY > endY) {
+          x = arrow.endX + offsetX;
+          y = arrow.endY + offsetY;
+          if (arrow.startY > arrow.endY) {
             y += directionOffset;
           }
           break;
         default:
-          x = endX + offsetX;
-          y = endY - offsetY;
+          x = arrow.endX + offsetX;
+          y = arrow.endY - offsetY;
       }
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
