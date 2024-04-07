@@ -222,6 +222,7 @@ export const parseMermaidFlowChartDiagram = (
   diagram.parse();
 
   // Get mermaid parsed data from parser shared variable `yy`
+  //@ts-ignore
   const mermaidParser = diagram.parser.yy;
   const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {

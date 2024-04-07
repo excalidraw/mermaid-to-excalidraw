@@ -470,6 +470,7 @@ export const parseMermaidSequenceDiagram = (
   diagram.parse();
 
   // Get mermaid parsed data from parser shared variable `yy`
+  //@ts-ignore
   const mermaidParser = diagram.parser.yy;
   const nodes: Array<Node[]> = [];
   const groups = mermaidParser.getBoxes();
