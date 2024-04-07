@@ -1,3 +1,15 @@
+## 0.3.0 (2023-12-10)
+
+## Library
+
+### Features
+
+- Support sequence elements creation and destruction and upgrade mermaid to 10.9.0 [#46](https://github.com/excalidraw/mermaid-to-excalidraw/pull/46) by [@ad1992](https://github.com/ad1992).
+
+### Fixes
+
+- Fix double rendering of class diagrams when name space present and also fix grouping [#46](https://github.com/excalidraw/mermaid-to-excalidraw/pull/46) by [@ad1992](https://github.com/ad1992).
+
 ## 0.2.0 (2023-12-06)
 
 ## Library
