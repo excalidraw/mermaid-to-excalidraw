@@ -59,6 +59,24 @@ A-.->B;
   `flowchart LR
 A-. text .-> B
 `,
+  {
+    name: "An open link ",
+    definition: `flowchart LR
+A --- B
+`,
+  },
+  {
+    name: "An open link with text",
+    definition: `flowchart LR
+A-- This is the text! ---B
+`,
+  },
+  {
+    name: "An open link with text using another syntax",
+    definition: `flowchart LR
+A---|This is the text|B
+`,
+  },
   `flowchart LR
 A ==> B
 `,
