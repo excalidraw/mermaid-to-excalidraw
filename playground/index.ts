@@ -21,9 +21,8 @@ let indexOffset = 0;
   // Render flowchart diagrams
   const flowchartContainer = document.getElementById("flowchart-container")!;
   await Promise.all(
-    FLOWCHART_DIAGRAM_TESTCASES.map(async (defination, index) => {
-      const name = `Test ${index + 1}`;
-      await renderDiagram(flowchartContainer, name, defination, index);
+    FLOWCHART_DIAGRAM_TESTCASES.map(async ({ name, definition }, index) => {
+      await renderDiagram(flowchartContainer, name, definition, index);
     })
   );
   indexOffset += FLOWCHART_DIAGRAM_TESTCASES.length;
