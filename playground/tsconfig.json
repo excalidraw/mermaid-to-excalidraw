@@ -1,8 +1,17 @@
 {
   "extends": "../tsconfig.common.json",
   "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable"],
     "useDefineForClassFields": true,
+    "module": "ESNext",
+
+    /*Bundler Mode */
+    "moduleResolution": "bundler",
     "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
     "types": ["vite/client"]
   },
   "include": ["./**/*"]

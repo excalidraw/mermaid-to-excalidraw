@@ -1,3 +1,8 @@
+import React from "react";
+import {
+  Excalidraw,
+  convertToExcalidrawElements,
+} from "@excalidraw/excalidraw";
 import {
   BinaryFiles,
   ExcalidrawImperativeAPI,
@@ -9,7 +14,6 @@ interface ExcalidrawWrapperProps {
   files?: BinaryFiles;
 }
 
-const { Excalidraw, convertToExcalidrawElements } = ExcalidrawLib;
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   const [excalidrawAPI, setExcalidrawAPI] =
     React.useState<ExcalidrawImperativeAPI | null>(null);
@@ -35,24 +39,18 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
     excalidrawAPI.addFiles(Object.values(props.files));
   }, [props.files]);
 
-  return React.createElement(
-    React.Fragment,
-    null,
-    React.createElement(
-      "div",
-      {
-        className: "excalidraw-wrapper",
-      },
-      React.createElement(Excalidraw, {
-        initialData: {
+  return (
+    <div className="excalidraw-wrapper">
+      <Excalidraw
+        initialData={{
           appState: {
             viewBackgroundColor: "#fafafa",
             currentItemFontFamily: 1,
           },
-        },
-        excalidrawAPI: (api) => setExcalidrawAPI(api),
-      })
-    )
+        }}
+        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+      />
+    </div>
   );
 };
 

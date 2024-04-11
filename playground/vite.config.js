@@ -1,10 +1,15 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
 
 export default defineConfig({
   build: {
     outDir: "../public",
     emptyOutDir: true,
   },
+  define: {
+    "process.env.IS_PREACT": JSON.stringify("false"),
+  },
+  plugins: [react()],
   server: {
     warmup: {
       /* 
