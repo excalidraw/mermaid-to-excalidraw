@@ -1,4 +1,9 @@
 {
   "extends": "../tsconfig.common.json",
+  "compilerOptions": {
+    "useDefineForClassFields": true,
+    "isolatedModules": true,
+    "types": ["vite/client"]
+  },
   "include": ["./**/*"]
 }

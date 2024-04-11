@@ -15,9 +15,10 @@
   "type": "module",
   "scripts": {
     "build": "rimraf -rf ./dist && cross-env tsc -b src",
+    "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "start": "vite playground",
     "build:playground": "vite build playground",
-    "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
+    "preview": "npm run build:playground && vite preview --outDir ./public"
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
