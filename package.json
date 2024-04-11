@@ -4,11 +4,6 @@
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "//": "Set targets.main = false, this instructs Parcel to ignore the main parameters.",
-  "targets": {
-    "main": false,
-    "types": false
-  },
   "files": [
     "dist/*"
   ],
@@ -29,7 +24,6 @@
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
     "@excalidraw/excalidraw": "0.17.1-7381-cdf6d3e",
-    "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "9.2.0",
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.4",
@@ -39,9 +33,9 @@
     "eslint": "8.42.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
-    "parcel": "2.9.1",
     "prettier": "2.8.8",
     "process": "0.11.10",
+    "sass": "1.74.1",
     "typescript": "5.2.2",
     "rimraf": "5.0.5",
     "vite": "5.2.8"
