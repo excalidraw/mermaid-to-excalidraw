@@ -14,9 +14,9 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "rimraf ./dist && cross-env tsc -b src",
-    "start": "rimraf .parcel-cache && parcel playground/index.html --open --dist-dir ./public",
-    "build:playground": "rimraf ./public && parcel build playground/index.html --no-scope-hoist --dist-dir ./public --public-url /",
+    "build": "rimraf -rf ./dist && cross-env tsc -b src",
+    "start": "vite playground",
+    "build:playground": "vite build playground",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {
@@ -42,7 +42,8 @@
     "prettier": "2.8.8",
     "process": "0.11.10",
     "typescript": "5.2.2",
-    "rimraf": "5.0.5"
+    "rimraf": "5.0.5",
+    "vite": "5.2.8"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
