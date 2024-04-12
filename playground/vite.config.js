@@ -5,6 +5,7 @@ export default defineConfig({
   build: {
     outDir: "../public",
     emptyOutDir: true,
+    assetsDir: "./",
   },
   define: {
     "process.env.IS_PREACT": JSON.stringify("false"),
