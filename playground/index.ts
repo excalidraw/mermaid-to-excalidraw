@@ -81,6 +81,16 @@ function generateDiagramId(base: string, number: number) {
   return `${base}-${number}`;
 }
 
+async function handleRenderExcalidraw(id: string, definition: string) {
+  const data = await parseMermaid(definition);
+
+  // In HMR we use this attribute to trigger a rerender for active test case for Excalidraw
+  const excalidraw = document.getElementById(EXCALIDRAW_WRAPPER_ID);
+  excalidraw?.setAttribute(EXCALIDRAW_ACTIVE_ATTR, id);
+
+  renderExcalidraw(JSON.stringify(data));
+}
+
 async function renderDiagram(
   containerEl: HTMLElement,
   name: string,
@@ -102,15 +112,9 @@ async function renderDiagram(
 
   const btn = diagramContainerEl.querySelector(`#diagram-btn-${id}`)!;
 
-  btn.addEventListener("click", async () => {
-    const data = await parseMermaid(diagramDefinition);
-
-    // In HMR we use this attribute to trigger a rerender for active test case for Excalidraw
-    const excalidraw = document.getElementById(EXCALIDRAW_WRAPPER_ID);
-    excalidraw?.setAttribute(EXCALIDRAW_ACTIVE_ATTR, id);
-
-    renderExcalidraw(JSON.stringify(data));
-  });
+  btn.addEventListener("click", () =>
+    handleRenderExcalidraw(id, diagramDefinition)
+  );
 
   const diagramEl = diagramContainerEl.querySelector(`#diagram-${id}`)!;
   const { svg } = await mermaid.render(`diagram-${id}`, diagramDefinition);
@@ -140,7 +144,16 @@ async function updateDiagram(
   const titleEl = document.getElementById(`diagram-title-${id}`)!;
   const { svg } = await mermaid.render(`diagram-${id}`, diagramDefinition);
   const mermaidSyntaxEl = document.getElementById(`mermaid-syntax-${id}`)!;
+  const btn = document.getElementById(`diagram-btn-${id}`)!;
 
+  // This allows us to remove all anonymous events listeners from btn
+  const btnClone = btn.cloneNode(true);
+
+  btnClone.addEventListener("click", () =>
+    handleRenderExcalidraw(id, diagramDefinition)
+  );
+
+  btn.replaceWith(btnClone);
   titleEl.textContent = name;
   diagramEl.innerHTML = svg;
   diagramContainerEl.append(diagramEl);
