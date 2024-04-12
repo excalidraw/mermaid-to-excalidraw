@@ -17,8 +17,8 @@ import { Edge } from "../parser/flowchart.js";
  * Compute groupIds for each element
  */
 export interface ArrowType {
-  startArrowhead?: Arrowhead;
-  endArrowhead?: Arrowhead;
+  startArrowhead?: Arrowhead | null;
+  endArrowhead?: Arrowhead | null;
 }
 /**
  * Convert mermaid edge type to Excalidraw arrow type
@@ -29,6 +29,10 @@ const MERMAID_EDGE_TYPE_MAPPER: { [key: string]: ArrowType } = {
   },
   arrow_cross: {
     endArrowhead: "bar",
+  },
+  arrow_open: {
+    endArrowhead: null,
+    startArrowhead: null,
   },
   double_arrow_circle: {
     endArrowhead: "dot",
