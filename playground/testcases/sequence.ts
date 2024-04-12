@@ -1,4 +1,4 @@
-const SEQUENCE_DIAGRAM_TESTCASES = [
+export const SEQUENCE_DIAGRAM_TESTCASES = [
   {
     name: "Solid and dotted line without arrow",
     definition: `sequenceDiagram
@@ -194,5 +194,3 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
     Bob->>Alice: I agree`,
   },
 ];
-
-export { SEQUENCE_DIAGRAM_TESTCASES };

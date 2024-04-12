@@ -1,4 +1,4 @@
-export default [
+export const UNSUPPORTED_DIAGRAM_TESTCASES = [
   {
     name: "ER Diagram",
     definition: `erDiagram

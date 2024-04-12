@@ -1,4 +1,4 @@
-export default [
+export const FLOWCHART_DIAGRAM_TESTCASES = [
   {
     name: "Direction Top to Down",
     definition: `flowchart TD

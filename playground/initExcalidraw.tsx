@@ -1,12 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import ExcalidrawWrapper from "./ExcalidrawWrapper.js";
-import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
-import { DEFAULT_FONT_SIZE } from "../src/constants.js";
+import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
+import { graphToExcalidraw } from "../src/graphToExcalidraw.ts";
+import { DEFAULT_FONT_SIZE } from "../src/constants.ts";
+import { EXCALIDRAW_WRAPPER_ID } from "./constants.ts";
 
 // Create Excalidraw Wrapper element
 const excalidrawWrapper = document.createElement("div");
-excalidrawWrapper.id = "excalidraw";
+excalidrawWrapper.id = EXCALIDRAW_WRAPPER_ID;
 document.body.appendChild(excalidrawWrapper);
 
 // Init Excalidraw
