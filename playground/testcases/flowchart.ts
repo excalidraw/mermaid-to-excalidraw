@@ -1,12 +1,12 @@
 export default [
   {
-    name: "Direction TD",
+    name: "Direction Top to Down",
     definition: `flowchart TD
 Start --> Stop
 `,
   },
   {
-    name: "Direction LR",
+    name: "Direction Left to Right",
     definition: `flowchart LR
 Start --> Stop
 `,
