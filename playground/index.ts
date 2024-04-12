@@ -29,11 +29,11 @@ let indexOffset = 0;
   // Render Sequence diagrams
   const sequenceContainer = document.getElementById("sequence-container")!;
   await Promise.all(
-    SEQUENCE_DIAGRAM_TESTCASES.map(({ name, defination }, index) => {
+    SEQUENCE_DIAGRAM_TESTCASES.map(({ name, definition }, index) => {
       return renderDiagram(
         sequenceContainer,
         name,
-        defination,
+        definition,
         index + indexOffset
       );
     })
@@ -43,11 +43,11 @@ let indexOffset = 0;
   // Render Class diagrams
   const classContainer = document.getElementById("class-container")!;
   await Promise.all(
-    CLASS_DIAGRAM_TESTCASES.map(({ name, defination }, index) => {
+    CLASS_DIAGRAM_TESTCASES.map(({ name, definition }, index) => {
       return renderDiagram(
         classContainer,
         name,
-        defination,
+        definition,
         index + indexOffset
       );
     })
@@ -61,12 +61,12 @@ let indexOffset = 0;
     `;
   await Promise.all(
     UNSUPPORTED_DIAGRAM_TESTCASES.map(async (testcase, index) => {
-      const { name, defination } = testcase;
+      const { name, definition } = testcase;
 
       await renderDiagram(
         unsupportedContainer,
         name,
-        defination,
+        definition,
         index + indexOffset
       );
     })

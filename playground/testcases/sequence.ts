@@ -1,33 +1,33 @@
 const SEQUENCE_DIAGRAM_TESTCASES = [
   {
     name: "Solid and dotted line without arrow",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->John: Hello John, how are you?
   John-->Alice: Great!`,
   },
   {
     name: "Solid and dotted line with arrow head",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->>John: Hello John, how are you?
   John-->>Alice: Great!
   Alice->>John: See you later!`,
   },
   {
     name: "Solid and Dotted line with cross at end",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice-xJohn: Hello John, how are you?
   John--xAlice: Great!`,
   },
   {
     name: "Solid and dotted line with open arrow at end",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice-)John: Hello John, how are you?
   John--)Alice: Great!
   Alice-)John: See you later!`,
   },
   {
     name: "Actor symbols",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   actor Alice
   actor Bob
   Alice->>Bob: Hi Bob
@@ -35,7 +35,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Aliases",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   participant A as Alice
   participant J as John
   A->>J: Hello John, how are you?
@@ -43,14 +43,14 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Notes",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   participant Alice
   Note left of Alice: This is a note
   Note right of Alice: Hey I am coming soon!`,
   },
   {
     name: "Grouping",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   box rgb(191, 223, 255) Alice & John
     participant Alice
     participant John
@@ -66,7 +66,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Activations",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->>+John: Hello John, how are you?
   Alice->>+John: John, can you hear me?
   John-->>-Alice: Hi Alice, I can hear you!
@@ -74,7 +74,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Loops",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->John: Hi John, how are you?
   loop Every minute
     John-->Alice: Great!
@@ -82,7 +82,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Alternate Paths",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->>Bob: Hello Bob, how are you?
   alt is sick
       Bob->>Alice: Not so good :(
@@ -95,7 +95,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Critical Regions",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   critical Establish a connection to the DB
       Service-->DB: connect
   option Network timeout
@@ -106,7 +106,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Parallel Actions",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   par Alice to Bob
     Alice->>Bob: Hello Folks!
   and Alice to John
@@ -117,7 +117,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Break",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Consumer-->API: Book something
   API-->BookingService: Start booking process
   break when the booking process fails
@@ -127,14 +127,14 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Comments",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   Alice->>John: Hi John, whats up?
   %% this is a comment
   John-->>Alice: Great!`,
   },
   {
     name: "Background Hightlights",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   participant Alice
   participant John
 
@@ -152,7 +152,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Grouping with Background Highlights",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   rect rgb(191, 223, 255)
   box rgb(252, 194, 215) Alice and John
     participant Alice
@@ -166,7 +166,7 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Sequence Numbers",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
   autonumber
   Alice->>John: Hello John, how are you?
   John-->>Alice: Great!
@@ -175,13 +175,13 @@ const SEQUENCE_DIAGRAM_TESTCASES = [
   },
   {
     name: "Entity codes",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
     Alice->>Bob: I #9829; you!
     Bob->>Alice: I #9829; you #infin; times more!`,
   },
   {
     name: "Actor creation and destruction",
-    defination: `sequenceDiagram
+    definition: `sequenceDiagram
     Alice->>Bob: Hello Bob, how are you ?
     Bob->>Alice: Fine, thank you. And you?
     create participant Carl

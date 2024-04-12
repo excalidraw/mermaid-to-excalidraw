@@ -1,14 +1,14 @@
 export default [
   {
     name: "ER Diagram",
-    defination: `erDiagram
+    definition: `erDiagram
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
     CUSTOMER }|..|{ DELIVERY-ADDRESS : uses`,
   },
   {
     name: "Gantt Diagram",
-    defination: `gantt
+    definition: `gantt
     title A Gantt Diagram
     dateFormat  YYYY-MM-DD
     section Section
