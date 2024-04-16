@@ -1,43 +1,96 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   Excalidraw,
   convertToExcalidrawElements,
 } from "@excalidraw/excalidraw";
-import {
+import type {
   BinaryFiles,
   ExcalidrawImperativeAPI,
 } from "@excalidraw/excalidraw/types/types.js";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import { parseMermaid } from "../src/parseMermaid";
+import { graphToExcalidraw } from "../src/graphToExcalidraw";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
+import { ExcalidrawContext, useExcalidraw } from "./context/excalidraw";
 
-interface ExcalidrawWrapperProps {
-  elements: ExcalidrawElementSkeleton[];
-  files?: BinaryFiles;
-}
+export const ExcalidrawProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const excalidrawAPI = React.useRef<ExcalidrawImperativeAPI>();
 
-const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
-  const [excalidrawAPI, setExcalidrawAPI] =
-    React.useState<ExcalidrawImperativeAPI | null>(null);
+  const updateElements = useCallback(
+    (elements: ExcalidrawElementSkeleton[]) => {
+      if (!excalidrawAPI.current) {
+        return;
+      }
 
-  React.useEffect(() => {
-    if (!props.elements || !excalidrawAPI) {
+      excalidrawAPI.current.updateScene({
+        elements: convertToExcalidrawElements(elements),
+      });
+
+      excalidrawAPI.current.scrollToContent(
+        excalidrawAPI.current.getSceneElements(),
+        {
+          fitToContent: true,
+        }
+      );
+    },
+    []
+  );
+
+  const addFiles = useCallback((files: BinaryFiles) => {
+    if (!excalidrawAPI.current) {
       return;
     }
 
-    excalidrawAPI.updateScene({
-      elements: convertToExcalidrawElements(props.elements),
-    });
-    excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
-      fitToContent: true,
-    });
-  }, [props.elements]);
+    excalidrawAPI.current.addFiles(Object.values(files));
+  }, []);
 
-  React.useEffect(() => {
-    if (!props.files || !excalidrawAPI) {
-      return;
-    }
+  const setApi = useCallback((api: ExcalidrawImperativeAPI) => {
+    excalidrawAPI.current = api;
+  }, []);
 
-    excalidrawAPI.addFiles(Object.values(props.files));
-  }, [props.files]);
+  const translateMermaidToExcalidraw = useCallback(
+    async (mermaidSyntax: string) => {
+      const mermaid = await parseMermaid(mermaidSyntax);
+
+      const { elements, files } = graphToExcalidraw(mermaid, {
+        fontSize: DEFAULT_FONT_SIZE,
+      });
+
+      updateElements(elements);
+
+      if (files) {
+        addFiles(files);
+      }
+
+      return { mermaid, excalidraw: { elements, files } };
+    },
+    [updateElements, addFiles]
+  );
+
+  const context = useMemo(
+    () => ({
+      excalidrawAPI: excalidrawAPI.current,
+      addFiles,
+      updateElements,
+      setApi,
+      translateMermaidToExcalidraw,
+    }),
+    [addFiles, updateElements, setApi, translateMermaidToExcalidraw]
+  );
+
+  return (
+    <ExcalidrawContext.Provider value={context}>
+      {children}
+    </ExcalidrawContext.Provider>
+  );
+};
+
+const ExcalidrawWrapper = () => {
+  const excalidraw = useExcalidraw();
 
   return (
     <div className="excalidraw-wrapper">
@@ -48,7 +101,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
             currentItemFontFamily: 1,
           },
         }}
-        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        excalidrawAPI={excalidraw?.setApi}
       />
     </div>
   );

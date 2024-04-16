@@ -5,73 +5,8 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="style.scss" />
   </head>
-
   <body>
-    <section id="custom-test">
-      <h1>Custom Test</h1>
-      Supports only
-      <a target="_blank" href="https://mermaid.js.org/syntax/flowchart.html"
-        >Flowchart</a
-      >
-
-      <a
-        target="_blank"
-        href="https://mermaid.js.org/syntax/sequenceDiagram.html"
-      >
-        Sequence
-      </a>
-      and
-      <a target="_blank" href="https://mermaid.js.org/syntax/classDiagram.html">
-        class </a
-      >diagrams.
-      <br />
-      <textarea
-        id="mermaid-input"
-        rows="10"
-        cols="50"
-        style="margin-top: 1rem"
-        placeholder="Input Mermaid Syntax"
-      ></textarea
-      ><br />
-      <button id="render-excalidraw-btn">Render to Excalidraw</button>
-      <div id="custom-diagram"></div>
-      <details id="parsed-data-details">
-        <summary>Parsed data from parseMermaid</summary>
-        <pre id="custom-parsed-data"></pre>
-      </details>
-      <div id="error"></div>
-    </section>
-
-    <img
-      src="./images/spinner.gif"
-      alt="Loading Spinner"
-      id="diagram-loading-spinner"
-      width="50"
-    />
-    <h2>Flowchart Diagrams</h2>
-    <details>
-      <summary>Flowchart Examples</summary>
-      <div id="flowchart-container"></div>
-    </details>
-
-    <h2>Sequence Diagrams</h2>
-    <details>
-      <summary>Sequence Diagram Examples</summary>
-      <div id="sequence-container"></div>
-    </details>
-
-    <h2>Class Diagrams</h2>
-    <details>
-      <summary>Class Diagram Examples</summary>
-      <div id="class-container"></div>
-    </details>
-
-    <h2 style="margin-top: 50px">Unsupported diagrams</h2>
-    <details>
-      <summary>Unsupported Diagram Examples</summary>
-      <div id="unsupported"></div>
-    </details>
-
-    <script type="module" src="index.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="main.tsx"></script>
   </body>
 </html>

@@ -6,6 +6,7 @@ body {
     max-width: 48%;
   }
 }
+
 button {
   height: 40px;
   font-size: 16px;
@@ -16,6 +17,7 @@ button {
   color: white;
   cursor: pointer;
 }
+
 #excalidraw {
   width: 50vw;
   height: 100vh;
@@ -46,11 +48,9 @@ button {
 
   #parsed-data-details {
     margin-top: 20px;
-    display: none;
   }
 
   #error {
-    display: none;
     color: red;
     margin-top: 20px;
   }
