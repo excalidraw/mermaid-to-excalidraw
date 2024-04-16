@@ -8,7 +8,7 @@
 
 ### Fixes
 
-- Render class diagrams correctly by using data-id instead dom id - [#53](https://github.com/excalidraw/mermaid-to-excalidraw/pull/53) by [@ad1992](https://github.com/ad1992).
+- Render class diagrams correctly by using data-id instead dom id [#53](https://github.com/excalidraw/mermaid-to-excalidraw/pull/53) by [@ad1992](https://github.com/ad1992).
 
 ## 0.3.0 (2023-12-10)
 
