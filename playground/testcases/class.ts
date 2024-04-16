@@ -234,4 +234,11 @@ export const CLASS_DIAGRAM_TESTCASES = [
   class MyClass{
   }`,
   },
+  {
+    name: "Classes with partial match",
+    defination: `classDiagram
+    Foobar <|-- Foo
+    Baz <|-- Foo
+    `,
+  },
 ];

@@ -6,6 +6,10 @@
 
 - Support [Mermaid Open Link](https://mermaid.js.org/syntax/flowchart.html#an-open-link) [#51](https://github.com/excalidraw/mermaid-to-excalidraw/pull/51) by [@igorwessel](https://github.com/igorwessel).
 
+### Fixes
+
+- Render class diagrams correctly by using data-id instead dom id [#53](https://github.com/excalidraw/mermaid-to-excalidraw/pull/53) by [@ad1992](https://github.com/ad1992).
+
 ## 0.3.0 (2023-12-10)
 
 ## Library
