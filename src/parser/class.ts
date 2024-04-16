@@ -103,7 +103,7 @@ const parseClasses = (
   Object.values(classes).forEach((classNode) => {
     const { domId, id: classId } = classNode;
     const groupId = nanoid();
-    const domNode = containerEl.querySelector(`[id*=classId-${classId}]`);
+    const domNode = containerEl.querySelector(`[data-id=${classId}]`);
     if (!domNode) {
       throw Error(`DOM Node with id ${domId} not found`);
     }
@@ -429,6 +429,7 @@ export const parseMermaidClassDiagram = (
   const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
 
   const classes = mermaidParser.getClasses();
+  console.log(classes, "classes");
   if (Object.keys(classes).length) {
     const classData = parseClasses(classes, containerEl);
     nodes.push(classData.nodes);
