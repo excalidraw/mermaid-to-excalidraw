@@ -12,8 +12,7 @@
     "build": "rimraf -rf ./dist && cross-env tsc -b src",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "start": "vite playground",
-    "typecheck": "tsc --noEmit",
-    "build:playground": "npm run typecheck --project ./playground/tsconfig.json && vite build playground",
+    "build:playground": "tsc --noEmit --project ./playground/tsconfig.json && vite build playground",
     "preview": "npm run build:playground && vite preview --outDir ./public"
   },
   "dependencies": {
