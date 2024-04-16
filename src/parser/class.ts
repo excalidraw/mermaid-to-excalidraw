@@ -429,7 +429,6 @@ export const parseMermaidClassDiagram = (
   const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
 
   const classes = mermaidParser.getClasses();
-  console.log(classes, "classes");
   if (Object.keys(classes).length) {
     const classData = parseClasses(classes, containerEl);
     nodes.push(classData.nodes);
