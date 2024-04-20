@@ -1,6 +1,10 @@
 import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
 import { Arrow, Line, Node, Text } from "../elementSkeleton.js";
 
+export const normalizeText = (text: string) => {
+  return text.replace(/\\n/g, "\n");
+};
+
 export const transformToExcalidrawLineSkeleton = (line: Line) => {
   const lineElement: ExcalidrawElementSkeleton = {
     type: "line",
@@ -32,7 +36,7 @@ export const transformToExcalidrawTextSkeleton = (element: Text) => {
     y: element.y,
     width: element.width,
     height: element.height,
-    text: element.text || "",
+    text: normalizeText(element.text) || "",
     fontSize: element.fontSize,
     verticalAlign: "middle",
   };
@@ -63,7 +67,7 @@ export const transformToExcalidrawContainerSkeleton = (
     width: element.width,
     height: element.height,
     label: {
-      text: element?.label?.text || "",
+      text: normalizeText(element?.label?.text || ""),
       fontSize: element?.label?.fontSize,
       verticalAlign: element.label?.verticalAlign || "middle",
       strokeColor: element.label?.color || "#000",
@@ -98,7 +102,7 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
     endArrowhead: arrow?.endArrowhead || null,
     startArrowhead: arrow?.startArrowhead || null,
     label: {
-      text: arrow?.label?.text || "",
+      text: normalizeText(arrow?.label?.text || ""),
       fontSize: 16,
     },
     roundness: {
