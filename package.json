@@ -1,6 +1,6 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,19 +15,19 @@
   "type": "module",
   "scripts": {
     "build": "rimraf ./dist && cross-env tsc -b src",
-    "start": "parcel playground/index.html --open --dist-dir ./public",
+    "start": "rimraf .parcel-cache && parcel playground/index.html --open --dist-dir ./public",
     "build:playground": "rimraf ./public && parcel build playground/index.html --no-scope-hoist --dist-dir ./public --public-url /",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx ."
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
-    "mermaid": "10.2.3",
+    "mermaid": "10.9.0",
     "nanoid": "4.0.2"
   },
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
-    "@excalidraw/excalidraw": "0.16.0",
+    "@excalidraw/excalidraw": "0.17.1-7381-cdf6d3e",
     "@parcel/transformer-sass": "2.9.1",
     "@types/mermaid": "9.2.0",
     "@types/react": "18.2.14",

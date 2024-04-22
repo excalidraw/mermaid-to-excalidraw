@@ -11,14 +11,14 @@ interface ExcalidrawWrapperProps {
 
 const { Excalidraw, convertToExcalidrawElements } = ExcalidrawLib;
 const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
-  const excalidrawRef = React.useRef(null);
+  const [excalidrawAPI, setExcalidrawAPI] =
+    React.useState<ExcalidrawImperativeAPI | null>(null);
 
   React.useEffect(() => {
-    if (!props.elements || !excalidrawRef.current) {
+    if (!props.elements || !excalidrawAPI) {
       return;
     }
 
-    const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
     excalidrawAPI.updateScene({
       elements: convertToExcalidrawElements(props.elements),
     });
@@ -28,11 +28,10 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
   }, [props.elements]);
 
   React.useEffect(() => {
-    if (!props.files || !excalidrawRef.current) {
+    if (!props.files || !excalidrawAPI) {
       return;
     }
 
-    const excalidrawAPI = excalidrawRef.current as ExcalidrawImperativeAPI;
     excalidrawAPI.addFiles(Object.values(props.files));
   }, [props.files]);
 
@@ -51,7 +50,7 @@ const ExcalidrawWrapper = (props: ExcalidrawWrapperProps) => {
             currentItemFontFamily: 1,
           },
         },
-        ref: excalidrawRef,
+        excalidrawAPI: (api) => setExcalidrawAPI(api),
       })
     )
   );

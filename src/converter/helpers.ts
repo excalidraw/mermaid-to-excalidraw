@@ -4,8 +4,6 @@ import {
 } from "@excalidraw/excalidraw/types/element/types.js";
 import {
   CONTAINER_STYLE_PROPERTY,
-  Edge,
-  Graph,
   LABEL_STYLE_PROPERTY,
   SubGraph,
   Vertex,
@@ -13,78 +11,14 @@ import {
 import { ExcalidrawVertexElement } from "../types.js";
 import { Mutable } from "@excalidraw/excalidraw/types/utility-types.js";
 import { removeMarkdown } from "@excalidraw/markdown-to-text";
+import { Edge } from "../parser/flowchart.js";
 
 /**
  * Compute groupIds for each element
  */
-export const computeGroupIds = (
-  graph: Graph
-): {
-  getGroupIds: (elementId: string) => string[];
-  getParentId: (elementId: string) => string | null;
-} => {
-  // Parse the diagram into a tree for rendering and grouping
-  const tree: {
-    [key: string]: {
-      id: string;
-      parent: string | null;
-      isLeaf: boolean; // true = vertex, false = subGraph
-    };
-  } = {};
-  graph.subGraphs.map((subGraph) => {
-    subGraph.nodeIds.forEach((nodeId) => {
-      tree[subGraph.id] = {
-        id: subGraph.id,
-        parent: null,
-        isLeaf: false,
-      };
-      tree[nodeId] = {
-        id: nodeId,
-        parent: subGraph.id,
-        isLeaf: graph.vertices[nodeId] !== undefined,
-      };
-    });
-  });
-  const mapper: {
-    [key: string]: string[];
-  } = {};
-  [...Object.keys(graph.vertices), ...graph.subGraphs.map((c) => c.id)].forEach(
-    (id) => {
-      if (!tree[id]) {
-        return;
-      }
-      let curr = tree[id];
-      const groupIds: string[] = [];
-      if (!curr.isLeaf) {
-        groupIds.push(`subgraph_group_${curr.id}`);
-      }
-
-      while (true) {
-        if (curr.parent) {
-          groupIds.push(`subgraph_group_${curr.parent}`);
-          curr = tree[curr.parent];
-        } else {
-          break;
-        }
-      }
-
-      mapper[id] = groupIds;
-    }
-  );
-
-  return {
-    getGroupIds: (elementId) => {
-      return mapper[elementId] || [];
-    },
-    getParentId: (elementId) => {
-      return tree[elementId] ? tree[elementId].parent : null;
-    },
-  };
-};
-
-interface ArrowType {
-  startArrowhead?: Arrowhead;
-  endArrowhead?: Arrowhead;
+export interface ArrowType {
+  startArrowhead?: Arrowhead | null;
+  endArrowhead?: Arrowhead | null;
 }
 /**
  * Convert mermaid edge type to Excalidraw arrow type
@@ -95,6 +29,10 @@ const MERMAID_EDGE_TYPE_MAPPER: { [key: string]: ArrowType } = {
   },
   arrow_cross: {
     endArrowhead: "bar",
+  },
+  arrow_open: {
+    endArrowhead: null,
+    startArrowhead: null,
   },
   double_arrow_circle: {
     endArrowhead: "dot",

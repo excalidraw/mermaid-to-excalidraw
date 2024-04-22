@@ -1,8 +1,10 @@
-import { entityCodesToText, getTransformAttr } from "../utils.js";
+import {
+  computeEdgePositions,
+  entityCodesToText,
+  getTransformAttr,
+} from "../utils.js";
 import {
   CONTAINER_STYLE_PROPERTY,
-  Edge,
-  Graph,
   LABEL_STYLE_PROPERTY,
   Position,
   SubGraph,
@@ -10,6 +12,28 @@ import {
 } from "../interfaces.js";
 
 import { Diagram } from "mermaid/dist/Diagram.js";
+
+export interface Flowchart {
+  type: "flowchart";
+  subGraphs: SubGraph[];
+  vertices: { [key: string]: Vertex | undefined };
+  edges: Edge[];
+}
+
+export interface Edge {
+  id?: string;
+  start: string;
+  end: string;
+  type: string;
+  text: string;
+  labelType: string;
+  stroke: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  reflectionPoints: Position[];
+}
 
 const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
   // Extract only node id for better reference
@@ -187,76 +211,10 @@ const computeElementPosition = (
   return position;
 };
 
-// Extract edge position start, end, and points (reflectionPoints)
-interface EdgePositionData {
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  reflectionPoints: Position[];
-}
-const computeEdgePositions = (
-  pathElement: SVGPathElement,
-  offset: Position = { x: 0, y: 0 }
-): EdgePositionData => {
-  if (pathElement.tagName.toLowerCase() !== "path") {
-    throw new Error(
-      `Invalid input: Expected an HTMLElement of tag "path", got ${pathElement.tagName}`
-    );
-  }
-
-  const dAttr = pathElement.getAttribute("d");
-  if (!dAttr) {
-    throw new Error('Path element does not contain a "d" attribute');
-  }
-
-  // Split the d attribute based on M (Move To) and L (Line To) commands
-  const commands = dAttr.split(/(?=[LM])/);
-  const startPosition = commands[0]
-    .substring(1)
-    .split(",")
-    .map((coord) => parseFloat(coord));
-  const endPosition = commands[commands.length - 1]
-    .substring(1)
-    .split(",")
-    .map((coord) => parseFloat(coord));
-  const reflectionPoints = commands
-    .map((command) => {
-      const coords = command
-        .substring(1)
-        .split(",")
-        .map((coord) => parseFloat(coord));
-      return { x: coords[0], y: coords[1] };
-    })
-    .filter((point, index, array) => {
-      if (index === array.length - 1) {
-        return true;
-      }
-      const prevPoint = array[index - 1];
-      return (
-        index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
-      );
-    })
-    .map((p) => {
-      return {
-        x: p.x + offset.x,
-        y: p.y + offset.y,
-      };
-    });
-
-  return {
-    startX: startPosition[0] + offset.x,
-    startY: startPosition[1] + offset.y,
-    endX: endPosition[0] + offset.x,
-    endY: endPosition[1] + offset.y,
-    reflectionPoints,
-  };
-};
-
 export const parseMermaidFlowChartDiagram = (
   diagram: Diagram,
   containerEl: Element
-): Graph => {
+): Flowchart => {
   // This does some cleanup and initialization making sure
   // diagram is parsed correctly. Useful when multiple diagrams are
   // parsed together one after another, eg in playground
@@ -264,6 +222,7 @@ export const parseMermaidFlowChartDiagram = (
   diagram.parse();
 
   // Get mermaid parsed data from parser shared variable `yy`
+  //@ts-ignore
   const mermaidParser = diagram.parser.yy;
   const vertices = mermaidParser.getVertices();
   Object.keys(vertices).forEach((id) => {
