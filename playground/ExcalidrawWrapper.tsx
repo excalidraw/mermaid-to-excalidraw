@@ -1,96 +1,65 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Excalidraw,
   convertToExcalidrawElements,
 } from "@excalidraw/excalidraw";
-import type {
-  BinaryFiles,
-  ExcalidrawImperativeAPI,
-} from "@excalidraw/excalidraw/types/types.js";
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types.js";
 import { parseMermaid } from "../src/parseMermaid";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
-import { ExcalidrawContext, useExcalidraw } from "./context/excalidraw";
 
-export const ExcalidrawProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const excalidrawAPI = useRef<ExcalidrawImperativeAPI>();
+interface ExcalidrawWrapperProps {
+  mermaidSyntax: string;
+  onMermaidDataParsed: (
+    syntax: Awaited<ReturnType<typeof parseMermaid>> | null,
+    err?: unknown
+  ) => void;
+}
 
-  const updateElements = useCallback(
-    (elements: ExcalidrawElementSkeleton[]) => {
-      if (!excalidrawAPI.current) {
-        return;
-      }
+const ExcalidrawWrapper = ({
+  mermaidSyntax,
+  onMermaidDataParsed,
+}: ExcalidrawWrapperProps) => {
+  const [excalidrawAPI, setExcalidrawAPI] =
+    useState<ExcalidrawImperativeAPI | null>(null);
 
-      excalidrawAPI.current.updateScene({
-        elements: convertToExcalidrawElements(elements),
-      });
-
-      excalidrawAPI.current.scrollToContent(
-        excalidrawAPI.current.getSceneElements(),
-        {
-          fitToContent: true,
-        }
-      );
-    },
-    []
-  );
-
-  const addFiles = useCallback((files: BinaryFiles) => {
-    if (!excalidrawAPI.current) {
+  useEffect(() => {
+    if (!excalidrawAPI) {
       return;
     }
 
-    excalidrawAPI.current.addFiles(Object.values(files));
-  }, []);
+    if (mermaidSyntax === "") {
+      excalidrawAPI.resetScene();
+      return;
+    }
 
-  const setApi = useCallback((api: ExcalidrawImperativeAPI) => {
-    excalidrawAPI.current = api;
-  }, []);
+    const updateDiagram = async () => {
+      try {
+        const mermaid = await parseMermaid(mermaidSyntax);
 
-  const translateMermaidToExcalidraw = useCallback(
-    async (mermaidSyntax: string) => {
-      const mermaid = await parseMermaid(mermaidSyntax);
+        const { elements, files } = graphToExcalidraw(mermaid, {
+          fontSize: DEFAULT_FONT_SIZE,
+        });
 
-      const { elements, files } = graphToExcalidraw(mermaid, {
-        fontSize: DEFAULT_FONT_SIZE,
-      });
+        onMermaidDataParsed(mermaid);
 
-      updateElements(elements);
+        excalidrawAPI.updateScene({
+          elements: convertToExcalidrawElements(elements),
+        });
+        excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
+          fitToContent: true,
+        });
 
-      if (files) {
-        addFiles(files);
+        if (files) {
+          excalidrawAPI.addFiles(Object.values(files));
+        }
+      } catch (err) {
+        onMermaidDataParsed(null, err);
       }
+    };
 
-      return { mermaid, excalidraw: { elements, files } };
-    },
-    [updateElements, addFiles]
-  );
-
-  const context = useMemo(
-    () => ({
-      excalidrawAPI: excalidrawAPI.current,
-      addFiles,
-      updateElements,
-      setApi,
-      translateMermaidToExcalidraw,
-    }),
-    [addFiles, updateElements, setApi, translateMermaidToExcalidraw]
-  );
-
-  return (
-    <ExcalidrawContext.Provider value={context}>
-      {children}
-    </ExcalidrawContext.Provider>
-  );
-};
-
-const ExcalidrawWrapper = () => {
-  const excalidraw = useExcalidraw();
+    updateDiagram();
+  }, [mermaidSyntax]);
 
   return (
     <div className="excalidraw-wrapper">
@@ -101,7 +70,7 @@ const ExcalidrawWrapper = () => {
             currentItemFontFamily: 1,
           },
         }}
-        excalidrawAPI={excalidraw?.setApi}
+        excalidrawAPI={(api) => setExcalidrawAPI(api)}
       />
     </div>
   );

@@ -1,84 +1,54 @@
 import { useState } from "react";
-
+import { parseMermaid } from "../src/parseMermaid.ts";
 import { Mermaid } from "./Mermaid.tsx";
-import { useExcalidraw } from "./context/excalidraw.ts";
 
-const CustomTest = () => {
-  const excalidraw = useExcalidraw();
-  const [parsedMermaid, setParsedMermaid] = useState<{
-    data: string | null;
-    error: string | null;
-    definition: string | null;
-  }>({
-    data: null,
-    error: null,
-    definition: null,
-  });
+interface CustomTestProps {
+  mermaid: {
+    syntax: string;
+    data: Awaited<ReturnType<typeof parseMermaid>> | null;
+    error: unknown;
+  };
+  onChangeDefinition: (definition: string) => void;
+}
 
+const CustomTest = ({ onChangeDefinition, mermaid }: CustomTestProps) => {
+  const isActiveCustomTest = window.location.hash === "#custom-diagram";
   return (
     <>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
+      <textarea
+        id="mermaid-input"
+        rows={10}
+        cols={50}
+        name="mermaid-input"
+        onChange={(e) => {
+          onChangeDefinition(e.target.value);
 
-          const data = new FormData(event.target as HTMLFormElement);
-          const mermaidSyntax = data.get("mermaid-input") as string;
-
-          if (!mermaidSyntax) {
-            return;
-          }
-
-          try {
-            setParsedMermaid({
-              data: null,
-              definition: null,
-              error: null,
-            });
-
-            const { mermaid } = await excalidraw.translateMermaidToExcalidraw(
-              mermaidSyntax
-            );
-
-            setParsedMermaid({
-              data: JSON.stringify(mermaid, null, 2),
-              definition: mermaidSyntax,
-              error: null,
-            });
-          } catch (error) {
-            setParsedMermaid({
-              data: null,
-              definition: null,
-              error: String(error),
-            });
-          }
+          window.location.hash = "#custom-diagram";
         }}
-      >
-        <textarea
-          id="mermaid-input"
-          rows={10}
-          cols={50}
-          name="mermaid-input"
-          style={{ marginTop: "1rem" }}
-          placeholder="Input Mermaid Syntax"
-        />
-        <br />
-        <button type="submit" id="render-excalidraw-btn">
-          {"Render to Excalidraw"}
-        </button>
-      </form>
+        style={{ marginTop: "1rem" }}
+        placeholder="Input Mermaid Syntax"
+      />
+      <br />
+      <button type="button" onClick={() => {}} id="render-excalidraw-btn">
+        {"Render to Excalidraw"}
+      </button>
 
-      {parsedMermaid.definition && (
-        <Mermaid definition={parsedMermaid.definition} id="custom-diagram" />
+      {isActiveCustomTest && (
+        <>
+          <Mermaid definition={mermaid.syntax} id="custom-diagram" />
+
+          <details id="parsed-data-details">
+            <summary>{"Parsed data from parseMermaid"}</summary>
+            <pre id="custom-parsed-data">
+              {JSON.stringify(mermaid.data, null, 2)}
+            </pre>
+          </details>
+
+          {typeof mermaid.error === "string" && (
+            <div id="error">{mermaid.error}</div>
+          )}
+        </>
       )}
-
-      {parsedMermaid.data && (
-        <details id="parsed-data-details">
-          <summary>{"Parsed data from parseMermaid"}</summary>
-          <pre id="custom-parsed-data">{parsedMermaid.data}</pre>
-        </details>
-      )}
-
-      {parsedMermaid.error && <div id="error">{parsedMermaid.error}</div>}
     </>
   );
 };

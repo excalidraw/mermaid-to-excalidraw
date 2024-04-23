@@ -6,16 +6,20 @@ import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import { Mermaid } from "./Mermaid";
-import { useExcalidraw } from "./context/excalidraw.ts";
 
 interface TestCaseProps {
   name: string;
   baseId: string;
   testcases: { name: string; definition: string }[];
+  onChangeDefinition: (definition: string) => void;
 }
 
-const Testcase = ({ name, baseId, testcases }: TestCaseProps) => {
-  const excalidraw = useExcalidraw();
+const Testcase = ({
+  name,
+  baseId,
+  testcases,
+  onChangeDefinition,
+}: TestCaseProps) => {
   const activeTestcase = useRef<number>();
 
   useEffect(() => {
@@ -24,9 +28,9 @@ const Testcase = ({ name, baseId, testcases }: TestCaseProps) => {
     if (testcase !== undefined) {
       const { definition } = testcases[testcase];
 
-      excalidraw.translateMermaidToExcalidraw(definition);
+      onChangeDefinition(definition);
     }
-  }, [excalidraw.translateMermaidToExcalidraw, testcases]);
+  }, [testcases]);
 
   return (
     <>
@@ -57,7 +61,8 @@ const Testcase = ({ name, baseId, testcases }: TestCaseProps) => {
 
                 <button
                   onClick={() => {
-                    excalidraw.translateMermaidToExcalidraw(definition);
+                    onChangeDefinition(definition);
+                    window.location.hash = "";
                     activeTestcase.current = index;
                   }}
                 >
@@ -74,30 +79,38 @@ const Testcase = ({ name, baseId, testcases }: TestCaseProps) => {
   );
 };
 
-const Testcases = () => {
+interface TestcasesProps {
+  onChangeDefinition: (definition: string) => void;
+}
+
+const Testcases = ({ onChangeDefinition }: TestcasesProps) => {
   return (
     <>
       <Testcase
         name="Flowchart"
         baseId="flowchart"
+        onChangeDefinition={onChangeDefinition}
         testcases={FLOWCHART_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Sequence"
         baseId="sequence"
+        onChangeDefinition={onChangeDefinition}
         testcases={SEQUENCE_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Class"
         baseId="class"
+        onChangeDefinition={onChangeDefinition}
         testcases={CLASS_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Unsupported"
         baseId="unsupported"
+        onChangeDefinition={onChangeDefinition}
         testcases={UNSUPPORTED_DIAGRAM_TESTCASES}
       />
     </>
