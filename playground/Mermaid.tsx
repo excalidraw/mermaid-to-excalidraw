@@ -1,16 +1,16 @@
+import { useState, useTransition, useEffect } from "react";
 import mermaid from "mermaid";
-import React from "react";
 
 interface MermaidProps {
   id: string;
   definition: string;
 }
 
-export function Mermaid({ definition, id }: MermaidProps) {
-  const [svg, setSvg] = React.useState("");
-  const [, startTransition] = React.useTransition();
+export const Mermaid = ({ definition, id }: MermaidProps) => {
+  const [svg, setSvg] = useState("");
+  const [, startTransition] = useTransition();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const render = async (id: string, definition: string) => {
       const { svg } = await mermaid.render(`mermaid-diagram-${id}`, definition);
       startTransition(() => {
@@ -28,4 +28,4 @@ export function Mermaid({ definition, id }: MermaidProps) {
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
-}
+};
