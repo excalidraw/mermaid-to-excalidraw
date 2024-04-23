@@ -1,4 +1,4 @@
-import React from "react";
+import { useRef, useEffect } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
@@ -14,11 +14,11 @@ interface TestCaseProps {
   testcases: { name: string; definition: string }[];
 }
 
-function Testcase({ name, baseId, testcases }: TestCaseProps) {
+const Testcase = ({ name, baseId, testcases }: TestCaseProps) => {
   const excalidraw = useExcalidraw();
-  const activeTestcase = React.useRef<number>();
+  const activeTestcase = useRef<number>();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const testcase = activeTestcase.current;
 
     if (testcase !== undefined) {
@@ -72,9 +72,9 @@ function Testcase({ name, baseId, testcases }: TestCaseProps) {
       </details>
     </>
   );
-}
+};
 
-function Testcases() {
+const Testcases = () => {
   return (
     <>
       <Testcase
@@ -102,6 +102,6 @@ function Testcases() {
       />
     </>
   );
-}
+};
 
 export default Testcases;

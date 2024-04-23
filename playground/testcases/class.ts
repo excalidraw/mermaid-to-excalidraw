@@ -236,7 +236,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   },
   {
     name: "Classes with partial match",
-    defination: `classDiagram
+    definition: `classDiagram
     Foobar <|-- Foo
     Baz <|-- Foo
     `,
