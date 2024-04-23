@@ -2,7 +2,7 @@ import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper, { ExcalidrawProvider } from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 
-function App() {
+const App = () => {
   return (
     <ExcalidrawProvider>
       <section id="custom-test">
@@ -36,6 +36,6 @@ function App() {
       </div>
     </ExcalidrawProvider>
   );
-}
+};
 
 export default App;
