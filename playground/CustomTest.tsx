@@ -1,11 +1,11 @@
-import React from "react";
+import { useState } from "react";
 
 import { Mermaid } from "./Mermaid.tsx";
 import { useExcalidraw } from "./context/excalidraw.ts";
 
-function CustomTest() {
+const CustomTest = () => {
   const excalidraw = useExcalidraw();
-  const [parsedMermaid, setParsedMermaid] = React.useState<{
+  const [parsedMermaid, setParsedMermaid] = useState<{
     data: string | null;
     error: string | null;
     definition: string | null;
@@ -81,6 +81,6 @@ function CustomTest() {
       {parsedMermaid.error && <div id="error">{parsedMermaid.error}</div>}
     </>
   );
-}
+};
 
 export default CustomTest;
