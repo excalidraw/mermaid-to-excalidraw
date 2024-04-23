@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   Excalidraw,
   convertToExcalidrawElements,
@@ -18,7 +18,7 @@ export const ExcalidrawProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const excalidrawAPI = React.useRef<ExcalidrawImperativeAPI>();
+  const excalidrawAPI = useRef<ExcalidrawImperativeAPI>();
 
   const updateElements = useCallback(
     (elements: ExcalidrawElementSkeleton[]) => {
