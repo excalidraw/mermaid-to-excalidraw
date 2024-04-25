@@ -5,25 +5,31 @@ import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
-import { Mermaid } from "./Mermaid";
+import type { UpdateMermaidDefinition } from "./index.tsx";
+import { MermaidDiagram } from "./MermaidDiagram.tsx";
 
 interface TestCaseProps {
   name: string;
   testcases: { name: string; definition: string }[];
-  onChange: (definition: string) => void;
+  onChange: (definition: string, activeTestcaseIndex: number) => void;
+  error: string | null;
+  activeTestcase?: number;
 }
 
-const Testcase = ({ name, testcases, onChange }: TestCaseProps) => {
-  const activeTestcase = useRef<number>();
+const Testcase = ({
+  name,
+  testcases,
+  onChange,
+  error,
+  activeTestcase,
+}: TestCaseProps) => {
   const baseId = name.toLowerCase();
 
   useEffect(() => {
-    const testcase = activeTestcase.current;
+    if (activeTestcase !== undefined) {
+      const { definition } = testcases[activeTestcase];
 
-    if (testcase !== undefined) {
-      const { definition } = testcases[testcase];
-
-      onChange(definition);
+      onChange(definition, activeTestcase);
     }
   }, [testcases]);
 
@@ -45,14 +51,17 @@ const Testcase = ({ name, testcases, onChange }: TestCaseProps) => {
                 <pre>{definition}</pre>
                 <button
                   onClick={() => {
-                    onChange(definition);
-                    window.location.hash = "";
-                    activeTestcase.current = index;
+                    onChange(definition, index);
                   }}
                 >
                   {"Render to Excalidraw"}
                 </button>
-                <Mermaid definition={definition} id={id} />
+
+                <MermaidDiagram definition={definition} id={id} />
+
+                {error && activeTestcase === index && (
+                  <div id="error">{error}</div>
+                )}
               </Fragment>
             );
           })}
@@ -63,10 +72,14 @@ const Testcase = ({ name, testcases, onChange }: TestCaseProps) => {
 };
 
 interface TestcasesProps {
-  onChange: (definition: string) => void;
+  onChange: UpdateMermaidDefinition;
+  isCustomTest: boolean;
+  error: TestCaseProps["error"];
 }
 
-const Testcases = ({ onChange }: TestcasesProps) => {
+const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
+  const activeTestcase = useRef<[number, number]>();
+
   const testCases = [
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
     { name: "Sequence", testcases: SEQUENCE_DIAGRAM_TESTCASES },
@@ -80,8 +93,18 @@ const Testcases = ({ onChange }: TestcasesProps) => {
         <Testcase
           key={index}
           name={name}
-          onChange={onChange}
+          activeTestcase={
+            activeTestcase.current?.[0] === index
+              ? activeTestcase.current[1]
+              : undefined
+          }
+          onChange={(definition, activeTestcaseIndex) => {
+            activeTestcase.current = [index, activeTestcaseIndex];
+
+            onChange(definition, false);
+          }}
           testcases={testcases}
+          error={!isCustomTest ? error : null}
         />
       ))}
     </>

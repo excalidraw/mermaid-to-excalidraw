@@ -10,6 +10,11 @@ export interface MermaidData {
   error: string | null;
 }
 
+export type UpdateMermaidDefinition = (
+  definition: string,
+  isCustom: boolean
+) => void;
+
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
@@ -21,11 +26,11 @@ const App = () => {
   const deferredMermaidData = useDeferredValue(mermaidData);
 
   const handleUpdateMermaidDefinition = useCallback(
-    async (definition: MermaidData["definition"], isCustom?: boolean) => {
+    async (definition: MermaidData["definition"], isCustom: boolean) => {
       try {
-        const mermaid = await parseMermaid(definition);
+        setIsActiveCustomTest(isCustom);
 
-        setIsActiveCustomTest(!!isCustom);
+        const mermaid = await parseMermaid(definition);
 
         setMermaidData({
           definition,
@@ -75,6 +80,7 @@ const App = () => {
       </section>
 
       <Testcases
+        isCustomTest={isActiveCustomTest}
         error={deferredMermaidData.error}
         onChange={handleUpdateMermaidDefinition}
       />

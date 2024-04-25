@@ -1,8 +1,8 @@
 import { MermaidDiagram } from "./MermaidDiagram.tsx";
-import type { MermaidData } from "./index.tsx";
+import type { MermaidData, UpdateMermaidDefinition } from "./index.tsx";
 
 interface CustomTestProps {
-  onChange: (definition: string, isCustom?: boolean) => void;
+  onChange: UpdateMermaidDefinition;
   mermaidData: MermaidData;
   isActive: boolean;
 }
