@@ -31,7 +31,7 @@ const CustomTest = ({
 
       {isActiveCustomTest && (
         <>
-          <Mermaid definition={mermaidData.syntax} id="custom-diagram" />
+          <Mermaid definition={mermaidData.definition} id="custom-diagram" />
 
           <details id="parsed-data-details">
             <summary>{"Parsed data from parseMermaid"}</summary>
