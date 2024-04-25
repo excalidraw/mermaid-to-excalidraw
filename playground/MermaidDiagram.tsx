@@ -6,7 +6,7 @@ interface MermaidProps {
   definition: string;
 }
 
-export const Mermaid = ({ definition, id }: MermaidProps) => {
+export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
   const [svg, setSvg] = useState("");
   const [, startTransition] = useTransition();
 
