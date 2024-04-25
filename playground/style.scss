@@ -61,3 +61,13 @@ a {
   font-weight: 600;
   text-decoration: none;
 }
+
+.testcase-container pre {
+  font-size: 16px;
+  font-weight: 600;
+  font-style: italic;
+  background: #eeeef1;
+  white-space: pre-wrap;
+  width: 45vw;
+  padding: 5px;
+}
