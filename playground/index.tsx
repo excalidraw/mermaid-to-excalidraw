@@ -5,24 +5,24 @@ import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
 
 export interface MermaidData {
-  syntax: string;
+  definition: string;
   output: Awaited<ReturnType<typeof parseMermaid>> | null;
   error: string | null;
 }
 
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
-    syntax: "",
+    definition: "",
     output: null,
     error: null,
   });
 
-  const mermaidSyntax = useDeferredValue(mermaidData.syntax);
+  const mermaidDefinition = useDeferredValue(mermaidData.definition);
 
   const handleUpdateSyntax = useCallback(
-    async (mermaidSyntax: MermaidData["syntax"]) => {
+    async (definition: MermaidData["definition"]) => {
       setMermaidData({
-        syntax: mermaidSyntax,
+        definition,
         output: null,
         error: null,
       });
@@ -33,7 +33,7 @@ const App = () => {
   const handleDataParsed = useCallback(
     (parsedData: MermaidData["output"], err?: unknown) => {
       setMermaidData({
-        syntax: mermaidData.syntax,
+        definition: mermaidData.definition,
         output: parsedData,
         error: err ? String(err) : null,
       });
@@ -73,7 +73,7 @@ const App = () => {
       <div id="excalidraw">
         <ExcalidrawWrapper
           onMermaidDataParsed={handleDataParsed}
-          mermaidSyntax={mermaidSyntax}
+          mermaidDefinition={mermaidDefinition}
         />
       </div>
     </>

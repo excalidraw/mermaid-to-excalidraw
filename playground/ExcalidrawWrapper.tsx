@@ -10,14 +10,14 @@ import { DEFAULT_FONT_SIZE } from "../src/constants";
 import type { MermaidData } from "./";
 
 interface ExcalidrawWrapperProps {
-  mermaidSyntax: MermaidData["syntax"];
+  mermaidDefinition: MermaidData["definition"];
   onMermaidDataParsed: (
     mermaid: MermaidData["output"],
     error?: unknown
   ) => void;
 }
 const ExcalidrawWrapper = ({
-  mermaidSyntax,
+  mermaidDefinition,
   onMermaidDataParsed,
 }: ExcalidrawWrapperProps) => {
   const [excalidrawAPI, setExcalidrawAPI] =
@@ -28,14 +28,14 @@ const ExcalidrawWrapper = ({
       return;
     }
 
-    if (mermaidSyntax === "") {
+    if (mermaidDefinition === "") {
       excalidrawAPI.resetScene();
       return;
     }
 
     const updateDiagram = async () => {
       try {
-        const mermaid = await parseMermaid(mermaidSyntax);
+        const mermaid = await parseMermaid(mermaidDefinition);
 
         const { elements, files } = graphToExcalidraw(mermaid, {
           fontSize: DEFAULT_FONT_SIZE,
@@ -59,7 +59,7 @@ const ExcalidrawWrapper = ({
     };
 
     updateDiagram();
-  }, [mermaidSyntax]);
+  }, [mermaidDefinition]);
 
   return (
     <div className="excalidraw-wrapper">
