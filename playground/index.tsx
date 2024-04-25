@@ -4,39 +4,41 @@ import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
 
+export interface MermaidData {
+  syntax: string;
+  output: Awaited<ReturnType<typeof parseMermaid>> | null;
+  error: string | null;
+}
+
 const App = () => {
-  const [mermaid, setMermaid] = useState<{
-    syntax: string;
-    data: Awaited<ReturnType<typeof parseMermaid>> | null;
-    error: unknown;
-  }>({
+  const [mermaidData, setMermaidData] = useState<MermaidData>({
     syntax: "",
-    data: null,
+    output: null,
     error: null,
   });
 
-  const mermaidSyntax = useDeferredValue(mermaid.syntax);
+  const mermaidSyntax = useDeferredValue(mermaidData.syntax);
 
-  const handleUpdateSyntax = useCallback(async (mermaidSyntax: string) => {
-    setMermaid({
-      syntax: mermaidSyntax,
-      data: null,
-      error: null,
-    });
-  }, []);
+  const handleUpdateSyntax = useCallback(
+    async (mermaidSyntax: MermaidData["syntax"]) => {
+      setMermaidData({
+        syntax: mermaidSyntax,
+        output: null,
+        error: null,
+      });
+    },
+    []
+  );
 
   const handleDataParsed = useCallback(
-    (
-      parsedData: Awaited<ReturnType<typeof parseMermaid>> | null,
-      err?: unknown
-    ) => {
-      setMermaid({
-        syntax: mermaid.syntax,
-        data: parsedData,
+    (parsedData: MermaidData["output"], err?: MermaidData["error"]) => {
+      setMermaidData({
+        syntax: mermaidData.syntax,
+        output: parsedData,
         error: err ? String(err) : null,
       });
     },
-    [mermaid]
+    [mermaidData]
   );
 
   return (
@@ -46,7 +48,8 @@ const App = () => {
         {"Supports only "}
         <a target="_blank" href="https://mermaid.js.org/syntax/flowchart.html">
           {"Flowchart"}
-        </a>{" "}
+        </a>
+        {", "}
         <a
           target="_blank"
           href="https://mermaid.js.org/syntax/sequenceDiagram.html"
@@ -62,7 +65,10 @@ const App = () => {
         </a>
         {"diagrams."}
         <br />
-        <CustomTest mermaid={mermaid} onChangeDefinition={handleUpdateSyntax} />
+        <CustomTest
+          mermaidData={mermaidData}
+          onChangeDefinition={handleUpdateSyntax}
+        />
       </section>
 
       <Testcases onChangeDefinition={handleUpdateSyntax} />

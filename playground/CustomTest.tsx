@@ -1,17 +1,13 @@
-import { useState } from "react";
-import { parseMermaid } from "../src/parseMermaid.ts";
 import { Mermaid } from "./Mermaid.tsx";
+import type { MermaidData } from "./index.tsx";
 
-interface CustomTestProps {
-  mermaid: {
-    syntax: string;
-    data: Awaited<ReturnType<typeof parseMermaid>> | null;
-    error: unknown;
-  };
+const CustomTest = ({
+  onChangeDefinition,
+  mermaidData,
+}: {
   onChangeDefinition: (definition: string) => void;
-}
-
-const CustomTest = ({ onChangeDefinition, mermaid }: CustomTestProps) => {
+  mermaidData: MermaidData;
+}) => {
   const isActiveCustomTest = window.location.hash === "#custom-diagram";
   return (
     <>
@@ -35,17 +31,17 @@ const CustomTest = ({ onChangeDefinition, mermaid }: CustomTestProps) => {
 
       {isActiveCustomTest && (
         <>
-          <Mermaid definition={mermaid.syntax} id="custom-diagram" />
+          <Mermaid definition={mermaidData.syntax} id="custom-diagram" />
 
           <details id="parsed-data-details">
             <summary>{"Parsed data from parseMermaid"}</summary>
             <pre id="custom-parsed-data">
-              {JSON.stringify(mermaid.data, null, 2)}
+              {JSON.stringify(mermaidData.output, null, 2)}
             </pre>
           </details>
 
-          {typeof mermaid.error === "string" && (
-            <div id="error">{mermaid.error}</div>
+          {typeof mermaidData.error === "string" && (
+            <div id="error">{mermaidData.error}</div>
           )}
         </>
       )}

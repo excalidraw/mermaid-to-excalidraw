@@ -7,15 +7,15 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types
 import { parseMermaid } from "../src/parseMermaid";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
+import type { MermaidData } from "./";
 
 interface ExcalidrawWrapperProps {
-  mermaidSyntax: string;
+  mermaidSyntax: MermaidData["syntax"];
   onMermaidDataParsed: (
-    syntax: Awaited<ReturnType<typeof parseMermaid>> | null,
-    err?: unknown
+    mermaid: MermaidData["output"],
+    error?: unknown
   ) => void;
 }
-
 const ExcalidrawWrapper = ({
   mermaidSyntax,
   onMermaidDataParsed,
