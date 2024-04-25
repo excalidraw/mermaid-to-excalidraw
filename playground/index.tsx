@@ -31,7 +31,7 @@ const App = () => {
   );
 
   const handleDataParsed = useCallback(
-    (parsedData: MermaidData["output"], err?: MermaidData["error"]) => {
+    (parsedData: MermaidData["output"], err?: unknown) => {
       setMermaidData({
         syntax: mermaidData.syntax,
         output: parsedData,
@@ -65,13 +65,10 @@ const App = () => {
         </a>
         {"diagrams."}
         <br />
-        <CustomTest
-          mermaidData={mermaidData}
-          onChangeDefinition={handleUpdateSyntax}
-        />
+        <CustomTest mermaidData={mermaidData} onChange={handleUpdateSyntax} />
       </section>
 
-      <Testcases onChangeDefinition={handleUpdateSyntax} />
+      <Testcases onChange={handleUpdateSyntax} />
 
       <div id="excalidraw">
         <ExcalidrawWrapper

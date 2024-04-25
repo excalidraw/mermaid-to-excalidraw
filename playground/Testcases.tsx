@@ -11,15 +11,10 @@ interface TestCaseProps {
   name: string;
   baseId: string;
   testcases: { name: string; definition: string }[];
-  onChangeDefinition: (definition: string) => void;
+  onChange: (definition: string) => void;
 }
 
-const Testcase = ({
-  name,
-  baseId,
-  testcases,
-  onChangeDefinition,
-}: TestCaseProps) => {
+const Testcase = ({ name, baseId, testcases, onChange }: TestCaseProps) => {
   const activeTestcase = useRef<number>();
 
   useEffect(() => {
@@ -28,7 +23,7 @@ const Testcase = ({
     if (testcase !== undefined) {
       const { definition } = testcases[testcase];
 
-      onChangeDefinition(definition);
+      onChange(definition);
     }
   }, [testcases]);
 
@@ -61,7 +56,7 @@ const Testcase = ({
 
                 <button
                   onClick={() => {
-                    onChangeDefinition(definition);
+                    onChange(definition);
                     window.location.hash = "";
                     activeTestcase.current = index;
                   }}
@@ -80,37 +75,37 @@ const Testcase = ({
 };
 
 interface TestcasesProps {
-  onChangeDefinition: (definition: string) => void;
+  onChange: (definition: string) => void;
 }
 
-const Testcases = ({ onChangeDefinition }: TestcasesProps) => {
+const Testcases = ({ onChange }: TestcasesProps) => {
   return (
     <>
       <Testcase
         name="Flowchart"
         baseId="flowchart"
-        onChangeDefinition={onChangeDefinition}
+        onChange={onChange}
         testcases={FLOWCHART_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Sequence"
         baseId="sequence"
-        onChangeDefinition={onChangeDefinition}
+        onChange={onChange}
         testcases={SEQUENCE_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Class"
         baseId="class"
-        onChangeDefinition={onChangeDefinition}
+        onChange={onChange}
         testcases={CLASS_DIAGRAM_TESTCASES}
       />
 
       <Testcase
         name="Unsupported"
         baseId="unsupported"
-        onChangeDefinition={onChangeDefinition}
+        onChange={onChange}
         testcases={UNSUPPORTED_DIAGRAM_TESTCASES}
       />
     </>

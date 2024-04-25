@@ -2,10 +2,10 @@ import { Mermaid } from "./Mermaid.tsx";
 import type { MermaidData } from "./index.tsx";
 
 const CustomTest = ({
-  onChangeDefinition,
+  onChange,
   mermaidData,
 }: {
-  onChangeDefinition: (definition: string) => void;
+  onChange: (definition: string) => void;
   mermaidData: MermaidData;
 }) => {
   const isActiveCustomTest = window.location.hash === "#custom-diagram";
@@ -17,7 +17,7 @@ const CustomTest = ({
         cols={50}
         name="mermaid-input"
         onChange={(e) => {
-          onChangeDefinition(e.target.value);
+          onChange(e.target.value);
 
           window.location.hash = "#custom-diagram";
         }}
