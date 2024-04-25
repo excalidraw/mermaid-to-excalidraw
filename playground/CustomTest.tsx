@@ -1,37 +1,51 @@
-import { Mermaid } from "./Mermaid.tsx";
+import { MermaidDiagram } from "./MermaidDiagram.tsx";
 import type { MermaidData } from "./index.tsx";
 
-const CustomTest = ({
-  onChange,
-  mermaidData,
-}: {
-  onChange: (definition: string) => void;
+interface CustomTestProps {
+  onChange: (definition: string, isCustom?: boolean) => void;
   mermaidData: MermaidData;
-}) => {
-  const isActiveCustomTest = window.location.hash === "#custom-diagram";
+  isActive: boolean;
+}
+
+const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
   return (
     <>
-      <textarea
-        id="mermaid-input"
-        rows={10}
-        cols={50}
-        name="mermaid-input"
-        onChange={(e) => {
-          onChange(e.target.value);
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
 
-          window.location.hash = "#custom-diagram";
+          const formData = new FormData(e.target as HTMLFormElement);
+
+          onChange(formData.get("mermaid-input")?.toString() || "", true);
         }}
-        style={{ marginTop: "1rem" }}
-        placeholder="Input Mermaid Syntax"
-      />
-      <br />
-      <button type="button" onClick={() => {}} id="render-excalidraw-btn">
-        {"Render to Excalidraw"}
-      </button>
+      >
+        <textarea
+          id="mermaid-input"
+          rows={10}
+          cols={50}
+          name="mermaid-input"
+          onChange={(e) => {
+            if (!isActive) {
+              return;
+            }
 
-      {isActiveCustomTest && (
+            onChange(e.target.value, true);
+          }}
+          style={{ marginTop: "1rem" }}
+          placeholder="Input Mermaid Syntax"
+        />
+        <br />
+        <button type="submit" id="render-excalidraw-btn">
+          {"Render to Excalidraw"}
+        </button>
+      </form>
+
+      {isActive && (
         <>
-          <Mermaid definition={mermaidData.definition} id="custom-diagram" />
+          <MermaidDiagram
+            definition={mermaidData.definition}
+            id="custom-diagram"
+          />
 
           <details id="parsed-data-details">
             <summary>{"Parsed data from parseMermaid"}</summary>

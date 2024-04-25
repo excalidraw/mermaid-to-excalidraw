@@ -4,21 +4,18 @@ import {
   convertToExcalidrawElements,
 } from "@excalidraw/excalidraw";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types.js";
-import { parseMermaid } from "../src/parseMermaid";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import type { MermaidData } from "./";
 
 interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
-  onMermaidDataParsed: (
-    mermaid: MermaidData["output"],
-    error?: unknown
-  ) => void;
+  mermaidOutput: MermaidData["output"];
 }
+
 const ExcalidrawWrapper = ({
   mermaidDefinition,
-  onMermaidDataParsed,
+  mermaidOutput,
 }: ExcalidrawWrapperProps) => {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
@@ -28,38 +25,26 @@ const ExcalidrawWrapper = ({
       return;
     }
 
-    if (mermaidDefinition === "") {
+    if (mermaidDefinition === "" || mermaidOutput === null) {
       excalidrawAPI.resetScene();
       return;
     }
 
-    const updateDiagram = async () => {
-      try {
-        const mermaid = await parseMermaid(mermaidDefinition);
+    const { elements, files } = graphToExcalidraw(mermaidOutput, {
+      fontSize: DEFAULT_FONT_SIZE,
+    });
 
-        const { elements, files } = graphToExcalidraw(mermaid, {
-          fontSize: DEFAULT_FONT_SIZE,
-        });
+    excalidrawAPI.updateScene({
+      elements: convertToExcalidrawElements(elements),
+    });
+    excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
+      fitToContent: true,
+    });
 
-        onMermaidDataParsed(mermaid);
-
-        excalidrawAPI.updateScene({
-          elements: convertToExcalidrawElements(elements),
-        });
-        excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
-          fitToContent: true,
-        });
-
-        if (files) {
-          excalidrawAPI.addFiles(Object.values(files));
-        }
-      } catch (err) {
-        onMermaidDataParsed(null, err);
-      }
-    };
-
-    updateDiagram();
-  }, [mermaidDefinition]);
+    if (files) {
+      excalidrawAPI.addFiles(Object.values(files));
+    }
+  }, [mermaidDefinition, mermaidOutput]);
 
   return (
     <div className="excalidraw-wrapper">

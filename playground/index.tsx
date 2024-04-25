@@ -16,29 +16,31 @@ const App = () => {
     output: null,
     error: null,
   });
+  const [isActiveCustomTest, setIsActiveCustomTest] = useState(false);
 
-  const mermaidDefinition = useDeferredValue(mermaidData.definition);
+  const deferredMermaidData = useDeferredValue(mermaidData);
 
-  const handleUpdateSyntax = useCallback(
-    async (definition: MermaidData["definition"]) => {
-      setMermaidData({
-        definition,
-        output: null,
-        error: null,
-      });
+  const handleUpdateMermaidDefinition = useCallback(
+    async (definition: MermaidData["definition"], isCustom?: boolean) => {
+      try {
+        const mermaid = await parseMermaid(definition);
+
+        setIsActiveCustomTest(!!isCustom);
+
+        setMermaidData({
+          definition,
+          output: mermaid,
+          error: null,
+        });
+      } catch (err) {
+        setMermaidData({
+          definition,
+          output: null,
+          error: String(err),
+        });
+      }
     },
     []
-  );
-
-  const handleDataParsed = useCallback(
-    (parsedData: MermaidData["output"], err?: unknown) => {
-      setMermaidData({
-        definition: mermaidData.definition,
-        output: parsedData,
-        error: err ? String(err) : null,
-      });
-    },
-    [mermaidData]
   );
 
   return (
@@ -65,15 +67,22 @@ const App = () => {
         </a>
         {"diagrams."}
         <br />
-        <CustomTest mermaidData={mermaidData} onChange={handleUpdateSyntax} />
+        <CustomTest
+          isActive={isActiveCustomTest}
+          mermaidData={deferredMermaidData}
+          onChange={handleUpdateMermaidDefinition}
+        />
       </section>
 
-      <Testcases onChange={handleUpdateSyntax} />
+      <Testcases
+        error={deferredMermaidData.error}
+        onChange={handleUpdateMermaidDefinition}
+      />
 
       <div id="excalidraw">
         <ExcalidrawWrapper
-          onMermaidDataParsed={handleDataParsed}
-          mermaidDefinition={mermaidDefinition}
+          mermaidDefinition={deferredMermaidData.definition}
+          mermaidOutput={deferredMermaidData.output}
         />
       </div>
     </>
