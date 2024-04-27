@@ -38,14 +38,52 @@ export interface StateRoot {
     stmt: string;
     type: string;
   };
-  stmt: string;
+  stmt: "relation";
 }
 
-const parseRelations = (data: StateRoot[], containerEl: Element) => {
+export interface SingleState {
+  stmt: "state";
+  description: string;
+  id: string;
+  type: string;
+}
+
+export type ParsedDoc = SingleState | StateRoot;
+
+const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
   const nodes: Array<Node> = [];
   const parsedIds = new Set<string>();
 
   data.forEach((state) => {
+    const isSingleState = state.stmt === "state";
+
+    if (isSingleState) {
+      const node1 = containerEl.querySelector<SVGSVGElement>(
+        `[data-id="${state.id}"]`
+      );
+
+      const node1Position = computeElementPosition(node1, containerEl);
+
+      const node1Element = createContainerSkeletonFromSVG(
+        node1,
+        "rectangle",
+
+        {
+          id: node1.id,
+          label: {
+            text: state.description || state.id,
+          },
+        }
+      );
+
+      node1Element.x = node1Position.x;
+      node1Element.y = node1Position.y;
+
+      nodes.push(node1Element);
+
+      return;
+    }
+
     const state1 = state.state1;
     const state2 = state.state2;
 
@@ -144,36 +182,43 @@ const parseRelations = (data: StateRoot[], containerEl: Element) => {
   return nodes;
 };
 
-const parseEdges = (nodes: StateRoot[], containerEl: Element) => {
+const parseEdges = (nodes: ParsedDoc[], containerEl: Element) => {
   const edges = containerEl.querySelector(".edgePaths")?.children;
 
   if (!edges) {
     throw new Error("Edges not found");
   }
 
-  return nodes.map((edge, i) => {
-    const startId = edge.state1.id;
-    const endId = edge.state2.id;
+  return (
+    nodes
+      .filter((node) => node.stmt === "relation")
+      //@ts-expect-error
+      .map((edge: StateRoot, i) => {
+        const startId = edge.state1.id;
+        const endId = edge.state2.id;
 
-    const nodeStartElement = containerEl.querySelector<SVGPathElement>(
-      `[data-id*="${startId}"]`
-    )!;
-    const nodeEndElement = containerEl.querySelector<SVGPathElement>(
-      `[data-id*="${endId}"]`
-    )!;
+        const nodeStartElement = containerEl.querySelector<SVGPathElement>(
+          `[data-id*="${startId}"]`
+        )!;
+        const nodeEndElement = containerEl.querySelector<SVGPathElement>(
+          `[data-id*="${endId}"]`
+        )!;
 
-    const edgeStartElement = edges[i] as SVGPathElement;
+        const edgeStartElement = edges[i] as SVGPathElement;
 
-    const position = computeElementPosition(edgeStartElement, containerEl);
+        const position = computeElementPosition(edgeStartElement, containerEl);
+        const edgePositionData = computeEdgePositions(
+          edgeStartElement,
+          position
+        );
 
-    const edgePositionData = computeEdgePositions(edgeStartElement, position);
-
-    return {
-      start: nodeStartElement.id,
-      end: nodeEndElement.id,
-      ...edgePositionData,
-    };
-  });
+        return {
+          start: nodeStartElement.id,
+          end: nodeEndElement.id,
+          ...edgePositionData,
+        };
+      })
+  );
 };
 
 export const parseMermaidStateDiagram = (
@@ -188,15 +233,7 @@ export const parseMermaidStateDiagram = (
   const nodes: Array<Node> = [];
   const rootDocV2 = mermaidParser.getRootDocV2();
 
-  const relations = parseRelations(rootDocV2.doc, containerEl);
-
-  const edges = parseEdges(rootDocV2.doc, containerEl);
-
-  nodes.push(...relations);
-
   console.debug({
-    nodes,
-    edges,
     document: rootDocV2,
     mermaidParser,
     states: mermaidParser.getStates(),
@@ -204,6 +241,12 @@ export const parseMermaidStateDiagram = (
     classes: mermaidParser.getClasses(),
     logDocuments: mermaidParser.logDocuments(),
   });
+
+  const relations = parseRelations(rootDocV2.doc, containerEl);
+
+  const edges = parseEdges(rootDocV2.doc, containerEl);
+
+  nodes.push(...relations);
 
   return { type: "state", nodes, edges };
 };

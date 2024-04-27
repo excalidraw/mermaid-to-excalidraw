@@ -13,8 +13,12 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: State) => {
     const elements: ExcalidrawElementSkeleton[] = [];
 
-    chart.nodes.forEach((firstState) => {
-      const element = transformToExcalidrawContainerSkeleton(firstState);
+    chart.nodes.forEach((node) => {
+      const element = transformToExcalidrawContainerSkeleton(node);
+
+      Object.assign(element, {
+        roundness: { type: 3 },
+      });
 
       elements.push(element);
     });
@@ -39,10 +43,12 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
       }
 
       arrow.start = {
-        id: startVertex?.id || "",
+        id: startVertex.id,
+        type: "rectangle",
       };
       arrow.end = {
-        id: endVertex?.id || "",
+        id: endVertex.id,
+        type: "rectangle",
       };
 
       elements.push(transformToExcalidrawArrowSkeleton(arrow));
