@@ -6,10 +6,12 @@ import { SequenceToExcalidrawSkeletonConvertor } from "./converter/types/sequenc
 import { Sequence } from "./parser/sequence.js";
 import { Flowchart } from "./parser/flowchart.js";
 import { Class } from "./parser/class.js";
+import { State } from "./parser/state.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
+import { StateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
 
 export const graphToExcalidraw = (
-  graph: Flowchart | GraphImage | Sequence | Class,
+  graph: Flowchart | GraphImage | Sequence | Class | State,
   options: MermaidOptions = {}
 ): MermaidToExcalidrawResult => {
   switch (graph.type) {
@@ -23,6 +25,10 @@ export const graphToExcalidraw = (
 
     case "sequence": {
       return SequenceToExcalidrawSkeletonConvertor.convert(graph, options);
+    }
+
+    case "state": {
+      return StateToExcalidrawSkeletonConvertor.convert(graph, options);
     }
 
     case "class": {

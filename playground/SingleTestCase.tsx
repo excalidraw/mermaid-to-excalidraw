@@ -1,7 +1,7 @@
 import { MermaidDiagram } from "./MermaidDiagram";
 
 export interface TestCase {
-  type: "class" | "flowchart" | "sequence" | "unsupported";
+  type: "class" | "flowchart" | "sequence" | "unsupported" | "state";
   name: string;
   definition: string;
 }
