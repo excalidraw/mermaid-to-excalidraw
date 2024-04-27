@@ -3,7 +3,11 @@ import {
   createContainerSkeletonFromSVG,
   type Node,
 } from "../elementSkeleton.js";
-import { computeEdgePositions, computeElementPosition } from "../utils.js";
+import {
+  computeEdge2Positions,
+  computeEdgePositions,
+  computeElementPosition,
+} from "../utils.js";
 
 export interface State {
   type: "state";
@@ -61,7 +65,7 @@ const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
     if (isSingleState) {
       const node1 = containerEl.querySelector<SVGSVGElement>(
         `[data-id="${state.id}"]`
-      );
+      )!;
 
       const node1Position = computeElementPosition(node1, containerEl);
 
@@ -165,9 +169,13 @@ const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
         innerEllipse.height = 4;
 
         innerEllipse.x =
-          node2Position.x + node2Element.width / 2 - innerEllipse.width / 2;
+          node2Position.x +
+          (node2Element.width as number) / 2 -
+          innerEllipse.width / 2;
         innerEllipse.y =
-          node2Position.y + node2Element.height / 2 - innerEllipse.height / 2;
+          node2Position.y +
+          (node2Element.height as number) / 2 -
+          innerEllipse.height / 2;
         innerEllipse.strokeColor = "black";
         innerEllipse.bgColor = "black";
 
@@ -208,7 +216,7 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element) => {
         const edgeStartElement = edges[i] as SVGPathElement;
 
         const position = computeElementPosition(edgeStartElement, containerEl);
-        const edgePositionData = computeEdgePositions(
+        const edgePositionData = computeEdge2Positions(
           edgeStartElement,
           position
         );

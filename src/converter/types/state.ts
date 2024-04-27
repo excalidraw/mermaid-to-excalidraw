@@ -8,6 +8,7 @@ import {
 
 import type { State } from "../../parser/state.js";
 import type { Arrow } from "../../elementSkeleton.js";
+import type { Point } from "@excalidraw/excalidraw/types/types.js";
 
 export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: State) => {
@@ -24,14 +25,14 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
     });
 
     chart.edges.forEach((edge) => {
-      const points = edge.reflectionPoints.map((point) => [
+      const points = edge.reflectionPoints.map((point: Point) => [
         point.x - edge.reflectionPoints[0].x,
         point.y - edge.reflectionPoints[0].y,
       ]);
 
       const arrow: Arrow = {
         ...edge,
-        endArrowhead: "arrow",
+        endArrowhead: "triangle",
         points,
       };
 

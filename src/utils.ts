@@ -109,6 +109,7 @@ export const computeEdgePositions = (
         .substring(1)
         .split(",")
         .map((coord) => parseFloat(coord));
+
       return { x: coords[0], y: coords[1] };
     })
     .filter((point, index, array) => {
@@ -129,6 +130,86 @@ export const computeEdgePositions = (
         y: p.y + offset.y,
       };
     });
+
+  // Return the edge positions
+  return {
+    startX: startPosition[0] + offset.x,
+    startY: startPosition[1] + offset.y,
+    endX: endPosition[0] + offset.x,
+    endY: endPosition[1] + offset.y,
+    reflectionPoints,
+  };
+};
+
+export const computeEdge2Positions = (
+  pathElement: SVGPathElement,
+  offset: Position = { x: 0, y: 0 }
+): EdgePositionData => {
+  // Check if the element is a path else throw an error
+  if (pathElement.tagName.toLowerCase() !== "path") {
+    throw new Error(
+      `Invalid input: Expected an HTMLElement of tag "path", got ${pathElement.tagName}`
+    );
+  }
+
+  // Get the d attribute from the path element else throw an error
+  const dAttr = pathElement.getAttribute("d");
+  if (!dAttr) {
+    throw new Error('Path element does not contain a "d" attribute');
+  }
+
+  // Split the d attribute based on M (Move To) and L (Line To) commands
+  // eg "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2"]
+  const commands = dAttr.split(/(?=[MC])/);
+
+  // Get the start position from the first commands element => [29.383,38.5]
+  const startPosition = commands[0]
+    .substring(1)
+    .split(",")
+    .map((coord) => parseFloat(coord));
+
+  // Get the last position from the last commands element => [29.383,83.2]
+  const endPosition = commands[commands.length - 1]
+    .substring(1)
+    .split(",")
+    .map((coord) => parseFloat(coord));
+
+  // compute the reflection points -> [ {x: 29.383, y: 38.5}, {x: 29.383, y: 83.2} ]
+  // These includes the start and end points and also points which are not the same as the previous points
+  const reflectionPoints = commands
+    .map((command) => {
+      const commandType = command[0];
+      const coords = command
+        .substring(1)
+        .split(",")
+        .map((coord) => parseFloat(coord));
+
+      if (commandType === "C") {
+        // For other "C" commands, return the end point
+        return { x: coords[4], y: coords[5] };
+      }
+
+      return { x: coords[0], y: coords[1] };
+    })
+    .filter((point, index, array) => {
+      // Always include the last point
+      if (index === array.length - 1) {
+        return true;
+      }
+      // Include the start point or if the current point if it's not the same as the previous point
+      const prevPoint = array[index - 1];
+      return (
+        index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
+      );
+    })
+    .map((p) => {
+      // Offset the point by the provided offset
+      return {
+        x: p.x + offset.x,
+        y: p.y + offset.y,
+      };
+    });
+
   // Return the edge positions
   return {
     startX: startPosition[0] + offset.x,
