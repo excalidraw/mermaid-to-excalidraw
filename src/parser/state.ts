@@ -31,6 +31,7 @@ export interface StateNode {
 }
 
 export interface StateRoot {
+  description?: string;
   [state: `state${number}`]: {
     description: string;
     id: string;
@@ -215,6 +216,9 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element) => {
         return {
           start: nodeStartElement.id,
           end: nodeEndElement.id,
+          label: {
+            text: edge?.description,
+          },
           ...edgePositionData,
         };
       })
