@@ -8,6 +8,7 @@ import {
   computeEdgePositions,
   computeElementPosition,
 } from "../utils.js";
+import { ExcalidrawElementType } from "@excalidraw/excalidraw/types/element/types.js";
 
 export interface State {
   type: "state";
@@ -34,157 +35,181 @@ export interface StateNode {
   height: number;
 }
 
-export interface StateRoot {
+export interface RelationState {
   description?: string;
   [state: `state${number}`]: {
     description: string;
     id: string;
     start?: boolean;
-    stmt: string;
+    stmt: "state";
     type: string;
   };
   stmt: "relation";
 }
 
-export interface SingleState {
-  stmt: "state";
+export interface CompositeState {
+  doc?: Array<ParsedDoc>;
   description: string;
   id: string;
   type: string;
+  stmt: "state";
 }
 
-export type ParsedDoc = SingleState | StateRoot;
+export type ParsedDoc = CompositeState | RelationState;
+
+const createInnerEllipseExcalidrawElement = (
+  element: SVGSVGElement,
+  position: { x: number; y: number; width: number; height: number },
+  size = 4
+) => {
+  const innerEllipse = createContainerSkeletonFromSVG(element, "ellipse", {
+    id: `${element.id}-inner`,
+    groupId: element.id,
+  });
+
+  innerEllipse.width = size;
+  innerEllipse.height = size;
+
+  innerEllipse.x =
+    position.x + (position.width as number) / 2 - innerEllipse.width / 2;
+  innerEllipse.y =
+    position.y + (position.height as number) / 2 - innerEllipse.height / 2;
+
+  innerEllipse.strokeColor = "black";
+  innerEllipse.bgColor = "black";
+
+  return innerEllipse;
+};
+
+const createExcalidrawElement = (
+  node: SVGSVGElement,
+  containerEl: Element,
+  shape: "ellipse" | "rectangle",
+  additionalProps: Parameters<typeof createContainerSkeletonFromSVG>[2]
+) => {
+  const nodePosition = computeElementPosition(node, containerEl);
+
+  const nodeElement = createContainerSkeletonFromSVG(node, shape, {
+    id: node.id,
+    ...additionalProps,
+  });
+
+  nodeElement.x = nodePosition.x;
+  nodeElement.y = nodePosition.y;
+
+  return nodeElement;
+};
+
+const parseRelation = (
+  relation: Extract<ParsedDoc, { stmt: "relation" }>,
+  containerEl: Element,
+  nodes: Array<Node>,
+  processedNodeRelations: Set<string>
+) => {
+  const relationStart = relation.state1;
+  const relationEnd = relation.state2;
+
+  const cluster1 = containerEl.querySelector<SVGSVGElement>(
+    `[id="${relationStart.id}"]`
+  );
+  const cluster2 = containerEl.querySelector<SVGSVGElement>(
+    `[id="${relationEnd.id}"]`
+  );
+
+  const relationStartNode = containerEl.querySelector<SVGSVGElement>(
+    `[data-id="${relationStart.id}"]`
+  );
+  const relationEndNode = containerEl.querySelector<SVGSVGElement>(
+    `[data-id="${relationEnd.id}"]`
+  );
+
+  if (cluster1 || cluster2) {
+    return;
+  }
+
+  if (!relationStartNode || !relationEndNode) {
+    throw new Error("Relation nodes not found");
+  }
+
+  if (!processedNodeRelations.has(relationStartNode.id)) {
+    const nodeOneContainer = createExcalidrawElement(
+      relationStartNode,
+      containerEl,
+      relationStart?.start !== undefined ? "ellipse" : "rectangle",
+      relationStart?.start === undefined
+        ? { label: { text: relationStart.description || relationStart.id } }
+        : { subtype: "highlight" }
+    );
+
+    if (!nodeOneContainer.bgColor && relationStart.start) {
+      nodeOneContainer.bgColor = "#000";
+    }
+
+    nodes.push(nodeOneContainer);
+    processedNodeRelations.add(relationStartNode.id);
+  }
+
+  if (!processedNodeRelations.has(relationEndNode.id)) {
+    const nodeTwoContainer = createExcalidrawElement(
+      relationEndNode,
+      containerEl,
+      relationEnd?.start !== undefined ? "ellipse" : "rectangle",
+      relationEnd?.start === undefined
+        ? { label: { text: relationEnd.description || relationEnd.id } }
+        : { groupId: relationEndNode.id }
+    );
+    nodes.push(nodeTwoContainer);
+    processedNodeRelations.add(relationEndNode.id);
+
+    if (relationEnd.id === "root_end") {
+      const innerEllipse = createInnerEllipseExcalidrawElement(
+        relationEndNode,
+        {
+          x: nodeTwoContainer.x,
+          y: nodeTwoContainer.y,
+          width: nodeTwoContainer.width!,
+          height: nodeTwoContainer.height!,
+        },
+        4
+      );
+
+      nodes.push(innerEllipse);
+    }
+  }
+};
 
 const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
   const nodes: Array<Node> = [];
-  const parsedIds = new Set<string>();
+  const processedNodeRelations = new Set<string>();
 
   data.forEach((state) => {
-    const isSingleState = state.stmt === "state";
+    const isSingleState = state.stmt === "state" && !state?.doc;
 
     if (isSingleState) {
-      const node1 = containerEl.querySelector<SVGSVGElement>(
+      const singleStateNode = containerEl.querySelector<SVGSVGElement>(
         `[data-id="${state.id}"]`
       )!;
 
-      const node1Position = computeElementPosition(node1, containerEl);
-
-      const node1Element = createContainerSkeletonFromSVG(
-        node1,
+      const stateElement = createExcalidrawElement(
+        singleStateNode,
+        containerEl,
         "rectangle",
-
-        {
-          id: node1.id,
-          label: {
-            text: state.description || state.id,
-          },
-        }
+        { label: { text: state.description || state.id } }
       );
 
-      node1Element.x = node1Position.x;
-      node1Element.y = node1Position.y;
-
-      nodes.push(node1Element);
+      nodes.push(stateElement);
 
       return;
     }
 
-    const state1 = state.state1;
-    const state2 = state.state2;
+    if (state.stmt === "state" && state.doc) {
+      console.debug("TODO: make a recursive call to parse nested states");
 
-    const relationId = [state1.id, state2.id].sort().join("-");
-
-    if (parsedIds.has(relationId)) {
       return;
     }
 
-    const node1 = containerEl.querySelector<SVGSVGElement>(
-      `[data-id="${state1.id}"]`
-    );
-    const node2 = containerEl.querySelector<SVGSVGElement>(
-      `[data-id="${state2.id}"]`
-    );
-
-    if (!node1 || !node2) {
-      throw new Error("State node not found");
-    }
-
-    if (!parsedIds.has(node1.id)) {
-      const node1Element = createContainerSkeletonFromSVG(
-        node1,
-        state1?.start !== undefined ? "ellipse" : "rectangle",
-        state1?.start === undefined
-          ? {
-              id: node1.id,
-              label: {
-                text: state1.description || state1.id,
-              },
-            }
-          : {
-              id: node1.id,
-              subtype: "highlight",
-            }
-      );
-
-      const node1Position = computeElementPosition(node1, containerEl);
-      node1Element.x = node1Position.x;
-      node1Element.y = node1Position.y;
-
-      if (!node1Element.bgColor && state1.start) {
-        node1Element.bgColor = "#000";
-      }
-
-      nodes.push(node1Element);
-      parsedIds.add(node1.id);
-    }
-
-    if (!parsedIds.has(node2.id)) {
-      const node2Element = createContainerSkeletonFromSVG(
-        node2,
-        state2?.start !== undefined ? "ellipse" : "rectangle",
-        state2?.start === undefined
-          ? {
-              id: node2.id,
-              label: {
-                text: state2.description || state2.id,
-              },
-            }
-          : {
-              id: node2.id,
-              groupId: node2.id,
-            }
-      );
-      const node2Position = computeElementPosition(node2, containerEl);
-
-      node2Element.x = node2Position.x;
-      node2Element.y = node2Position.y;
-
-      if (state2.id === "root_end") {
-        const innerEllipse = createContainerSkeletonFromSVG(node2, "ellipse", {
-          id: `${node2.id}-inner`,
-          groupId: node2.id,
-        });
-
-        innerEllipse.width = 4;
-        innerEllipse.height = 4;
-
-        innerEllipse.x =
-          node2Position.x +
-          (node2Element.width as number) / 2 -
-          innerEllipse.width / 2;
-        innerEllipse.y =
-          node2Position.y +
-          (node2Element.height as number) / 2 -
-          innerEllipse.height / 2;
-        innerEllipse.strokeColor = "black";
-        innerEllipse.bgColor = "black";
-
-        nodes.push(innerEllipse);
-      }
-
-      nodes.push(node2Element);
-
-      parsedIds.add(node2.id);
+    if (state.stmt === "relation") {
+      return parseRelation(state, containerEl, nodes, processedNodeRelations);
     }
   });
 
