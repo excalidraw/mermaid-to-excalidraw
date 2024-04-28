@@ -227,7 +227,7 @@ export const createTextSkeletonFromSVG = (
 };
 
 export const createContainerSkeletonFromSVG = (
-  node: SVGSVGElement | SVGRectElement,
+  node: SVGSVGElement | SVGRectElement | SVGCircleElement,
   type: Container["type"],
   opts: {
     id?: string;

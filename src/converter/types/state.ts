@@ -4,6 +4,8 @@ import { GraphConverter } from "../GraphConverter.js";
 import {
   transformToExcalidrawContainerSkeleton,
   transformToExcalidrawArrowSkeleton,
+  transformToExcalidrawTextSkeleton,
+  transformToExcalidrawLineSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
 
 import type { State } from "../../parser/state.js";
@@ -15,13 +17,28 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
     const elements: ExcalidrawElementSkeleton[] = [];
 
     chart.nodes.forEach((node) => {
-      const element = transformToExcalidrawContainerSkeleton(node);
+      switch (node.type) {
+        case "ellipse":
+        case "rectangle":
+          const element = transformToExcalidrawContainerSkeleton(node);
 
-      Object.assign(element, {
-        roundness: { type: 3 },
-      });
+          Object.assign(element, {
+            roundness: { type: 3 },
+          });
 
-      elements.push(element);
+          elements.push(element);
+          break;
+        case "line":
+          const line = transformToExcalidrawLineSkeleton(node);
+          elements.push(line);
+          break;
+        case "text":
+          const text = transformToExcalidrawTextSkeleton(node);
+          elements.push(text);
+          break;
+        default:
+          throw `unknown type ${node.type}`;
+      }
     });
 
     chart.edges.forEach((edge) => {

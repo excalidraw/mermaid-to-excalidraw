@@ -1,14 +1,10 @@
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import {
+  Line,
   createContainerSkeletonFromSVG,
   type Node,
 } from "../elementSkeleton.js";
-import {
-  computeEdge2Positions,
-  computeEdgePositions,
-  computeElementPosition,
-} from "../utils.js";
-import { ExcalidrawElementType } from "@excalidraw/excalidraw/types/element/types.js";
+import { computeEdge2Positions, computeElementPosition } from "../utils.js";
 
 export interface State {
   type: "state";
@@ -70,10 +66,8 @@ const createInnerEllipseExcalidrawElement = (
   innerEllipse.width = size;
   innerEllipse.height = size;
 
-  innerEllipse.x =
-    position.x + (position.width as number) / 2 - innerEllipse.width / 2;
-  innerEllipse.y =
-    position.y + (position.height as number) / 2 - innerEllipse.height / 2;
+  innerEllipse.x = position.x + position.width / 2 - innerEllipse.width / 2;
+  innerEllipse.y = position.y + position.height / 2 - innerEllipse.height / 2;
 
   innerEllipse.strokeColor = "black";
   innerEllipse.bgColor = "black";
@@ -109,35 +103,47 @@ const parseRelation = (
   const relationStart = relation.state1;
   const relationEnd = relation.state2;
 
-  const cluster1 = containerEl.querySelector<SVGSVGElement>(
-    `[id="${relationStart.id}"]`
-  );
-  const cluster2 = containerEl.querySelector<SVGSVGElement>(
-    `[id="${relationEnd.id}"]`
-  );
+  let relationStartNode = containerEl.querySelector<SVGSVGElement>(
+    `[data-id*="${relationStart.id}"]`
+  )!;
+  let relationEndNode = containerEl.querySelector<SVGSVGElement>(
+    `[data-id*="${relationEnd.id}"]`
+  )!;
 
-  const relationStartNode = containerEl.querySelector<SVGSVGElement>(
-    `[data-id="${relationStart.id}"]`
-  );
-  const relationEndNode = containerEl.querySelector<SVGSVGElement>(
-    `[data-id="${relationEnd.id}"]`
-  );
+  const isRelationEndCluster =
+    relationEndNode.id.includes(`${relationEnd.id}_start`) ||
+    relationEndNode.id.includes(`${relationEnd.id}_end`);
 
-  if (cluster1 || cluster2) {
-    return;
+  if (isRelationEndCluster) {
+    relationEndNode = containerEl.querySelector(`[id="${relationEnd.id}"]`)!;
+  }
+
+  const isRelationStartCluster =
+    relationStartNode.id.includes(`${relationStart.id}_start`) ||
+    relationStartNode.id.includes(`${relationStart.id}_end`);
+
+  if (isRelationStartCluster) {
+    relationStartNode = containerEl.querySelector(
+      `[id="${relationStart.id}"]`
+    )!;
   }
 
   if (!relationStartNode || !relationEndNode) {
     throw new Error("Relation nodes not found");
   }
 
-  if (!processedNodeRelations.has(relationStartNode.id)) {
+  if (
+    !processedNodeRelations.has(relationStartNode.id) &&
+    !isRelationStartCluster
+  ) {
     const nodeOneContainer = createExcalidrawElement(
       relationStartNode,
       containerEl,
       relationStart?.start !== undefined ? "ellipse" : "rectangle",
       relationStart?.start === undefined
-        ? { label: { text: relationStart.description || relationStart.id } }
+        ? {
+            label: { text: relationStart.description || relationStart.id },
+          }
         : { subtype: "highlight" }
     );
 
@@ -149,19 +155,25 @@ const parseRelation = (
     processedNodeRelations.add(relationStartNode.id);
   }
 
-  if (!processedNodeRelations.has(relationEndNode.id)) {
+  if (
+    !processedNodeRelations.has(relationEndNode.id) &&
+    !isRelationEndCluster
+  ) {
     const nodeTwoContainer = createExcalidrawElement(
       relationEndNode,
       containerEl,
       relationEnd?.start !== undefined ? "ellipse" : "rectangle",
       relationEnd?.start === undefined
-        ? { label: { text: relationEnd.description || relationEnd.id } }
-        : { groupId: relationEndNode.id }
+        ? {
+            label: { text: relationEnd.description || relationEnd.id },
+          }
+        : undefined
     );
+
     nodes.push(nodeTwoContainer);
     processedNodeRelations.add(relationEndNode.id);
 
-    if (relationEnd.id === "root_end") {
+    if (relationEnd?.start === false) {
       const innerEllipse = createInnerEllipseExcalidrawElement(
         relationEndNode,
         {
@@ -169,20 +181,20 @@ const parseRelation = (
           y: nodeTwoContainer.y,
           width: nodeTwoContainer.width!,
           height: nodeTwoContainer.height!,
-        },
-        4
+        }
       );
-
       nodes.push(innerEllipse);
     }
   }
 };
 
-const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
-  const nodes: Array<Node> = [];
-  const processedNodeRelations = new Set<string>();
-
-  data.forEach((state) => {
+const parseDoc = (
+  doc: ParsedDoc[],
+  containerEl: Element,
+  nodes: Array<Node> = [],
+  processedNodeRelations: Set<string> = new Set<string>()
+) => {
+  doc.forEach((state) => {
     const isSingleState = state.stmt === "state" && !state?.doc;
 
     if (isSingleState) {
@@ -198,47 +210,123 @@ const parseRelations = (data: ParsedDoc[], containerEl: Element) => {
       );
 
       nodes.push(stateElement);
-
-      return;
     }
 
-    if (state.stmt === "state" && state.doc) {
-      console.debug("TODO: make a recursive call to parse nested states");
-
-      return;
-    }
-
+    // Relation state
     if (state.stmt === "relation") {
-      return parseRelation(state, containerEl, nodes, processedNodeRelations);
+      parseRelation(state, containerEl, nodes, processedNodeRelations);
+    }
+
+    // Composite state
+    if (state.stmt === "state" && state?.doc) {
+      const clusterElement = containerEl.querySelector<SVGSVGElement>(
+        `[id="${state.id}"]`
+      )!;
+
+      const clusterElementPosition = computeElementPosition(
+        clusterElement,
+        containerEl
+      );
+
+      const clusterElementSkeleton = createContainerSkeletonFromSVG(
+        clusterElement,
+        "rectangle",
+        {
+          id: state.id,
+          label: { text: state.description || state.id, verticalAlign: "top" },
+          groupId: state.id,
+        }
+      );
+
+      clusterElementSkeleton.x = clusterElementPosition.x;
+      clusterElementSkeleton.y = clusterElementPosition.y;
+
+      const topLine: Line = {
+        type: "line",
+        startX: clusterElementPosition.x,
+        startY: clusterElementPosition.y + 25,
+        endX: clusterElementPosition.x + clusterElementSkeleton.width,
+        endY: clusterElementPosition.y + 25,
+        strokeColor: "black",
+        strokeWidth: 1,
+        groupId: state.id,
+      };
+
+      nodes.push(clusterElementSkeleton);
+      nodes.push(topLine);
+
+      parseDoc(state.doc, containerEl, nodes, processedNodeRelations);
     }
   });
 
   return nodes;
 };
 
-const parseEdges = (nodes: ParsedDoc[], containerEl: Element) => {
-  const edges = containerEl.querySelector(".edgePaths")?.children;
-
-  if (!edges) {
-    throw new Error("Edges not found");
+function isNodeInCluster(node: Element | null) {
+  if (!node) {
+    return false;
   }
 
-  return (
-    nodes
-      .filter((node) => node.stmt === "relation")
-      //@ts-expect-error
-      .map((edge: StateRoot, i) => {
-        const startId = edge.state1.id;
-        const endId = edge.state2.id;
+  let parentNode = node.parentNode as Element;
+  while (parentNode && parentNode?.tagName !== "svg") {
+    if (parentNode.getAttribute("transform")) {
+      return true;
+    }
+    parentNode = parentNode.parentNode as Element;
+  }
+  return false;
+}
 
-        const nodeStartElement = containerEl.querySelector<SVGPathElement>(
+const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
+  let rootEdgeIndex = 0;
+
+  function parse(nodes: ParsedDoc[]): any[] {
+    return nodes.flatMap((node, index) => {
+      if (node.stmt === "state" && node?.doc) {
+        return parse(node.doc);
+      } else if (node.stmt === "relation") {
+        const startId = node.state1.id;
+        const endId = node.state2.id;
+
+        let nodeStartElement = containerEl.querySelector<SVGPathElement>(
           `[data-id*="${startId}"]`
         )!;
-        const nodeEndElement = containerEl.querySelector<SVGPathElement>(
+
+        let nodeEndElement = containerEl.querySelector<SVGPathElement>(
           `[data-id*="${endId}"]`
         )!;
 
-        const edgeStartElement = edges[i] as SVGPathElement;
+        // It's a cluster node
+        if (
+          nodeStartElement.id.includes(`${startId}_start`) ||
+          nodeStartElement.id.includes(`${startId}_end`)
+        ) {
+          nodeStartElement = containerEl.querySelector(`[id="${startId}"]`)!;
+        }
+
+        // It's a cluster node
+        if (
+          nodeEndElement.id.includes(`${endId}_end`) ||
+          nodeEndElement.id.includes(`${endId}_start`)
+        ) {
+          nodeEndElement = containerEl.querySelector(`[id="${endId}"]`)!;
+        }
+
+        const rootContainer = nodeStartElement.parentElement?.parentElement;
+
+        if (!rootContainer) {
+          throw new Error("Root container not found");
+        }
+
+        const edges = rootContainer.querySelector(".edgePaths")?.children;
+
+        if (!edges) {
+          throw new Error("Edges not found");
+        }
+
+        const edgeStartElement = edges[
+          isNodeInCluster(nodeStartElement) ? index : rootEdgeIndex
+        ] as SVGPathElement;
 
         const position = computeElementPosition(edgeStartElement, containerEl);
         const edgePositionData = computeEdge2Positions(
@@ -246,16 +334,25 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element) => {
           position
         );
 
+        // Edge case where the start node is in a cluster and the end node is not, we need to track all edges.
+        rootEdgeIndex++;
+
         return {
           start: nodeStartElement.id,
           end: nodeEndElement.id,
           label: {
-            text: edge?.description,
+            text: node?.description,
           },
           ...edgePositionData,
         };
-      })
-  );
+      }
+
+      // This is neither a "state" node nor a "relation" node. Return an empty array.
+      return [];
+    });
+  }
+
+  return parse(nodes);
 };
 
 export const parseMermaidStateDiagram = (
@@ -267,7 +364,7 @@ export const parseMermaidStateDiagram = (
   // Get mermaid parsed data from parser shared variable `yy`
   //@ts-ignore
   const mermaidParser = diagram.parser.yy;
-  const nodes: Array<Node> = [];
+  // const nodes: Array<Node> = [];
   const rootDocV2 = mermaidParser.getRootDocV2();
 
   console.debug({
@@ -279,11 +376,8 @@ export const parseMermaidStateDiagram = (
     logDocuments: mermaidParser.logDocuments(),
   });
 
-  const relations = parseRelations(rootDocV2.doc, containerEl);
-
+  const nodes = parseDoc(rootDocV2.doc, containerEl);
   const edges = parseEdges(rootDocV2.doc, containerEl);
-
-  nodes.push(...relations);
 
   return { type: "state", nodes, edges };
 };
