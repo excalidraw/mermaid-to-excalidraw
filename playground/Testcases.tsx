@@ -104,7 +104,7 @@ const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
             onChange(definition, false);
           }}
           testcases={testcases}
-          error={!isCustomTest ? error : null}
+          error={isCustomTest ? null : error}
         />
       ))}
     </>
