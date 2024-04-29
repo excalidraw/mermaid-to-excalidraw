@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
@@ -6,7 +6,7 @@ import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import type { UpdateMermaidDefinition } from "./index.tsx";
-import Testcase from "./SingleTestCase.tsx";
+import SingleTestCase from "./SingleTestCase.tsx";
 
 interface TestcasesProps {
   onChange: UpdateMermaidDefinition;
@@ -14,7 +14,8 @@ interface TestcasesProps {
 }
 
 const Testcases = ({ onChange }: TestcasesProps) => {
-  const activeTestcase = useRef<[number, number]>();
+  const [[activeTestCaseFileIndex, activeTestCaseIndex], setActiveTestCase] =
+    useState<[number | undefined, number | undefined] | []>([]);
 
   const testCases = [
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
@@ -23,21 +24,26 @@ const Testcases = ({ onChange }: TestcasesProps) => {
     { name: "Unsupported", testcases: UNSUPPORTED_DIAGRAM_TESTCASES },
   ];
 
+  useEffect(() => {
+    if (
+      activeTestCaseIndex !== undefined &&
+      activeTestCaseFileIndex !== undefined
+    ) {
+      const { definition } =
+        testCases[activeTestCaseFileIndex].testcases[activeTestCaseIndex];
+
+      onChange(definition, false);
+    }
+  }, [activeTestCaseFileIndex, activeTestCaseIndex]);
+
   return (
     <>
-      {testCases.map(({ name, testcases }, index) => (
-        <Testcase
-          key={index}
+      {testCases.map(({ name, testcases }, fileIndex) => (
+        <SingleTestCase
+          key={fileIndex}
           name={name}
-          activeTestcaseIndex={
-            activeTestcase.current?.[0] === index
-              ? activeTestcase.current[1]
-              : undefined
-          }
-          onChange={(definition, activeTestcaseIndex) => {
-            activeTestcase.current = [index, activeTestcaseIndex];
-
-            onChange(definition, false);
+          onChange={(activeCase) => {
+            setActiveTestCase([fileIndex, activeCase]);
           }}
           testcases={testcases}
         />
