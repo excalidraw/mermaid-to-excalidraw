@@ -13,7 +13,7 @@ interface TestCaseProps {
   testcases: { name: string; definition: string }[];
   onChange: (definition: string, activeTestcaseIndex: number) => void;
   error: string | null;
-  activeTestcase?: number;
+  activeTestcaseIndex?: number;
 }
 
 const Testcase = ({
@@ -21,15 +21,15 @@ const Testcase = ({
   testcases,
   onChange,
   error,
-  activeTestcase,
+  activeTestcaseIndex,
 }: TestCaseProps) => {
   const baseId = name.toLowerCase();
 
   useEffect(() => {
-    if (activeTestcase !== undefined) {
-      const { definition } = testcases[activeTestcase];
+    if (activeTestcaseIndex !== undefined) {
+      const { definition } = testcases[activeTestcaseIndex];
 
-      onChange(definition, activeTestcase);
+      onChange(definition, activeTestcaseIndex);
     }
   }, [testcases]);
 
@@ -59,7 +59,7 @@ const Testcase = ({
 
                 <MermaidDiagram definition={definition} id={id} />
 
-                {error && activeTestcase === index && (
+                {error && activeTestcaseIndex === index && (
                   <div id="error">{error}</div>
                 )}
               </Fragment>
@@ -93,7 +93,7 @@ const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
         <Testcase
           key={index}
           name={name}
-          activeTestcase={
+          activeTestcaseIndex={
             activeTestcase.current?.[0] === index
               ? activeTestcase.current[1]
               : undefined
