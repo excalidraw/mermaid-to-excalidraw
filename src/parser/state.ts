@@ -53,6 +53,8 @@ export interface CompositeState {
 
 export type ParsedDoc = CompositeState | RelationState;
 
+const MARGIN_TOP_LINE_X_AXIS = 25;
+
 const createInnerEllipseExcalidrawElement = (
   element: SVGSVGElement,
   position: { x: number; y: number; width: number; height: number },
@@ -94,11 +96,53 @@ const createExcalidrawElement = (
   return nodeElement;
 };
 
+const createClusterExcalidrawElement = (
+  clusterNode: SVGSVGElement,
+  containerEl: Element,
+  state: Extract<ParsedDoc, { stmt: "state" }>
+) => {
+  const clusterElementPosition = computeElementPosition(
+    clusterNode,
+    containerEl
+  );
+
+  const clusterElementSkeleton = createContainerSkeletonFromSVG(
+    clusterNode,
+    "rectangle",
+    {
+      id: state.id,
+      label: { text: state.description || state.id, verticalAlign: "top" },
+      groupId: state.id,
+    }
+  );
+
+  clusterElementSkeleton.x = clusterElementPosition.x;
+  clusterElementSkeleton.y = clusterElementPosition.y;
+
+  const topLine: Line = {
+    type: "line",
+    startX: clusterElementPosition.x,
+    startY: clusterElementPosition.y + MARGIN_TOP_LINE_X_AXIS,
+    endX: clusterElementPosition.x + (clusterElementSkeleton.width || 0),
+    endY: clusterElementPosition.y + MARGIN_TOP_LINE_X_AXIS,
+    strokeColor: "black",
+    strokeWidth: 1,
+    groupId: state.id,
+  };
+
+  return { clusterElementSkeleton, topLine };
+};
+
+const getClusterElement = (containerEl: Element, id: string) => {
+  return containerEl.querySelector<SVGSVGElement>(`[id="${id}"]`)!;
+};
+
 const parseRelation = (
   relation: Extract<ParsedDoc, { stmt: "relation" }>,
   containerEl: Element,
   nodes: Array<Node>,
-  processedNodeRelations: Set<string>
+  processedNodeRelations: Set<string>,
+  groupId?: string
 ) => {
   const relationStart = relation.state1;
   const relationEnd = relation.state2;
@@ -114,18 +158,18 @@ const parseRelation = (
     relationEndNode.id.includes(`${relationEnd.id}_start`) ||
     relationEndNode.id.includes(`${relationEnd.id}_end`);
 
+  // Binding the relation to the cluster, if we don't make this will bind to end node ellipse
   if (isRelationEndCluster) {
-    relationEndNode = containerEl.querySelector(`[id="${relationEnd.id}"]`)!;
+    relationEndNode = getClusterElement(containerEl, relationEnd.id);
   }
 
   const isRelationStartCluster =
     relationStartNode.id.includes(`${relationStart.id}_start`) ||
     relationStartNode.id.includes(`${relationStart.id}_end`);
 
+  // Binding the relation to the cluster, if we don't make this will bind to start node ellipse
   if (isRelationStartCluster) {
-    relationStartNode = containerEl.querySelector(
-      `[id="${relationStart.id}"]`
-    )!;
+    relationStartNode = getClusterElement(containerEl, relationStart.id);
   }
 
   if (!relationStartNode || !relationEndNode) {
@@ -136,7 +180,7 @@ const parseRelation = (
     !processedNodeRelations.has(relationStartNode.id) &&
     !isRelationStartCluster
   ) {
-    const nodeOneContainer = createExcalidrawElement(
+    const relationStartContainer = createExcalidrawElement(
       relationStartNode,
       containerEl,
       relationStart?.start !== undefined ? "ellipse" : "rectangle",
@@ -147,11 +191,12 @@ const parseRelation = (
         : { subtype: "highlight" }
     );
 
-    if (!nodeOneContainer.bgColor && relationStart.start) {
-      nodeOneContainer.bgColor = "#000";
+    if (!relationStartContainer.bgColor && relationStart.start) {
+      relationStartContainer.bgColor = "#000";
     }
 
-    nodes.push(nodeOneContainer);
+    relationStartContainer.groupId = groupId;
+    nodes.push(relationStartContainer);
     processedNodeRelations.add(relationStartNode.id);
   }
 
@@ -159,7 +204,7 @@ const parseRelation = (
     !processedNodeRelations.has(relationEndNode.id) &&
     !isRelationEndCluster
   ) {
-    const nodeTwoContainer = createExcalidrawElement(
+    const relationEndContainer = createExcalidrawElement(
       relationEndNode,
       containerEl,
       relationEnd?.start !== undefined ? "ellipse" : "rectangle",
@@ -170,17 +215,18 @@ const parseRelation = (
         : undefined
     );
 
-    nodes.push(nodeTwoContainer);
+    relationEndContainer.groupId = groupId;
+    nodes.push(relationEndContainer);
     processedNodeRelations.add(relationEndNode.id);
 
     if (relationEnd?.start === false) {
       const innerEllipse = createInnerEllipseExcalidrawElement(
         relationEndNode,
         {
-          x: nodeTwoContainer.x,
-          y: nodeTwoContainer.y,
-          width: nodeTwoContainer.width!,
-          height: nodeTwoContainer.height!,
+          x: relationEndContainer.x,
+          y: relationEndContainer.y,
+          width: relationEndContainer.width!,
+          height: relationEndContainer.height!,
         }
       );
       nodes.push(innerEllipse);
@@ -192,7 +238,8 @@ const parseDoc = (
   doc: ParsedDoc[],
   containerEl: Element,
   nodes: Array<Node> = [],
-  processedNodeRelations: Set<string> = new Set<string>()
+  processedNodeRelations: Set<string> = new Set<string>(),
+  groupId?: string
 ) => {
   doc.forEach((state) => {
     const isSingleState = state.stmt === "state" && !state?.doc;
@@ -214,48 +261,20 @@ const parseDoc = (
 
     // Relation state
     if (state.stmt === "relation") {
-      parseRelation(state, containerEl, nodes, processedNodeRelations);
+      parseRelation(state, containerEl, nodes, processedNodeRelations, groupId);
     }
 
     // Composite state
     if (state.stmt === "state" && state?.doc) {
-      const clusterElement = containerEl.querySelector<SVGSVGElement>(
-        `[id="${state.id}"]`
-      )!;
+      const clusterElement = getClusterElement(containerEl, state.id);
 
-      const clusterElementPosition = computeElementPosition(
-        clusterElement,
-        containerEl
-      );
-
-      const clusterElementSkeleton = createContainerSkeletonFromSVG(
-        clusterElement,
-        "rectangle",
-        {
-          id: state.id,
-          label: { text: state.description || state.id, verticalAlign: "top" },
-          groupId: state.id,
-        }
-      );
-
-      clusterElementSkeleton.x = clusterElementPosition.x;
-      clusterElementSkeleton.y = clusterElementPosition.y;
-
-      const topLine: Line = {
-        type: "line",
-        startX: clusterElementPosition.x,
-        startY: clusterElementPosition.y + 25,
-        endX: clusterElementPosition.x + (clusterElementSkeleton?.width || 0),
-        endY: clusterElementPosition.y + 25,
-        strokeColor: "black",
-        strokeWidth: 1,
-        groupId: state.id,
-      };
+      const { clusterElementSkeleton, topLine } =
+        createClusterExcalidrawElement(clusterElement, containerEl, state);
 
       nodes.push(clusterElementSkeleton);
       nodes.push(topLine);
 
-      parseDoc(state.doc, containerEl, nodes, processedNodeRelations);
+      parseDoc(state.doc, containerEl, nodes, processedNodeRelations, state.id);
     }
   });
 
@@ -265,14 +284,20 @@ const parseDoc = (
 const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
   let rootEdgeIndex = 0;
 
-  function parse(nodes: ParsedDoc[], isCluster = false): any[] {
+  function parse(
+    nodes: ParsedDoc[],
+    retrieveEdgeFromClusterSvg = false,
+    clusterId?: string
+  ): any[] {
     return nodes.flatMap((node, index) => {
       if (node.stmt === "state" && node?.doc) {
-        const clusters = containerEl
-          ?.querySelector(`[id="${node.id}"]`)
-          ?.closest(".root");
+        const clusters = getClusterElement(containerEl, node.id)?.closest(
+          ".root"
+        );
 
-        return parse(node.doc, clusters?.hasAttribute("transform"));
+        const clusterHasOwnEdges = clusters?.hasAttribute("transform");
+
+        return parse(node.doc, clusterHasOwnEdges, node.id);
       } else if (node.stmt === "relation") {
         const startId = node.state1.id;
         const endId = node.state2.id;
@@ -306,7 +331,7 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           throw new Error("Root container not found");
         }
 
-        const edges = isCluster
+        const edges = retrieveEdgeFromClusterSvg
           ? rootContainer.querySelector(".edgePaths")?.children
           : containerEl.querySelector(".edgePaths")?.children;
 
@@ -315,7 +340,7 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
         }
 
         const edgeStartElement = edges[
-          isCluster ? index : rootEdgeIndex
+          retrieveEdgeFromClusterSvg ? index : rootEdgeIndex
         ] as SVGPathElement;
 
         const position = computeElementPosition(edgeStartElement, containerEl);
@@ -324,12 +349,16 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           position
         );
 
-        // Edge case where the start node is in a cluster and the end node is not, we need to track all edges.
+        /**
+         * Edge case where cluster don't have the .edgePaths in SVG,
+         * so we need to increment the index manually and get from the root container svg
+         * */
         rootEdgeIndex++;
 
         return {
           start: nodeStartElement.id,
           end: nodeEndElement.id,
+          groupId: clusterId,
           label: {
             text: node?.description,
           },
