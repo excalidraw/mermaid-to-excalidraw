@@ -1,4 +1,4 @@
-import { useRef, useEffect, Fragment } from "react";
+import { useRef } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
@@ -6,75 +6,12 @@ import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import type { UpdateMermaidDefinition } from "./index.tsx";
-import { MermaidDiagram } from "./MermaidDiagram.tsx";
-
-interface TestCaseProps {
-  name: string;
-  testcases: { name: string; definition: string }[];
-  onChange: (definition: string, activeTestcaseIndex: number) => void;
-  error: string | null;
-  activeTestcaseIndex?: number;
-}
-
-const Testcase = ({
-  name,
-  testcases,
-  onChange,
-  error,
-  activeTestcaseIndex,
-}: TestCaseProps) => {
-  const baseId = name.toLowerCase();
-
-  useEffect(() => {
-    if (activeTestcaseIndex !== undefined) {
-      const { definition } = testcases[activeTestcaseIndex];
-
-      onChange(definition, activeTestcaseIndex);
-    }
-  }, [testcases]);
-
-  return (
-    <>
-      <h2>
-        {name} {"Diagrams"}
-      </h2>
-      <details>
-        <summary>
-          {name} {"Examples"}
-        </summary>
-        <div id={`${baseId}-container`} className="testcase-container">
-          {testcases.map(({ name, definition }, index) => {
-            const id = `${baseId}-${index}`;
-            return (
-              <Fragment key={id}>
-                <h2 style={{ marginTop: "50px", color: "#f06595" }}>{name}</h2>
-                <pre>{definition}</pre>
-                <button
-                  onClick={() => {
-                    onChange(definition, index);
-                  }}
-                >
-                  {"Render to Excalidraw"}
-                </button>
-
-                <MermaidDiagram definition={definition} id={id} />
-
-                {error && activeTestcaseIndex === index && (
-                  <div id="error">{error}</div>
-                )}
-              </Fragment>
-            );
-          })}
-        </div>
-      </details>
-    </>
-  );
-};
+import Testcase, { type SingleTestCaseProps } from "./SingleTestCase.tsx";
 
 interface TestcasesProps {
   onChange: UpdateMermaidDefinition;
   isCustomTest: boolean;
-  error: TestCaseProps["error"];
+  error: SingleTestCaseProps["error"];
 }
 
 const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
