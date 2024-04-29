@@ -7,7 +7,6 @@ import { parseMermaid } from "../src/parseMermaid.ts";
 export interface MermaidData {
   definition: string;
   output: Awaited<ReturnType<typeof parseMermaid>> | null;
-  error: string | null;
 }
 
 export type UpdateMermaidDefinition = (
@@ -19,7 +18,6 @@ const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
     output: null,
-    error: null,
   });
   const [isActiveCustomTest, setIsActiveCustomTest] = useState(false);
 
@@ -35,13 +33,11 @@ const App = () => {
         setMermaidData({
           definition,
           output: mermaid,
-          error: null,
         });
       } catch (err) {
         setMermaidData({
           definition,
           output: null,
-          error: String(err),
         });
       }
     },
@@ -81,7 +77,6 @@ const App = () => {
 
       <Testcases
         isCustomTest={isActiveCustomTest}
-        error={deferredMermaidData.error}
         onChange={handleUpdateMermaidDefinition}
       />
 

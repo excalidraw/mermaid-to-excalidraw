@@ -5,7 +5,6 @@ export interface SingleTestCaseProps {
   name: string;
   testcases: { name: string; definition: string }[];
   onChange: (definition: string, activeTestcaseIndex: number) => void;
-  error: string | null;
   activeTestcaseIndex?: number;
 }
 
@@ -13,7 +12,6 @@ const SingleTestCase = ({
   name,
   testcases,
   onChange,
-  error,
   activeTestcaseIndex,
 }: SingleTestCaseProps) => {
   const baseId = name.toLowerCase();
@@ -51,10 +49,6 @@ const SingleTestCase = ({
                 </button>
 
                 <MermaidDiagram definition={definition} id={id} />
-
-                {error && activeTestcaseIndex === index && (
-                  <div id="error">{error}</div>
-                )}
               </Fragment>
             );
           })}

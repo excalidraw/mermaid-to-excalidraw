@@ -53,10 +53,6 @@ const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
               {JSON.stringify(mermaidData.output, null, 2)}
             </pre>
           </details>
-
-          {typeof mermaidData.error === "string" && (
-            <div id="error">{mermaidData.error}</div>
-          )}
         </>
       )}
     </>

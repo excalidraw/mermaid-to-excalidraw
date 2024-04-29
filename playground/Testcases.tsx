@@ -6,15 +6,14 @@ import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import type { UpdateMermaidDefinition } from "./index.tsx";
-import Testcase, { type SingleTestCaseProps } from "./SingleTestCase.tsx";
+import Testcase from "./SingleTestCase.tsx";
 
 interface TestcasesProps {
   onChange: UpdateMermaidDefinition;
   isCustomTest: boolean;
-  error: SingleTestCaseProps["error"];
 }
 
-const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
+const Testcases = ({ onChange }: TestcasesProps) => {
   const activeTestcase = useRef<[number, number]>();
 
   const testCases = [
@@ -41,7 +40,6 @@ const Testcases = ({ onChange, error, isCustomTest }: TestcasesProps) => {
             onChange(definition, false);
           }}
           testcases={testcases}
-          error={isCustomTest ? null : error}
         />
       ))}
     </>
