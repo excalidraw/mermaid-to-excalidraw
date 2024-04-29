@@ -245,7 +245,7 @@ const parseDoc = (
         type: "line",
         startX: clusterElementPosition.x,
         startY: clusterElementPosition.y + 25,
-        endX: clusterElementPosition.x + clusterElementSkeleton.width,
+        endX: clusterElementPosition.x + (clusterElementSkeleton?.width || 0),
         endY: clusterElementPosition.y + 25,
         strokeColor: "black",
         strokeWidth: 1,
@@ -262,70 +262,60 @@ const parseDoc = (
   return nodes;
 };
 
-function isNodeInCluster(node: Element | null) {
-  if (!node) {
-    return false;
-  }
-
-  let parentNode = node.parentNode as Element;
-  while (parentNode && parentNode?.tagName !== "svg") {
-    if (parentNode.getAttribute("transform")) {
-      return true;
-    }
-    parentNode = parentNode.parentNode as Element;
-  }
-  return false;
-}
-
 const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
   let rootEdgeIndex = 0;
 
-  function parse(nodes: ParsedDoc[]): any[] {
+  function parse(nodes: ParsedDoc[], isCluster = false): any[] {
     return nodes.flatMap((node, index) => {
       if (node.stmt === "state" && node?.doc) {
-        return parse(node.doc);
+        const clusters = containerEl
+          ?.querySelector(`[id="${node.id}"]`)
+          ?.closest(".root");
+
+        return parse(node.doc, clusters?.hasAttribute("transform"));
       } else if (node.stmt === "relation") {
         const startId = node.state1.id;
         const endId = node.state2.id;
 
-        let nodeStartElement = containerEl.querySelector<SVGPathElement>(
+        let nodeStartElement = containerEl.querySelector(
           `[data-id*="${startId}"]`
         )!;
 
-        let nodeEndElement = containerEl.querySelector<SVGPathElement>(
+        let nodeEndElement = containerEl.querySelector(
           `[data-id*="${endId}"]`
         )!;
 
-        // It's a cluster node
-        if (
+        const isClusterStartRelation =
           nodeStartElement.id.includes(`${startId}_start`) ||
-          nodeStartElement.id.includes(`${startId}_end`)
-        ) {
+          nodeStartElement.id.includes(`${startId}_end`);
+        const isClusterEndRelation =
+          nodeEndElement.id.includes(`${endId}_end`) ||
+          nodeEndElement.id.includes(`${endId}_start`);
+
+        if (isClusterStartRelation) {
           nodeStartElement = containerEl.querySelector(`[id="${startId}"]`)!;
         }
 
-        // It's a cluster node
-        if (
-          nodeEndElement.id.includes(`${endId}_end`) ||
-          nodeEndElement.id.includes(`${endId}_start`)
-        ) {
+        if (isClusterEndRelation) {
           nodeEndElement = containerEl.querySelector(`[id="${endId}"]`)!;
         }
 
-        const rootContainer = nodeStartElement.parentElement?.parentElement;
+        const rootContainer = nodeStartElement.closest(".root");
 
         if (!rootContainer) {
           throw new Error("Root container not found");
         }
 
-        const edges = rootContainer.querySelector(".edgePaths")?.children;
+        const edges = isCluster
+          ? rootContainer.querySelector(".edgePaths")?.children
+          : containerEl.querySelector(".edgePaths")?.children;
 
         if (!edges) {
           throw new Error("Edges not found");
         }
 
         const edgeStartElement = edges[
-          isNodeInCluster(nodeStartElement) ? index : rootEdgeIndex
+          isCluster ? index : rootEdgeIndex
         ] as SVGPathElement;
 
         const position = computeElementPosition(edgeStartElement, containerEl);
