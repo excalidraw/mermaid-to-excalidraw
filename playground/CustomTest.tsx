@@ -52,6 +52,7 @@ const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
             <pre id="custom-parsed-data">
               {JSON.stringify(mermaidData.output, null, 2)}
             </pre>
+            {mermaidData.error && <div id="error">{mermaidData.error}</div>}
           </details>
         </>
       )}
