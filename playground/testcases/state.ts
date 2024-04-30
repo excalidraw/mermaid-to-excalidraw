@@ -73,7 +73,7 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
             }
         }
     }
-  `,
+`,
     type: "state",
   },
   {
@@ -95,7 +95,7 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
         [*] --> thi
         thi --> [*]
     }
-    `,
+`,
     type: "state",
   },
   {
@@ -110,7 +110,46 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
         [*] --> second
         second --> [*]
     }
-  `,
+`,
+    type: "state",
+  },
+  {
+    name: "Choice",
+    definition: `stateDiagram-v2
+    state if_state <<choice>>
+    [*] --> IsPositive
+    IsPositive --> if_state
+    if_state --> False: if n < 0
+    if_state --> True : if n >= 0
+`,
+    type: "state",
+  },
+  {
+    name: "Choice in a composite state",
+    definition: `stateDiagram-v2
+    [*] --> First
+    First --> Second
+    First --> Third
+
+    state First {
+        [*] --> fir
+        fir --> [*]
+        
+        state if_state <<choice>>
+        [*] --> IsPositive
+        IsPositive --> if_state
+        if_state --> False: if n < 0
+        if_state --> True : if n >= 0
+    }
+    state Second {
+        [*] --> sec
+        sec --> [*]
+    }
+    state Third {
+        [*] --> thi
+        thi --> [*]
+    }
+`,
     type: "state",
   },
   {

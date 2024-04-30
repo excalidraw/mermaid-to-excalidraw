@@ -19,6 +19,7 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
     chart.nodes.forEach((node) => {
       switch (node.type) {
         case "ellipse":
+        case "diamond":
         case "rectangle":
           const element = transformToExcalidrawContainerSkeleton(node);
 

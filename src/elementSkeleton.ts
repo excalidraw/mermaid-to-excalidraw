@@ -47,7 +47,7 @@ export type Text = {
 };
 
 export type Container = {
-  type: "rectangle" | "ellipse";
+  type: "rectangle" | "ellipse" | "diamond";
   x: number;
   y: number;
   id?: string;
