@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
@@ -16,6 +16,7 @@ interface TestcasesProps {
 const Testcases = ({ onChange }: TestcasesProps) => {
   const [[activeTestCaseFileIndex, activeTestCaseIndex], setActiveTestCase] =
     useState<[number | undefined, number | undefined] | []>([]);
+  const [updateKey, setUpdateKey] = useState(0);
 
   const testCases = [
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
@@ -34,7 +35,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
 
       onChange(definition, false);
     }
-  }, [activeTestCaseFileIndex, activeTestCaseIndex]);
+  }, [activeTestCaseFileIndex, activeTestCaseIndex, updateKey]);
 
   return (
     <>
@@ -44,6 +45,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
           name={name}
           onChange={(activeCase) => {
             setActiveTestCase([fileIndex, activeCase]);
+            setUpdateKey((prev) => prev + 1);
           }}
           testcases={testcases}
         />
