@@ -9,7 +9,7 @@ Start --> Stop
     type: "flowchart",
   },
   {
-    name: "Direction Left to Right1",
+    name: "Direction Left to Right",
     definition: `flowchart LR
 Start --> Stop
 `,
