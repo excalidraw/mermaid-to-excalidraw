@@ -1,6 +1,6 @@
 export const FLOWCHART_DIAGRAM_TESTCASES = [
   {
-    name: "Direction Top to Down",
+    name: "Direction Top to Down1",
     definition: `flowchart TD
 Start --> Stop
 `,

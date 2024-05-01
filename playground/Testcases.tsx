@@ -5,11 +5,11 @@ import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
-import type { UpdateMermaidDefinition } from "./index.tsx";
 import SingleTestCase from "./SingleTestCase.tsx";
+import type { MermaidData } from "./index.tsx";
 
 interface TestcasesProps {
-  onChange: UpdateMermaidDefinition;
+  onChange: (definition: MermaidData["definition"], isCustom: boolean) => void;
   isCustomTest: boolean;
 }
 

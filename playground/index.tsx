@@ -10,11 +10,6 @@ export interface MermaidData {
   error: string | null;
 }
 
-export type UpdateMermaidDefinition = (
-  definition: string,
-  isCustom: boolean
-) => void;
-
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
@@ -25,7 +20,7 @@ const App = () => {
 
   const deferredMermaidData = useDeferredValue(mermaidData);
 
-  const handleUpdateMermaidDefinition = useCallback(
+  const handleOnChange = useCallback(
     async (definition: MermaidData["definition"], isCustom: boolean) => {
       try {
         setIsActiveCustomTest(isCustom);
@@ -68,21 +63,18 @@ const App = () => {
           target="_blank"
           href="https://mermaid.js.org/syntax/classDiagram.html"
         >
-          {"class "}
+          {"Class "}
         </a>
         {"diagrams."}
         <br />
         <CustomTest
           isActive={isActiveCustomTest}
           mermaidData={deferredMermaidData}
-          onChange={handleUpdateMermaidDefinition}
+          onChange={handleOnChange}
         />
       </section>
 
-      <Testcases
-        isCustomTest={isActiveCustomTest}
-        onChange={handleUpdateMermaidDefinition}
-      />
+      <Testcases isCustomTest={isActiveCustomTest} onChange={handleOnChange} />
 
       <div id="excalidraw">
         <ExcalidrawWrapper
