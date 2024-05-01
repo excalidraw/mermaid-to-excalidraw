@@ -1,11 +1,15 @@
-export const SEQUENCE_DIAGRAM_TESTCASES = [
+import { TestCase } from "../SingleTestCase";
+
+export const SEQUENCE_DIAGRAM_TESTCASES: TestCase[] = [
   {
+    type: "sequence",
     name: "Solid and dotted line without arrow",
     definition: `sequenceDiagram
   Alice->John: Hello John, how are you?
   John-->Alice: Great!`,
   },
   {
+    type: "sequence",
     name: "Solid and dotted line with arrow head",
     definition: `sequenceDiagram
   Alice->>John: Hello John, how are you?
@@ -13,12 +17,14 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Alice->>John: See you later!`,
   },
   {
+    type: "sequence",
     name: "Solid and Dotted line with cross at end",
     definition: `sequenceDiagram
   Alice-xJohn: Hello John, how are you?
   John--xAlice: Great!`,
   },
   {
+    type: "sequence",
     name: "Solid and dotted line with open arrow at end",
     definition: `sequenceDiagram
   Alice-)John: Hello John, how are you?
@@ -26,6 +32,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Alice-)John: See you later!`,
   },
   {
+    type: "sequence",
     name: "Actor symbols",
     definition: `sequenceDiagram
   actor Alice
@@ -34,6 +41,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Bob->>Alice: Hi Alice`,
   },
   {
+    type: "sequence",
     name: "Aliases",
     definition: `sequenceDiagram
   participant A as Alice
@@ -42,6 +50,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   J->>A: Great!`,
   },
   {
+    type: "sequence",
     name: "Notes",
     definition: `sequenceDiagram
   participant Alice
@@ -49,6 +58,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Note right of Alice: Hey I am coming soon!`,
   },
   {
+    type: "sequence",
     name: "Grouping",
     definition: `sequenceDiagram
   box rgb(191, 223, 255) Alice & John
@@ -65,6 +75,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Bob->>June: Hello June, how are you?`,
   },
   {
+    type: "sequence",
     name: "Activations",
     definition: `sequenceDiagram
   Alice->>+John: Hello John, how are you?
@@ -73,6 +84,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   John-->>-Alice: I feel great!`,
   },
   {
+    type: "sequence",
     name: "Loops",
     definition: `sequenceDiagram
   Alice->John: Hi John, how are you?
@@ -81,6 +93,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   end`,
   },
   {
+    type: "sequence",
     name: "Alternate Paths",
     definition: `sequenceDiagram
   Alice->>Bob: Hello Bob, how are you?
@@ -94,6 +107,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   end`,
   },
   {
+    type: "sequence",
     name: "Critical Regions",
     definition: `sequenceDiagram
   critical Establish a connection to the DB
@@ -105,6 +119,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   end`,
   },
   {
+    type: "sequence",
     name: "Parallel Actions",
     definition: `sequenceDiagram
   par Alice to Bob
@@ -116,6 +131,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   John-->>Alice: Hi Alice!`,
   },
   {
+    type: "sequence",
     name: "Break",
     definition: `sequenceDiagram
   Consumer-->API: Book something
@@ -126,6 +142,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   API-->BillingService: Start billing process`,
   },
   {
+    type: "sequence",
     name: "Comments",
     definition: `sequenceDiagram
   Alice->>John: Hi John, whats up?
@@ -133,6 +150,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   John-->>Alice: Great!`,
   },
   {
+    type: "sequence",
     name: "Background Hightlights",
     definition: `sequenceDiagram
   participant Alice
@@ -151,6 +169,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   John -->>- Alice: Yeah! See you there.`,
   },
   {
+    type: "sequence",
     name: "Grouping with Background Highlights",
     definition: `sequenceDiagram
   rect rgb(191, 223, 255)
@@ -165,6 +184,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
    `,
   },
   {
+    type: "sequence",
     name: "Sequence Numbers",
     definition: `sequenceDiagram
   autonumber
@@ -174,12 +194,14 @@ export const SEQUENCE_DIAGRAM_TESTCASES = [
   Bob-->>John: Jolly good!`,
   },
   {
+    type: "sequence",
     name: "Entity codes",
     definition: `sequenceDiagram
     Alice->>Bob: I #9829; you!
     Bob->>Alice: I #9829; you #infin; times more!`,
   },
   {
+    type: "sequence",
     name: "Actor creation and destruction",
     definition: `sequenceDiagram
     Alice->>Bob: Hello Bob, how are you ?

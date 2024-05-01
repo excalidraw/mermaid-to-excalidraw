@@ -1,171 +1,201 @@
-export const FLOWCHART_DIAGRAM_TESTCASES = [
+import { TestCase } from "../SingleTestCase";
+
+export const FLOWCHART_DIAGRAM_TESTCASES: TestCase[] = [
   {
-    name: "Direction Top to Down1",
+    name: "Direction Top to Down",
     definition: `flowchart TD
 Start --> Stop
 `,
+    type: "flowchart",
   },
   {
-    name: "Direction Left to Right",
+    name: "Direction Left to Right1",
     definition: `flowchart LR
 Start --> Stop
 `,
+    type: "flowchart",
   },
   {
     name: "A node with round edges",
     definition: `flowchart LR
 id1(This is the text in the box)
 `,
+    type: "flowchart",
   },
   {
     name: "A stadium-shaped node ",
     definition: `flowchart LR
 id1([This is the text in the box])
 `,
+    type: "flowchart",
   },
   {
     name: "A node in a subroutine shape",
     definition: `flowchart LR
 id1[[This is the text in the box]]
 `,
+    type: "flowchart",
   },
   {
     name: "A node in a cylindrical shape",
     definition: `flowchart LR
 id1[(Database)]
 `,
+    type: "flowchart",
   },
   {
     name: "A node in the form of a circle",
     definition: `flowchart LR
 id1((This is the text in the circle))
 `,
+    type: "flowchart",
   },
   {
     name: "A node in an asymmetric shape",
     definition: `flowchart LR
 id1>This is the text in the box]
 `,
+    type: "flowchart",
   },
   {
     name: "A node (rhombus)",
     definition: `flowchart LR
 id1{This is the text in the box}
 `,
+    type: "flowchart",
   },
   {
     name: "A hexagon node",
     definition: `flowchart LR
 id1{{This is the text in the box}}
 `,
+    type: "flowchart",
   },
   {
     name: "Parallelogram",
     definition: `flowchart TD
 id1[/This is the text in the box/]
 `,
+    type: "flowchart",
   },
   {
     name: "Parallelogram with alt text",
     definition: `flowchart TD
 id1[\\This is the text in the box\\]
 `,
+    type: "flowchart",
   },
   {
     name: "Trapezoid",
     definition: `flowchart TD
 A[/Christmas\\]
 `,
+    type: "flowchart",
   },
   {
     name: "Trapezoid alt",
     definition: `flowchart TD
 B[\\Go shopping/]
 `,
+    type: "flowchart",
   },
   {
     name: "Double circle",
     definition: `flowchart TD
 id1(((This is the text in the circle)))
 `,
+    type: "flowchart",
   },
   {
     name: "A link with arrow head",
     definition: `flowchart LR
 A-->B
 `,
+    type: "flowchart",
   },
   {
     name: "A link with arrow head and text",
     definition: `flowchart LR
 A-->|text|B
 `,
+    type: "flowchart",
   },
   {
     name: "A link with arrow head and text using another syntax",
     definition: `flowchart LR
 A-- text -->B
 `,
+    type: "flowchart",
   },
   {
     name: "Dotted link",
     definition: `flowchart LR
 A-.->B;
 `,
+    type: "flowchart",
   },
   {
     name: "Dotted link with text",
     definition: `flowchart LR
 A-. text .-> B
 `,
+    type: "flowchart",
   },
   {
     name: "An open link ",
     definition: `flowchart LR
 A --- B
 `,
+    type: "flowchart",
   },
   {
     name: "An open link with text",
     definition: `flowchart LR
 A-- This is the text! ---B
 `,
+    type: "flowchart",
   },
   {
     name: "An open link with text using another syntax",
     definition: `flowchart LR
 A---|This is the text|B
 `,
+    type: "flowchart",
   },
   {
     name: "Thick link",
     definition: `flowchart LR
 A ==> B
 `,
+    type: "flowchart",
   },
   {
     name: "Thick link with text",
     definition: `flowchart LR
 A == text ==> B
 `,
+    type: "flowchart",
   },
   {
     name: "Chaining of links",
     definition: `flowchart LR
 A -- text --> B -- text2 --> C
 `,
+    type: "flowchart",
   },
   {
     name: "Multiple nodes links in the same line",
     definition: `flowchart LR
 a --> b & c--> d
 `,
+    type: "flowchart",
   },
   {
     name: "Multiple nodes links to describe a dependencies",
     definition: `flowchart TB
 A & B--> C & D
 `,
+    type: "flowchart",
   },
   {
     name: "Multiple nodes linkes to describe a dependencies using another syntax",
@@ -175,6 +205,7 @@ A --> D
 B --> C
 B --> D
 `,
+    type: "flowchart",
   },
   {
     name: "Circle arrow and Cross arrow",
@@ -182,6 +213,7 @@ B --> D
 A --o B
 B --x C
 `,
+    type: "flowchart",
   },
   {
     name: "Multi directional arrows",
@@ -190,18 +222,21 @@ A o--o B
 B <--> C
 C x--x D
 `,
+    type: "flowchart",
   },
   {
     name: "Special characters that break syntax",
     definition: `flowchart LR
 id1["This is the (text) in the box"]
 `,
+    type: "flowchart",
   },
   {
     name: "Entity codes to escape characters",
     definition: `flowchart LR
 A["A double quote:#quot;"] -->B["A dec char:#9829;"]
 `,
+    type: "flowchart",
   },
   {
     name: "Subgraphs",
@@ -217,6 +252,7 @@ subgraph three
 c1-->c2
 end
 `,
+    type: "flowchart",
   },
   {
     name: "Subgraph with explicit id",
@@ -226,6 +262,7 @@ subgraph ide1 [one]
 a1-->a2
 end
 `,
+    type: "flowchart",
   },
   {
     name: "Links between subgraphs",
@@ -244,6 +281,7 @@ one --> two
 three --> two
 two --> c2
 `,
+    type: "flowchart",
   },
   {
     name: "Direction in subgraphs",
@@ -262,6 +300,7 @@ end
 A --> TOP --> B
 B1 --> B2
 `,
+    type: "flowchart",
   },
   {
     name: "Markdown Strings",
@@ -275,6 +314,7 @@ c("\`The **cat**
 in the hat\`") -- "\`Bold **edge label**\`" --> d("The dog in the hog")
 end
 `,
+    type: "flowchart",
   },
   {
     name: "Interaction using tooltip",
@@ -287,6 +327,7 @@ click B "https://www.github.com" "This is a tooltip for a link"
 click A call callback() "Tooltip for a callback"
 click B href "https://www.github.com" "This is a tooltip for a link"
 `,
+    type: "flowchart",
   },
   {
     name: "Interaction using link",
@@ -300,6 +341,7 @@ click B "https://www.github.com" "Open this in a new tab" _blank
 click C href "https://www.github.com" _blank
 click D href "https://www.github.com" "Open this in a new tab" _blank
 `,
+    type: "flowchart",
   },
   {
     name: "Comments",
@@ -307,6 +349,7 @@ click D href "https://www.github.com" "Open this in a new tab" _blank
 %% this is a comment A -- text --> B{node}
 A -- text --> B -- text2 --> C
 `,
+    type: "flowchart",
   },
   {
     name: "Styling a node",
@@ -315,6 +358,7 @@ id1(Start)-->id2(Stop)
 style id1 fill:#f9f,stroke:#333,stroke-width:4px
 style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5
 `,
+    type: "flowchart",
   },
   {
     name: "Classes",
@@ -323,6 +367,7 @@ A-->B[AAABBB]
 B-->D
 class A cssClass
 `,
+    type: "flowchart",
   },
   {
     name: "Basic support for fontawesome",
@@ -332,6 +377,7 @@ B-->C[fa:fa-ban forbidden]
 B-->D(fa:fa-spinner)
 B-->E(A fa:fa-camera-retro perhaps?)
 `,
+    type: "flowchart",
   },
   {
     name: "Graph declarations with spaces between vertices and link and without semicolon",
@@ -341,6 +387,7 @@ B --> C{Decision}
 C -->|One| D[Result one]
 C -->|Two| E[Result two]
 `,
+    type: "flowchart",
   },
   {
     name: "Complex Case 1",
@@ -358,6 +405,7 @@ C -->|Two| E[Result two]
   H -->|No| J[Action 6]
   I --> K[End]
   J --> K`,
+    type: "flowchart",
   },
   {
     name: "Complex Case 2",
@@ -418,5 +466,6 @@ C -->|Two| E[Result two]
   AG[Subprocess] --> J[Task 1]
   AG[Subprocess] --> B[Initialize]
 `,
+    type: "flowchart",
   },
 ];

@@ -10,20 +10,26 @@ export interface MermaidData {
   error: string | null;
 }
 
+export type ActiveTestCaseIndex = number | "custom" | null;
+
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
     error: null,
     output: null,
   });
-  const [isActiveCustomTest, setIsActiveCustomTest] = useState(false);
 
+  const [activeTestCaseIndex, setActiveTestCaseIndex] =
+    useState<ActiveTestCaseIndex>(null);
   const deferredMermaidData = useDeferredValue(mermaidData);
 
   const handleOnChange = useCallback(
-    async (definition: MermaidData["definition"], isCustom: boolean) => {
+    async (
+      definition: MermaidData["definition"],
+      activeTestCaseIndex: ActiveTestCaseIndex
+    ) => {
       try {
-        setIsActiveCustomTest(isCustom);
+        setActiveTestCaseIndex(activeTestCaseIndex);
 
         const mermaid = await parseMermaid(definition);
 
@@ -68,13 +74,16 @@ const App = () => {
         {"diagrams."}
         <br />
         <CustomTest
-          isActive={isActiveCustomTest}
+          activeTestCaseIndex={activeTestCaseIndex}
           mermaidData={deferredMermaidData}
           onChange={handleOnChange}
         />
       </section>
 
-      <Testcases isCustomTest={isActiveCustomTest} onChange={handleOnChange} />
+      <Testcases
+        activeTestCaseIndex={activeTestCaseIndex}
+        onChange={handleOnChange}
+      />
 
       <div id="excalidraw">
         <ExcalidrawWrapper

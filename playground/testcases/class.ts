@@ -1,17 +1,22 @@
-export const CLASS_DIAGRAM_TESTCASES = [
+import type { TestCase } from "../SingleTestCase";
+
+export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
   {
+    type: "class",
     name: "Class only",
     definition: `classDiagram
   class Animal
     `,
   },
   {
+    type: "class",
     name: "Class with Relations",
     definition: `classDiagram
   class Animal
   Vehicle <|-- Car`,
   },
   {
+    type: "class",
     name: "Class with Labels",
     definition: `classDiagram
   class Animal["Animal with a label"]
@@ -19,6 +24,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Animal --> Car`,
   },
   {
+    type: "class",
     name: "Class with Members",
     definition: `classDiagram
   class BankAccount
@@ -28,6 +34,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   BankAccount : +withdrawal(amount)`,
   },
   {
+    type: "class",
     name: "Class with Members using Curly braces ({})",
     definition: `classDiagram
   class BankAccount{
@@ -38,6 +45,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Class with Members and Return type",
     definition: `classDiagram
   class BankAccount{
@@ -48,6 +56,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Class with Generic types",
     definition: `classDiagram
   class Square~Shape~{
@@ -63,6 +72,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Square : +getDistanceMatrix() List~List~int~~`,
   },
   {
+    type: "class",
     name: "Multiple Classes with Members",
     definition: `classDiagram
   class Duck
@@ -77,6 +87,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   `,
   },
   {
+    type: "class",
     name: "Class with Relations [1]",
     definition: `classDiagram
   classA <|-- classB
@@ -86,6 +97,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   `,
   },
   {
+    type: "class",
     name: "Class with Relations [2]",
     definition: `classDiagram
   classI -- classJ
@@ -94,6 +106,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   classO .. classP`,
   },
   {
+    type: "class",
     name: "Class with 2 way Relations",
     definition: `classDiagram
   Animal <|--|> Zebra
@@ -109,6 +122,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
     classG <--> classH`,
   },
   {
+    type: "class",
     name: "Class with Namespace",
     definition: `classDiagram
   namespace BaseShapes {
@@ -120,6 +134,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Class with Cardinality / Multiplicity on Relations",
     definition: `classDiagram
   Customer "1" --> "*" Ticket
@@ -127,6 +142,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Galaxy --> "many" Star : Contains`,
   },
   {
+    type: "class",
     name: "Annotations on Classes",
     definition: `classDiagram
   class Shape{
@@ -144,6 +160,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Comments",
     definition: `classDiagram
   %% This whole line is a comment classDiagram class Shape <&lt;interface&gt;>
@@ -154,6 +171,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Setting the direction of Diagram -> Left to Right ",
     definition: `classDiagram
   direction LR
@@ -172,6 +190,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Student "1" --o "1" Bike : rides`,
   },
   {
+    type: "class",
     name: "Setting the direction of Diagram -> Right to Left ",
     definition: `classDiagram
   direction RL
@@ -191,6 +210,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   },
 
   {
+    type: "class",
     name: "Setting the direction of Diagram -> Bottom to Top ",
     definition: `classDiagram
   direction BT
@@ -209,6 +229,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Student "1" --o "1" Bike : rides`,
   },
   {
+    type: "class",
     name: "Setting the direction of Diagram -> Top to Bottom ",
     definition: `classDiagram
   direction TB
@@ -227,6 +248,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   Student "1" --o "1" Bike : rides`,
   },
   {
+    type: "class",
     name: "Class with Notes",
     definition: `classDiagram
   note "This is a general note"
@@ -235,6 +257,7 @@ export const CLASS_DIAGRAM_TESTCASES = [
   }`,
   },
   {
+    type: "class",
     name: "Classes with partial match",
     definition: `classDiagram
     Foobar <|-- Foo

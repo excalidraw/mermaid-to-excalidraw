@@ -1,55 +1,64 @@
-import { useEffect, useState } from "react";
+import { Fragment } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
-import SingleTestCase from "./SingleTestCase.tsx";
-import type { MermaidData } from "./index.tsx";
+import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
+import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 
 interface TestcasesProps {
-  onChange: (definition: MermaidData["definition"], isCustom: boolean) => void;
-  isCustomTest: boolean;
+  onChange: (
+    definition: MermaidData["definition"],
+    activeTestCaseIndex: number | "custom" | null
+  ) => void;
+  activeTestCaseIndex: ActiveTestCaseIndex;
 }
 
 const Testcases = ({ onChange }: TestcasesProps) => {
-  const [[activeTestCaseFileIndex, activeTestCaseIndex], setActiveTestCase] =
-    useState<[number | undefined, number | undefined] | []>([]);
-  const [updateKey, setUpdateKey] = useState(0);
-
-  const testCases = [
+  const testcaseTypes: { name: string; testcases: TestCase[] }[] = [
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
     { name: "Sequence", testcases: SEQUENCE_DIAGRAM_TESTCASES },
     { name: "Class", testcases: CLASS_DIAGRAM_TESTCASES },
     { name: "Unsupported", testcases: UNSUPPORTED_DIAGRAM_TESTCASES },
   ];
 
-  useEffect(() => {
-    if (
-      activeTestCaseIndex !== undefined &&
-      activeTestCaseFileIndex !== undefined
-    ) {
-      const { definition } =
-        testCases[activeTestCaseFileIndex].testcases[activeTestCaseIndex];
+  const allTestCases = testcaseTypes.flatMap((type) => type.testcases);
 
-      onChange(definition, false);
-    }
-  }, [activeTestCaseFileIndex, activeTestCaseIndex, updateKey]);
-
+  let testCaseIndex = 0;
   return (
     <>
-      {testCases.map(({ name, testcases }, fileIndex) => (
-        <SingleTestCase
-          key={fileIndex}
-          name={name}
-          onChange={(activeCase) => {
-            setActiveTestCase([fileIndex, activeCase]);
-            setUpdateKey((prev) => prev + 1);
-          }}
-          testcases={testcases}
-        />
-      ))}
+      {testcaseTypes.map(({ name, testcases }) => {
+        const baseId = name.toLowerCase();
+        return (
+          <Fragment key={baseId}>
+            <h2>
+              {name} {"Diagrams"}
+            </h2>
+            <details>
+              <summary>
+                {name} {"Diagram Examples"}
+              </summary>
+              <div id={`${baseId}-container`} className="testcase-container">
+                {testcases.map((testcase, index) => {
+                  return (
+                    <SingleTestCase
+                      key={`${testcase.type}-${index}`}
+                      index={testCaseIndex++}
+                      onChange={(index) => {
+                        const { definition } = allTestCases[index];
+                        onChange(definition, index);
+                      }}
+                      testcase={testcase}
+                    />
+                  );
+                })}
+              </div>
+            </details>
+          </Fragment>
+        );
+      })}
     </>
   );
 };

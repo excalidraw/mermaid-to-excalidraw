@@ -20,7 +20,6 @@ export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
           `mermaid-diagram-${id}`,
           definition
         );
-
         startTransition(() => {
           setSvg(svg);
         });

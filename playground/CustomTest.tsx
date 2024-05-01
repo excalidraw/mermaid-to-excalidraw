@@ -1,13 +1,21 @@
 import { MermaidDiagram } from "./MermaidDiagram.tsx";
-import type { MermaidData } from "./index.tsx";
+import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 
 interface CustomTestProps {
-  onChange: (definition: MermaidData["definition"], isCustom: boolean) => void;
+  onChange: (
+    definition: MermaidData["definition"],
+    activeTestCaseIndex: ActiveTestCaseIndex
+  ) => void;
   mermaidData: MermaidData;
-  isActive: boolean;
+  activeTestCaseIndex: ActiveTestCaseIndex;
 }
 
-const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
+const CustomTest = ({
+  onChange,
+  mermaidData,
+  activeTestCaseIndex,
+}: CustomTestProps) => {
+  const isActive = activeTestCaseIndex === "custom";
   return (
     <>
       <form
@@ -16,7 +24,7 @@ const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
 
           const formData = new FormData(e.target as HTMLFormElement);
 
-          onChange(formData.get("mermaid-input")?.toString() || "", true);
+          onChange(formData.get("mermaid-input")?.toString() || "", "custom");
         }}
       >
         <textarea
@@ -29,7 +37,7 @@ const CustomTest = ({ onChange, mermaidData, isActive }: CustomTestProps) => {
               return;
             }
 
-            onChange(e.target.value, true);
+            onChange(e.target.value, "custom");
           }}
           style={{ marginTop: "1rem" }}
           placeholder="Input Mermaid Syntax"

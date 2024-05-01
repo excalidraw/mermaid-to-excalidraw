@@ -1,5 +1,8 @@
-export const UNSUPPORTED_DIAGRAM_TESTCASES = [
+import type { TestCase } from "../SingleTestCase";
+
+export const UNSUPPORTED_DIAGRAM_TESTCASES: TestCase[] = [
   {
+    type: "unsupported",
     name: "ER Diagram",
     definition: `erDiagram
     CUSTOMER ||--o{ ORDER : places
@@ -7,6 +10,7 @@ export const UNSUPPORTED_DIAGRAM_TESTCASES = [
     CUSTOMER }|..|{ DELIVERY-ADDRESS : uses`,
   },
   {
+    type: "unsupported",
     name: "Gantt Diagram",
     definition: `gantt
     title A Gantt Diagram
