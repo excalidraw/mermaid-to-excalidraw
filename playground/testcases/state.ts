@@ -152,6 +152,63 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
 `,
     type: "state",
   },
+
+  {
+    name: "Notes",
+    definition: `stateDiagram-v2
+    State1: The state with a note
+    note right of State1
+        Important information! You can write
+        notes.
+    end note
+    State1 --> State2
+    note left of State2 : This is the note to the left.
+`,
+    type: "state",
+  },
+  {
+    name: "Note left and right in same state",
+    definition: `stateDiagram-v2
+    State1: The state with a note
+    note right of State1
+        Important information! You can write
+        notes.
+    end note
+    note left of State1 : This is the note to the left.
+`,
+    type: "state",
+  },
+  {
+    name: "Multiple notes in the same state",
+    definition: `stateDiagram-v2
+    State1: The state with a note
+    note right of State1
+        Important information! You can write
+        notes.
+    end note
+    note left of State1 : Left.
+    note left of State1 : Join.
+    note left of State1 : Out.
+    note right of State1 : Ok!.
+`,
+    type: "state",
+  },
+  {
+    name: "Notes inside a composite state",
+    definition: `stateDiagram-v2
+    [*] --> First
+    state First {
+        [*] --> second
+        second --> [*]
+
+        note right of second
+        First is a composite state
+        end note
+  
+    }
+`,
+    type: "state",
+  },
   {
     name: "Sample 1",
     definition: `stateDiagram-v2

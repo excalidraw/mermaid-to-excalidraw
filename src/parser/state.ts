@@ -1,10 +1,12 @@
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import {
-  Line,
-  createContainerSkeletonFromSVG,
+  type Container,
+  type Line,
   type Node,
+  createContainerSkeletonFromSVG,
 } from "../elementSkeleton.js";
-import { computeEdge2Positions, computeElementPosition } from "../utils.js";
+import { computeEdgePositions, computeElementPosition } from "../utils.js";
+import type { Edge } from "./flowchart.js";
 
 export interface State {
   type: "state";
@@ -44,22 +46,68 @@ export interface RelationState {
 }
 
 export interface CompositeState {
-  doc?: Array<ParsedDoc>;
+  doc: Array<ParsedDoc>;
   description: string;
   id: string;
   type: "default";
   stmt: "state";
 }
 
-export interface ChoiceState {
+export interface SingleState {
+  description: string;
+  id: string;
+  type: "default";
+  stmt: "state";
+}
+
+export interface NoteState {
+  id: string;
+  note: {
+    position: string;
+    text: string;
+  };
+  stmt: "state";
+}
+
+export interface SpecialState {
   id: string;
   type: "choice";
   stmt: "state";
 }
 
-export type ParsedDoc = ChoiceState | CompositeState | RelationState;
+export type ParsedDoc =
+  | NoteState
+  | SpecialState
+  | SingleState
+  | CompositeState
+  | RelationState;
 
 const MARGIN_TOP_LINE_X_AXIS = 25;
+
+const isNoteState = (node: ParsedDoc): node is NoteState => {
+  return node.stmt === "state" && "note" in node;
+};
+
+const isCompositeState = (node: ParsedDoc): node is CompositeState => {
+  return node.stmt === "state" && "doc" in node;
+};
+
+const isSingleState = (node: ParsedDoc): node is SingleState => {
+  return (
+    node.stmt === "state" &&
+    "doc" in node === false &&
+    "type" in node &&
+    node.type === "default"
+  );
+};
+
+const isSpecialState = (node: ParsedDoc): node is SpecialState => {
+  return node.stmt === "state" && "type" in node && node.type !== "default";
+};
+
+const isRelationState = (node: ParsedDoc): node is RelationState => {
+  return node.stmt === "relation";
+};
 
 const createInnerEllipseExcalidrawElement = (
   element: SVGSVGElement,
@@ -184,7 +232,7 @@ const parseRelation = (
   }
 
   if (
-    !processedNodeRelations.has(relationStartNode.id) &&
+    !processedNodeRelations.has(relationStart.id) &&
     !isRelationStartCluster
   ) {
     const relationStartContainer = createExcalidrawElement(
@@ -209,13 +257,10 @@ const parseRelation = (
 
     relationStartContainer.groupId = groupId;
     nodes.push(relationStartContainer);
-    processedNodeRelations.add(relationStartNode.id);
+    processedNodeRelations.add(relationStart.id);
   }
 
-  if (
-    !processedNodeRelations.has(relationEndNode.id) &&
-    !isRelationEndCluster
-  ) {
+  if (!processedNodeRelations.has(relationEnd.id) && !isRelationEndCluster) {
     const relationEndContainer = createExcalidrawElement(
       relationEndNode,
       containerEl,
@@ -229,7 +274,7 @@ const parseRelation = (
 
     relationEndContainer.groupId = groupId;
     nodes.push(relationEndContainer);
-    processedNodeRelations.add(relationEndNode.id);
+    processedNodeRelations.add(relationEnd.id);
 
     if (relationEnd?.start === false) {
       const innerEllipse = createInnerEllipseExcalidrawElement(
@@ -260,10 +305,8 @@ const parseDoc = (
   groupId?: string
 ) => {
   doc.forEach((state) => {
-    const isSingleState =
-      state.stmt === "state" && state.type === "default" && !state?.doc;
-
-    if (isSingleState) {
+    if (isSingleState(state)) {
+      console.debug(state);
       const singleStateNode = containerEl.querySelector<SVGSVGElement>(
         `[data-id="${state.id}"]`
       )!;
@@ -275,15 +318,16 @@ const parseDoc = (
         { label: { text: state.description || state.id } }
       );
 
+      processedNodeRelations.add(state.id);
       nodes.push(stateElement);
     }
 
-    if (state.stmt === "state" && state.type === "choice") {
+    if (isSpecialState(state)) {
       specialTypes[state.id] = state;
+      return;
     }
 
-    // Relation state
-    if (state.stmt === "relation") {
+    if (isRelationState(state)) {
       parseRelation(
         state,
         containerEl,
@@ -294,8 +338,7 @@ const parseDoc = (
       );
     }
 
-    // Composite state
-    if (state.stmt === "state" && state.type === "default" && state?.doc) {
+    if (isCompositeState(state)) {
       const clusterElement = getClusterElement(containerEl, state.id);
 
       const { clusterElementSkeleton, topLine } =
@@ -327,9 +370,13 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
     clusterId?: string
   ): any[] {
     return nodes
-      .filter((node) => !(node.stmt === "state" && node.type === "choice"))
+      .filter((node) => {
+        return (
+          isCompositeState(node) || isRelationState(node) || isNoteState(node)
+        );
+      })
       .flatMap((node, index) => {
-        if (node.stmt === "state" && node.type === "default" && node.doc) {
+        if (isCompositeState(node)) {
           const clusters = getClusterElement(containerEl, node.id)?.closest(
             ".root"
           );
@@ -386,11 +433,11 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
             edgeStartElement,
             containerEl
           );
-          const edgePositionData = computeEdge2Positions(
+          const edgePositionData = computeEdgePositions(
             edgeStartElement,
-            position
+            position,
+            "MC"
           );
-
           /**
            * Edge case where cluster don't have the .edgePaths in SVG,
            * so we need to increment the index manually and get from the root container svg
@@ -408,12 +455,111 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           };
         }
 
-        // This is neither a "state" node nor a "relation" node. Return an empty array.
+        if (isNoteState(node)) {
+          rootEdgeIndex++;
+        }
+
         return [];
       });
   }
 
   return parse(nodes);
+};
+
+const parseNotes = (doc: ParsedDoc[], containerEl: Element) => {
+  let rootIndex = 0;
+  const noteIndex: Record<string, number> = {};
+  const notes: Container[] = [];
+  const edges: Partial<Edge>[] = [];
+
+  const processNote = (state: NoteState): [Container, Partial<Edge>] => {
+    if (!noteIndex[state.id]) {
+      noteIndex[state.id] = 0;
+    }
+    const noteNodes = Array.from(
+      containerEl.querySelectorAll<SVGSVGElement>(
+        `[data-id*="${state.id}----note"]`
+      )
+    );
+
+    const noteNode = noteNodes[noteIndex[state.id]];
+
+    const noteElement = createExcalidrawElement(
+      noteNode,
+      containerEl,
+      "rectangle",
+      {
+        label: { text: state.note.text },
+        id: noteNode.id,
+        subtype: "note",
+      }
+    );
+
+    const rootContainer = noteNode.closest(".root")!;
+
+    const edge = rootContainer.querySelector(".edgePaths")?.children[
+      rootIndex
+    ] as SVGPathElement;
+
+    const position = computeElementPosition(edge, containerEl);
+
+    const edgePositionData = computeEdgePositions(edge, position, "MCL");
+
+    let startNode = rootContainer.querySelector<SVGSVGElement>(
+      `[data-id*="${state.id}"]:not([data-id*="note"])`
+    )!;
+
+    const isClusterStartRelation =
+      startNode.id.includes(`_start`) || startNode.id.includes(`_end`);
+
+    if (isClusterStartRelation) {
+      startNode = getClusterElement(containerEl, state.id);
+    }
+
+    const edgeElement: Partial<Edge> = {
+      start: startNode.id,
+      end: noteNode.id,
+      ...edgePositionData,
+    };
+
+    if (state.note.position.includes("left")) {
+      edgeElement.end = startNode.id;
+      edgeElement.start = noteNode.id;
+    }
+
+    noteIndex[state.id]++;
+    return [noteElement, edgeElement];
+  };
+
+  doc
+    .filter(
+      (state) =>
+        isNoteState(state) || isCompositeState(state) || isRelationState(state)
+    )
+    .flatMap((state) => {
+      if (isNoteState(state)) {
+        const [noteElement, edgeElement] = processNote(state);
+
+        rootIndex++;
+        notes.push(noteElement);
+        edges.push(edgeElement);
+      }
+
+      if (isCompositeState(state)) {
+        const { notes: compositeNotes, edges: compositeEdges } = parseNotes(
+          state.doc,
+          containerEl
+        );
+        notes.push(...compositeNotes);
+        edges.push(...compositeEdges);
+      }
+
+      if (isRelationState(state)) {
+        rootIndex++;
+      }
+    });
+
+  return { notes, edges };
 };
 
 export const parseMermaidStateDiagram = (
@@ -439,6 +585,11 @@ export const parseMermaidStateDiagram = (
 
   const nodes = parseDoc(rootDocV2.doc, containerEl);
   const edges = parseEdges(rootDocV2.doc, containerEl);
+
+  const { notes, edges: edgeNotes } = parseNotes(rootDocV2.doc, containerEl);
+
+  nodes.push(...notes);
+  edges.push(...edgeNotes);
 
   return { type: "state", nodes, edges };
 };

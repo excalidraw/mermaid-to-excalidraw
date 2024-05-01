@@ -23,9 +23,11 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
         case "rectangle":
           const element = transformToExcalidrawContainerSkeleton(node);
 
-          Object.assign(element, {
-            roundness: { type: 3 },
-          });
+          if (!element.id?.includes("note")) {
+            Object.assign(element, {
+              roundness: { type: 3 },
+            });
+          }
 
           elements.push(element);
           break;
@@ -43,6 +45,10 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
     });
 
     chart.edges.forEach((edge) => {
+      if (!edge) {
+        return;
+      }
+
       const points = edge.reflectionPoints.map((point: Point) => [
         point.x - edge.reflectionPoints[0].x,
         point.y - edge.reflectionPoints[0].y,
@@ -59,6 +65,11 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
 
       if (!startVertex || !endVertex) {
         return;
+      }
+
+      if (endVertex.id?.includes("note") || startVertex.id?.includes("note")) {
+        arrow.endArrowhead = null;
+        arrow.strokeStyle = "dashed";
       }
 
       arrow.start = {
