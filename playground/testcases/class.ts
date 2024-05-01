@@ -113,6 +113,7 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
   Bird o..\* Peacock`,
   },
   {
+    type: "class",
     name: "Class with 2 way Relations and direction",
     definition: `classDiagram
     direction RL
