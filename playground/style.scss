@@ -6,6 +6,7 @@ body {
     max-width: 48%;
   }
 }
+
 button {
   height: 40px;
   font-size: 16px;
@@ -16,6 +17,7 @@ button {
   color: white;
   cursor: pointer;
 }
+
 #excalidraw {
   width: 50vw;
   height: 100vh;
@@ -46,18 +48,28 @@ button {
 
   #parsed-data-details {
     margin-top: 20px;
-    display: none;
   }
 
-  #error {
-    display: none;
-    color: red;
-    margin-top: 20px;
-  }
+  
+}
+
+#error {
+  color: red;
+  margin-top: 20px;
 }
 
 a {
   color: #0071ce;
   font-weight: 600;
   text-decoration: none;
+}
+
+.testcase-container pre {
+  font-size: 16px;
+  font-weight: 600;
+  font-style: italic;
+  background: #eeeef1;
+  white-space: pre-wrap;
+  width: 45vw;
+  padding: 5px;
 }

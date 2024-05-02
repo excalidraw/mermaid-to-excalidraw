@@ -1,4 +1,16 @@
 {
   "extends": "../tsconfig.common.json",
+  "compilerOptions": {
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+
+    /*Bundler Mode */
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
   "include": ["./**/*"]
 }
