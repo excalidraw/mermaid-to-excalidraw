@@ -3,6 +3,7 @@ import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
+import GitHubCorner from "./GitHubCorner.tsx";
 
 export interface MermaidData {
   definition: string;
@@ -51,34 +52,40 @@ const App = () => {
 
   return (
     <>
-      <section id="custom-test">
-        <h1>{"Custom Test"}</h1>
-        {"Supports only "}
-        <a target="_blank" href="https://mermaid.js.org/syntax/flowchart.html">
-          {"Flowchart"}
-        </a>
-        {", "}
-        <a
-          target="_blank"
-          href="https://mermaid.js.org/syntax/sequenceDiagram.html"
-        >
-          {"Sequence "}
-        </a>
-        {"and "}
-        <a
-          target="_blank"
-          href="https://mermaid.js.org/syntax/classDiagram.html"
-        >
-          {"Class "}
-        </a>
-        {"diagrams."}
-        <br />
-        <CustomTest
-          activeTestCaseIndex={activeTestCaseIndex}
-          mermaidData={deferredMermaidData}
-          onChange={handleOnChange}
-        />
-      </section>
+      <div style={{ width: "50%", display: "flex" }}>
+        <section id="custom-test">
+          <h1>{"Custom Test"}</h1>
+          {"Supports only "}
+          <a
+            target="_blank"
+            href="https://mermaid.js.org/syntax/flowchart.html"
+          >
+            {"Flowchart"}
+          </a>
+          {", "}
+          <a
+            target="_blank"
+            href="https://mermaid.js.org/syntax/sequenceDiagram.html"
+          >
+            {"Sequence "}
+          </a>
+          {"and "}
+          <a
+            target="_blank"
+            href="https://mermaid.js.org/syntax/classDiagram.html"
+          >
+            {"Class "}
+          </a>
+          {"diagrams."}
+          <br />
+          <CustomTest
+            activeTestCaseIndex={activeTestCaseIndex}
+            mermaidData={deferredMermaidData}
+            onChange={handleOnChange}
+          />
+        </section>
+        <GitHubCorner />
+      </div>
 
       <Testcases
         activeTestCaseIndex={activeTestCaseIndex}
