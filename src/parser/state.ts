@@ -75,8 +75,16 @@ export interface SpecialState {
   stmt: "state";
 }
 
+export interface ConcurrencyState {
+  id: string;
+  doc: ParsedDoc[];
+  stmt: "state";
+  type: "divider";
+}
+
 export type ParsedDoc =
   | NoteState
+  | ConcurrencyState
   | SpecialState
   | SingleState
   | CompositeState
@@ -85,24 +93,23 @@ export type ParsedDoc =
 const MARGIN_TOP_LINE_X_AXIS = 25;
 
 const isNoteState = (node: ParsedDoc): node is NoteState => {
-  return node.stmt === "state" && "note" in node;
+  return "note" in node;
 };
 
 const isCompositeState = (node: ParsedDoc): node is CompositeState => {
-  return node.stmt === "state" && "doc" in node;
+  return "doc" in node && node.type === "default";
+};
+
+const isConcurrencyState = (node: ParsedDoc): node is ConcurrencyState => {
+  return "doc" in node && node.type === "divider";
 };
 
 const isSingleState = (node: ParsedDoc): node is SingleState => {
-  return (
-    node.stmt === "state" &&
-    "doc" in node === false &&
-    "type" in node &&
-    node.type === "default"
-  );
+  return "doc" in node === false && "type" in node && node.type === "default";
 };
 
 const isSpecialState = (node: ParsedDoc): node is SpecialState => {
-  return node.stmt === "state" && "type" in node && node.type !== "default";
+  return "doc" in node === false && "type" in node && node.type !== "default";
 };
 
 const isRelationState = (node: ParsedDoc): node is RelationState => {
@@ -191,6 +198,19 @@ const getClusterElement = (containerEl: Element, id: string) => {
   return containerEl.querySelector<SVGSVGElement>(`[id="${id}"]`)!;
 };
 
+const getDividerId = (id: string): [string, number] => {
+  const matchDomId = id.includes("divider") ? 2 : 1;
+  const [identifier, randomId, count] = id.split("-");
+
+  const dividerCount = Number(count.split("_")[0]) - matchDomId;
+
+  return [`${identifier}-${randomId}-${dividerCount}`, dividerCount];
+};
+
+const getDividerElement = (containerEl: Element, id: string) => {
+  return containerEl.querySelector<SVGSVGElement>(`.clusters > [id*="${id}"]`)!;
+};
+
 const computeSpecialType = (specialType: SpecialState): Partial<Container> => {
   switch (specialType.type) {
     case "choice":
@@ -258,16 +278,35 @@ const parseRelation = (
   const relationStart = relation.state1;
   const relationEnd = relation.state2;
 
+  // if (
+  //   relationStart.id.startsWith("divider") ||
+  //   relationStart.id.startsWith("id")
+  // ) {
+  //   const [id, count] = getDividerId(relationStart.id);
+
+  //   relationStart.id = id.startsWith("id")
+  //     ? count?.toString()
+  //     : id.concat(relationStart.id.slice(id.length));
+  // }
+
+  // if (relationEnd.id.startsWith("divider") || relationEnd.id.startsWith("id")) {
+  //   const [id, count] = getDividerId(relationEnd.id);
+
+  //   relationEnd.id = id.startsWith("id")
+  //     ? count.toString()
+  //     : id.concat(relationEnd.id.slice(id.length));
+  // }
+
   let relationStartNode = containerEl.querySelector<SVGSVGElement>(
     `[data-id*="${relationStart.id}"]`
-  )!;
+  );
   let relationEndNode = containerEl.querySelector<SVGSVGElement>(
     `[data-id*="${relationEnd.id}"]`
-  )!;
+  );
 
   const isRelationEndCluster =
-    relationEndNode.id.includes(`${relationEnd.id}_start`) ||
-    relationEndNode.id.includes(`${relationEnd.id}_end`);
+    relationEndNode?.id.includes(`${relationEnd.id}_start`) ||
+    relationEndNode?.id.includes(`${relationEnd.id}_end`);
 
   // Binding the relation to the cluster, if we don't make this will bind to end node ellipse
   if (isRelationEndCluster) {
@@ -275,19 +314,20 @@ const parseRelation = (
   }
 
   const isRelationStartCluster =
-    relationStartNode.id.includes(`${relationStart.id}_start`) ||
-    relationStartNode.id.includes(`${relationStart.id}_end`);
+    relationStartNode?.id.includes(`${relationStart.id}_start`) ||
+    relationStartNode?.id.includes(`${relationStart.id}_end`);
 
   // Binding the relation to the cluster, if we don't make this will bind to start node ellipse
   if (isRelationStartCluster) {
     relationStartNode = getClusterElement(containerEl, relationStart.id);
   }
 
-  if (!relationStartNode || !relationEndNode) {
+  if (!relationStartNode && !relationEndNode) {
     throw new Error("Relation nodes not found");
   }
 
   if (
+    relationStartNode &&
     !processedNodeRelations.has(relationStart.id) &&
     !isRelationStartCluster
   ) {
@@ -303,7 +343,11 @@ const parseRelation = (
     processedNodeRelations.add(relationStart.id);
   }
 
-  if (!processedNodeRelations.has(relationEnd.id) && !isRelationEndCluster) {
+  if (
+    relationEndNode &&
+    !processedNodeRelations.has(relationEnd.id) &&
+    !isRelationEndCluster
+  ) {
     const [relationEndContainer, innerEllipse] =
       createRelationExcalidrawElement(
         relationEnd,
@@ -345,6 +389,7 @@ const parseDoc = (
 
       processedNodeRelations.add(state.id);
       nodes.push(stateElement);
+      return;
     }
 
     if (isSpecialState(state)) {
@@ -361,6 +406,37 @@ const parseDoc = (
         specialTypes,
         groupId
       );
+    }
+
+    if (isConcurrencyState(state)) {
+      const dividerNode = containerEl.querySelector<SVGSVGElement>(
+        `[id*="${state.id}"]`
+      )!;
+
+      const dividerElement = createExcalidrawElement(
+        dividerNode,
+        containerEl,
+        "rectangle",
+        {
+          id: dividerNode.id,
+          groupId: dividerNode.id,
+          subtype: "note",
+        }
+      );
+
+      dividerElement.bgColor = "#e9ecef";
+
+      nodes.push(dividerElement);
+
+      parseDoc(
+        state.doc,
+        containerEl,
+        nodes,
+        processedNodeRelations,
+        specialTypes,
+        state.id
+      );
+      return;
     }
 
     if (isCompositeState(state)) {
@@ -397,11 +473,14 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
     return nodes
       .filter((node) => {
         return (
-          isCompositeState(node) || isRelationState(node) || isNoteState(node)
+          isCompositeState(node) ||
+          isRelationState(node) ||
+          isConcurrencyState(node) ||
+          isNoteState(node)
         );
       })
       .flatMap((node, index) => {
-        if (isCompositeState(node)) {
+        if (isCompositeState(node) || isConcurrencyState(node)) {
           const clusters = getClusterElement(containerEl, node.id)?.closest(
             ".root"
           );
@@ -413,13 +492,13 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           const startId = node.state1.id;
           const endId = node.state2.id;
 
-          let nodeStartElement = containerEl.querySelector(
-            `[data-id*="${startId}"]`
-          )!;
+          let nodeStartElement =
+            containerEl.querySelector(`[data-id*="${startId}"]`) ||
+            getClusterElement(containerEl, startId);
 
-          let nodeEndElement = containerEl.querySelector(
-            `[data-id*="${endId}"]`
-          )!;
+          let nodeEndElement =
+            containerEl.querySelector(`[data-id*="${endId}"]`) ||
+            getClusterElement(containerEl, endId);
 
           const isClusterStartRelation =
             nodeStartElement.id.includes(`${startId}_start`) ||
@@ -591,8 +670,6 @@ export const parseMermaidStateDiagram = (
   diagram: Diagram,
   containerEl: Element
 ): State => {
-  diagram.parse();
-
   // Get mermaid parsed data from parser shared variable `yy`
   //@ts-ignore
   const mermaidParser = diagram.parser.yy;
@@ -602,6 +679,9 @@ export const parseMermaidStateDiagram = (
   console.debug({
     document: rootDocV2,
     mermaidParser,
+    clusters: Array.from(containerEl.querySelectorAll(".clusters")).map(
+      (el) => el.childNodes
+    ),
     states: mermaidParser.getStates(),
     relations: mermaidParser.getRelations(),
     classes: mermaidParser.getClasses(),

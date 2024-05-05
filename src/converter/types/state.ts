@@ -23,7 +23,7 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
         case "rectangle":
           const element = transformToExcalidrawContainerSkeleton(node);
 
-          if (!element.id?.includes("note")) {
+          if (node?.subtype !== "note") {
             Object.assign(element, {
               roundness: { type: 3 },
             });
