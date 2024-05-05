@@ -71,7 +71,7 @@ export interface NoteState {
 
 export interface SpecialState {
   id: string;
-  type: "choice";
+  type: "choice" | "fork" | "join";
   stmt: "state";
 }
 
@@ -191,12 +191,68 @@ const getClusterElement = (containerEl: Element, id: string) => {
   return containerEl.querySelector<SVGSVGElement>(`[id="${id}"]`)!;
 };
 
+const computeSpecialType = (specialType: SpecialState): Partial<Container> => {
+  switch (specialType.type) {
+    case "choice":
+      return { type: "diamond", label: undefined };
+    default:
+      return { type: "rectangle", label: undefined, bgColor: "#000" };
+  }
+};
+
+const createRelationExcalidrawElement = (
+  relation: RelationState["state1" | "state2"],
+  relationNode: SVGSVGElement,
+  containerEl: Element,
+  specialTypes: Record<string, SpecialState>,
+  groupId?: string
+): [Container, Container | null] => {
+  const shape = relation?.start !== undefined ? "ellipse" : "rectangle";
+  const label =
+    relation?.start === undefined
+      ? { label: { text: relation.description || relation.id } }
+      : undefined;
+
+  const relationContainer = createExcalidrawElement(
+    relationNode,
+    containerEl,
+    shape,
+    label
+  );
+
+  relationContainer.groupId = groupId;
+
+  if (relation?.start) {
+    relationContainer.bgColor = "#000";
+  }
+
+  let innerEllipse = null;
+
+  if (relation?.start === false) {
+    innerEllipse = createInnerEllipseExcalidrawElement(relationNode, {
+      x: relationContainer.x,
+      y: relationContainer.y,
+      width: relationContainer.width!,
+      height: relationContainer.height!,
+    });
+  }
+
+  if (specialTypes[relation.id]) {
+    Object.assign(
+      relationContainer,
+      computeSpecialType(specialTypes[relation.id])
+    );
+  }
+
+  return [relationContainer, innerEllipse];
+};
+
 const parseRelation = (
   relation: Extract<ParsedDoc, { stmt: "relation" }>,
   containerEl: Element,
   nodes: Array<Node>,
   processedNodeRelations: Set<string>,
-  specialTypes: Record<string, unknown>,
+  specialTypes: Record<string, SpecialState>,
   groupId?: string
 ) => {
   const relationStart = relation.state1;
@@ -235,63 +291,33 @@ const parseRelation = (
     !processedNodeRelations.has(relationStart.id) &&
     !isRelationStartCluster
   ) {
-    const relationStartContainer = createExcalidrawElement(
+    const [relationStartContainer] = createRelationExcalidrawElement(
+      relationStart,
       relationStartNode,
       containerEl,
-      relationStart?.start !== undefined ? "ellipse" : "rectangle",
-      relationStart?.start === undefined
-        ? {
-            label: { text: relationStart.description || relationStart.id },
-          }
-        : { subtype: "highlight" }
+      specialTypes,
+      groupId
     );
 
-    if (specialTypes[relationStart.id]) {
-      relationStartContainer.type = "diamond";
-      relationStartContainer.label = undefined;
-    }
-
-    if (!relationStartContainer.bgColor && relationStart.start) {
-      relationStartContainer.bgColor = "#000";
-    }
-
-    relationStartContainer.groupId = groupId;
     nodes.push(relationStartContainer);
     processedNodeRelations.add(relationStart.id);
   }
 
   if (!processedNodeRelations.has(relationEnd.id) && !isRelationEndCluster) {
-    const relationEndContainer = createExcalidrawElement(
-      relationEndNode,
-      containerEl,
-      relationEnd?.start !== undefined ? "ellipse" : "rectangle",
-      relationEnd?.start === undefined
-        ? {
-            label: { text: relationEnd.description || relationEnd.id },
-          }
-        : undefined
-    );
+    const [relationEndContainer, innerEllipse] =
+      createRelationExcalidrawElement(
+        relationEnd,
+        relationEndNode,
+        containerEl,
+        specialTypes,
+        groupId
+      );
 
-    relationEndContainer.groupId = groupId;
     nodes.push(relationEndContainer);
     processedNodeRelations.add(relationEnd.id);
 
-    if (relationEnd?.start === false) {
-      const innerEllipse = createInnerEllipseExcalidrawElement(
-        relationEndNode,
-        {
-          x: relationEndContainer.x,
-          y: relationEndContainer.y,
-          width: relationEndContainer.width!,
-          height: relationEndContainer.height!,
-        }
-      );
+    if (innerEllipse) {
       nodes.push(innerEllipse);
-    }
-
-    if (specialTypes[relationEnd.id]) {
-      relationEndContainer.type = "diamond";
-      relationEndContainer.label = undefined;
     }
   }
 };
@@ -301,12 +327,11 @@ const parseDoc = (
   containerEl: Element,
   nodes: Array<Node> = [],
   processedNodeRelations: Set<string> = new Set<string>(),
-  specialTypes: Record<string, unknown> = {},
+  specialTypes: Record<string, SpecialState> = {},
   groupId?: string
 ) => {
   doc.forEach((state) => {
     if (isSingleState(state)) {
-      console.debug(state);
       const singleStateNode = containerEl.querySelector<SVGSVGElement>(
         `[data-id="${state.id}"]`
       )!;

@@ -154,6 +154,22 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
   },
 
   {
+    name: "Forks",
+    definition: `stateDiagram-v2
+    state fork_state <<fork>>
+    fork_state --> State2
+    fork_state --> State3
+    [*] --> fork_state
+    
+    state join_state <<join>>
+    State2 --> join_state
+    State3 --> join_state
+    join_state --> State4
+    State4 --> [*]
+`,
+    type: "state",
+  },
+  {
     name: "Notes",
     definition: `stateDiagram-v2
     State1: The state with a note
