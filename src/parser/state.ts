@@ -198,6 +198,10 @@ const getClusterElement = (containerEl: Element, id: string) => {
   return containerEl.querySelector<SVGSVGElement>(`[id="${id}"]`)!;
 };
 
+const getRelationElement = (containerEl: Element, id: string) => {
+  return containerEl.querySelector<SVGSVGElement>(`[data-id="${id}"]`)!;
+};
+
 const getDividerId = (id: string): [string, number] => {
   const matchDomId = id.includes("divider") ? 2 : 1;
   const [identifier, randomId, count] = id.split("-");
@@ -278,59 +282,15 @@ const parseRelation = (
   const relationStart = relation.state1;
   const relationEnd = relation.state2;
 
-  // if (
-  //   relationStart.id.startsWith("divider") ||
-  //   relationStart.id.startsWith("id")
-  // ) {
-  //   const [id, count] = getDividerId(relationStart.id);
+  const relationStartNode = getRelationElement(containerEl, relationStart.id);
+  const relationEndNode = getRelationElement(containerEl, relationEnd.id);
 
-  //   relationStart.id = id.startsWith("id")
-  //     ? count?.toString()
-  //     : id.concat(relationStart.id.slice(id.length));
-  // }
-
-  // if (relationEnd.id.startsWith("divider") || relationEnd.id.startsWith("id")) {
-  //   const [id, count] = getDividerId(relationEnd.id);
-
-  //   relationEnd.id = id.startsWith("id")
-  //     ? count.toString()
-  //     : id.concat(relationEnd.id.slice(id.length));
-  // }
-
-  let relationStartNode = containerEl.querySelector<SVGSVGElement>(
-    `[data-id*="${relationStart.id}"]`
-  );
-  let relationEndNode = containerEl.querySelector<SVGSVGElement>(
-    `[data-id*="${relationEnd.id}"]`
-  );
-
-  const isRelationEndCluster =
-    relationEndNode?.id.includes(`${relationEnd.id}_start`) ||
-    relationEndNode?.id.includes(`${relationEnd.id}_end`);
-
-  // Binding the relation to the cluster, if we don't make this will bind to end node ellipse
-  if (isRelationEndCluster) {
-    relationEndNode = getClusterElement(containerEl, relationEnd.id);
-  }
-
-  const isRelationStartCluster =
-    relationStartNode?.id.includes(`${relationStart.id}_start`) ||
-    relationStartNode?.id.includes(`${relationStart.id}_end`);
-
-  // Binding the relation to the cluster, if we don't make this will bind to start node ellipse
-  if (isRelationStartCluster) {
-    relationStartNode = getClusterElement(containerEl, relationStart.id);
-  }
-
+  // If the relations is not found, is a cluster relation and we don't need to create a node for it
   if (!relationStartNode && !relationEndNode) {
-    throw new Error("Relation nodes not found");
+    return;
   }
 
-  if (
-    relationStartNode &&
-    !processedNodeRelations.has(relationStart.id) &&
-    !isRelationStartCluster
-  ) {
+  if (relationStartNode && !processedNodeRelations.has(relationStart.id)) {
     const [relationStartContainer] = createRelationExcalidrawElement(
       relationStart,
       relationStartNode,
@@ -343,11 +303,7 @@ const parseRelation = (
     processedNodeRelations.add(relationStart.id);
   }
 
-  if (
-    relationEndNode &&
-    !processedNodeRelations.has(relationEnd.id) &&
-    !isRelationEndCluster
-  ) {
+  if (relationEndNode && !processedNodeRelations.has(relationEnd.id)) {
     const [relationEndContainer, innerEllipse] =
       createRelationExcalidrawElement(
         relationEnd,
@@ -492,33 +448,18 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           const startId = node.state1.id;
           const endId = node.state2.id;
 
-          let nodeStartElement =
-            containerEl.querySelector(`[data-id*="${startId}"]`) ||
+          // If the relations node not found, is a relation with a cluster.
+          const nodeStartElement =
+            getRelationElement(containerEl, startId) ||
             getClusterElement(containerEl, startId);
-
-          let nodeEndElement =
-            containerEl.querySelector(`[data-id*="${endId}"]`) ||
+          const nodeEndElement =
+            getRelationElement(containerEl, endId) ||
             getClusterElement(containerEl, endId);
-
-          const isClusterStartRelation =
-            nodeStartElement.id.includes(`${startId}_start`) ||
-            nodeStartElement.id.includes(`${startId}_end`);
-          const isClusterEndRelation =
-            nodeEndElement.id.includes(`${endId}_end`) ||
-            nodeEndElement.id.includes(`${endId}_start`);
-
-          if (isClusterStartRelation) {
-            nodeStartElement = containerEl.querySelector(`[id="${startId}"]`)!;
-          }
-
-          if (isClusterEndRelation) {
-            nodeEndElement = containerEl.querySelector(`[id="${endId}"]`)!;
-          }
 
           const rootContainer = nodeStartElement.closest(".root");
 
           if (!rootContainer) {
-            throw new Error("Root container not found");
+            throw new Error("Root container when parsing edge not found");
           }
 
           const edges = retrieveEdgeFromClusterSvg
