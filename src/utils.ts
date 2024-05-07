@@ -116,7 +116,7 @@ export const computeEdgePositions = (
       if (index === array.length - 1) {
         return true;
       }
-      // Include the start point or if the current point if it's not the same as the previous point
+      // Always include the start point, or if the current point is not the same as the previous point
       const prevPoint = array[index - 1];
       return index === 0 || point.x !== prevPoint.x || point.y !== prevPoint.y;
     })

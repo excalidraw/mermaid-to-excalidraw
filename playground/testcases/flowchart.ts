@@ -471,7 +471,6 @@ C -->|Two| E[Result two]
   {
     name: "Multiple Edges, Relations to a Single Entity",
     definition: `
-    %%{init: {'theme':'forest'}}%%
     flowchart LR
      style Entity1 fill: gold, stroke:#333, stroke-width:4px
     
