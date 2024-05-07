@@ -113,17 +113,22 @@ export const computeEdgePositions = (
         .map((coord) => parseFloat(coord));
 
       if (commandType === "C") {
-        // For other "C" commands, return the end point
-        return { x: coords[4], y: coords[5] };
+        return { x: coords[4], y: coords[5], command: commandType };
       }
 
-      return { x: coords[0], y: coords[1] };
+      return { x: coords[0], y: coords[1], command: commandType };
     })
     .filter((point, index, array) => {
       // Always include the last point
       if (index === array.length - 1) {
         return true;
       }
+
+      // Exclude the second last point if it's a "C" command because this is a curve and the last point is the end point, so we don't need to include it.
+      if (index === array.length - 2 && point.command === "C") {
+        return false;
+      }
+
       // Include the start point or if the current point if it's not the same as the previous point
       const prevPoint = array[index - 1];
       return (

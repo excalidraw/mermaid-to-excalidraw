@@ -481,7 +481,7 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           const edgePositionData = computeEdgePositions(
             edgeStartElement,
             position,
-            "MC"
+            "MCL"
           );
           /**
            * Edge case where cluster don't have the .edgePaths in SVG,
