@@ -103,19 +103,41 @@ export const computeEdgePositions = (
 
   // compute the reflection points -> [ {x: 29.383, y: 38.5}, {x: 29.383, y: 83.2} ]
   // These includes the start and end points and also points which are not the same as the previous points
-  const reflectionPoints = commands
-    .map((command) => {
-      const coords = command
-        .substring(1)
-        .split(",")
-        .map((coord) => parseFloat(coord));
-      return { x: coords[0], y: coords[1] };
-    })
+  const reflectionPoints = commands.map((command) => {
+    const coords = command
+      .substring(1)
+      .split(",")
+      .map((coord) => parseFloat(coord));
+    return { x: coords[0], y: coords[1] };
+  });
+
+  const filterReflectionPoints = reflectionPoints
     .filter((point, index, array) => {
       // Always include the last point
       if (index === array.length - 1) {
         return true;
       }
+
+      if (
+        index === array.length - 2 &&
+        (array[index - 1].x === point.x || array[index - 1].y === point.y)
+      ) {
+        const lastPoint = array[array.length - 1];
+
+        /**
+         * Euclidean distance formula.
+         * If the distance between the last point and the current point (second last point) is greater than X include the last point.
+         */
+        const distance = Math.sqrt(
+          Math.pow(lastPoint.x - point.x, 2) +
+            Math.pow(lastPoint.y - point.y, 2)
+        );
+
+        return distance > 20;
+
+        // return false;
+      }
+
       // Always include the start point, or if the current point is not the same as the previous point
       const prevPoint = array[index - 1];
       return index === 0 || point.x !== prevPoint.x || point.y !== prevPoint.y;
@@ -127,12 +149,14 @@ export const computeEdgePositions = (
         y: p.y + offset.y,
       };
     });
+
+  console.debug({ reflectionPoints, filterReflectionPoints });
   // Return the edge positions
   return {
     startX: startPosition[0] + offset.x,
     startY: startPosition[1] + offset.y,
     endX: endPosition[0] + offset.x,
     endY: endPosition[1] + offset.y,
-    reflectionPoints,
+    reflectionPoints: filterReflectionPoints,
   };
 };
