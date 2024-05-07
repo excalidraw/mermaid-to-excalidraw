@@ -133,7 +133,7 @@ export const computeEdgePositions = (
             Math.pow(lastPoint.y - point.y, 2)
         );
 
-        return distance > 20;
+        return distance > 50;
 
         // return false;
       }
