@@ -13,7 +13,7 @@
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "start": "vite playground",
     "build:playground": "tsc --noEmit --project ./playground/tsconfig.json && vite build playground",
-    "preview": "npm run build:playground && vite preview --outDir ./public",
+    "preview": "yarn run build:playground && vite preview --outDir ./public",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch"
