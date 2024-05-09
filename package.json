@@ -13,7 +13,9 @@
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "start": "vite playground",
     "build:playground": "tsc --noEmit --project ./playground/tsconfig.json && vite build playground",
-    "preview": "npm run build:playground && vite preview --outDir ./public"
+    "preview": "npm run build:playground && vite preview --outDir ./public",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
@@ -29,19 +31,22 @@
     "@types/react-dom": "18.2.4",
     "@typescript-eslint/eslint-plugin": "5.59.9",
     "@typescript-eslint/parser": "5.59.9",
-    "cross-env": "7.0.3",
     "@vitejs/plugin-react-swc": "3.6.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "cross-env": "7.0.3",
     "eslint": "8.42.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
+    "jsdom": "^24.0.0",
     "prettier": "2.8.8",
     "process": "0.11.10",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "rimraf": "5.0.5",
     "sass": "1.74.1",
     "typescript": "5.2.2",
-    "rimraf": "5.0.5",
-    "vite": "5.2.8"
+    "vite": "5.2.8",
+    "vitest": "^1.6.0"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
