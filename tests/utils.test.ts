@@ -1,4 +1,4 @@
-import { getTransformAttr } from "../src/utils.ts";
+import { getTransformAttr } from "../src/utils.js";
 
 describe("Test getTransformAttr", () => {
   let el: HTMLDivElement;

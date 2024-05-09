@@ -1,7 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "./src" }, { "path": "./playground" }],
-  "compilerOptions": {
-    "types": ["vitest/globals"]
-  }
+  "references": [
+    { "path": "./src" },
+    { "path": "./playground" },
+    { "path": "./tests" }
+  ]
 }
