@@ -141,36 +141,19 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   };
 };
 
-const processedEdges = () => {
-  const edges = new Set<string>();
-
-  const add = (id: string) => {
-    edges.add(id);
-  };
-
-  return {
-    add,
-    has: (id: string) => edges.has(id),
-  };
-};
-
-const parseEdge = (data: any, containerEl: Element): Edge => {
+const parseEdge = (
+  data: any,
+  edgeIndex: number,
+  containerEl: Element
+): Edge => {
   // Find edge element
-  const edges = Array.from(
-    containerEl.querySelectorAll<SVGPathElement>(
-      `[id*="L-${data.start}-${data.end}"]`
-    )
-  );
-  const unprocessedEdges = edges.filter(
-    (edge) => !processedEdges().has(edge.id)
+  const edge = containerEl.querySelector<SVGPathElement>(
+    `[id*="L-${data.start}-${data.end}-${edgeIndex}"]`
   );
 
-  if (!unprocessedEdges.length) {
+  if (!edge) {
     throw new Error("Edge element not found");
   }
-
-  const edge = unprocessedEdges[0];
-  processedEdges().add(edge.id);
 
   // Compute edge position data
   const position = computeElementPosition(edge, containerEl);
@@ -251,9 +234,14 @@ export const parseMermaidFlowChartDiagram = (
     vertices[id] = parseVertex(vertices[id], containerEl);
   });
 
-  const edges = mermaidParser
-    .getEdges()
-    .map((data: any) => parseEdge(data, containerEl));
+  const edgeCountMap = new Map<string, number>();
+  const edges = mermaidParser.getEdges().map((data: any) => {
+    const edgeIdentifier = `${data.start}-${data.end}`;
+    const count = edgeCountMap.get(edgeIdentifier) || 0;
+    edgeCountMap.set(edgeIdentifier, count + 1);
+
+    return parseEdge(data, count, containerEl);
+  });
 
   const subGraphs = mermaidParser
     .getSubGraphs()
