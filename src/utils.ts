@@ -103,15 +103,14 @@ export const computeEdgePositions = (
 
   // compute the reflection points -> [ {x: 29.383, y: 38.5}, {x: 29.383, y: 83.2} ]
   // These includes the start and end points and also points which are not the same as the previous points
-  const reflectionPoints = commands.map((command) => {
-    const coords = command
-      .substring(1)
-      .split(",")
-      .map((coord) => parseFloat(coord));
-    return { x: coords[0], y: coords[1] };
-  });
-
-  const filterReflectionPoints = reflectionPoints
+  const reflectionPoints = commands
+    .map((command) => {
+      const coords = command
+        .substring(1)
+        .split(",")
+        .map((coord) => parseFloat(coord));
+      return { x: coords[0], y: coords[1] };
+    })
     .filter((point, index, array) => {
       // Always include the last point
       if (index === array.length - 1) {
@@ -127,6 +126,7 @@ export const computeEdgePositions = (
         /**
          * Euclidean distance formula.
          * If the distance between the last point and the current point (second last point) is greater than X include the last point.
+         * This is to ensure we have a distance for render the edge.
          */
         const distance = Math.sqrt(
           Math.pow(lastPoint.x - point.x, 2) +
@@ -134,8 +134,6 @@ export const computeEdgePositions = (
         );
 
         return distance > 50;
-
-        // return false;
       }
 
       // Always include the start point, or if the current point is not the same as the previous point
@@ -150,13 +148,12 @@ export const computeEdgePositions = (
       };
     });
 
-  console.debug({ reflectionPoints, filterReflectionPoints });
   // Return the edge positions
   return {
     startX: startPosition[0] + offset.x,
     startY: startPosition[1] + offset.y,
     endX: endPosition[0] + offset.x,
     endY: endPosition[1] + offset.y,
-    reflectionPoints: filterReflectionPoints,
+    reflectionPoints,
   };
 };
