@@ -468,4 +468,17 @@ C -->|Two| E[Result two]
 `,
     type: "flowchart",
   },
+  {
+    name: "When some edges aren't present in DOM",
+    definition: `flowchart TB   
+    subgraph conference
+        frontend
+        backend
+        security
+    end
+    frontend --> |Dive into frontend frameworks| conference
+    backend --> |Learn all about backend| conference
+    security --> |securing web apps| conference`,
+    type: "flowchart",
+  },
 ];

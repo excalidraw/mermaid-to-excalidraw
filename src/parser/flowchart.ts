@@ -11,7 +11,7 @@ import {
   Vertex,
 } from "../interfaces.js";
 
-import { Diagram } from "mermaid/dist/Diagram.js";
+import type { Diagram } from "mermaid/dist/Diagram.js";
 
 export interface Flowchart {
   type: "flowchart";
