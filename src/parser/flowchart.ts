@@ -11,7 +11,7 @@ import {
   Vertex,
 } from "../interfaces.js";
 
-import { Diagram } from "mermaid/dist/Diagram.js";
+import type { Diagram } from "mermaid/dist/Diagram.js";
 
 export interface Flowchart {
   type: "flowchart";
@@ -235,13 +235,19 @@ export const parseMermaidFlowChartDiagram = (
   });
 
   const edgeCountMap = new Map<string, number>();
-  const edges = mermaidParser.getEdges().map((data: any) => {
-    const edgeIdentifier = `${data.start}-${data.end}`;
-    const count = edgeCountMap.get(edgeIdentifier) || 0;
-    edgeCountMap.set(edgeIdentifier, count + 1);
+  const edges = mermaidParser
+    .getEdges()
+    .filter((edge: any) => {
+      // Sometimes mermaid parser returns edges which are not present in the DOM hence this is a safety check to only consider edges present in the DOM, issue - https://github.com/mermaid-js/mermaid/issues/5516
+      return containerEl.querySelector(`[id*="L-${edge.start}-${edge.end}"]`);
+    })
+    .map((data: any) => {
+      const edgeIdentifier = `${data.start}-${data.end}`;
+      const count = edgeCountMap.get(edgeIdentifier) || 0;
+      edgeCountMap.set(edgeIdentifier, count + 1);
 
-    return parseEdge(data, count, containerEl);
-  });
+      return parseEdge(data, count, containerEl);
+    });
 
   const subGraphs = mermaidParser
     .getSubGraphs()

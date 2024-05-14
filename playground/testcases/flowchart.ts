@@ -470,9 +470,8 @@ C -->|Two| E[Result two]
   },
   {
     name: "Multiple Edges, Relations to a Single Entity",
-    definition: `
-    flowchart LR
-     style Entity1 fill: gold, stroke:#333, stroke-width:4px
+    definition: `flowchart LR
+    style Entity1 fill: gold, stroke:#333, stroke-width:4px
     
     Entity1[Entity 1]
     Entity2[Entity 2 fa:fa-suitcase]
@@ -522,6 +521,19 @@ C -->|Two| E[Result two]
     Entity1 -..->|Relation22| Entity18
     Entity1 -..->|Relation23| Entity19
 `,
+    type: "flowchart",
+  },
+  {
+    name: "When some edges aren't present in DOM",
+    definition: `flowchart TB   
+    subgraph conference
+        frontend
+        backend
+        security
+    end
+    frontend --> |Dive into frontend frameworks| conference
+    backend --> |Learn all about backend| conference
+    security --> |securing web apps| conference`,
     type: "flowchart",
   },
 ];
