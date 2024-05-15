@@ -123,17 +123,16 @@ export const computeEdgePositions = (
       ) {
         const lastPoint = array[array.length - 1];
 
-        /**
-         * Euclidean distance formula.
-         * If the distance between the last point and the current point (second last point) is greater than X include the last point.
-         * This is to ensure we have a distance for render the edge.
-         */
-        const distance = Math.sqrt(
-          Math.pow(lastPoint.x - point.x, 2) +
-            Math.pow(lastPoint.y - point.y, 2)
+        // Get the distance between the last point and second last point using Euclidean distance formula
+        const distance = Math.hypot(
+          lastPoint.x - point.x,
+          lastPoint.y - point.y
         );
-
-        return distance > 50;
+        // Include the second last point if the distance between the
+        // last point and second last point is > 20.
+        // This is to ensure we have a distance for render the edge.
+        // 20 seems to be a good enough distance to render the edge
+        return distance > 20;
       }
 
       // Always include the start point, or if the current point is not the same as the previous point

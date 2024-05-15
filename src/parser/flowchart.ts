@@ -234,6 +234,7 @@ export const parseMermaidFlowChartDiagram = (
     vertices[id] = parseVertex(vertices[id], containerEl);
   });
 
+  // Track the count of edges based on the edge id
   const edgeCountMap = new Map<string, number>();
   const edges = mermaidParser
     .getEdges()
@@ -242,9 +243,10 @@ export const parseMermaidFlowChartDiagram = (
       return containerEl.querySelector(`[id*="L-${edge.start}-${edge.end}"]`);
     })
     .map((data: any) => {
-      const edgeIdentifier = `${data.start}-${data.end}`;
-      const count = edgeCountMap.get(edgeIdentifier) || 0;
-      edgeCountMap.set(edgeIdentifier, count + 1);
+      const edgeId = `${data.start}-${data.end}`;
+
+      const count = edgeCountMap.get(edgeId) || 0;
+      edgeCountMap.set(edgeId, count + 1);
 
       return parseEdge(data, count, containerEl);
     });
