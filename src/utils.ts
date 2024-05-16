@@ -113,14 +113,36 @@ export const computeEdgePositions = (
     })
     .filter((point, index, array) => {
       // Always include the last point
-      if (index === array.length - 1) {
+      if (index === 0 || index === array.length - 1) {
         return true;
       }
-      // Include the start point or if the current point if it's not the same as the previous point
-      const prevPoint = array[index - 1];
-      return (
-        index === 0 || (point.x !== prevPoint.x && point.y !== prevPoint.y)
-      );
+
+      // Exclude the points which are the same as the previous point
+      if (point.x === array[index - 1].x && point.y === array[index - 1].y) {
+        return false;
+      }
+
+      // The below check is exclusively for second last point
+      if (
+        index === array.length - 2 &&
+        (array[index - 1].x === point.x || array[index - 1].y === point.y)
+      ) {
+        const lastPoint = array[array.length - 1];
+
+        // Get the distance between the last point and second last point using Euclidean distance formula
+        const distance = Math.hypot(
+          lastPoint.x - point.x,
+          lastPoint.y - point.y
+        );
+        // Include the second last point if the distance between the
+        // last point and second last point is > 20.
+        // This is to ensure we have a distance for render the edge.
+        // 20 seems to be a good enough distance to render the edge
+        return distance > 20;
+      }
+
+      // Always include if the current point is not the same as the previous point
+      return point.x !== array[index - 1].x || point.y !== array[index - 1].y;
     })
     .map((p) => {
       // Offset the point by the provided offset
@@ -129,6 +151,7 @@ export const computeEdgePositions = (
         y: p.y + offset.y,
       };
     });
+
   // Return the edge positions
   return {
     startX: startPosition[0] + offset.x,
