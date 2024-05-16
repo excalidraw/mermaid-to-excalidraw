@@ -11,7 +11,7 @@ import {
   Vertex,
 } from "../interfaces.js";
 
-import { Diagram } from "mermaid/dist/Diagram.js";
+import type { Diagram } from "mermaid/dist/Diagram.js";
 
 export interface Flowchart {
   type: "flowchart";
@@ -141,18 +141,23 @@ const parseVertex = (data: any, containerEl: Element): Vertex | undefined => {
   };
 };
 
-const parseEdge = (data: any, containerEl: Element): Edge => {
+const parseEdge = (
+  data: any,
+  edgeIndex: number,
+  containerEl: Element
+): Edge => {
   // Find edge element
-  const el: SVGPathElement | null = containerEl.querySelector(
-    `[id*="L-${data.start}-${data.end}"]`
+  const edge = containerEl.querySelector<SVGPathElement>(
+    `[id*="L-${data.start}-${data.end}-${edgeIndex}"]`
   );
-  if (!el) {
+
+  if (!edge) {
     throw new Error("Edge element not found");
   }
 
   // Compute edge position data
-  const position = computeElementPosition(el, containerEl);
-  const edgePositionData = computeEdgePositions(el, position);
+  const position = computeElementPosition(edge, containerEl);
+  const edgePositionData = computeEdgePositions(edge, position);
 
   // Remove irrelevant properties
   data.length = undefined;
@@ -181,9 +186,24 @@ export const parseMermaidFlowChartDiagram = (
   Object.keys(vertices).forEach((id) => {
     vertices[id] = parseVertex(vertices[id], containerEl);
   });
+
+  // Track the count of edges based on the edge id
+  const edgeCountMap = new Map<string, number>();
   const edges = mermaidParser
     .getEdges()
-    .map((data: any) => parseEdge(data, containerEl));
+    .filter((edge: any) => {
+      // Sometimes mermaid parser returns edges which are not present in the DOM hence this is a safety check to only consider edges present in the DOM, issue - https://github.com/mermaid-js/mermaid/issues/5516
+      return containerEl.querySelector(`[id*="L-${edge.start}-${edge.end}"]`);
+    })
+    .map((data: any) => {
+      const edgeId = `${data.start}-${data.end}`;
+
+      const count = edgeCountMap.get(edgeId) || 0;
+      edgeCountMap.set(edgeId, count + 1);
+
+      return parseEdge(data, count, containerEl);
+    });
+
   const subGraphs = mermaidParser
     .getSubGraphs()
     .map((data: any) => parseSubGraph(data, containerEl));
