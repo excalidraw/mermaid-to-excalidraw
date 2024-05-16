@@ -6,18 +6,18 @@
 
 ### Features
 
-- Add support for an open link by @igorwessel in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
+- Add support for an open link by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
 
 ### Fixes
 
-- Render class diagrams correctly by using data-id by @ad1992 in https://github.com/excalidraw/mermaid-to-excalidraw/pull/53
-- Normalize text when transforming to excalidraw skeleton by @ad1992 in https://github.com/excalidraw/mermaid-to-excalidraw/pull/54
-- Only consider edges which are present in DOM for flowchart by @ad1992 in https://github.com/excalidraw/mermaid-to-excalidraw/pull/64
-- Flowchart rendering issues by @igorwessel in https://github.com/excalidraw/mermaid-to-excalidraw/pull/61
+- Render class diagrams correctly by using data-id by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/53
+- Normalize text when transforming to excalidraw skeleton by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/54
+- Only consider edges which are present in DOM for flowchart by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/64
+- Flowchart rendering issues by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/61
 
 ### Docs
 
-- Fix example code in README by @jtaavola in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
+- Fix example code in README by [@jtaavola](https://github.com/jtaavola) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
 
 ### Build
 
@@ -25,18 +25,18 @@
 
 ### Test
 
-- Add vitest and some tests by @ad1992 in https://github.com/excalidraw/mermaid-to-excalidraw/pull/63
+- Add vitest and some tests by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/63
 
 ## Playground
 
 ### Build
 
-- Simple setup vite for playground by @igorwessel in https://github.com/excalidraw/mermaid-to-excalidraw/pull/52
-- Add GH link by @ad1992 in https://github.com/excalidraw/mermaid-to-excalidraw/pull/57
+- Simple setup vite for playground by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/52
+- Add GH link by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/57
 
 ## New Contributors
 
-- @igorwessel made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
+- [@igorwessel](https://github.com/igorwessel). made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
 - @jtaavola made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
 - @zsviczian made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
 
