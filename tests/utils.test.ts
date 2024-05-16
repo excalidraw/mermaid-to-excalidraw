@@ -71,7 +71,7 @@ describe("Test Utils", () => {
       ]);
     });
 
-    it("should include the second last point if the distance to the last point is greater than 50 and second last point is straight line", () => {
+    it("should include the second last point if the distance to the last point is greater than 20 and second last point is straight line", () => {
       const commands = ["M29.383,38.5", "L29.383,83.2", "L90.383,83.2"];
       pathElement.setAttribute("d", commands.join(""));
 
@@ -84,15 +84,15 @@ describe("Test Utils", () => {
       ]);
     });
 
-    it("should exclude the  second last point if the distance to the last point is less than 50 and second last point is straight line", () => {
-      const commands = ["M29.383,38.5", "L29.383,83.2", "L59.383,83.2"];
+    it("should exclude the second last point if the distance to the last point is less than 20 and second last point is straight line", () => {
+      const commands = ["M29.383,38.5", "L29.383,83.2", "L33.383,83.2"];
       pathElement.setAttribute("d", commands.join(""));
 
       const result = computeEdgePositions(pathElement);
 
       expect(result.reflectionPoints).toEqual([
         { x: 29.383, y: 38.5 },
-        { x: 59.383, y: 83.2 },
+        { x: 33.383, y: 83.2 },
       ]);
     });
 

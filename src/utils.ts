@@ -113,10 +113,16 @@ export const computeEdgePositions = (
     })
     .filter((point, index, array) => {
       // Always include the last point
-      if (index === array.length - 1) {
+      if (index === 0 || index === array.length - 1) {
         return true;
       }
 
+      // Exclude the points which are the same as the previous point
+      if (point.x === array[index - 1].x && point.y === array[index - 1].y) {
+        return false;
+      }
+
+      // The below check is exclusively for second last point
       if (
         index === array.length - 2 &&
         (array[index - 1].x === point.x || array[index - 1].y === point.y)
@@ -135,9 +141,8 @@ export const computeEdgePositions = (
         return distance > 20;
       }
 
-      // Always include the start point, or if the current point is not the same as the previous point
-      const prevPoint = array[index - 1];
-      return index === 0 || point.x !== prevPoint.x || point.y !== prevPoint.y;
+      // Always include if the current point is not the same as the previous point
+      return point.x !== array[index - 1].x || point.y !== array[index - 1].y;
     })
     .map((p) => {
       // Offset the point by the provided offset
