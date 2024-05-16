@@ -1,6 +1,6 @@
 ## Unreleased
 
-## v0.4.0 (2024-05-16)
+## v1.0.0 (2024-05-16)
 
 ## Library
 
@@ -21,7 +21,7 @@
 
 ### Build
 
-- Add cross-env for platform independent build by @zsviczian in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
+- Add cross-env for platform independent build by [@zsviczian](https://github.com/zsviczian) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
 
 ### Test
 
@@ -37,8 +37,8 @@
 ## New Contributors
 
 - [@igorwessel](https://github.com/igorwessel). made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
-- @jtaavola made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
-- @zsviczian made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
+- [@jtaavola](https://github.com/jtaavola) made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
+- [@zsviczian](https://github.com/zsviczian) made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
 
 **Full Changelog**: https://github.com/excalidraw/mermaid-to-excalidraw/compare/v0.3.0...v0.4.0
 
