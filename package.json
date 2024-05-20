@@ -1,6 +1,6 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "1.0.0-next",
+  "version": "1.0.0",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
