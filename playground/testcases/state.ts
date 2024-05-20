@@ -247,6 +247,29 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
     type: "state",
   },
   {
+    name: "Styling",
+    definition: `stateDiagram-v2
+   direction TB
+
+   classDef notMoving fill:white
+   classDef movement font-style:italic
+   classDef badBadEvent fill:#f00,color:white,font-weight:bold,stroke-width:2px,stroke:yellow
+
+   [*]--> Still
+   Still --> [*]
+   Still --> Moving
+   Moving --> Still
+   Moving --> Crash
+   Crash --> [*]
+
+   class Still notMoving
+   class Moving, Crash movement
+   class Crash badBadEvent
+   class end badBadEvent
+`,
+    type: "state",
+  },
+  {
     name: "Sample 1",
     definition: `stateDiagram-v2
     [*] --> Still

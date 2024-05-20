@@ -91,6 +91,8 @@ export type ParsedDoc =
   | RelationState;
 
 const MARGIN_TOP_LINE_X_AXIS = 25;
+const DEFAULT_FILL_COLOR = "rgb(236, 236, 255)";
+const DEFAULT_STROKE_COLOR = "rgb(147, 112, 219)";
 
 const isNoteState = (node: ParsedDoc): node is NoteState => {
   return "note" in node;
@@ -232,9 +234,15 @@ const createRelationExcalidrawElement = (
   groupId?: string
 ): [Container, Container | null] => {
   const shape = relation?.start !== undefined ? "ellipse" : "rectangle";
+  const styles = getComputedStyle(relationNode.firstElementChild!);
+  const haveCustomStyles = relationNode.classList.length > 3;
   const label =
     relation?.start === undefined
-      ? { label: { text: relation.description || relation.id } }
+      ? {
+          label: {
+            text: relation.description || relation.id,
+          },
+        }
       : undefined;
 
   const relationContainer = createExcalidrawElement(
@@ -245,6 +253,16 @@ const createRelationExcalidrawElement = (
   );
 
   relationContainer.groupId = groupId;
+  if (relationContainer.label) {
+    relationContainer.label.color = styles.color;
+  }
+
+  if (typeof relation.start === "undefined" && haveCustomStyles) {
+    relationContainer.strokeColor =
+      styles.stroke === DEFAULT_STROKE_COLOR ? "#000" : styles.stroke;
+    relationContainer.bgColor =
+      styles.fill === DEFAULT_FILL_COLOR ? undefined : styles.fill;
+  }
 
   if (relation?.start) {
     relationContainer.bgColor = "#000";
