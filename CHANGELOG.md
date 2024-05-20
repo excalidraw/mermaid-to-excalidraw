@@ -1,16 +1,46 @@
 ## Unreleased
 
+## v1.0.0 (2024-05-20)
+
 ## Library
 
 ### Features
 
-- Support [Mermaid Open Link](https://mermaid.js.org/syntax/flowchart.html#an-open-link) [#51](https://github.com/excalidraw/mermaid-to-excalidraw/pull/51) by [@igorwessel](https://github.com/igorwessel).
+- Add support for an open link by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
 
 ### Fixes
 
-- Normalize text when transforming to excalidraw skeleton #[54](https://github.com/excalidraw/mermaid-to-excalidraw/pull/54) by [@ad1992](https://github.com/ad1992).
+- Render class diagrams correctly by using data-id by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/53
+- Normalize text when transforming to excalidraw skeleton by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/54
+- Only consider edges which are present in DOM for flowchart by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/64
+- Flowchart rendering issues by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/61
 
-- Render class diagrams correctly by using data-id instead dom id [#53](https://github.com/excalidraw/mermaid-to-excalidraw/pull/53) by [@ad1992](https://github.com/ad1992).
+### Docs
+
+- Fix example code in README by [@jtaavola](https://github.com/jtaavola) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
+
+### Build
+
+- Add cross-env for platform independent build by [@zsviczian](https://github.com/zsviczian) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
+
+### Test
+
+- Add vitest and some tests by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/63
+
+## Playground
+
+### Build
+
+- Simple setup vite for playground by [@igorwessel](https://github.com/igorwessel). in https://github.com/excalidraw/mermaid-to-excalidraw/pull/52
+- Add GH link by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/57
+
+## New Contributors
+
+- [@igorwessel](https://github.com/igorwessel). made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/51
+- [@jtaavola](https://github.com/jtaavola) made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/35
+- [@zsviczian](https://github.com/zsviczian) made their first contribution in https://github.com/excalidraw/mermaid-to-excalidraw/pull/33
+
+**Full Changelog**: https://github.com/excalidraw/mermaid-to-excalidraw/compare/v0.3.0...v0.4.0
 
 ## 0.3.0 (2023-12-10)
 
