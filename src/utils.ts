@@ -70,7 +70,8 @@ interface EdgePositionData {
 // Compute edge postion start, end and points (reflection points)
 export const computeEdgePositions = (
   pathElement: SVGPathElement,
-  offset: Position = { x: 0, y: 0 }
+  offset: Position = { x: 0, y: 0 },
+  commandsPattern = "LM"
 ): EdgePositionData => {
   // Check if the element is a path else throw an error
   if (pathElement.tagName.toLowerCase() !== "path") {
@@ -85,9 +86,9 @@ export const computeEdgePositions = (
     throw new Error('Path element does not contain a "d" attribute');
   }
 
-  // Split the d attribute based on M (Move To) and L (Line To) commands
-  // eg "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2"]
-  const commands = dAttr.split(/(?=[LM])/);
+  // Split the d attribute based on some commands: M (Move To), L (Line To) commands and if specifies C (Curve To) commands
+  // eg "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2", "C29.383,83.2"]
+  const commands = dAttr.split(new RegExp(`(?=[${commandsPattern}])`));
 
   // Get the start position from the first commands element => [29.383,38.5]
   const startPosition = commands[0]
@@ -105,11 +106,17 @@ export const computeEdgePositions = (
   // These includes the start and end points and also points which are not the same as the previous points
   const reflectionPoints = commands
     .map((command) => {
+      const commandType = command[0];
       const coords = command
         .substring(1)
         .split(",")
         .map((coord) => parseFloat(coord));
-      return { x: coords[0], y: coords[1] };
+
+      if (commandType === "C") {
+        return { x: coords[4], y: coords[5], command: commandType };
+      }
+
+      return { x: coords[0], y: coords[1], command: commandType };
     })
     .filter((point, index, array) => {
       // Always include the last point
@@ -119,6 +126,11 @@ export const computeEdgePositions = (
 
       // Exclude the points which are the same as the previous point
       if (point.x === array[index - 1].x && point.y === array[index - 1].y) {
+        return false;
+      }
+
+      // Exclude the second last point if it's a "C" command because this is a curve and the last point is the end point, so we don't need to include it.
+      if (index === array.length - 2 && point.command === "C") {
         return false;
       }
 
@@ -160,4 +172,51 @@ export const computeEdgePositions = (
     endY: endPosition[1] + offset.y,
     reflectionPoints,
   };
+};
+
+// Compute element position
+export const computeElementPosition = (
+  el: Element | null,
+  containerEl: Element
+): Position => {
+  if (!el) {
+    throw new Error("Element not found");
+  }
+
+  let root = el.parentElement?.parentElement;
+
+  const childElement = el.childNodes[0] as SVGSVGElement;
+  let childPosition = { x: 0, y: 0 };
+  if (childElement) {
+    const { transformX, transformY } = getTransformAttr(childElement);
+
+    const boundingBox = childElement.getBBox();
+    childPosition = {
+      x:
+        Number(childElement.getAttribute("x")) ||
+        transformX + boundingBox.x ||
+        0,
+      y:
+        Number(childElement.getAttribute("y")) ||
+        transformY + boundingBox.y ||
+        0,
+    };
+  }
+
+  const { transformX, transformY } = getTransformAttr(el);
+  const position = {
+    x: transformX + childPosition.x,
+    y: transformY + childPosition.y,
+  };
+  while (root && root.id !== containerEl.id) {
+    if (root.classList.value === "root" && root.hasAttribute("transform")) {
+      const { transformX, transformY } = getTransformAttr(root);
+      position.x += transformX;
+      position.y += transformY;
+    }
+
+    root = root.parentElement;
+  }
+
+  return position;
 };

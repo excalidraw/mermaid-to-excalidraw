@@ -47,7 +47,7 @@ export type Text = {
 };
 
 export type Container = {
-  type: "rectangle" | "ellipse";
+  type: "rectangle" | "ellipse" | "diamond";
   x: number;
   y: number;
   id?: string;
@@ -227,7 +227,7 @@ export const createTextSkeletonFromSVG = (
 };
 
 export const createContainerSkeletonFromSVG = (
-  node: SVGSVGElement | SVGRectElement,
+  node: SVGSVGElement | SVGRectElement | SVGCircleElement,
   type: Container["type"],
   opts: {
     id?: string;

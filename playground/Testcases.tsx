@@ -2,6 +2,7 @@ import { Fragment } from "react";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
+import { STATE_DIAGRAM_TESTCASES } from "./testcases/state.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
@@ -18,6 +19,7 @@ interface TestcasesProps {
 
 const Testcases = ({ onChange }: TestcasesProps) => {
   const testcaseTypes: { name: string; testcases: TestCase[] }[] = [
+    { name: "State", testcases: STATE_DIAGRAM_TESTCASES },
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
     { name: "Sequence", testcases: SEQUENCE_DIAGRAM_TESTCASES },
     { name: "Class", testcases: CLASS_DIAGRAM_TESTCASES },

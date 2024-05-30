@@ -1,7 +1,7 @@
 import {
   computeEdgePositions,
+  computeElementPosition,
   entityCodesToText,
-  getTransformAttr,
 } from "../utils.js";
 import {
   CONTAINER_STYLE_PROPERTY,
@@ -167,53 +167,6 @@ const parseEdge = (
     ...edgePositionData,
     text: entityCodesToText(data.text),
   };
-};
-
-// Compute element position
-const computeElementPosition = (
-  el: Element | null,
-  containerEl: Element
-): Position => {
-  if (!el) {
-    throw new Error("Element not found");
-  }
-
-  let root = el.parentElement?.parentElement;
-
-  const childElement = el.childNodes[0] as SVGSVGElement;
-  let childPosition = { x: 0, y: 0 };
-  if (childElement) {
-    const { transformX, transformY } = getTransformAttr(childElement);
-
-    const boundingBox = childElement.getBBox();
-    childPosition = {
-      x:
-        Number(childElement.getAttribute("x")) ||
-        transformX + boundingBox.x ||
-        0,
-      y:
-        Number(childElement.getAttribute("y")) ||
-        transformY + boundingBox.y ||
-        0,
-    };
-  }
-
-  const { transformX, transformY } = getTransformAttr(el);
-  const position = {
-    x: transformX + childPosition.x,
-    y: transformY + childPosition.y,
-  };
-  while (root && root.id !== containerEl.id) {
-    if (root.classList.value === "root" && root.hasAttribute("transform")) {
-      const { transformX, transformY } = getTransformAttr(root);
-      position.x += transformX;
-      position.y += transformY;
-    }
-
-    root = root.parentElement;
-  }
-
-  return position;
 };
 
 export const parseMermaidFlowChartDiagram = (
