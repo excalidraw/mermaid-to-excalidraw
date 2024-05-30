@@ -17,6 +17,8 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
     const elements: ExcalidrawElementSkeleton[] = [];
 
     chart.nodes.forEach((node) => {
+      const groupIds = node.groupId?.split(", ");
+
       switch (node.type) {
         case "ellipse":
         case "diamond":
@@ -29,10 +31,27 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
             });
           }
 
+          if (node.groupId) {
+            Object.assign(element, {
+              label: {
+                ...element.label,
+                groupIds,
+              },
+              groupIds,
+            });
+          }
+
           elements.push(element);
           break;
         case "line":
           const line = transformToExcalidrawLineSkeleton(node);
+
+          if (node.groupId) {
+            Object.assign(line, {
+              groupIds,
+            });
+          }
+
           elements.push(line);
           break;
         case "text":
@@ -67,6 +86,8 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
         return;
       }
 
+      const groupIds = edge.groupId?.split(", ");
+
       if (endVertex.id?.includes("note") || startVertex.id?.includes("note")) {
         arrow.endArrowhead = null;
         arrow.strokeStyle = "dashed";
@@ -81,7 +102,15 @@ export const StateToExcalidrawSkeletonConvertor = new GraphConverter({
         type: "rectangle",
       };
 
-      elements.push(transformToExcalidrawArrowSkeleton(arrow));
+      const arrowSkeleton = transformToExcalidrawArrowSkeleton(arrow);
+
+      if (groupIds) {
+        Object.assign(arrowSkeleton, {
+          groupIds,
+        });
+      }
+
+      elements.push(arrowSkeleton);
     });
 
     return { elements };

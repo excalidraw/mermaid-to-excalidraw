@@ -204,19 +204,6 @@ const getRelationElement = (containerEl: Element, id: string) => {
   return containerEl.querySelector<SVGSVGElement>(`[data-id="${id}"]`)!;
 };
 
-const getDividerId = (id: string): [string, number] => {
-  const matchDomId = id.includes("divider") ? 2 : 1;
-  const [identifier, randomId, count] = id.split("-");
-
-  const dividerCount = Number(count.split("_")[0]) - matchDomId;
-
-  return [`${identifier}-${randomId}-${dividerCount}`, dividerCount];
-};
-
-const getDividerElement = (containerEl: Element, id: string) => {
-  return containerEl.querySelector<SVGSVGElement>(`.clusters > [id*="${id}"]`)!;
-};
-
 const computeSpecialType = (specialType: SpecialState): Partial<Container> => {
   switch (specialType.type) {
     case "choice":
@@ -277,6 +264,11 @@ const createRelationExcalidrawElement = (
       width: relationContainer.width!,
       height: relationContainer.height!,
     });
+
+    relationContainer.groupId = groupId
+      ? `${relationContainer.id}, ${groupId}`
+      : relationContainer.id;
+    innerEllipse.groupId += groupId ? `, ${groupId}` : "";
   }
 
   if (specialTypes[relation.id]) {
@@ -361,6 +353,7 @@ const parseDoc = (
         { label: { text: state.description || state.id } }
       );
 
+      stateElement.groupId += groupId ? `, ${groupId}` : "";
       processedNodeRelations.add(state.id);
       nodes.push(stateElement);
       return;
@@ -380,6 +373,8 @@ const parseDoc = (
         specialTypes,
         groupId
       );
+
+      return;
     }
 
     if (isConcurrencyState(state)) {
@@ -398,7 +393,9 @@ const parseDoc = (
         }
       );
 
+      groupId = `${dividerNode.id}${groupId ? `, ${groupId}` : ""}`;
       dividerElement.bgColor = "#e9ecef";
+      dividerElement.groupId = groupId;
 
       nodes.push(dividerElement);
 
@@ -408,8 +405,10 @@ const parseDoc = (
         nodes,
         processedNodeRelations,
         specialTypes,
-        state.id
+        groupId
       );
+
+      groupId = undefined;
       return;
     }
 
@@ -419,6 +418,9 @@ const parseDoc = (
       const { clusterElementSkeleton, topLine } =
         createClusterExcalidrawElement(clusterElement, containerEl, state);
 
+      groupId = `${state.id}${groupId ? `, ${groupId}` : ""}`;
+      clusterElementSkeleton.groupId = groupId;
+      topLine.groupId = groupId;
       nodes.push(clusterElementSkeleton);
       nodes.push(topLine);
 
@@ -428,8 +430,10 @@ const parseDoc = (
         nodes,
         processedNodeRelations,
         specialTypes,
-        state.id
+        groupId
       );
+
+      groupId = undefined;
     }
   });
 
@@ -460,8 +464,13 @@ const parseEdges = (nodes: ParsedDoc[], containerEl: Element): any[] => {
           );
 
           const clusterHasOwnEdges = clusters?.hasAttribute("transform");
+          clusterId = `${node.id}${clusterId ? `, ${clusterId}` : ""}`;
 
-          return parse(node.doc, clusterHasOwnEdges, node.id);
+          const edges = parse(node.doc, clusterHasOwnEdges, clusterId);
+
+          clusterId = undefined;
+
+          return edges;
         } else if (node.stmt === "relation") {
           const startId = node.state1.id;
           const endId = node.state2.id;
