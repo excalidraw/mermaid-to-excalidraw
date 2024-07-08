@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { graphToExcalidraw } from "./graphToExcalidraw.js";
 import { parseMermaid } from "./parseMermaid.js";
 
@@ -7,7 +8,7 @@ export interface MermaidConfig {
     curve?: "linear" | "basis";
   };
   themeVariables?: {
-    fontSize?: string;
+    fontSize?: number;
   };
   maxEdges?: number;
   maxTextSize?: number;
@@ -21,7 +22,10 @@ const parseMermaidToExcalidraw = async (
 
   // Only font size supported for excalidraw elements
   const excalidrawElements = graphToExcalidraw(parsedMermaidData, {
-    fontSize: config.themeVariables?.fontSize,
+    themeVariables: {
+      ...config.themeVariables,
+      fontSize: config.themeVariables?.fontSize || DEFAULT_FONT_SIZE,
+    },
   });
   return excalidrawElements;
 };

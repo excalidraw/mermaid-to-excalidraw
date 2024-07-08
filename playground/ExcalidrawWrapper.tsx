@@ -31,7 +31,9 @@ const ExcalidrawWrapper = ({
     }
 
     const { elements, files } = graphToExcalidraw(mermaidOutput, {
-      fontSize: DEFAULT_FONT_SIZE,
+      themeVariables: {
+        fontSize: DEFAULT_FONT_SIZE,
+      },
     });
 
     excalidrawAPI.updateScene({
