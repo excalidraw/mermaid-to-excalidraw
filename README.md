@@ -30,9 +30,14 @@ Example code:
 import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
 
 try {
-  const { elements, files } = await parseMermaidToExcalidraw(diagramDefinition, {
-    fontSize: DEFAULT_FONT_SIZE,
-  });
+  const { elements, files } = await parseMermaidToExcalidraw(
+    diagramDefinition,
+    {
+      themeVariables: {
+        fontSize: DEFAULT_FONT_SIZE,
+      },
+    }
+  );
   // Render elements and files on Excalidraw
 } catch (e) {
   // Parse error, displaying error message to users
