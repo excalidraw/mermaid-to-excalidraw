@@ -79,7 +79,8 @@ const computeGroupIds = (
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
     const elements: ExcalidrawElementSkeleton[] = [];
-    const fontSize = options.themeVariables?.fontSize || DEFAULT_FONT_SIZE;
+    const fontSize =
+      parseInt(options.themeVariables?.fontSize ?? "") || DEFAULT_FONT_SIZE;
     const { getGroupIds, getParentId } = computeGroupIds(graph);
 
     // SubGraphs

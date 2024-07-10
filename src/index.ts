@@ -17,9 +17,10 @@ export interface MermaidConfig {
   };
   /**
    * Theme variables
+   * @default { fontSize: "25px" }
    */
   themeVariables?: {
-    fontSize?: number;
+    fontSize?: string;
   };
   /**
    * Maximum number of edges to be rendered.
@@ -44,7 +45,8 @@ const parseMermaidToExcalidraw = async (
   const excalidrawElements = graphToExcalidraw(parsedMermaidData, {
     themeVariables: {
       ...mermaidConfig.themeVariables,
-      fontSize: mermaidConfig.themeVariables?.fontSize || DEFAULT_FONT_SIZE,
+      fontSize:
+        mermaidConfig.themeVariables?.fontSize || `${DEFAULT_FONT_SIZE}px`,
     },
   });
   return excalidrawElements;

@@ -49,10 +49,10 @@ Currently `mermaid-to-excalidraw` only supports the :point_down: config params
   };
   /**
    * Theme variables
-   * @default { fontSize: 25 }
+   * @default { fontSize: "25px" }
    */
   themeVariables?: {
-    fontSize?: number;
+    fontSize?: string;
   };
   /**
    * Maximum number of edges to be rendered.
@@ -77,7 +77,7 @@ try {
     diagramDefinition,
     {
       themeVariables: {
-        fontSize: DEFAULT_FONT_SIZE,
+        fontSize: "25px",
       },
     }
   );
