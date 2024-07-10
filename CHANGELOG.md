@@ -4,7 +4,9 @@
 
 ### Features
 
-- Add support for passing config params `maxEdge` and `maxTextSize` to mermaid by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/68
+- Add support for passing config params `maxEdge`, `maxTextSize` and more params to mermaid by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/68.
+
+You can read about it [here](https://github.com/excalidraw/mermaid-to-excalidraw/blob/f2c4908acd1a4837e71169fd9b339a7eee1c63bc/README.md#get-started).
 
 Additonally the param `fontSize` is renamed to `themeVariables.fontSize` and type is changed from `number` to `string` to be consistent with the [mermaid config](https://mermaid.js.org/schemas/config.schema.json).
 
