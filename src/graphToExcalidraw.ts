@@ -1,4 +1,4 @@
-import { MermaidOptions } from "./index.js";
+import { ExcalidrawConfig } from "./index.js";
 import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart.js";
 import { GraphImageConverter } from "./converter/types/graphImage.js";
 import { GraphImage, MermaidToExcalidrawResult } from "./interfaces.js";
@@ -10,7 +10,7 @@ import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
 
 export const graphToExcalidraw = (
   graph: Flowchart | GraphImage | Sequence | Class,
-  options: MermaidOptions = {}
+  options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   switch (graph.type) {
     case "graphImage": {

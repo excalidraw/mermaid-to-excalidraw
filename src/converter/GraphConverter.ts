@@ -1,4 +1,4 @@
-import { MermaidOptions } from "../index.js";
+import { ExcalidrawConfig } from "../index.js";
 import { DEFAULT_FONT_SIZE } from "../constants.js";
 import { MermaidToExcalidrawResult } from "../interfaces.js";
 import { Flowchart } from "../parser/flowchart.js";
@@ -11,15 +11,15 @@ export class GraphConverter<T = Flowchart | Sequence> {
   }: {
     converter: (
       graph: T,
-      options: Required<MermaidOptions>
+      config: Required<ExcalidrawConfig>
     ) => MermaidToExcalidrawResult;
   }) {
     this.converter = converter;
   }
-  convert = (graph: T, options: MermaidOptions) => {
+  convert = (graph: T, config: ExcalidrawConfig) => {
     return this.converter(graph, {
-      ...options,
-      fontSize: options.fontSize || DEFAULT_FONT_SIZE,
+      ...config,
+      fontSize: config.fontSize || DEFAULT_FONT_SIZE,
     });
   };
 }
