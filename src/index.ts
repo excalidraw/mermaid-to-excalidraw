@@ -46,7 +46,7 @@ const parseMermaidToExcalidraw = async (
   const fontSize =
     parseInt(mermaidConfig.themeVariables?.fontSize ?? "") || DEFAULT_FONT_SIZE;
   const parsedMermaidData = await parseMermaid(definition, {
-    ...config,
+    ...mermaidConfig,
     themeVariables: {
       ...mermaidConfig.themeVariables,
       // Multiplying by 1.25 to increase the font size by 25% and render correctly in Excalidraw
