@@ -1,4 +1,4 @@
-## Unreleased
+## v1.1.0 (2024-07-10)
 
 ## Library
 
