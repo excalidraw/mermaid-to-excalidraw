@@ -4,7 +4,6 @@ import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
-import { DEFAULT_FONT_SIZE } from "../src/constants.ts";
 
 export interface MermaidData {
   definition: string;
