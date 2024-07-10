@@ -9,7 +9,6 @@ import {
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
-import { DEFAULT_FONT_SIZE } from "../../constants.js";
 
 const computeGroupIds = (
   graph: Flowchart
@@ -79,7 +78,7 @@ const computeGroupIds = (
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
     const elements: ExcalidrawElementSkeleton[] = [];
-    const fontSize = options.fontSize || DEFAULT_FONT_SIZE;
+    const fontSize = options.fontSize;
     const { getGroupIds, getParentId } = computeGroupIds(graph);
 
     // SubGraphs

@@ -1,3 +1,4 @@
+import { ExcalidrawConfig } from "./index.js";
 import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart.js";
 import { GraphImageConverter } from "./converter/types/graphImage.js";
 import { GraphImage, MermaidToExcalidrawResult } from "./interfaces.js";
@@ -6,7 +7,6 @@ import { Sequence } from "./parser/sequence.js";
 import { Flowchart } from "./parser/flowchart.js";
 import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
-import { ExcalidrawConfig } from "./index.js";
 
 export const graphToExcalidraw = (
   graph: Flowchart | GraphImage | Sequence | Class,
