@@ -47,7 +47,6 @@ export const parseMermaid = async (
   config: MermaidConfig = MERMAID_CONFIG
 ): Promise<Flowchart | GraphImage | Sequence | Class> => {
   mermaid.initialize(config);
-
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(
     encodeEntities(definition)

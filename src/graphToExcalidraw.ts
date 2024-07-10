@@ -6,11 +6,11 @@ import { Sequence } from "./parser/sequence.js";
 import { Flowchart } from "./parser/flowchart.js";
 import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
-import { MermaidConfig } from "./index.js";
+import { ExcalidrawConfig } from "./index.js";
 
 export const graphToExcalidraw = (
   graph: Flowchart | GraphImage | Sequence | Class,
-  options: MermaidConfig = {}
+  options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   switch (graph.type) {
     case "graphImage": {

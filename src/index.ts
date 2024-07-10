@@ -34,20 +34,28 @@ export interface MermaidConfig {
   maxTextSize?: number;
 }
 
+export interface ExcalidrawConfig {
+  fontSize?: number;
+}
+
 const parseMermaidToExcalidraw = async (
   definition: string,
   config?: MermaidConfig
 ) => {
   const mermaidConfig = config || {};
-  const parsedMermaidData = await parseMermaid(definition, config);
-
-  // Only font size supported for excalidraw elements
-  const excalidrawElements = graphToExcalidraw(parsedMermaidData, {
+  const fontSize =
+    parseInt(mermaidConfig.themeVariables?.fontSize ?? "") || DEFAULT_FONT_SIZE;
+  const parsedMermaidData = await parseMermaid(definition, {
+    ...config,
     themeVariables: {
       ...mermaidConfig.themeVariables,
-      fontSize:
-        mermaidConfig.themeVariables?.fontSize || `${DEFAULT_FONT_SIZE}px`,
+      // Multiplying by 1.25 to increase the font size by 25% and render correctly in Excalidraw
+      fontSize: `${fontSize * 1.25}px`,
     },
+  });
+  // Only font size supported for excalidraw elements
+  const excalidrawElements = graphToExcalidraw(parsedMermaidData, {
+    fontSize,
   });
   return excalidrawElements;
 };

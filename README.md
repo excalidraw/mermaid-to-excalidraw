@@ -49,7 +49,7 @@ Currently `mermaid-to-excalidraw` only supports the :point_down: config params
   };
   /**
    * Theme variables
-   * @default { fontSize: "25px" }
+   * @default { fontSize: "20px" }
    */
   themeVariables?: {
     fontSize?: string;
