@@ -56,12 +56,12 @@ Currently `mermaid-to-excalidraw` only supports the :point_down: config params
   };
   /**
    * Maximum number of edges to be rendered.
-   * @default 1000
+   * @default 500
    */
   maxEdges?: number;
   /**
    * Maximum number of characters to be rendered.
-   * @default 1000
+   * @default 50000
    */
   maxTextSize?: number;
 }
