@@ -24,6 +24,49 @@ yarn build
 
 ## Get started
 
+```ts
+parseMermaidToExcalidraw(diagramDefinition: string, config?: MermaidConfig)
+```
+
+The `diagramDefinition` is the mermaid diagram definition.
+and `config` is the mermaid config. You can use the `config` param when you want to pass some custom config to mermaid.
+
+Currently `mermaid-to-excalidraw` only supports the :point_down: config params
+
+```ts
+{
+  /**
+   * Whether to start the diagram automatically when the page loads.
+   * @default false
+   */
+  startOnLoad?: boolean;
+  /**
+   * The flowchart curve style.
+   * @default "linear"
+   */
+  flowchart?: {
+    curve?: "linear" | "basis";
+  };
+  /**
+   * Theme variables
+   * @default { fontSize: 25 }
+   */
+  themeVariables?: {
+    fontSize?: number;
+  };
+  /**
+   * Maximum number of edges to be rendered.
+   * @default 1000
+   */
+  maxEdges?: number;
+  /**
+   * Maximum number of characters to be rendered.
+   * @default 1000
+   */
+  maxTextSize?: number;
+}
+```
+
 Example code:
 
 ```ts
