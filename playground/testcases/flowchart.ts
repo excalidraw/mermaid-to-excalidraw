@@ -361,6 +361,15 @@ style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 
     type: "flowchart",
   },
   {
+    name: "Styling a node using class",
+    definition: `flowchart LR
+    A:::foo & B:::bar --> C:::foobar
+    classDef foo stroke:#1971c2, fill:#4dabf7
+    classDef bar stroke:#d6336c, fill:#f783ac
+    classDef foobar stroke:#00f stroke-width:2px`,
+    type: "flowchart",
+  },
+  {
     name: "Classes",
     definition: `flowchart LR
 A-->B[AAABBB]

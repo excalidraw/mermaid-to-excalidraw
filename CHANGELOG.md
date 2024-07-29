@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+- Support ClassDef for styling the nodes by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/71
+
 ## v1.1.0 (2024-07-10)
 
 ## Library
