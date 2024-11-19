@@ -1,3 +1,11 @@
+
+## v1.1.2 (2024-11-19)
+
+### Fixes
+
+- Bump mermaid to 10.9.3 to fix [GHSA-m4gq-x24j-jpmf](https://github.com/advisories/GHSA-m4gq-x24j-jpmf).
+- Remove `@types/mermaid` from dependencies (not needed).
+
 ## v1.1.0 (2024-07-10)
 
 ## Library
