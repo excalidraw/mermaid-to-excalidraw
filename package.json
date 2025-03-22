@@ -26,7 +26,7 @@
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
-    "@excalidraw/excalidraw": "0.17.1-7381-cdf6d3e",
+    "@excalidraw/excalidraw": "0.18.0",
     "@types/mermaid": "9.2.0",
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.4",
