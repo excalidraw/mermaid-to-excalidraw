@@ -3,11 +3,11 @@ import {
   Excalidraw,
   convertToExcalidrawElements,
 } from "@excalidraw/excalidraw";
-import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import type { MermaidData } from "./";
 import "@excalidraw/excalidraw/index.css";
+import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
