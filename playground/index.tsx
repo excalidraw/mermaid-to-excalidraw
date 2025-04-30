@@ -4,6 +4,7 @@ import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
+import Split from "react-split";
 
 export interface MermaidData {
   definition: string;
@@ -51,46 +52,53 @@ const App = () => {
   );
 
   return (
-    <>
-      <div style={{ width: "50%", display: "flex" }}>
-        <section id="custom-test">
-          <h1>{"Custom Test"}</h1>
-          {"Supports only "}
-          <a
-            target="_blank"
-            href="https://mermaid.js.org/syntax/flowchart.html"
-          >
-            {"Flowchart"}
-          </a>
-          {", "}
-          <a
-            target="_blank"
-            href="https://mermaid.js.org/syntax/sequenceDiagram.html"
-          >
-            {"Sequence "}
-          </a>
-          {"and "}
-          <a
-            target="_blank"
-            href="https://mermaid.js.org/syntax/classDiagram.html"
-          >
-            {"Class "}
-          </a>
-          {"diagrams."}
-          <br />
-          <CustomTest
-            activeTestCaseIndex={activeTestCaseIndex}
-            mermaidData={deferredMermaidData}
-            onChange={handleOnChange}
-          />
-        </section>
-        <GitHubCorner />
+    <Split
+      className="split"
+      sizes={[50, 50]}
+      minSize={460}
+      gutterSize={3}
+      gutterAlign="center"
+    >
+      <div className="mermaid-container">
+        <div className="mermaid-header-container">
+          <section id="custom-test">
+            <h1>{"Custom Test"}</h1>
+            {"Supports only "}
+            <a
+              target="_blank"
+              href="https://mermaid.js.org/syntax/flowchart.html"
+            >
+              {"Flowchart"}
+            </a>
+            {", "}
+            <a
+              target="_blank"
+              href="https://mermaid.js.org/syntax/sequenceDiagram.html"
+            >
+              {"Sequence "}
+            </a>
+            {"and "}
+            <a
+              target="_blank"
+              href="https://mermaid.js.org/syntax/classDiagram.html"
+            >
+              {"Class "}
+            </a>
+            {"diagrams."}
+            <br />
+            <CustomTest
+              activeTestCaseIndex={activeTestCaseIndex}
+              mermaidData={deferredMermaidData}
+              onChange={handleOnChange}
+            />
+          </section>
+          <GitHubCorner />
+        </div>
+        <Testcases
+          activeTestCaseIndex={activeTestCaseIndex}
+          onChange={handleOnChange}
+        />
       </div>
-
-      <Testcases
-        activeTestCaseIndex={activeTestCaseIndex}
-        onChange={handleOnChange}
-      />
 
       <div id="excalidraw">
         <ExcalidrawWrapper
@@ -98,7 +106,7 @@ const App = () => {
           mermaidOutput={deferredMermaidData.output}
         />
       </div>
-    </>
+    </Split>
   );
 };
 
