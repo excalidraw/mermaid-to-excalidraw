@@ -28,7 +28,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
 
   let testCaseIndex = 0;
   return (
-    <>
+    <div>
       {testcaseTypes.map(({ name, testcases }) => {
         const baseId = name.toLowerCase();
         return (
@@ -59,7 +59,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
           </Fragment>
         );
       })}
-    </>
+    </div>
   );
 };
 

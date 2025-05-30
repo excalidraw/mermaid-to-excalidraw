@@ -1,6 +1,8 @@
 body {
-  font-family: sans-serif;
   margin-top: 0;
+  margin-bottom: 0;
+  padding: 0;
+  font-family: sans-serif;
   #flowchart-container,
   #unsupported {
     max-width: 48%;
@@ -19,12 +21,12 @@ button {
 }
 
 #excalidraw {
+  overflow: auto;
   width: 50vw;
   height: 100vh;
   position: fixed;
   top: 0;
   right: 0;
-  border-left: 1px solid #ccc;
 
   .mobile-misc-tools-container {
     display: none !important;
@@ -62,6 +64,11 @@ a {
   text-decoration: none;
 }
 
+summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
 .testcase-container pre {
   font-size: 16px;
   font-weight: 600;
@@ -70,4 +77,33 @@ a {
   white-space: pre-wrap;
   width: 45vw;
   padding: 5px;
+}
+
+.split {
+  min-height: 100vh;
+  display: flex;
+}
+
+.gutter-horizontal {
+  background: #ccc;
+  z-index: 1;
+  cursor: row-resize;
+
+  &:hover {
+    cursor: col-resize;
+  }
+}
+
+.mermaid-container {
+  width: 50%;
+  height: max-content;
+  display: "flex";
+  flex-direction: "column";
+  overflow: auto;
+  
+  .mermaid-header-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
 }
