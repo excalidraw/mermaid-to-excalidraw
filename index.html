@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/index.js"></script>
+    <title>Mermaid to Excalidraw</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/index.css" />
+  </head>
+  <body>
+    <section id="custom-test">
+      <h1>Custom Test</h1>
+      <br />
+      <textarea
+        id="mermaid-input"
+        rows="10"
+        cols="50"
+        placeholder="Input Mermaid Syntax"
+      ></textarea
+      ><br />
+      <label for="font-size-input">Custom Font Size: </label>
+      <input type="number" id="font-size-input" value="20" /><br />
+      <button id="render-excalidraw-btn">Render to Excalidraw</button>
+      <div id="custom-diagram"></div>
+      <details id="parsed-data-details">
+        <summary>Parsed data from parseMermaid</summary>
+        <pre id="custom-parsed-data"></pre>
+      </details>
+      <div id="error"></div>
+    </section>
+    <img
+      src="/spinner.gif"
+      alt="Loading Spinner"
+      id="diagram-loading-spinner"
+      width="50"
+    />
+    <div id="flowchart-container"></div>
+    <div id="unsupported"></div>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/@excalidraw/excalidraw@0.15.2-6546-eae7ba2/dist/excalidraw.development.js"
+    ></script>
+    <script src="/index.js" defer></script>
+  </body>
+</html>
+
