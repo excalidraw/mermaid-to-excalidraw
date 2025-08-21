@@ -4,6 +4,10 @@
 
 - Support ClassDef for styling the nodes by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/71
 
+## v1.1.3 (2025-08-21)
+
+- Bump mermaid to 10.9.4 to fix XSS in Mermaid [#84](https://github.com/excalidraw/mermaid-to-excalidraw/pull/84)
+
 ## v1.1.0 (2024-07-10)
 
 ## Library
