@@ -1,4 +1,4 @@
-import { useState, useCallback, useDeferredValue } from "react";
+import { useState, useCallback, useDeferredValue, useEffect } from "react";
 import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
@@ -14,15 +14,28 @@ export interface MermaidData {
 
 export type ActiveTestCaseIndex = number | "custom" | null;
 
+const STORAGE_KEY = "mermaid-data";
+
+const getInitialMermaidData = (): MermaidData => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved
+    ? JSON.parse(saved)
+    : {
+      definition: "graph TD;\nA-->B;",
+      error: null,
+      output: null,
+    };
+};
+
 const App = () => {
-  const [mermaidData, setMermaidData] = useState<MermaidData>({
-    definition: "",
-    error: null,
-    output: null,
-  });
+  const [mermaidData, setMermaidData] = useState<MermaidData>(getInitialMermaidData);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mermaidData));
+  }, [mermaidData]);
 
   const [activeTestCaseIndex, setActiveTestCaseIndex] =
-    useState<ActiveTestCaseIndex>(null);
+    useState<ActiveTestCaseIndex>("custom");
   const deferredMermaidData = useDeferredValue(mermaidData);
 
   const handleOnChange = useCallback(

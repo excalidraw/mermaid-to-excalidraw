@@ -32,6 +32,7 @@ const CustomTest = ({
           rows={10}
           cols={50}
           name="mermaid-input"
+          value={mermaidData.definition}
           onChange={(e) => {
             if (!isActive) {
               return;
