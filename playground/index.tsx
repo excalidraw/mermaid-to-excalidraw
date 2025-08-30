@@ -14,24 +14,33 @@ export interface MermaidData {
 
 export type ActiveTestCaseIndex = number | "custom" | null;
 
-const STORAGE_KEY = "mermaid-data";
+const STORAGE_KEY = "savedData";
 
 const getInitialMermaidData = (): MermaidData => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  return saved
-    ? JSON.parse(saved)
-    : {
-      definition: "graph TD;\nA-->B;",
-      error: null,
-      output: null,
-    };
+  const savedData = localStorage.getItem(STORAGE_KEY);
+  if (savedData) {
+    try {
+      return JSON.parse(savedData);
+    } catch {
+      console.warn("Invalid saved mermaid data in localStorage, resetting to default.");
+    }
+  }
+  return {
+    definition: "graph TD;\nA-->B;",
+    error: null,
+    output: null,
+  };
 };
 
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>(getInitialMermaidData);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mermaidData));
+    const timeout = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mermaidData));
+    }, 300);
+
+    return () => clearTimeout(timeout);
   }, [mermaidData]);
 
   const [activeTestCaseIndex, setActiveTestCaseIndex] =
