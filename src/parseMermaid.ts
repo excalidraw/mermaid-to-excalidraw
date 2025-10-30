@@ -27,7 +27,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 
   // Convert SVG to image
   const mimeType = "image/svg+xml";
-  const decoded = unescape(encodeURIComponent(svgEl.outerHTML));
+  const decoded = decodeURIComponent(encodeURIComponent(svgEl.outerHTML));
   const base64 = btoa(decoded);
   const dataURL = `data:image/svg+xml;base64,${base64}`;
 
