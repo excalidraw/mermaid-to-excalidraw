@@ -89,7 +89,7 @@ try {
 
 ## Playground
 
-Try out [here](https://mermaid-to-excalidraw.vercel.app).
+Try out the [Mermaid to Excalidraw Playground](https://mermaid-to-excalidraw.vercel.app).
 
 ## API
 
