@@ -20,7 +20,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 
   // Set width and height explicitly since in firefox it gets set to 0
   // if the width and height are not explicitly set.
-  // E.g., in some cases like er Diagram, gnatt, width and height is set as 100%
+  // E.g., in some cases like er Diagram, gantt, width and height is set as 100%
   // which sets the dimensions as 0 in firefox and thus the diagram isn't rendered
   svgEl.setAttribute("width", `${width}`);
   svgEl.setAttribute("height", `${height}`);
