@@ -7,7 +7,7 @@ import {
   Line,
   Node,
   Text,
-  createArrowSkeletion,
+  createArrowSkeleton,
   createContainerSkeletonFromSVG,
   createLineSkeletonFromSVG,
   createTextSkeleton,
@@ -253,7 +253,7 @@ const parseRelations = (
     const edgePositionData = computeEdgePositions(
       edges[index] as SVGPathElement
     );
-    const arrowSkeletion = createArrowSkeletion(
+    const arrowSkeleton = createArrowSkeleton(
       edgePositionData.startX,
       edgePositionData.startY,
       edgePositionData.endX,
@@ -268,7 +268,7 @@ const parseRelations = (
       }
     );
 
-    const arrow = adjustArrowPosition(direction, arrowSkeletion);
+    const arrow = adjustArrowPosition(direction, arrowSkeleton);
     arrows.push(arrow);
 
     // Add cardinalities and Multiplicities
@@ -399,7 +399,7 @@ const parseNotes = (
       const startY = container.y + (container.height || 0);
       const endX = startX;
       const endY = classNode.y;
-      const connector = createArrowSkeletion(startX, startY, endX, endY, {
+      const connector = createArrowSkeleton(startX, startY, endX, endY, {
         strokeStyle: "dotted",
         startArrowhead: null,
         endArrowhead: null,

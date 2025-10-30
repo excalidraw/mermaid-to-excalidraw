@@ -143,7 +143,7 @@ export const createArrowSkeletonFromSVG = (
   return arrow;
 };
 
-export const createArrowSkeletion = (
+export const createArrowSkeleton = (
   startX: number,
   startY: number,
   endX: number,
