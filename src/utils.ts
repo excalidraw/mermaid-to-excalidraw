@@ -67,7 +67,7 @@ interface EdgePositionData {
   reflectionPoints: Position[];
 }
 
-// Compute edge postion start, end and points (reflection points)
+// Compute edge position start, end and points (reflection points)
 export const computeEdgePositions = (
   pathElement: SVGPathElement,
   offset: Position = { x: 0, y: 0 }

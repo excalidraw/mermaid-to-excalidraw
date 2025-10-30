@@ -40,7 +40,7 @@ const LINE_TYPE = {
   DOTTED_LINE: 1,
 };
 
-// This is the offset to update the arrow head postition for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
+// This is the offset to update the arrow head position for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
 const MERMAID_ARROW_HEAD_OFFSET = 16;
 
 export interface Class {
