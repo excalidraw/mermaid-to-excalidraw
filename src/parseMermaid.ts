@@ -81,7 +81,7 @@ export const parseMermaid = async (
       data = parseMermaidClassDiagram(diagram, svgContainer);
       break;
     }
-    // fallback to image if diagram type not-supported
+    // fall back to image if diagram type not-supported
     default: {
       data = convertSvgToGraphImage(svgContainer);
     }
