@@ -14,7 +14,7 @@
 
 You can read about it in [Get started](https://github.com/excalidraw/mermaid-to-excalidraw/blob/f2c4908acd1a4837e71169fd9b339a7eee1c63bc/README.md#get-started).
 
-Additonally the param `fontSize` is renamed to `themeVariables.fontSize` and type is changed from `number` to `string` to be consistent with the [mermaid config](https://mermaid.js.org/schemas/config.schema.json).
+Additionally the param `fontSize` is renamed to `themeVariables.fontSize` and type is changed from `number` to `string` to be consistent with the [mermaid config](https://mermaid.js.org/schemas/config.schema.json).
 
 ## v1.0.0 (2024-05-20)
 
