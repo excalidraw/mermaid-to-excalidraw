@@ -271,7 +271,7 @@ const parseRelations = (
     const arrow = adjustArrowPosition(direction, arrowSkeletion);
     arrows.push(arrow);
 
-    // Add cardianlities and Multiplicities
+    // Add cardinalities and Multiplicities
     const { relationTitle1, relationTitle2 } = relationNode;
     const offsetX = 20;
     const offsetY = 15;
