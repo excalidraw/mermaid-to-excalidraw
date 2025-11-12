@@ -10,6 +10,16 @@ describe("Test Utils", () => {
       expect(entityCodesToText("#9829;")).toBe("♥");
       expect(entityCodesToText("#6672;")).toBe("ᨐ");
     });
+
+    it("should convert <br> tags to spaces", () => {
+      expect(entityCodesToText("Line 1<br>Line 2")).toBe("Line 1 Line 2");
+      expect(entityCodesToText("Line 1<br/>Line 2")).toBe("Line 1 Line 2");
+      expect(entityCodesToText("Line 1<br />Line 2")).toBe("Line 1 Line 2");
+      expect(entityCodesToText("Line 1<BR>Line 2")).toBe("Line 1 Line 2");
+      expect(entityCodesToText("Line 1<br>Middle<br/>Line 3")).toBe(
+        "Line 1 Middle Line 3"
+      );
+    });
   });
 
   describe("Test getTransformAttr", () => {

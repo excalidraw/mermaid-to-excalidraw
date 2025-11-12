@@ -3,6 +3,11 @@ import { Position } from "./interfaces.js";
 // Convert mermaid entity codes to text e.g. "#9829;" to "♥"
 export const entityCodesToText = (input: string): string => {
   input = decodeEntities(input);
+
+  // Convert <br> and <br/> tags to a space
+  // This handles cases where Mermaid renders <br> tags as literal strings
+  input = input.replace(/<br\s*\/?>/gi, " ");
+
   // Append & before the pattern #(\d+); or #([a-z]+); to convert to decimal code
   // so it can be rendered as html character
   // eg #9829; => &#9829;

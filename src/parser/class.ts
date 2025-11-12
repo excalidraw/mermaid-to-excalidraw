@@ -1,6 +1,10 @@
 import { nanoid } from "nanoid";
 
-import { computeEdgePositions, getTransformAttr } from "../utils.js";
+import {
+  computeEdgePositions,
+  entityCodesToText,
+  getTransformAttr,
+} from "../utils.js";
 import {
   Arrow,
   Container,
@@ -168,7 +172,7 @@ const parseClasses = (
       const textElement = createTextSkeleton(
         transformX + textTransformX,
         transformY + textTransformY + offsetY,
-        label,
+        entityCodesToText(label),
         {
           width: boundingBox.width,
           height: boundingBox.height,
@@ -262,7 +266,9 @@ const parseRelations = (
         strokeStyle,
         startArrowhead,
         endArrowhead,
-        label: relationNode.title ? { text: relationNode.title } : undefined,
+        label: relationNode.title
+          ? { text: entityCodesToText(relationNode.title) }
+          : undefined,
         start: { type: "rectangle", id: node1.id },
         end: { type: "rectangle", id: node2.id },
       }
@@ -314,9 +320,14 @@ const parseRelations = (
           y = arrow.startY + offsetY;
       }
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
-        fontSize: 16,
-      });
+      const relationTitleElement = createTextSkeleton(
+        x,
+        y,
+        entityCodesToText(relationTitle1),
+        {
+          fontSize: 16,
+        }
+      );
 
       text.push(relationTitleElement);
     }
@@ -355,9 +366,14 @@ const parseRelations = (
           y = arrow.endY - offsetY;
       }
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
-        fontSize: 16,
-      });
+      const relationTitleElement = createTextSkeleton(
+        x,
+        y,
+        entityCodesToText(relationTitle2),
+        {
+          fontSize: 16,
+        }
+      );
 
       text.push(relationTitleElement);
     }
