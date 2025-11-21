@@ -1,6 +1,7 @@
 import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { graphToExcalidraw } from "./graphToExcalidraw.js";
 import { parseMermaid } from "./parseMermaid.js";
+import { validateMermaid } from "./validateMermaid.js";
 
 export interface MermaidConfig {
   /**
@@ -60,4 +61,4 @@ const parseMermaidToExcalidraw = async (
   return excalidrawElements;
 };
 
-export { parseMermaidToExcalidraw };
+export { parseMermaidToExcalidraw, validateMermaid };
