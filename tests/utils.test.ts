@@ -19,7 +19,7 @@ describe("Test Utils", () => {
       el = document.createElement("div");
     });
 
-    it("should return the correct transformX and transformY when transform attrubute is present", () => {
+    it("should return the correct transformX and transformY when transform attribute is present", () => {
       el.setAttribute("transform", "translate(100, 200)");
       const { transformX, transformY } = getTransformAttr(el);
       expect(transformX).toBe(100);

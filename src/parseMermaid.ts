@@ -18,16 +18,16 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
   const width = rect.width;
   const height = rect.height;
 
-  // Set width and height explictly since in firefox it gets set to 0
-  // if the width and height are not expilcitly set
-  // eg in some cases like er Diagram, gnatt, width and height is set as 100%
+  // Set width and height explicitly since in firefox it gets set to 0
+  // if the width and height are not explicitly set.
+  // E.g., in some cases like an Entity-Relationship diagram or a Gantt diagram, the width and height are set as 100%
   // which sets the dimensions as 0 in firefox and thus the diagram isn't rendered
   svgEl.setAttribute("width", `${width}`);
   svgEl.setAttribute("height", `${height}`);
 
   // Convert SVG to image
   const mimeType = "image/svg+xml";
-  const decoded = unescape(encodeURIComponent(svgEl.outerHTML));
+  const decoded = decodeURIComponent(encodeURIComponent(svgEl.outerHTML));
   const base64 = btoa(decoded);
   const dataURL = `data:image/svg+xml;base64,${base64}`;
 
@@ -81,7 +81,7 @@ export const parseMermaid = async (
       data = parseMermaidClassDiagram(diagram, svgContainer);
       break;
     }
-    // fallback to image if diagram type not-supported
+    // fall back to image if diagram type not-supported
     default: {
       data = convertSvgToGraphImage(svgContainer);
     }

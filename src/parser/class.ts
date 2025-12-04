@@ -7,7 +7,7 @@ import {
   Line,
   Node,
   Text,
-  createArrowSkeletion,
+  createArrowSkeleton,
   createContainerSkeletonFromSVG,
   createLineSkeletonFromSVG,
   createTextSkeleton,
@@ -40,7 +40,7 @@ const LINE_TYPE = {
   DOTTED_LINE: 1,
 };
 
-// This is the offset to update the arrow head postition for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
+// This is the offset to update the arrow head position for rendering in excalidraw as mermaid calculates the position until the start of arrowhead
 const MERMAID_ARROW_HEAD_OFFSET = 16;
 
 export interface Class {
@@ -253,7 +253,7 @@ const parseRelations = (
     const edgePositionData = computeEdgePositions(
       edges[index] as SVGPathElement
     );
-    const arrowSkeletion = createArrowSkeletion(
+    const arrowSkeleton = createArrowSkeleton(
       edgePositionData.startX,
       edgePositionData.startY,
       edgePositionData.endX,
@@ -268,10 +268,10 @@ const parseRelations = (
       }
     );
 
-    const arrow = adjustArrowPosition(direction, arrowSkeletion);
+    const arrow = adjustArrowPosition(direction, arrowSkeleton);
     arrows.push(arrow);
 
-    // Add cardianlities and Multiplicities
+    // Add cardinalities and Multiplicities
     const { relationTitle1, relationTitle2 } = relationNode;
     const offsetX = 20;
     const offsetY = 15;
@@ -399,7 +399,7 @@ const parseNotes = (
       const startY = container.y + (container.height || 0);
       const endX = startX;
       const endY = classNode.y;
-      const connector = createArrowSkeletion(startX, startY, endX, endY, {
+      const connector = createArrowSkeleton(startX, startY, endX, endY, {
         strokeStyle: "dotted",
         startArrowhead: null,
         endArrowhead: null,

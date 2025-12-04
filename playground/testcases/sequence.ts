@@ -151,7 +151,7 @@ export const SEQUENCE_DIAGRAM_TESTCASES: TestCase[] = [
   },
   {
     type: "sequence",
-    name: "Background Hightlights",
+    name: "Background Highlights",
     definition: `sequenceDiagram
   participant Alice
   participant John

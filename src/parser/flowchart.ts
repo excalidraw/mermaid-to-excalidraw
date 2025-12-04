@@ -37,8 +37,8 @@ export interface Edge {
 }
 
 const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
-  // Extract only node id for better reference
-  // e.g. full element id = "flowchart-c1-205" will map to "c1"
+  // Extract only node id for better reference,
+  // e.g., full element id = "flowchart-c1-205" will map to "c1"
   const nodeIds = data.nodes.map((n: string) => {
     if (n.startsWith("flowchart-")) {
       return n.split("-")[1];
@@ -241,7 +241,7 @@ export const parseMermaidFlowChartDiagram = (
 ): Flowchart => {
   // This does some cleanup and initialization making sure
   // diagram is parsed correctly. Useful when multiple diagrams are
-  // parsed together one after another, eg in playground
+  // parsed together one after another, e.g., in playground
   // https://github.com/mermaid-js/mermaid/blob/e561cbd3be2a93b8bedfa4839484966faad92ccf/packages/mermaid/src/Diagram.ts#L43
   diagram.parse();
 

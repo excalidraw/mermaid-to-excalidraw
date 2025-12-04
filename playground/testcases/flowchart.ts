@@ -198,7 +198,7 @@ A & B--> C & D
     type: "flowchart",
   },
   {
-    name: "Multiple nodes linkes to describe a dependencies using another syntax",
+    name: "Multiple nodes links to describe a dependencies using another syntax",
     definition: `flowchart TB
 A --> C
 A --> D

@@ -474,7 +474,7 @@ export const parseMermaidSequenceDiagram = (
   const mermaidParser = diagram.parser.yy;
   const nodes: Array<Node[]> = [];
   const groups = mermaidParser.getBoxes();
-  const bgHightlights = computeHighlights(containerEl);
+  const bgHighlights = computeHighlights(containerEl);
   const actorData = mermaidParser.getActors();
   const { nodes: actors, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
@@ -482,7 +482,7 @@ export const parseMermaidSequenceDiagram = (
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(messages, containerEl);
-  nodes.push(bgHightlights);
+  nodes.push(bgHighlights);
   nodes.push(...actors);
   nodes.push(notes);
   nodes.push(activations);

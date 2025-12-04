@@ -1,16 +1,16 @@
 import { Position } from "./interfaces.js";
 
-// Convert mermaid entity codes to text e.g. "#9829;" to "♥"
+// Convert mermaid entity codes to text, e.g., "#9829;" to "♥"
 export const entityCodesToText = (input: string): string => {
   input = decodeEntities(input);
   // Append & before the pattern #(\d+); or #([a-z]+); to convert to decimal code
-  // so it can be rendered as html character
-  // eg #9829; => &#9829;
+  // so it can be rendered as html character,
+  // e.g., #9829; => &#9829;
   const inputWithDecimalCode = input
     .replace(/#(\d+);/g, "&#$1;")
     .replace(/#([a-z]+);/g, "&$1;");
 
-  // Render the decimal code as html character, eg &#9829; => ♥
+  // Render the decimal code as html character, e.g., &#9829; => ♥
   const element = document.createElement("textarea");
   element.innerHTML = inputWithDecimalCode;
   return element.value;
@@ -67,7 +67,7 @@ interface EdgePositionData {
   reflectionPoints: Position[];
 }
 
-// Compute edge postion start, end and points (reflection points)
+// Compute edge position start, end and points (reflection points)
 export const computeEdgePositions = (
   pathElement: SVGPathElement,
   offset: Position = { x: 0, y: 0 }
@@ -86,7 +86,7 @@ export const computeEdgePositions = (
   }
 
   // Split the d attribute based on M (Move To) and L (Line To) commands
-  // eg "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2"]
+  // e.g., "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2"]
   const commands = dAttr.split(/(?=[LM])/);
 
   // Get the start position from the first commands element => [29.383,38.5]
