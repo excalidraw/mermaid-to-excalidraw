@@ -85,6 +85,11 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     graph.subGraphs.reverse().forEach((subGraph) => {
       const groupIds = getGroupIds(subGraph.id);
 
+      // Compute custom style from subgraph containerStyle
+      const containerStyle = computeExcalidrawVertexStyle(
+        subGraph.containerStyle || {}
+      );
+
       const containerElement: ExcalidrawElementSkeleton = {
         id: subGraph.id,
         type: "rectangle",
@@ -99,10 +104,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           fontSize,
           verticalAlign: "top",
         },
+        ...containerStyle,
       };
 
       elements.push(containerElement);
     });
+
 
     // Vertices
     Object.values(graph.vertices).forEach((vertex) => {

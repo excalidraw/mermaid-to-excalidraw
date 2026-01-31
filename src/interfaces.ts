@@ -40,6 +40,7 @@ export interface SubGraph {
   y: number;
   width: number;
   height: number;
+  containerStyle: { [key in CONTAINER_STYLE_PROPERTY]?: string };
 }
 
 export interface Position {

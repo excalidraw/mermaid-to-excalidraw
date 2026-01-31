@@ -62,6 +62,52 @@ const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
     height: boundingBox.height,
   };
 
+  // Extract container style from cluster rect element
+  // Subgraphs render as cluster groups with rect elements that contain the styling
+  const containerStyle: SubGraph["containerStyle"] = {};
+  const clusterRect = el.querySelector("rect");
+
+  if (clusterRect) {
+    // Extract fill color
+    const fill = clusterRect.getAttribute("fill");
+    if (fill && fill !== "none") {
+      containerStyle[CONTAINER_STYLE_PROPERTY.FILL] = fill;
+    }
+
+    // Extract stroke color
+    const stroke = clusterRect.getAttribute("stroke");
+    if (stroke && stroke !== "none") {
+      containerStyle[CONTAINER_STYLE_PROPERTY.STROKE] = stroke;
+    }
+
+    // Extract stroke width
+    const strokeWidth = clusterRect.getAttribute("stroke-width");
+    if (strokeWidth) {
+      containerStyle[CONTAINER_STYLE_PROPERTY.STROKE_WIDTH] = strokeWidth;
+    }
+
+    // Extract stroke dasharray for dashed borders
+    const strokeDasharray = clusterRect.getAttribute("stroke-dasharray");
+    if (strokeDasharray) {
+      containerStyle[CONTAINER_STYLE_PROPERTY.STROKE_DASHARRAY] = strokeDasharray;
+    }
+
+    // Also check inline style attribute for styles applied via `style` directive
+    const styleAttr = clusterRect.getAttribute("style");
+    if (styleAttr) {
+      styleAttr.split(";").forEach((property) => {
+        if (!property) {
+          return;
+        }
+        const key = property.split(":")[0].trim() as CONTAINER_STYLE_PROPERTY;
+        const value = property.split(":")[1]?.trim();
+        if (value && Object.values(CONTAINER_STYLE_PROPERTY).includes(key)) {
+          containerStyle[key] = value;
+        }
+      });
+    }
+  }
+
   // Remove irrelevant properties
   data.classes = undefined;
   data.dir = undefined;
@@ -72,8 +118,10 @@ const parseSubGraph = (data: any, containerEl: Element): SubGraph => {
     ...position,
     ...dimension,
     text: entityCodesToText(data.title),
+    containerStyle,
   };
 };
+
 
 const parseVertex = (
   data: any,
