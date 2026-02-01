@@ -17,6 +17,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   endArrowhead?: ValidLinearElement["endArrowhead"];
   start?: ValidLinearElement["start"];
   end?: ValidLinearElement["end"];
+  roundness?: { type: 1 | 2 | 3; value?: number } | null;  // null = sharp corners
 };
 
 export type Line = {
@@ -153,11 +154,13 @@ export const createArrowSkeletion = (
     label?: Arrow["label"];
     strokeColor?: Arrow["strokeColor"];
     strokeStyle?: Arrow["strokeStyle"];
+    strokeWidth?: Arrow["strokeWidth"];
     startArrowhead?: Arrow["startArrowhead"];
     endArrowhead?: Arrow["endArrowhead"];
     start?: Arrow["start"];
     end?: Arrow["end"];
     points?: Arrow["points"];
+    roundness?: Arrow["roundness"];
   }
 ) => {
   const arrow = {} as Arrow;

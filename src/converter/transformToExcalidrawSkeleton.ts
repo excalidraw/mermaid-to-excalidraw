@@ -99,15 +99,14 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
     width: arrow.endX - arrow.startX,
     height: arrow.endY - arrow.startY,
     strokeStyle: arrow?.strokeStyle || "solid",
+    strokeWidth: arrow?.strokeWidth || 1,
     endArrowhead: arrow?.endArrowhead || null,
     startArrowhead: arrow?.startArrowhead || null,
     label: {
       text: normalizeText(arrow?.label?.text || ""),
-      fontSize: 16,
+      fontSize: arrow?.label?.fontSize || 16,
     },
-    roundness: {
-      type: 2,
-    },
+    roundness: arrow.roundness === null ? null : (arrow.roundness ?? { type: 2 as const }),
     start: arrow.start,
     end: arrow.end,
   };
