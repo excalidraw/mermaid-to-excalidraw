@@ -2,6 +2,7 @@ import { GraphConverter } from "../GraphConverter.js";
 import {
     transformToExcalidrawContainerSkeleton,
     transformToExcalidrawArrowSkeleton,
+    transformToExcalidrawLineSkeleton,
     transformToExcalidrawTextSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
@@ -18,6 +19,11 @@ export const ERToExcalidrawSkeletonConverter = new GraphConverter({
 
         chart.relationships.forEach((relationship) => {
             const excalidrawElement = transformToExcalidrawArrowSkeleton(relationship);
+            elements.push(excalidrawElement);
+        });
+
+        chart.lines.forEach((line) => {
+            const excalidrawElement = transformToExcalidrawLineSkeleton(line);
             elements.push(excalidrawElement);
         });
 
