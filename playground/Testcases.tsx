@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
+import { ER_TESTCASES } from "./testcases/er.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
@@ -21,6 +22,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
     { name: "Flowchart", testcases: FLOWCHART_DIAGRAM_TESTCASES },
     { name: "Sequence", testcases: SEQUENCE_DIAGRAM_TESTCASES },
     { name: "Class", testcases: CLASS_DIAGRAM_TESTCASES },
+    { name: "ER", testcases: ER_TESTCASES },
     { name: "Unsupported", testcases: UNSUPPORTED_DIAGRAM_TESTCASES },
   ];
 

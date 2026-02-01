@@ -5,6 +5,7 @@ import { encodeEntities } from "./utils.js";
 import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
 import { Class, parseMermaidClassDiagram } from "./parser/class.js";
+import { ER, parseMermaidERDiagram } from "./parser/er.js";
 
 // Fallback to Svg
 const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
@@ -45,7 +46,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 export const parseMermaid = async (
   definition: string,
   config: MermaidConfig = MERMAID_CONFIG
-): Promise<Flowchart | GraphImage | Sequence | Class> => {
+): Promise<Flowchart | GraphImage | Sequence | Class | ER> => {
   mermaid.initialize({ ...MERMAID_CONFIG, ...config });
   // Parse the diagram
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(
@@ -81,6 +82,12 @@ export const parseMermaid = async (
       data = parseMermaidClassDiagram(diagram, svgContainer);
       break;
     }
+
+    case "er": {
+      data = parseMermaidERDiagram(diagram, svgContainer);
+      break;
+    }
+
     // fallback to image if diagram type not-supported
     default: {
       data = convertSvgToGraphImage(svgContainer);

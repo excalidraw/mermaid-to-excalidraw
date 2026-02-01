@@ -7,9 +7,11 @@ import { Sequence } from "./parser/sequence.js";
 import { Flowchart } from "./parser/flowchart.js";
 import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
+import { ER } from "./parser/er.js";
+import { ERToExcalidrawSkeletonConverter } from "./converter/types/er.js";
 
 export const graphToExcalidraw = (
-  graph: Flowchart | GraphImage | Sequence | Class,
+  graph: Flowchart | GraphImage | Sequence | Class | ER,
   options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   switch (graph.type) {
@@ -29,10 +31,13 @@ export const graphToExcalidraw = (
       return classToExcalidrawSkeletonConvertor.convert(graph, options);
     }
 
+    case "er": {
+      return ERToExcalidrawSkeletonConverter.convert(graph, options);
+    }
+
     default: {
       throw new Error(
-        `graphToExcalidraw: unknown graph type "${
-          (graph as any).type
+        `graphToExcalidraw: unknown graph type "${(graph as any).type
         }, only flowcharts are supported!"`
       );
     }

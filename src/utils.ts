@@ -67,6 +67,70 @@ interface EdgePositionData {
   reflectionPoints: Position[];
 }
 
+// Parse coordinates from a path command string
+
+const parseCoordinates = (coordStr: string): number[] => {
+  // Split by comma or space, filter empty strings, and parse as numbers
+  return coordStr
+    .trim()
+    .split(/[\s,]+/)
+    .filter((s) => s.length > 0)
+    .map((coord) => parseFloat(coord));
+};
+
+/**
+ * Extract the endpoint from a path command
+ * For curves (C, S, Q, T), this is the last coordinate pair
+ * For lines (L, M), this is the coordinate pair
+ */
+const getEndpointFromCommand = (command: string): Position | null => {
+  const type = command[0].toUpperCase();
+  const coordStr = command.substring(1).trim();
+  const coords = parseCoordinates(coordStr);
+
+  if (coords.length < 2) {
+    return null;
+  }
+
+  switch (type) {
+    case "M": // Move to: x,y
+    case "L": // Line to: x,y
+      return { x: coords[0], y: coords[1] };
+
+    case "C": // Cubic Bezier: x1,y1 x2,y2 x,y (endpoint is last pair)
+      if (coords.length >= 6) {
+        return { x: coords[4], y: coords[5] };
+      }
+      break;
+
+    case "S": // Smooth cubic Bezier: x2,y2 x,y (endpoint is last pair)
+    case "Q": // Quadratic Bezier: x1,y1 x,y (endpoint is last pair)
+      if (coords.length >= 4) {
+        return { x: coords[2], y: coords[3] };
+      }
+      break;
+
+    case "T": // Smooth quadratic Bezier: x,y
+      return { x: coords[0], y: coords[1] };
+
+    case "A": // Arc: rx ry x-axis-rotation large-arc-flag sweep-flag x y
+      if (coords.length >= 7) {
+        return { x: coords[5], y: coords[6] };
+      }
+      break;
+
+    case "H": // Horizontal line: x (y stays the same - we can't determine this without context)
+    case "V": // Vertical line: y (x stays the same - we can't determine this without context)
+      // These are relative and need context, return null
+      return null;
+
+    case "Z": // Close path
+      return null;
+  }
+
+  return null;
+};
+
 // Compute edge postion start, end and points (reflection points)
 export const computeEdgePositions = (
   pathElement: SVGPathElement,
@@ -85,44 +149,47 @@ export const computeEdgePositions = (
     throw new Error('Path element does not contain a "d" attribute');
   }
 
-  // Split the d attribute based on M (Move To) and L (Line To) commands
-  // eg "M29.383,38.5L29.383,63.5L29.383,83.2" => ["M29.383,38.5", "L29.383,63.5", "L29.383,83.2"]
-  const commands = dAttr.split(/(?=[LM])/);
+  // Split the d attribute based on SVG path commands
+  // Handles M (Move), L (Line), C (Cubic Bezier), S (Smooth Cubic), Q (Quadratic), T (Smooth Quadratic), A (Arc)
+  // eg "M50,100C60,80,80,60,100,50L150,50" => ["M50,100", "C60,80,80,60,100,50", "L150,50"]
+  const commands = dAttr.match(/[MLCSQTAHVZ][^MLCSQTAHVZ]*/gi) || [];
 
-  // Get the start position from the first commands element => [29.383,38.5]
-  const startPosition = commands[0]
-    .substring(1)
-    .split(",")
-    .map((coord) => parseFloat(coord));
+  if (commands.length === 0) {
+    throw new Error("No valid path commands found in path element");
+  }
 
-  // Get the last position from the last commands element => [29.383,83.2]
-  const endPosition = commands[commands.length - 1]
-    .substring(1)
-    .split(",")
-    .map((coord) => parseFloat(coord));
+  // Extract all endpoints from commands
+  const points: Position[] = [];
 
-  // compute the reflection points -> [ {x: 29.383, y: 38.5}, {x: 29.383, y: 83.2} ]
-  // These includes the start and end points and also points which are not the same as the previous points
-  const reflectionPoints = commands
-    .map((command) => {
-      const coords = command
-        .substring(1)
-        .split(",")
-        .map((coord) => parseFloat(coord));
-      return { x: coords[0], y: coords[1] };
-    })
+  for (const command of commands) {
+    const endpoint = getEndpointFromCommand(command);
+    if (endpoint) {
+      points.push(endpoint);
+    }
+  }
+
+  if (points.length === 0) {
+    throw new Error("Could not extract any points from path commands");
+  }
+
+  // Get start and end positions
+  const startPosition = points[0];
+  const endPosition = points[points.length - 1];
+
+  // Filter reflection points to remove duplicates and unnecessary points
+  const reflectionPoints = points
     .filter((point, index, array) => {
-      // Always include the last point
+      // Always include the first and last points
       if (index === 0 || index === array.length - 1) {
         return true;
       }
 
-      // Exclude the points which are the same as the previous point
+      // Exclude points that are the same as the previous point
       if (point.x === array[index - 1].x && point.y === array[index - 1].y) {
         return false;
       }
 
-      // The below check is exclusively for second last point
+      // For second-to-last point, check if it's too close to the last point
       if (
         index === array.length - 2 &&
         (array[index - 1].x === point.x || array[index - 1].y === point.y)
@@ -134,30 +201,24 @@ export const computeEdgePositions = (
           lastPoint.x - point.x,
           lastPoint.y - point.y
         );
-        // Include the second last point if the distance between the
-        // last point and second last point is > 20.
-        // This is to ensure we have a distance for render the edge.
-        // 20 seems to be a good enough distance to render the edge
+        // Include only if distance > 20 to ensure visible edge rendering
         return distance > 20;
       }
 
-      // Always include if the current point is not the same as the previous point
+      // Include if different from previous point
       return point.x !== array[index - 1].x || point.y !== array[index - 1].y;
     })
-    .map((p) => {
-      // Offset the point by the provided offset
-      return {
-        x: p.x + offset.x,
-        y: p.y + offset.y,
-      };
-    });
+    .map((p) => ({
+      x: p.x + offset.x,
+      y: p.y + offset.y,
+    }));
 
   // Return the edge positions
   return {
-    startX: startPosition[0] + offset.x,
-    startY: startPosition[1] + offset.y,
-    endX: endPosition[0] + offset.x,
-    endY: endPosition[1] + offset.y,
+    startX: startPosition.x + offset.x,
+    startY: startPosition.y + offset.y,
+    endX: endPosition.x + offset.x,
+    endY: endPosition.y + offset.y,
     reflectionPoints,
   };
 };

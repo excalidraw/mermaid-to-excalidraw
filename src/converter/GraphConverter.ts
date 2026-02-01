@@ -3,8 +3,10 @@ import { DEFAULT_FONT_SIZE } from "../constants.js";
 import { MermaidToExcalidrawResult } from "../interfaces.js";
 import { Flowchart } from "../parser/flowchart.js";
 import { Sequence } from "../parser/sequence.js";
+import { Class } from "../parser/class.js";
+import { ER } from "../parser/er.js";
 
-export class GraphConverter<T = Flowchart | Sequence> {
+export class GraphConverter<T = Flowchart | Sequence | Class | ER> {
   private converter;
   constructor({
     converter,
