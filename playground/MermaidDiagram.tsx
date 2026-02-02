@@ -16,9 +16,18 @@ export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
       try {
         setError(null);
 
+        // Strip style directives for ER diagrams (Mermaid doesn't support them)
+        let processedDef = definition;
+        if (definition.includes('erDiagram')) {
+          processedDef = definition
+            .split('\n')
+            .filter(line => !line.trim().toLowerCase().startsWith('style '))
+            .join('\n');
+        }
+
         const { svg } = await mermaid.render(
           `mermaid-diagram-${id}`,
-          definition
+          processedDef
         );
         startTransition(() => {
           setSvg(svg);

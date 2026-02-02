@@ -43,18 +43,42 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
   return graphImage;
 };
 
+const stripERStyleDirectives = (definition: string): string => {
+  // Remove lines starting with 'style' followed by entity name and properties
+  // Also handles lines after comments (%%...)
+  const stripped = definition
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      // Skip lines that start with 'style' (case insensitive)
+      return !trimmed.toLowerCase().startsWith('style ');
+    })
+    .join('\n');
+
+  return stripped;
+};
+
 export const parseMermaid = async (
   definition: string,
   config: MermaidConfig = MERMAID_CONFIG
 ): Promise<Flowchart | GraphImage | Sequence | Class | ER> => {
   mermaid.initialize({ ...MERMAID_CONFIG, ...config });
-  // Parse the diagram
+
+  // Preprocess ER diagrams to strip style directives (Mermaid doesn't support them)
+  let processedDefinition = definition;
+  const originalDefinition = definition; // Keep original for style extraction later
+  if (definition.includes('erDiagram')) {
+    processedDefinition = stripERStyleDirectives(definition);
+  }
+
   const diagram = await mermaid.mermaidAPI.getDiagramFromText(
-    encodeEntities(definition)
+    encodeEntities(processedDefinition)
   );
 
-  // Render the SVG diagram
-  const { svg } = await mermaid.render("mermaid-to-excalidraw", definition);
+  // Store original definition for style extraction
+  (diagram as any).originalText = originalDefinition;
+
+  const { svg } = await mermaid.render("mermaid-to-excalidraw", processedDefinition);
 
   // Append Svg to DOM
   const svgContainer = document.createElement("div");

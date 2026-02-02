@@ -644,6 +644,23 @@ export const parseMermaidERDiagram = (
     // Parse entities directly from SVG
     const { entities, entityMap, entityTableMap } = parseEntities(containerEl, mermaidParser);
 
+    // Extract diagram text (use originalText which has style directives, set in parseMermaid.ts)
+    const diagramText = (diagram as any).originalText || (diagram as any).text || '';
+    if (diagramText) {
+        const styleMap = parseStyleDirectives(diagramText);
+
+        // Apply styles to entities
+        entities.forEach(entity => {
+            const entityId = entity.id || '';
+            const styles = styleMap.get(entityId);
+            if (styles) {
+                if (styles.bgColor) entity.bgColor = styles.bgColor;
+                if (styles.strokeColor) entity.strokeColor = styles.strokeColor;
+                if (styles.strokeWidth) entity.strokeWidth = styles.strokeWidth;
+            }
+        });
+    }
+
     // Parse relationships
     const { relationships, lines, text } = parseRelationships(
         relationshipsData,
@@ -658,4 +675,54 @@ export const parseMermaidERDiagram = (
         lines,
         text,
     };
+};
+
+
+ // Parse style directives from ER diagram text
+ // Supports: style ENTITY fill:#color,stroke:#color,stroke-width:2px
+ 
+const parseStyleDirectives = (diagramText: string): Map<string, {
+    bgColor?: string;
+    strokeColor?: string;
+    strokeWidth?: number;
+}> => {
+    const styleMap = new Map<string, { bgColor?: string; strokeColor?: string; strokeWidth?: number }>();
+
+    // Match: style ENTITY_NAME fill:#color,stroke:#color,stroke-width:2px
+    // Pattern: style <name> <props>
+    const styleRegex = /style\s+([A-Za-z_][A-Za-z0-9_-]*)\s+(.+?)(?:\n|$)/gi;
+
+    let match;
+    while ((match = styleRegex.exec(diagramText)) !== null) {
+        const entityName = match[1];
+        const propsString = match[2].trim();
+
+        const styles: { bgColor?: string; strokeColor?: string; strokeWidth?: number } = {};
+
+        // Parse comma-separated properties: fill:#color,stroke:#color,stroke-width:2px
+        const props = propsString.split(',');
+        props.forEach(prop => {
+            const [key, value] = prop.split(':').map(s => s.trim());
+            if (!key || !value) return;
+
+            switch (key.toLowerCase()) {
+                case 'fill':
+                    styles.bgColor = value;
+                    break;
+                case 'stroke':
+                    styles.strokeColor = value;
+                    break;
+                case 'stroke-width':
+                    const width = parseFloat(value);
+                    if (!isNaN(width)) styles.strokeWidth = width;
+                    break;
+            }
+        });
+
+        if (Object.keys(styles).length > 0) {
+            styleMap.set(entityName, styles);
+        }
+    }
+
+    return styleMap;
 };
