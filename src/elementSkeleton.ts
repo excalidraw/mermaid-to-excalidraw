@@ -1,6 +1,6 @@
-import { ExcalidrawTextElement } from "@excalidraw/excalidraw/types/element/types.js";
+import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
 import { entityCodesToText } from "./utils.js";
-import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ValidLinearElement } from "@excalidraw/excalidraw/element/transform";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { cleanCSSValue } from "./parser/cssUtils.js";
 

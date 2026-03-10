@@ -14,7 +14,7 @@ import {
 import { cleanCSSValue } from "./cssUtils.js";
 
 import type { Diagram } from "mermaid/dist/Diagram.js";
-import type { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
+import type { StrokeStyle } from "@excalidraw/excalidraw/element/types";
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
 

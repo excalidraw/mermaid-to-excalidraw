@@ -1,5 +1,8 @@
 import { GraphConverter } from "../GraphConverter.js";
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawElementSkeleton, ValidLinearElement } from "@excalidraw/excalidraw/element/transform";
+import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
+
+const localPoint = (x: number, y: number) => [x, y] as LocalPoint;
 
 import {
   getText,
@@ -219,17 +222,25 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const { startX, startY, reflectionPoints } = edge;
 
       // Calculate Excalidraw arrow's points
-      const points: readonly (readonly [number, number])[] =
-        reflectionPoints.map((point) => [
+      const points = reflectionPoints.map((point) =>
+        localPoint(
           point.x - reflectionPoints[0].x,
           point.y - reflectionPoints[0].y,
-        ]);
+        ),
+      );
 
       // Get supported arrow type
       const arrowType = computeExcalidrawArrowType(edge.type || "arrow_point");
 
+      // Bind start and end vertex to arrow
+      const startVertex = elements.find((e) => e.id === edge.start);
+      const endVertex = elements.find((e) => e.id === edge.end);
+      if (!startVertex || !endVertex) {
+        return;
+      }
+
       const arrowId = `${edge.start}_${edge.end}`;
-      const containerElement: ExcalidrawElementSkeleton = {
+      const containerElement: ValidLinearElement = {
         id: arrowId,
         type: "arrow",
         groupIds,
@@ -247,20 +258,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           type: 2,
         },
         ...arrowType,
-      };
-
-      // Bind start and end vertex to arrow
-      const startVertex = elements.find((e) => e.id === edge.start);
-      const endVertex = elements.find((e) => e.id === edge.end);
-      if (!startVertex || !endVertex) {
-        return;
-      }
-
-      containerElement.start = {
-        id: startVertex.id || "",
-      };
-      containerElement.end = {
-        id: endVertex.id || "",
+        start: {
+          id: startVertex.id || "",
+        },
+        end: {
+          id: endVertex.id || "",
+        },
       };
 
       elements.push(containerElement);

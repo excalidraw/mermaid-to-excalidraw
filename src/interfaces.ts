@@ -1,5 +1,5 @@
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
-import { BinaryFiles } from "@excalidraw/excalidraw/types/types.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type { BinaryFiles } from "@excalidraw/excalidraw/types";
 
 export enum VERTEX_TYPE {
   ROUND = "round",

@@ -5,6 +5,8 @@ import Testcases from "./Testcases.tsx";
 import { parseMermaid } from "../src/parseMermaid.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
 
+import "@excalidraw/excalidraw/index.css";
+
 export interface MermaidData {
   definition: string;
   output: Awaited<ReturnType<typeof parseMermaid>> | null;
@@ -63,7 +65,7 @@ const App = () => {
   const handleOnChange = useCallback(
     async (
       definition: MermaidData["definition"],
-      activeTestCaseIndex: ActiveTestCaseIndex
+      activeTestCaseIndex: ActiveTestCaseIndex,
     ) => {
       try {
         setActiveTestCaseIndex(activeTestCaseIndex);
@@ -91,7 +93,7 @@ const App = () => {
         });
       }
     },
-    []
+    [],
   );
 
   return (

@@ -7,7 +7,7 @@ import {
 } from "../transformToExcalidrawSkeleton.js";
 import { GraphConverter } from "../GraphConverter.js";
 
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
 import type { Class } from "../../parser/class.js";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({

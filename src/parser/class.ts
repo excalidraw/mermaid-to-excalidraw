@@ -45,7 +45,7 @@ import type {
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
-import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
+import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/element/types";
 
 // Taken from mermaidParser.relationType
 const RELATION_TYPE = {

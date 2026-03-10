@@ -1,5 +1,8 @@
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { Arrow, Line, Node, Text } from "../elementSkeleton.js";
+
+const point = (x: number, y: number) => [x, y] as LocalPoint;
 
 export const normalizeText = (text: string) => {
   return text.replace(/\\n/g, "\n");
@@ -11,8 +14,8 @@ export const transformToExcalidrawLineSkeleton = (line: Line) => {
     x: line.startX,
     y: line.startY,
     points: [
-      [0, 0],
-      [line.endX - line.startX, line.endY - line.startY],
+      point(0, 0),
+      point(line.endX - line.startX, line.endY - line.startY),
     ],
     width: line.endX - line.startX,
     height: line.endY - line.startY,
@@ -93,9 +96,9 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
     type: "arrow",
     x: arrow.startX,
     y: arrow.startY,
-    points: arrow.points || [
-      [0, 0],
-      [arrow.endX - arrow.startX, arrow.endY - arrow.startY],
+    points: arrow.points?.map(([x, y]) => point(x, y)) || [
+      point(0, 0),
+      point(arrow.endX - arrow.startX, arrow.endY - arrow.startY),
     ],
     width: arrow.endX - arrow.startX,
     height: arrow.endY - arrow.startY,
