@@ -10,6 +10,16 @@ import {
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
 
+const SUBGRAPH_LABEL_HORIZONTAL_PADDING = 32;
+const SUBGRAPH_LABEL_WIDTH_RATIO = 0.62;
+
+const estimateLabelWidth = (text: string, fontSize: number) => {
+  return Math.max(
+    20,
+    Math.ceil(text.length * fontSize * SUBGRAPH_LABEL_WIDTH_RATIO)
+  );
+};
+
 const computeGroupIds = (
   graph: Flowchart
 ): {
@@ -84,21 +94,35 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     // SubGraphs
     graph.subGraphs.reverse().forEach((subGraph) => {
       const groupIds = getGroupIds(subGraph.id);
+      const subGraphText = getText(subGraph);
+      const safeFontSize = fontSize || 16;
+      const estimatedTextWidth = estimateLabelWidth(subGraphText, safeFontSize);
+      const minSubGraphWidth =
+        estimatedTextWidth + SUBGRAPH_LABEL_HORIZONTAL_PADDING * 2;
+      const width = Math.max(subGraph.width, minSubGraphWidth);
+      const x = subGraph.x - (width - subGraph.width) / 2;
+
+      const containerStyle = computeExcalidrawVertexStyle(
+        subGraph.containerStyle
+      );
+      const labelStyle = computeExcalidrawVertexLabelStyle(subGraph.labelStyle);
 
       const containerElement: ExcalidrawElementSkeleton = {
         id: subGraph.id,
         type: "rectangle",
         groupIds,
-        x: subGraph.x,
+        x,
         y: subGraph.y,
-        width: subGraph.width,
+        width,
         height: subGraph.height,
         label: {
           groupIds,
-          text: getText(subGraph),
+          text: subGraphText,
           fontSize,
           verticalAlign: "top",
+          ...labelStyle,
         },
+        ...containerStyle,
       };
 
       elements.push(containerElement);
@@ -195,13 +219,14 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const { startX, startY, reflectionPoints } = edge;
 
       // Calculate Excalidraw arrow's points
-      const points = reflectionPoints.map((point) => [
-        point.x - reflectionPoints[0].x,
-        point.y - reflectionPoints[0].y,
-      ]);
+      const points: readonly (readonly [number, number])[] =
+        reflectionPoints.map((point) => [
+          point.x - reflectionPoints[0].x,
+          point.y - reflectionPoints[0].y,
+        ]);
 
       // Get supported arrow type
-      const arrowType = computeExcalidrawArrowType(edge.type);
+      const arrowType = computeExcalidrawArrowType(edge.type || "arrow_point");
 
       const arrowId = `${edge.start}_${edge.end}`;
       const containerElement: ExcalidrawElementSkeleton = {

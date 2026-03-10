@@ -1,5 +1,3 @@
-import { Fragment } from "react";
-
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
@@ -32,31 +30,26 @@ const Testcases = ({ onChange }: TestcasesProps) => {
       {testcaseTypes.map(({ name, testcases }) => {
         const baseId = name.toLowerCase();
         return (
-          <Fragment key={baseId}>
-            <h2>
-              {name} {"Diagrams"}
-            </h2>
-            <details>
-              <summary>
-                {name} {"Diagram Examples"}
-              </summary>
-              <div id={`${baseId}-container`} className="testcase-container">
-                {testcases.map((testcase, index) => {
-                  return (
-                    <SingleTestCase
-                      key={`${testcase.type}-${index}`}
-                      index={testCaseIndex++}
-                      onChange={(index) => {
-                        const { definition } = allTestCases[index];
-                        onChange(definition, index);
-                      }}
-                      testcase={testcase}
-                    />
-                  );
-                })}
-              </div>
-            </details>
-          </Fragment>
+          <details key={baseId} open={name === "Class"}>
+            <summary>
+              {name} {"Diagram Examples"}
+            </summary>
+            <div id={`${baseId}-container`} className="testcase-container">
+              {testcases.map((testcase, index) => {
+                return (
+                  <SingleTestCase
+                    key={`${testcase.type}-${index}`}
+                    index={testCaseIndex++}
+                    onChange={(index) => {
+                      const { definition } = allTestCases[index];
+                      onChange(definition, index);
+                    }}
+                    testcase={testcase}
+                  />
+                );
+              })}
+            </div>
+          </details>
         );
       })}
     </>

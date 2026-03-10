@@ -6,14 +6,18 @@ export default defineConfig({
     outDir: "../public",
     emptyOutDir: true,
     assetsDir: "./",
+    minify: false,
+    sourcemap: true,
   },
   define: {
     "process.env.IS_PREACT": JSON.stringify("false"),
   },
   plugins: [react()],
   server: {
+    port: 3000,
+    open: true,
     warmup: {
-      /* 
+      /*
         A small performance improvement so that this file is already transformed, cached when we receive the request :)
         See more: https://vitejs.dev/guide/performance.html#warm-up-frequently-used-files
       */
@@ -24,5 +28,9 @@ export default defineConfig({
         "./initExcalidraw.ts",
       ],
     },
+  },
+  // Enable source maps in dev mode
+  esbuild: {
+    sourcemap: true,
   },
 });

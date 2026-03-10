@@ -14,7 +14,7 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
     const elements: ExcalidrawElementSkeleton[] = [];
 
-    Object.values(chart.nodes).forEach((node) => {
+    chart.nodes.forEach((node) => {
       if (!node || !node.length) {
         return;
       }

@@ -38,7 +38,8 @@ export const transformToExcalidrawTextSkeleton = (element: Text) => {
     height: element.height,
     text: normalizeText(element.text) || "",
     fontSize: element.fontSize,
-    verticalAlign: "middle",
+    verticalAlign: "top",
+    strokeColor: element.color,
   };
   if (element.groupId) {
     Object.assign(textElement, { groupIds: [element.groupId] });

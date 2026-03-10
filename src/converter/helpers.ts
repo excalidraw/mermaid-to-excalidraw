@@ -3,8 +3,10 @@ import {
   ExcalidrawTextElement,
 } from "@excalidraw/excalidraw/types/element/types.js";
 import {
+  ContainerStyle,
   CONTAINER_STYLE_PROPERTY,
   LABEL_STYLE_PROPERTY,
+  LabelStyle,
   SubGraph,
   Vertex,
 } from "../interfaces.js";
@@ -76,7 +78,7 @@ const removeFontAwesomeIcons = (input: string): string => {
  * Compute style for vertex
  */
 export const computeExcalidrawVertexStyle = (
-  style: Vertex["containerStyle"]
+  style: ContainerStyle
 ): Partial<Mutable<ExcalidrawVertexElement>> => {
   const excalidrawProperty: Partial<Mutable<ExcalidrawVertexElement>> = {};
   Object.keys(style).forEach((property) => {
@@ -109,7 +111,7 @@ export const computeExcalidrawVertexStyle = (
  * Compute style for label
  */
 export const computeExcalidrawVertexLabelStyle = (
-  style: Vertex["labelStyle"]
+  style: LabelStyle
 ): Partial<Mutable<ExcalidrawTextElement>> => {
   const excalidrawProperty: Partial<Mutable<ExcalidrawTextElement>> = {};
   Object.keys(style).forEach((property) => {

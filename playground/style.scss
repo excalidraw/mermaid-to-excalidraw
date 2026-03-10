@@ -1,10 +1,30 @@
 body {
   font-family: sans-serif;
-  margin-top: 0;
+  margin: 0;
   #flowchart-container,
   #unsupported {
     max-width: 48%;
   }
+
+  &.dark-mode {
+    background-color: #121212;
+    .left-side {
+      filter: invert(93%) hue-rotate(180deg);
+    }
+  }
+}
+
+#root {
+  display: grid;
+  grid-template-columns: 0.75fr 1fr;
+}
+
+.left-side {
+  padding: 1rem;
+  background: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 button {
@@ -18,10 +38,19 @@ button {
   cursor: pointer;
 }
 
-#excalidraw {
-  width: 50vw;
-  height: 100vh;
+#dark-mode-toggle {
   position: fixed;
+  top: 10px;
+  right: calc(50vw + 150px);
+  right: 0;
+  z-index: 1000;
+  padding: 8px 16px;
+}
+
+#excalidraw {
+  // width: 50vw;
+  height: 100vh;
+  position: sticky;
   top: 0;
   right: 0;
   border-left: 1px solid #ccc;
@@ -36,8 +65,7 @@ button {
 }
 
 #custom-test {
-  width: 50vw;
-
+  width: 100%;
   #render-excalidraw-btn {
     margin-top: 10px;
   }
@@ -62,12 +90,80 @@ a {
   text-decoration: none;
 }
 
+details {
+  // display: flex;
+  // flex-direction: column;
+  summary {
+    position: sticky;
+    top: 0;
+    background: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.75rem 0;
+    cursor: pointer;
+    user-select: none;
+    z-index: 10;
+    margin-bottom: 1rem;
+  }
+}
+
 .testcase-container pre {
   font-size: 16px;
   font-weight: 600;
   font-style: italic;
   background: #eeeef1;
   white-space: pre-wrap;
-  width: 45vw;
+  // width: 45vw;
   padding: 5px;
+}
+
+.diagram-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  margin-bottom: 28px;
+  align-items: flex-start;
+}
+
+.diagram-preview-panel {
+  min-width: 0;
+}
+
+.diagram-preview-title {
+  margin: 0 0 8px;
+}
+
+.diagram-preview-surface {
+  background: #fff;
+  border: 1px solid #d9d9e3;
+  border-radius: 4px;
+  padding: 10px;
+  overflow: auto;
+}
+
+.diagram-preview-surface svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-loading {
+  color: #666;
+  font-size: 14px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-error {
+  color: red;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 1200px) {
+  .diagram-preview-grid {
+    grid-template-columns: 1fr;
+  }
 }

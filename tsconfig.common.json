@@ -8,7 +8,8 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "NodeNext",
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "sourceMap": true
   },
   "exclude": ["node_modules", "**/__tests__/*"]
 }

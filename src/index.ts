@@ -40,7 +40,7 @@ export interface ExcalidrawConfig {
 
 const parseMermaidToExcalidraw = async (
   definition: string,
-  config?: MermaidConfig
+  config?: MermaidConfig,
 ) => {
   const mermaidConfig = config || {};
   const fontSize =
@@ -49,8 +49,6 @@ const parseMermaidToExcalidraw = async (
     ...mermaidConfig,
     themeVariables: {
       ...mermaidConfig.themeVariables,
-      // Multiplying by 1.25 to increase the font size by 25% and render correctly in Excalidraw
-      fontSize: `${fontSize * 1.25}px`,
     },
   });
   // Only font size supported for excalidraw elements

@@ -265,4 +265,13 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
     Baz <|-- Foo
     `,
   },
+  {
+    type: "class",
+    name: "Class with Custom Colors using style",
+    definition: `classDiagram
+  class Animal
+  class Mineral
+  style Animal fill:#f9f,stroke:#333,stroke-width:4px
+  style Mineral fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5`,
+  },
 ];

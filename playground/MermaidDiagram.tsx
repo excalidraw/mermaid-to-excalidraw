@@ -33,11 +33,7 @@ export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
 
   return (
     <>
-      <div
-        style={{ width: "50%" }}
-        className="mermaid"
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
+      <div className="mermaid" dangerouslySetInnerHTML={{ __html: svg }} />
       {error && <div id="error">{error}</div>}
     </>
   );

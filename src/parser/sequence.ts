@@ -11,6 +11,7 @@ import {
   createLineSkeletonFromSVG,
   createTextSkeletonFromSVG,
 } from "../elementSkeleton.js";
+import { cleanCSSValue } from "./cssUtils.js";
 
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import type { StrokeStyle } from "@excalidraw/excalidraw/types/element/types.js";
@@ -28,6 +29,13 @@ type Group = {
   actorKeys: Array<string>;
   fill: string;
 };
+
+type MermaidSequenceParser = {
+  getBoxes: () => Group[];
+  getActors: () => { [key: string]: Actor } | Map<string, Actor>;
+  getMessages: () => Message[];
+};
+
 export interface Sequence {
   type: "sequence";
   nodes: Array<Node[]>;
@@ -49,6 +57,12 @@ type Actor = {
   name: string;
   description: string;
   type: "actor" | "participant";
+};
+
+type ParsedActor = {
+  topId?: string;
+  bottomId?: string;
+  bindType?: "rectangle" | "ellipse";
 };
 // Currently mermaid supported these 6 arrow types, the names are taken from mermaidParser.LINETYPE
 const SEQUENCE_ARROW_TYPES = {
@@ -146,7 +160,7 @@ const attachSequenceNumberToArrow = (
 };
 
 const createActorSymbol = (
-  rootNode: SVGRectElement,
+  rootNode: SVGElement,
   text: string,
   opts?: { id?: string }
 ) => {
@@ -208,7 +222,29 @@ const createActorSymbol = (
   return nodeElements;
 };
 
-const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
+const applyRectStyles = (container: Container, rect: Element) => {
+  const fill = rect.getAttribute("fill");
+  const stroke = rect.getAttribute("stroke");
+  const strokeWidth = rect.getAttribute("stroke-width");
+  const dashArray = rect.getAttribute("stroke-dasharray");
+  if (fill && fill !== "none") {
+    container.bgColor = cleanCSSValue(fill);
+  }
+  if (stroke && stroke !== "none") {
+    container.strokeColor = cleanCSSValue(stroke);
+  }
+  if (strokeWidth) {
+    container.strokeWidth = Number(strokeWidth);
+  }
+  if (dashArray && dashArray.trim()) {
+    container.strokeStyle = "dashed";
+  }
+};
+
+const parseActor = (
+  actors: { [key: string]: Actor } | Map<string, Actor>,
+  containerEl: Element
+): { nodes: Array<Node[]>; lines: Array<Line>; actorMap: Record<string, ParsedActor> } => {
   const actorTopNodes = Array.from(
     containerEl.querySelectorAll<SVGElement>(".actor-top")
   );
@@ -218,13 +254,47 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
-  Object.values(actors).forEach((actor, index) => {
+  const actorMap: Record<string, ParsedActor> = {};
+  const actorList =
+    actors instanceof Map ? Array.from(actors.values()) : Object.values(actors);
+  const actorLineNodes = Array.from(
+    containerEl.querySelectorAll<SVGLineElement>(".actor-line")
+  );
+
+  const resolveActorLineNode = (
+    actor: Actor,
+    topRootNode: SVGElement
+  ): SVGLineElement | null => {
+    const actorName = actor.name;
+    const actorLineNode = actorLineNodes.find(
+      (lineNode) => lineNode.getAttribute("name") === actorName
+    );
+    if (actorLineNode) {
+      return actorLineNode;
+    }
+
+    // Fallback to DOM traversal in case Mermaid changes actor line markup/class.
+    const candidateNode =
+      actor.type === "participant"
+        ? topRootNode.parentElement?.previousElementSibling
+        : topRootNode.previousElementSibling;
+
+    if (!candidateNode) {
+      return null;
+    }
+    if (candidateNode.tagName === "line") {
+      return candidateNode as SVGLineElement;
+    }
+    return candidateNode.querySelector<SVGLineElement>("line");
+  };
+
+  actorList.forEach((actor) => {
     const topRootNode = actorTopNodes.find(
       (actorNode) => actorNode.getAttribute("name") === actor.name
-    ) as SVGRectElement;
+    ) as SVGElement;
     const bottomRootNode = actorBottomNodes.find(
       (actorNode) => actorNode.getAttribute("name") === actor.name
-    ) as SVGRectElement;
+    ) as SVGElement;
 
     if (!topRootNode || !bottomRootNode) {
       throw "root not found";
@@ -233,10 +303,11 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
     if (actor.type === "participant") {
       // creating top actor node element
       const topNodeElement = createContainerSkeletonFromSVG(
-        topRootNode,
+        topRootNode as SVGRectElement,
         "rectangle",
         { id: `${actor.name}-top`, label: { text }, subtype: "actor" }
       );
+      applyRectStyles(topNodeElement, topRootNode);
       if (!topNodeElement) {
         throw "Top Node element not found!";
       }
@@ -244,15 +315,19 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
 
       // creating bottom actor node element
       const bottomNodeElement = createContainerSkeletonFromSVG(
-        bottomRootNode,
+        bottomRootNode as SVGRectElement,
         "rectangle",
         { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
       );
+      actorMap[actor.name] = {
+        topId: `${actor.name}-top`,
+        bottomId: `${actor.name}-bottom`,
+        bindType: "rectangle",
+      };
+      applyRectStyles(bottomNodeElement, bottomRootNode);
       nodes.push([bottomNodeElement]);
 
-      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as sibling parent of top root node
-      const lineNode = topRootNode?.parentElement
-        ?.previousElementSibling as SVGLineElement;
+      const lineNode = resolveActorLineNode(actor, topRootNode);
 
       if (lineNode?.tagName !== "line") {
         throw "Line not found";
@@ -282,9 +357,7 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
         id: `${actor.name}-bottom`,
       });
       nodes.push(bottomNodeElement);
-
-      // Get the line connecting the top and bottom nodes. As per the DOM, the line is rendered as sibling of the actor root element
-      const lineNode = topRootNode.previousElementSibling as SVGLineElement;
+      const lineNode = resolveActorLineNode(actor, topRootNode);
 
       if (lineNode?.tagName !== "line") {
         throw "Line not found";
@@ -308,13 +381,31 @@ const parseActor = (actors: { [key: string]: Actor }, containerEl: Element) => {
         );
         lines.push(line);
       }
+
+      const topEllipseNode = topNodeElement.find(
+        (node): node is Container => node.type === "ellipse"
+      );
+      const bottomEllipseActorNode = bottomNodeElement.find(
+        (node): node is Container => node.type === "ellipse"
+      );
+      if (topEllipseNode?.id && bottomEllipseActorNode?.id) {
+        actorMap[actor.name] = {
+          topId: topEllipseNode.id,
+          bottomId: bottomEllipseActorNode.id,
+          bindType: "ellipse",
+        };
+      }
     }
   });
 
-  return { nodes, lines };
+  return { nodes, lines, actorMap };
 };
 
-const computeArrows = (messages: Message[], containerEl: Element) => {
+const computeArrows = (
+  messages: Message[],
+  containerEl: Element,
+  actorMap: Record<string, ParsedActor>
+) => {
   const arrows: Arrow[] = [];
 
   const arrowNodes = Array.from<SVGLineElement>(
@@ -336,6 +427,13 @@ const computeArrows = (messages: Message[], containerEl: Element) => {
           ? null
           : "arrow",
     });
+    // Attach to actors if available
+    const from = actorMap[message.from];
+    const to = actorMap[message.to];
+    if (from?.topId && to?.topId) {
+      arrow.start = { type: from.bindType || "rectangle", id: from.topId };
+      arrow.end = { type: to.bindType || "rectangle", id: to.topId };
+    }
     attachSequenceNumberToArrow(arrowNode, arrow);
     arrows.push(arrow);
   });
@@ -360,6 +458,22 @@ const computeNotes = (messages: Message[], containerEl: Element) => {
       label: { text },
       subtype: "note",
     });
+    const fill = rect.getAttribute("fill");
+    const stroke = rect.getAttribute("stroke");
+    const strokeWidth = rect.getAttribute("stroke-width");
+    const dashArray = rect.getAttribute("stroke-dasharray");
+    if (fill && fill !== "none") {
+      note.bgColor = cleanCSSValue(fill);
+    }
+    if (stroke && stroke !== "none") {
+      note.strokeColor = cleanCSSValue(stroke);
+    }
+    if (strokeWidth) {
+      note.strokeWidth = Number(strokeWidth);
+    }
+    if (dashArray && dashArray.trim()) {
+      note.strokeStyle = "dashed";
+    }
     notes.push(note);
   });
   return notes;
@@ -375,6 +489,25 @@ const parseActivations = (containerEl: Element) => {
       label: { text: "" },
       subtype: "activation",
     });
+    const applyRectStyles = () => {
+      const fill = node.getAttribute("fill");
+      const stroke = node.getAttribute("stroke");
+      const strokeWidth = node.getAttribute("stroke-width");
+      const dashArray = node.getAttribute("stroke-dasharray");
+      if (fill && fill !== "none") {
+        rect.bgColor = cleanCSSValue(fill);
+      }
+      if (stroke && stroke !== "none") {
+        rect.strokeColor = cleanCSSValue(stroke);
+      }
+      if (strokeWidth) {
+        rect.strokeWidth = Number(strokeWidth);
+      }
+      if (dashArray && dashArray.trim()) {
+        rect.strokeStyle = "dashed";
+      }
+    };
+    applyRectStyles();
     activations.push(rect);
   });
 
@@ -467,18 +600,22 @@ export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
 ): Sequence => {
-  diagram.parse();
-
-  // Get mermaid parsed data from parser shared variable `yy`
-  //@ts-ignore
-  const mermaidParser = diagram.parser.yy;
+  // Mermaid already parsed the diagram when creating `diagram`.
+  // Re-parsing here can duplicate sequence state (notably boxed participants).
+  const mermaidParser = diagram.db as MermaidSequenceParser;
   const nodes: Array<Node[]> = [];
-  const groups = mermaidParser.getBoxes();
+  const rawGroups = mermaidParser.getBoxes();
+  // Clean CSS values from groups to remove !important declarations
+  const groups = rawGroups.map((group: Group) => ({
+    ...group,
+    fill: cleanCSSValue(group.fill || ""),
+  }));
+
   const bgHightlights = computeHighlights(containerEl);
   const actorData = mermaidParser.getActors();
-  const { nodes: actors, lines } = parseActor(actorData, containerEl);
+  const { nodes: actors, lines, actorMap } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages();
-  const arrows = computeArrows(messages, containerEl);
+  const arrows = computeArrows(messages, containerEl, actorMap);
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(messages, containerEl);

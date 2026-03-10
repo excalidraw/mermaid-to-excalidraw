@@ -2,6 +2,7 @@ import { ExcalidrawTextElement } from "@excalidraw/excalidraw/types/element/type
 import { entityCodesToText } from "./utils.js";
 import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
+import { cleanCSSValue } from "./parser/cssUtils.js";
 
 export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
@@ -11,7 +12,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];
-  points?: number[][];
+  points?: readonly (readonly [number, number])[];
   sequenceNumber?: Container;
   startArrowhead?: ValidLinearElement["startArrowhead"];
   endArrowhead?: ValidLinearElement["endArrowhead"];
@@ -42,6 +43,7 @@ export type Text = {
   width?: number;
   height?: number;
   fontSize: number;
+  color?: string;
   groupId?: string;
   metadata?: { [key: string]: any };
 };
@@ -102,9 +104,9 @@ export const createArrowSkeletonFromSVG = (
       .split(",")
       .map((coord) => parseFloat(coord));
 
-    const points: Arrow["points"] = [];
+    const points: (readonly [number, number])[] = [];
     commands.forEach((command) => {
-      const currPoints = command
+      const currPoints: readonly (readonly [number, number])[] = command
         .substring(1)
         .trim()
         .split(" ")
@@ -134,7 +136,12 @@ export const createArrowSkeletonFromSVG = (
     arrow.endY = arrow.endY - offset;
   }
 
-  arrow.strokeColor = arrowNode.getAttribute("stroke");
+  const strokeAttr = arrowNode.getAttribute("stroke");
+  const strokeColor =
+    (strokeAttr && strokeAttr !== "none" ? strokeAttr : "") ||
+    getComputedStyle(arrowNode as Element).stroke ||
+    "";
+  arrow.strokeColor = strokeColor ? cleanCSSValue(strokeColor) : null;
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   arrow.type = "arrow";
   arrow.strokeStyle = opts?.strokeStyle || "solid";
@@ -180,6 +187,7 @@ export const createTextSkeleton = (
     width?: number;
     height?: number;
     fontSize?: number;
+    color?: string;
     groupId?: string;
     metadata?: { [key: string]: any };
   }
@@ -194,6 +202,7 @@ export const createTextSkeleton = (
 
     fontSize: opts?.fontSize || DEFAULT_FONT_SIZE,
     id: opts?.id,
+    color: opts?.color,
     groupId: opts?.groupId,
     metadata: opts?.metadata,
   };
@@ -263,7 +272,7 @@ export const createContainerSkeletonFromSVG = (
     case "highlight":
       const bgColor = node.getAttribute("fill");
       if (bgColor) {
-        container.bgColor = bgColor;
+        container.bgColor = cleanCSSValue(bgColor);
       }
       break;
     case "note":
@@ -294,7 +303,8 @@ export const createLineSkeletonFromSVG = (
   }
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
-  line.strokeColor = lineNode.getAttribute("stroke");
+  const strokeColor = lineNode.getAttribute("stroke");
+  line.strokeColor = strokeColor ? cleanCSSValue(strokeColor) : null;
   line.strokeWidth = Number(lineNode.getAttribute("stroke-width"));
   line.type = "line";
   return line;

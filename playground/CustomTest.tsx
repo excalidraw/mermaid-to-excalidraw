@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { MermaidDiagram } from "./MermaidDiagram.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 
@@ -10,12 +11,30 @@ interface CustomTestProps {
   activeTestCaseIndex: ActiveTestCaseIndex;
 }
 
+const STORAGE_KEY = "mermaid-to-excalidraw-definition";
+
 const CustomTest = ({
   onChange,
   mermaidData,
   activeTestCaseIndex,
 }: CustomTestProps) => {
   const isActive = activeTestCaseIndex === "custom";
+  const [textareaValue, setTextareaValue] = useState(() => {
+    // Load from localStorage on initial mount
+    try {
+      return localStorage.getItem(STORAGE_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
+
+  // Update textarea when mermaidData changes from external source
+  useEffect(() => {
+    if (mermaidData.definition && activeTestCaseIndex !== "custom") {
+      setTextareaValue(mermaidData.definition);
+    }
+  }, [mermaidData.definition, activeTestCaseIndex]);
+
   return (
     <>
       <form
@@ -23,8 +42,16 @@ const CustomTest = ({
           e.preventDefault();
 
           const formData = new FormData(e.target as HTMLFormElement);
+          const definition = formData.get("mermaid-input")?.toString() || "";
 
-          onChange(formData.get("mermaid-input")?.toString() || "", "custom");
+          // Save to localStorage
+          try {
+            localStorage.setItem(STORAGE_KEY, definition);
+          } catch (error) {
+            console.error("Failed to save to localStorage:", error);
+          }
+
+          onChange(definition, "custom");
         }}
       >
         <textarea
@@ -32,12 +59,16 @@ const CustomTest = ({
           rows={10}
           cols={50}
           name="mermaid-input"
+          value={textareaValue}
           onChange={(e) => {
+            const value = e.target.value;
+            setTextareaValue(value);
+
             if (!isActive) {
               return;
             }
 
-            onChange(e.target.value, "custom");
+            onChange(value, "custom");
           }}
           style={{ marginTop: "1rem" }}
           placeholder="Input Mermaid Syntax"

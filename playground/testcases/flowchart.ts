@@ -370,6 +370,24 @@ style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 
     type: "flowchart",
   },
   {
+    name: "Styling subgraphs",
+    definition: `graph TD
+    %% Node styles work fine
+    classDef criticalNode fill:#ff5252,stroke:#b71c1c,color:#fff
+    
+    subgraph SG_RED ["CRITICAL MODULE"]
+        Node01["Important Service"]:::criticalNode
+    end
+
+    subgraph SG_BLUE ["DASHED BORDER MODULE"]
+        Node02["Feature Module"]
+    end
+
+    style SG_RED fill:#ffebee,stroke:#c62828,stroke-width:3px
+    style SG_BLUE fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,stroke-dasharray: 10 5`,
+    type: "flowchart",
+  },
+  {
     name: "Classes",
     definition: `flowchart LR
 A-->B[AAABBB]

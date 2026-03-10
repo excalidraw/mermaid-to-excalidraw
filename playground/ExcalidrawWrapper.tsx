@@ -11,11 +11,13 @@ import type { MermaidData } from "./";
 interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
   mermaidOutput: MermaidData["output"];
+  theme: "light" | "dark";
 }
 
 const ExcalidrawWrapper = ({
   mermaidDefinition,
   mermaidOutput,
+  theme,
 }: ExcalidrawWrapperProps) => {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
@@ -49,6 +51,7 @@ const ExcalidrawWrapper = ({
   return (
     <div className="excalidraw-wrapper">
       <Excalidraw
+        theme={theme}
         initialData={{
           appState: {
             viewBackgroundColor: "#fafafa",
