@@ -1,6 +1,7 @@
 import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
+import { ERD_DIAGRAM_TESTCASES } from "./testcases/er.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
@@ -12,6 +13,7 @@ interface TestcasesProps {
     definition: MermaidData["definition"],
     activeTestCaseIndex: number | "custom" | null
   ) => void;
+  onInsertMermaidSvg: (svgHtml: string, width: number, height: number) => void;
   activeTestCaseIndex: ActiveTestCaseIndex;
 }
 
@@ -21,6 +23,7 @@ interface TestcaseSectionProps {
   startIndex: number;
   documentationHref: string;
   onChange: TestcasesProps["onChange"];
+  onInsertMermaidSvg: TestcasesProps["onInsertMermaidSvg"];
 }
 
 const TestcaseSection = ({
@@ -29,6 +32,7 @@ const TestcaseSection = ({
   startIndex,
   documentationHref,
   onChange,
+  onInsertMermaidSvg,
 }: TestcaseSectionProps) => {
   const baseId = name.toLowerCase();
   const { isExpanded, handleToggle } = usePersistedSectionState(
@@ -73,9 +77,10 @@ const TestcaseSection = ({
               <SingleTestCase
                 key={`${testcase.type}-${index}`}
                 index={testcaseIndex}
-                onChange={() => {
-                  onChange(testcase.definition, testcaseIndex);
+                onChange={(definition) => {
+                  onChange(definition, testcaseIndex);
                 }}
+                onInsertMermaidSvg={onInsertMermaidSvg}
                 testcase={testcase}
               />
             );
@@ -86,7 +91,7 @@ const TestcaseSection = ({
   );
 };
 
-const Testcases = ({ onChange }: TestcasesProps) => {
+const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
   const testcaseTypes: {
     name: string;
     testcases: TestCase[];
@@ -107,6 +112,12 @@ const Testcases = ({ onChange }: TestcasesProps) => {
       name: "Class",
       testcases: CLASS_DIAGRAM_TESTCASES,
       documentationHref: "https://mermaid.js.org/syntax/classDiagram.html",
+    },
+    {
+      name: "ERD",
+      testcases: ERD_DIAGRAM_TESTCASES,
+      documentationHref:
+        "https://mermaid.js.org/syntax/entityRelationshipDiagram.html",
     },
     {
       name: "Unsupported",
@@ -130,6 +141,7 @@ const Testcases = ({ onChange }: TestcasesProps) => {
               documentationHref={documentationHref}
               name={name}
               onChange={onChange}
+              onInsertMermaidSvg={onInsertMermaidSvg}
               startIndex={startIndex}
               testcases={testcases}
             />

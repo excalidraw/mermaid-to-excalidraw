@@ -56,6 +56,18 @@ export const transformToExcalidrawTextSkeleton = (element: Text) => {
 export const transformToExcalidrawContainerSkeleton = (
   element: Exclude<Node, Line | Arrow | Text>
 ) => {
+  const label = {
+    text: normalizeText(element?.label?.text || ""),
+    fontSize: element?.label?.fontSize,
+    textAlign: element.label?.textAlign,
+    verticalAlign: element.label?.verticalAlign || "middle",
+    strokeColor: element.label?.color || "#000",
+  } as ExcalidrawElementSkeleton["label"];
+
+  if (element.groupId) {
+    label.groupIds = [element.groupId];
+  }
+
   let extraProps = {};
   if (element.type === "rectangle" && element.subtype === "activation") {
     extraProps = {
@@ -70,13 +82,7 @@ export const transformToExcalidrawContainerSkeleton = (
     y: element.y,
     width: element.width,
     height: element.height,
-    label: {
-      text: normalizeText(element?.label?.text || ""),
-      fontSize: element?.label?.fontSize,
-      verticalAlign: element.label?.verticalAlign || "middle",
-      strokeColor: element.label?.color || "#000",
-      groupIds: element.groupId ? [element.groupId] : [],
-    },
+    label,
     strokeStyle: element?.strokeStyle,
     strokeWidth: element?.strokeWidth,
     strokeColor: element?.strokeColor,
@@ -103,11 +109,13 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
     width: arrow.endX - arrow.startX,
     height: arrow.endY - arrow.startY,
     strokeStyle: arrow?.strokeStyle || "solid",
-    endArrowhead: arrow?.endArrowhead || null,
-    startArrowhead: arrow?.startArrowhead || null,
+    endArrowhead: (arrow?.endArrowhead || null) as any,
+    startArrowhead: (arrow?.startArrowhead || null) as any,
     label: {
       text: normalizeText(arrow?.label?.text || ""),
       fontSize: 16,
+      textAlign: arrow?.label?.textAlign,
+      verticalAlign: arrow?.label?.verticalAlign,
     },
     roundness: {
       type: 2,

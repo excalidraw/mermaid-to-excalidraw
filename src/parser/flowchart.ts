@@ -20,7 +20,11 @@ import type {
   FlowClass,
   FlowSubGraph,
 } from "mermaid/dist/diagrams/flowchart/types.js";
-import { cleanCSSValue } from "./cssUtils.js";
+import {
+  cleanCSSValue,
+  isValidCSSColor,
+  parseCSSDeclarations,
+} from "./cssUtils.js";
 
 export interface Flowchart {
   type: "flowchart";
@@ -44,21 +48,6 @@ export interface Edge {
   reflectionPoints: Position[];
 }
 
-const parseStyleProperty = (property: string) => {
-  const colonIndex = property.indexOf(":");
-  if (colonIndex === -1) {
-    return null;
-  }
-
-  const key = property.substring(0, colonIndex).trim().toLowerCase();
-  const value = cleanCSSValue(property.substring(colonIndex + 1));
-  if (!key || !value) {
-    return null;
-  }
-
-  return { key, value };
-};
-
 const applyContainerStyleProperty = (
   style: ContainerStyle,
   key: string,
@@ -67,6 +56,10 @@ const applyContainerStyleProperty = (
   switch (key) {
     case CONTAINER_STYLE_PROPERTY.FILL:
     case CONTAINER_STYLE_PROPERTY.STROKE:
+      if (isValidCSSColor(value)) {
+        style[key] = value;
+      }
+      break;
     case CONTAINER_STYLE_PROPERTY.STROKE_WIDTH:
     case CONTAINER_STYLE_PROPERTY.STROKE_DASHARRAY:
       style[key] = value;
@@ -79,7 +72,7 @@ const applyLabelStyleProperty = (
   key: string,
   value: string
 ) => {
-  if (key === LABEL_STYLE_PROPERTY.COLOR) {
+  if (key === LABEL_STYLE_PROPERTY.COLOR && isValidCSSColor(value)) {
     style[LABEL_STYLE_PROPERTY.COLOR] = value;
   }
 };
@@ -93,18 +86,9 @@ const applyStyleTextToStyles = (
     return;
   }
 
-  styleText.split(";").forEach((property) => {
-    if (!property.trim()) {
-      return;
-    }
-
-    const parsed = parseStyleProperty(property);
-    if (!parsed) {
-      return;
-    }
-
-    applyContainerStyleProperty(containerStyle, parsed.key, parsed.value);
-    applyLabelStyleProperty(labelStyle, parsed.key, parsed.value);
+  parseCSSDeclarations(styleText).forEach(({ property, value }) => {
+    applyContainerStyleProperty(containerStyle, property, value);
+    applyLabelStyleProperty(labelStyle, property, value);
   });
 };
 
@@ -116,22 +100,13 @@ const applyStyleTextToLabelStyle = (
     return;
   }
 
-  styleText.split(";").forEach((property) => {
-    if (!property.trim()) {
+  parseCSSDeclarations(styleText).forEach(({ property, value }) => {
+    if (property === "fill" && isValidCSSColor(value)) {
+      labelStyle[LABEL_STYLE_PROPERTY.COLOR] = value;
       return;
     }
 
-    const parsed = parseStyleProperty(property);
-    if (!parsed) {
-      return;
-    }
-
-    if (parsed.key === "fill") {
-      labelStyle[LABEL_STYLE_PROPERTY.COLOR] = parsed.value;
-      return;
-    }
-
-    applyLabelStyleProperty(labelStyle, parsed.key, parsed.value);
+    applyLabelStyleProperty(labelStyle, property, value);
   });
 };
 
@@ -175,7 +150,7 @@ const applyElementAttributesToLabelStyle = (
   const rawColor =
     element.getAttribute("fill") || element.getAttribute("color");
   const color = cleanCSSValue(rawColor || "");
-  if (color) {
+  if (isValidCSSColor(color)) {
     labelStyle[LABEL_STYLE_PROPERTY.COLOR] = color;
   }
 };
@@ -195,23 +170,17 @@ const applyClassStyles = (
     return;
   }
 
-  classDef.styles?.forEach((style) => {
-    const parsed = parseStyleProperty(style);
-    if (!parsed) {
-      return;
-    }
-
-    applyContainerStyleProperty(containerStyle, parsed.key, parsed.value);
-    applyLabelStyleProperty(labelStyle, parsed.key, parsed.value);
+  classDef.styles?.forEach((styleText) => {
+    parseCSSDeclarations(styleText).forEach(({ property, value }) => {
+      applyContainerStyleProperty(containerStyle, property, value);
+      applyLabelStyleProperty(labelStyle, property, value);
+    });
   });
 
-  classDef.textStyles?.forEach((style) => {
-    const parsed = parseStyleProperty(style);
-    if (!parsed) {
-      return;
-    }
-
-    applyLabelStyleProperty(labelStyle, parsed.key, parsed.value);
+  classDef.textStyles?.forEach((styleText) => {
+    parseCSSDeclarations(styleText).forEach(({ property, value }) => {
+      applyLabelStyleProperty(labelStyle, property, value);
+    });
   });
 };
 
@@ -320,36 +289,8 @@ const parseVertex = (
   };
 
   // Extract style
-  const labelContainerStyleText = node
-    .querySelector(".label-container")
-    ?.getAttribute("style");
-  const labelStyleText = node.querySelector(".label")?.getAttribute("style");
-
   const containerStyle: Vertex["containerStyle"] = {};
-  labelContainerStyleText?.split(";").forEach((property) => {
-    if (!property) {
-      return;
-    }
-
-    const key = property.split(":")[0].trim() as CONTAINER_STYLE_PROPERTY;
-    const value = cleanCSSValue(property.split(":")[1] || "");
-    if (value) {
-      containerStyle[key] = value;
-    }
-  });
-
   const labelStyle: Vertex["labelStyle"] = {};
-  labelStyleText?.split(";").forEach((property) => {
-    if (!property) {
-      return;
-    }
-
-    const key = property.split(":")[0].trim() as LABEL_STYLE_PROPERTY;
-    const value = cleanCSSValue(property.split(":")[1] || "");
-    if (value) {
-      labelStyle[key] = value;
-    }
-  });
 
   if (vertex.classes && classes instanceof Map) {
     (Array.isArray(vertex.classes) ? vertex.classes : [vertex.classes]).forEach(
@@ -358,6 +299,30 @@ const parseVertex = (
       }
     );
   }
+
+  vertex.styles?.forEach((styleText) => {
+    applyStyleTextToStyles(styleText, containerStyle, labelStyle);
+  });
+
+  const shapeEl = node.querySelector<SVGElement>(".label-container");
+  applyStyleTextToStyles(
+    shapeEl?.getAttribute("style"),
+    containerStyle,
+    labelStyle
+  );
+  applyElementAttributesToContainerStyle(shapeEl, containerStyle);
+
+  const labelElements = Array.from(
+    node.querySelectorAll<Element>(
+      ".label, .nodeLabel, .label text, .label tspan, .label span, .label div"
+    )
+  );
+
+  labelElements.forEach((element) => {
+    applyStyleTextToLabelStyle(element.getAttribute("style"), labelStyle);
+    applyElementAttributesToLabelStyle(element, labelStyle);
+  });
+
   return {
     id: vertex.id,
     labelType: vertex.labelType,

@@ -84,7 +84,8 @@ const CustomTest = ({
         <div className="custom-test-actions">
           <button
             className="playground-button"
-            type="submit" id="render-excalidraw-btn"
+            type="submit"
+            id="render-excalidraw-btn"
           >
             {"Render to Excalidraw"}
           </button>
@@ -99,10 +100,7 @@ const CustomTest = ({
           <section className="custom-preview-card">
             <div className="preview-badge">{"Live Mermaid SVG"}</div>
             <div className="diagram-preview-surface custom-diagram-surface">
-              <MermaidDiagram
-                definition={mermaidData.definition}
-                id="custom-diagram"
-              />
+              <MermaidDiagram definition={textareaValue} id="custom-diagram" />
             </div>
           </section>
 

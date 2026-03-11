@@ -15,6 +15,146 @@ export const cleanCSSValue = (value: string): string => {
   return value.replace(/\s*!important\s*$/i, "").trim();
 };
 
+const looksLikeDeclarationStart = (input: string, index: number) => {
+  let cursor = index;
+  while (cursor < input.length && /\s/.test(input[cursor])) {
+    cursor += 1;
+  }
+
+  const propertyStart = cursor;
+  while (cursor < input.length && /[a-z-]/i.test(input[cursor])) {
+    cursor += 1;
+  }
+
+  if (cursor === propertyStart) {
+    return false;
+  }
+
+  while (cursor < input.length && /\s/.test(input[cursor])) {
+    cursor += 1;
+  }
+
+  return input[cursor] === ":";
+};
+
+export const parseCSSDeclarations = (
+  input: string
+): Array<{ property: string; value: string }> => {
+  const declarations: Array<{ property: string; value: string }> = [];
+  let cursor = 0;
+
+  while (cursor < input.length) {
+    while (cursor < input.length && /[\s;,]/.test(input[cursor])) {
+      cursor += 1;
+    }
+
+    if (cursor >= input.length) {
+      break;
+    }
+
+    const propertyStart = cursor;
+    while (cursor < input.length && input[cursor] !== ":") {
+      if (input[cursor] === ";" || input[cursor] === ",") {
+        break;
+      }
+      cursor += 1;
+    }
+
+    if (cursor >= input.length || input[cursor] !== ":") {
+      break;
+    }
+
+    const property = input
+      .substring(propertyStart, cursor)
+      .trim()
+      .toLowerCase();
+    cursor += 1;
+
+    const valueStart = cursor;
+    let parenthesesDepth = 0;
+    let quote: '"' | "'" | null = null;
+
+    while (cursor < input.length) {
+      const currentChar = input[cursor];
+
+      if (quote) {
+        if (currentChar === quote && input[cursor - 1] !== "\\") {
+          quote = null;
+        }
+        cursor += 1;
+        continue;
+      }
+
+      if (currentChar === '"' || currentChar === "'") {
+        quote = currentChar;
+        cursor += 1;
+        continue;
+      }
+
+      if (currentChar === "(") {
+        parenthesesDepth += 1;
+        cursor += 1;
+        continue;
+      }
+
+      if (currentChar === ")") {
+        parenthesesDepth = Math.max(0, parenthesesDepth - 1);
+        cursor += 1;
+        continue;
+      }
+
+      if (parenthesesDepth === 0) {
+        if (currentChar === ";" || currentChar === ",") {
+          break;
+        }
+
+        if (
+          /\s/.test(currentChar) &&
+          looksLikeDeclarationStart(input, cursor)
+        ) {
+          break;
+        }
+      }
+
+      cursor += 1;
+    }
+
+    const value = cleanCSSValue(input.substring(valueStart, cursor));
+    if (property && value) {
+      declarations.push({ property, value });
+    }
+
+    if (
+      cursor < input.length &&
+      (input[cursor] === ";" || input[cursor] === ",")
+    ) {
+      cursor += 1;
+    }
+  }
+
+  return declarations;
+};
+
+export const isValidCSSColor = (value: string): boolean => {
+  const cleanedValue = cleanCSSValue(value);
+  if (!cleanedValue) {
+    return false;
+  }
+
+  if (typeof CSS !== "undefined" && typeof CSS.supports === "function") {
+    return CSS.supports("color", cleanedValue);
+  }
+
+  if (typeof document !== "undefined") {
+    const element = document.createElement("div");
+    element.style.color = "";
+    element.style.color = cleanedValue;
+    return element.style.color !== "";
+  }
+
+  return false;
+};
+
 /**
  * Cleans an array of CSS style strings, removing !important from each value
  * This is useful for processing style arrays from Mermaid data structures.
@@ -27,17 +167,10 @@ export const cleanCSSValue = (value: string): string => {
  */
 export const cleanCSSStyles = (styles: string[]): string[] => {
   return styles
-    .map((style) => {
-      // Split on colon to get property and value
-      const colonIndex = style.indexOf(":");
-      if (colonIndex === -1) {
-        return style;
-      }
-
-      const property = style.substring(0, colonIndex).trim();
-      const value = cleanCSSValue(style.substring(colonIndex + 1));
-
-      return value ? `${property}:${value}` : "";
-    })
+    .flatMap((style) =>
+      parseCSSDeclarations(style).map(
+        ({ property, value }) => `${property}:${value}`
+      )
+    )
     .filter((style) => style.length > 0);
 };

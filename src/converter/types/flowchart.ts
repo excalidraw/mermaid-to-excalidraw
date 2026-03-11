@@ -1,5 +1,8 @@
 import { GraphConverter } from "../GraphConverter.js";
-import type { ExcalidrawElementSkeleton, ValidLinearElement } from "@excalidraw/excalidraw/element/transform";
+import type {
+  ExcalidrawElementSkeleton,
+  ValidLinearElement,
+} from "@excalidraw/excalidraw/element/transform";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 
 const localPoint = (x: number, y: number) => [x, y] as LocalPoint;
@@ -12,14 +15,40 @@ import {
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
+import { DEFAULT_FONT_SIZE } from "../../constants.js";
 
 const SUBGRAPH_LABEL_HORIZONTAL_PADDING = 32;
 const SUBGRAPH_LABEL_WIDTH_RATIO = 0.62;
+const VERTEX_LABEL_HORIZONTAL_PADDING = 12;
+const MIN_VERTEX_LABEL_FONT_SIZE = 12;
 
 const estimateLabelWidth = (text: string, fontSize: number) => {
   return Math.max(
     20,
     Math.ceil(text.length * fontSize * SUBGRAPH_LABEL_WIDTH_RATIO)
+  );
+};
+
+const computeVertexLabelFontSize = (
+  vertexType: string,
+  text: string,
+  width: number,
+  fontSize?: number
+) => {
+  const safeFontSize = fontSize || DEFAULT_FONT_SIZE;
+  if ((vertexType !== VERTEX_TYPE.CYLINDER) || !text || text.includes("\n")) {
+    return safeFontSize;
+  }
+
+  const availableWidth = Math.max(20, width - VERTEX_LABEL_HORIZONTAL_PADDING);
+  const estimatedWidth = estimateLabelWidth(text, safeFontSize);
+  if (estimatedWidth <= availableWidth) {
+    return safeFontSize;
+  }
+
+  return Math.max(
+    MIN_VERTEX_LABEL_FONT_SIZE,
+    Math.floor(availableWidth / (text.length * SUBGRAPH_LABEL_WIDTH_RATIO))
   );
 };
 
@@ -137,6 +166,13 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         return;
       }
       const groupIds = getGroupIds(vertex.id);
+      const vertexText = getText(vertex);
+      const vertexLabelFontSize = computeVertexLabelFontSize(
+        vertex.type,
+        vertexText,
+        vertex.width,
+        fontSize
+      );
 
       // Compute custom style
       const containerStyle = computeExcalidrawVertexStyle(
@@ -155,8 +191,8 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         strokeWidth: 2,
         label: {
           groupIds,
-          text: getText(vertex),
-          fontSize,
+          text: vertexText,
+          fontSize: vertexLabelFontSize,
           ...labelStyle,
         },
         link: vertex.link || null,
@@ -188,8 +224,9 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
             roundness: { type: 3 },
             label: {
               groupIds,
-              text: getText(vertex),
-              fontSize,
+              text: vertexText,
+              fontSize: vertexLabelFontSize,
+              ...labelStyle,
             },
           };
           containerElement = { ...containerElement, groupIds, type: "ellipse" };
@@ -225,8 +262,8 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const points = reflectionPoints.map((point) =>
         localPoint(
           point.x - reflectionPoints[0].x,
-          point.y - reflectionPoints[0].y,
-        ),
+          point.y - reflectionPoints[0].y
+        )
       );
 
       // Get supported arrow type

@@ -1,7 +1,5 @@
-import type {
-  Arrowhead,
-  ExcalidrawTextElement,
-} from "@excalidraw/excalidraw/element/types";
+import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
+import type { Arrowhead } from "@excalidraw/element/types";
 import {
   ContainerStyle,
   CONTAINER_STYLE_PROPERTY,

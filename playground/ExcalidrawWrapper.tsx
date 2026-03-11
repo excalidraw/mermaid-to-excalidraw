@@ -12,12 +12,14 @@ interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
   mermaidOutput: MermaidData["output"];
   theme: "light" | "dark";
+  apiRef?: React.MutableRefObject<ExcalidrawImperativeAPI | null>;
 }
 
 const ExcalidrawWrapper = ({
   mermaidDefinition,
   mermaidOutput,
   theme,
+  apiRef,
 }: ExcalidrawWrapperProps) => {
   const [excalidrawAPI, setExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
@@ -58,7 +60,12 @@ const ExcalidrawWrapper = ({
             currentItemFontFamily: 1,
           },
         }}
-        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        excalidrawAPI={(api) => {
+          setExcalidrawAPI(api);
+          if (apiRef) {
+            apiRef.current = api;
+          }
+        }}
       />
     </div>
   );

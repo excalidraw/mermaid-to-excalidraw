@@ -7,6 +7,7 @@ export enum VERTEX_TYPE {
   DOUBLECIRCLE = "doublecircle",
   CIRCLE = "circle",
   DIAMOND = "diamond",
+  CYLINDER = "cylinder",
 }
 export enum LABEL_STYLE_PROPERTY {
   COLOR = "color",

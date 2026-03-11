@@ -1,4 +1,8 @@
-import { useState, useCallback, useDeferredValue, useEffect } from "react";
+import { useState, useCallback, useDeferredValue, useEffect, useRef } from "react";
+import {
+  convertToExcalidrawElements,
+} from "@excalidraw/excalidraw";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
@@ -63,6 +67,8 @@ const writeStoredThemeMode = (mode: ThemeMode) => {
 };
 
 const App = () => {
+  const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
+
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
     error: null,
@@ -141,6 +147,48 @@ const App = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleTheme]);
+
+  const handleInsertMermaidSvg = useCallback(
+    (svgHtml: string, width: number, height: number) => {
+      const api = excalidrawAPIRef.current;
+      if (!api) {
+        return;
+      }
+
+      const dataURL = `data:image/svg+xml;base64,${btoa(
+        unescape(encodeURIComponent(svgHtml))
+      )}`;
+      const fileId = `mermaid-svg-${Date.now()}`;
+
+      api.addFiles([
+        {
+          id: fileId as any,
+          dataURL: dataURL as any,
+          mimeType: "image/svg+xml" as any,
+          created: Date.now(),
+          lastRetrieved: Date.now(),
+        },
+      ]);
+
+      api.updateScene({
+        elements: [
+          ...api.getSceneElements(),
+          ...convertToExcalidrawElements([
+            {
+              type: "image",
+              fileId: fileId as any,
+              width,
+              height,
+              x: 0,
+              y: 0,
+            },
+          ]),
+        ],
+      });
+      api.scrollToContent(api.getSceneElements(), { fitToContent: true });
+    },
+    []
+  );
 
   const handleOnChange = useCallback(
     async (
@@ -224,6 +272,7 @@ const App = () => {
           <Testcases
             activeTestCaseIndex={activeTestCaseIndex}
             onChange={handleOnChange}
+            onInsertMermaidSvg={handleInsertMermaidSvg}
           />
         </section>
       </div>
@@ -232,6 +281,7 @@ const App = () => {
           mermaidDefinition={deferredMermaidData.definition}
           mermaidOutput={deferredMermaidData.output}
           theme={isDarkMode ? "dark" : "light"}
+          apiRef={excalidrawAPIRef}
         />
       </div>
     </>

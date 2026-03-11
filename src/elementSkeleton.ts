@@ -9,13 +9,15 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   label?: {
     text: string | null;
     fontSize?: number;
+    textAlign?: ExcalidrawTextElement["textAlign"];
+    verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];
   points?: readonly (readonly [number, number])[];
   sequenceNumber?: Container;
-  startArrowhead?: ValidLinearElement["startArrowhead"];
-  endArrowhead?: ValidLinearElement["endArrowhead"];
+  startArrowhead?: SupportedArrowhead;
+  endArrowhead?: SupportedArrowhead;
   start?: ValidLinearElement["start"];
   end?: ValidLinearElement["end"];
 };
@@ -57,6 +59,7 @@ export type Container = {
     text: string | null;
     fontSize: number;
     color?: string;
+    textAlign?: ExcalidrawTextElement["textAlign"];
     verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
   width?: number;
@@ -72,13 +75,25 @@ export type Container = {
 
 export type Node = Container | Line | Arrow | Text;
 
+export type CardinalityArrowhead =
+  | "cardinality_one"
+  | "cardinality_many"
+  | "cardinality_one_or_many"
+  | "cardinality_exactly_one"
+  | "cardinality_zero_or_one"
+  | "cardinality_zero_or_many";
+
+export type SupportedArrowhead =
+  | ValidLinearElement["startArrowhead"]
+  | CardinalityArrowhead;
+
 export const createArrowSkeletonFromSVG = (
   arrowNode: SVGLineElement | SVGPathElement,
   opts?: {
     label?: string;
     strokeStyle?: ValidLinearElement["strokeStyle"];
-    startArrowhead?: ValidLinearElement["startArrowhead"];
-    endArrowhead?: ValidLinearElement["endArrowhead"];
+    startArrowhead?: SupportedArrowhead;
+    endArrowhead?: SupportedArrowhead;
   }
 ) => {
   const arrow = {} as Arrow;
@@ -160,8 +175,8 @@ export const createArrowSkeletion = (
     label?: Arrow["label"];
     strokeColor?: Arrow["strokeColor"];
     strokeStyle?: Arrow["strokeStyle"];
-    startArrowhead?: Arrow["startArrowhead"];
-    endArrowhead?: Arrow["endArrowhead"];
+    startArrowhead?: SupportedArrowhead;
+    endArrowhead?: SupportedArrowhead;
     start?: Arrow["start"];
     end?: Arrow["end"];
     points?: Arrow["points"];
@@ -242,6 +257,7 @@ export const createContainerSkeletonFromSVG = (
     id?: string;
     label?: {
       text: string;
+      textAlign?: ExcalidrawTextElement["textAlign"];
       verticalAlign?: ExcalidrawTextElement["verticalAlign"];
     };
     subtype?: Container["subtype"];
@@ -259,6 +275,7 @@ export const createContainerSkeletonFromSVG = (
     container.label = {
       text: entityCodesToText(label.text),
       fontSize: 16,
+      textAlign: label?.textAlign,
       verticalAlign: label?.verticalAlign,
     };
   }

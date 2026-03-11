@@ -16,7 +16,11 @@ import {
   createLineSkeletonFromSVG,
   createTextSkeleton,
 } from "../elementSkeleton.js";
-import { cleanCSSValue } from "./cssUtils.js";
+import {
+  cleanCSSValue,
+  isValidCSSColor,
+  parseCSSDeclarations,
+} from "./cssUtils.js";
 
 const parseStyleStrings = (styles?: string[]) => {
   const styleObj: Record<string, string> = {};
@@ -24,16 +28,11 @@ const parseStyleStrings = (styles?: string[]) => {
     return styleObj;
   }
   styles.forEach((style) => {
-    style
-      .split(";")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .forEach((pair) => {
-        const [key, value] = pair.split(":").map((p) => p.trim());
-        if (key && value) {
-          styleObj[key] = cleanCSSValue(value);
-        }
-      });
+    parseCSSDeclarations(style).forEach(({ property, value }) => {
+      if (property && value) {
+        styleObj[property] = cleanCSSValue(value);
+      }
+    });
   });
   return styleObj;
 };
@@ -130,6 +129,33 @@ const accumulateTranslation = (node: Element, stopAt?: Element | null) => {
   }
 
   return { tx, ty };
+};
+
+type ClassTextSection = "header" | "members" | "methods" | "other";
+
+const getClassTextSection = (
+  textNode: Element,
+  classNode: Element
+): ClassTextSection => {
+  let current: Element | null = textNode;
+
+  while (current && current !== classNode) {
+    if (current.classList.contains("annotation-group")) {
+      return "header";
+    }
+    if (current.classList.contains("label-group")) {
+      return "header";
+    }
+    if (current.classList.contains("members-group")) {
+      return "members";
+    }
+    if (current.classList.contains("methods-group")) {
+      return "methods";
+    }
+    current = current.parentElement;
+  }
+
+  return "other";
 };
 
 const parseClasses = (
@@ -229,6 +255,9 @@ const parseClasses = (
 
     const isMeaningfulColor = (value: string) => {
       if (!value) {
+        return false;
+      }
+      if (!isValidCSSColor(value)) {
         return false;
       }
       const v = value.toLowerCase();
@@ -338,6 +367,17 @@ const parseClasses = (
       domNode.querySelectorAll("text, foreignObject")
     ) as SVGGraphicsElement[];
 
+    const parsedTextElements: Array<{
+      section: ClassTextSection;
+      text: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      fontSize: number;
+      color?: string;
+    }> = [];
+
     textElements.forEach((textNode) => {
       const isForeignObject =
         textNode.tagName.toLowerCase() === "foreignobject";
@@ -358,7 +398,7 @@ const parseClasses = (
       }
 
       const boundingBox = textNode.getBBox();
-      const { tx, ty } = accumulateTranslation(textNode, containerEl);
+      const { ty } = accumulateTranslation(textNode, containerEl);
       let fontSize = parseFloat(getComputedStyle(textNode).fontSize || "");
 
       if (isForeignObject && (!Number.isFinite(fontSize) || !fontSize)) {
@@ -375,32 +415,80 @@ const parseClasses = (
       // Slightly reduce font size to better fit the original box dimensions
       fontSize = fontSize * 0.9;
 
-      const textElement = createTextSkeleton(
-        (container?.x || 0) + 4,
-        boundingBox.y + ty,
-        entityCodesToText(rawText),
-        {
-          width:
-            container && container.width
-              ? Math.max(container.width - 8, boundingBox.width)
-              : boundingBox.width,
-          height: boundingBox.height,
-          fontSize: fontSize || undefined,
-          color:
-            cleanCSSValue(
-              (textNode as any).style?.color ||
-                (getComputedStyle(textNode) as any).fill ||
-                classStyles.color ||
-                ""
-            ) || undefined,
-          id: nanoid(),
-          groupId,
-          metadata: { classId },
-        }
+      const resolvedTextColor = cleanCSSValue(
+        (textNode as any).style?.color ||
+          (getComputedStyle(textNode) as any).fill ||
+          classStyles.color ||
+          ""
       );
 
-      text.push(textElement);
+      parsedTextElements.push({
+        section: getClassTextSection(textNode, domNode),
+        text: entityCodesToText(rawText),
+        x: boundingBox.x,
+        y: boundingBox.y + ty,
+        width:
+          container && container.width
+            ? Math.max(container.width - 8, boundingBox.width)
+            : boundingBox.width,
+        height: boundingBox.height,
+        fontSize,
+        color: isValidCSSColor(resolvedTextColor)
+          ? resolvedTextColor
+          : undefined,
+      });
     });
+
+    const headerTextElements = parsedTextElements
+      .filter((element) => element.section === "header")
+      .sort((a, b) => a.y - b.y || a.x - b.x);
+
+    if (!container.label) {
+      const fallbackHeaderTextElements =
+        headerTextElements.length === 0 && parsedTextElements.length === 1
+          ? parsedTextElements
+          : headerTextElements;
+
+      if (fallbackHeaderTextElements.length > 0) {
+        container.label = {
+          text: fallbackHeaderTextElements
+            .map((element) => element.text)
+            .join("\n"),
+          fontSize: Math.max(
+            ...fallbackHeaderTextElements.map((element) => element.fontSize)
+          ),
+          color: fallbackHeaderTextElements.find((element) => element.color)
+            ?.color,
+          verticalAlign: "top",
+        };
+      }
+    }
+
+    parsedTextElements
+      .filter((element) => {
+        if (headerTextElements.length > 0) {
+          return element.section !== "header";
+        }
+        return !(container.label && parsedTextElements.length === 1);
+      })
+      .forEach((element) => {
+        const textElement = createTextSkeleton(
+          (container?.x || 0) + 4,
+          element.y,
+          element.text,
+          {
+            width: element.width,
+            height: element.height,
+            fontSize: element.fontSize,
+            color: element.color,
+            id: nanoid(),
+            groupId,
+            metadata: { classId },
+          }
+        );
+
+        text.push(textElement);
+      });
   });
   return { nodes, lines, text };
 };

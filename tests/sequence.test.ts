@@ -96,7 +96,9 @@ describe("Sequence parser", () => {
         class: "actor-man actor-top",
         name,
       });
-      actorTop.appendChild(createSvgElement("circle", { cx: x, cy: 30, r: 12 }));
+      actorTop.appendChild(
+        createSvgElement("circle", { cx: x, cy: 30, r: 12 })
+      );
       svg.appendChild(actorTop);
 
       const actorBottom = createSvgElement("g", {
@@ -146,13 +148,13 @@ describe("Sequence parser", () => {
   actor Bob
   Alice->>Bob: Hi Bob
   Bob->>Alice: Hi Alice`,
+      db: {
+        getBoxes: () => [],
+        getActors: () => actorData,
+        getMessages: () => messages,
+      },
       parser: {
         parse: vi.fn(),
-        yy: {
-          getBoxes: () => [],
-          getActors: () => actorData,
-          getMessages: () => messages,
-        },
       },
     } as unknown as Diagram;
 

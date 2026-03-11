@@ -2,6 +2,8 @@
   --bg: rgba(255, 251, 245, 0.88);
   --bg-strong: #fbf7f1;
   --testcase-section: #f5ecdf;
+  --testcase-card-bg: rgba(255, 255, 255, 0.6);
+  // --testcase-card-bg: rgba(255, 255, 255, 0.38)
   --panel-border: rgba(91, 68, 49, 0.14);
   --panel-border-strong: rgba(91, 68, 49, 0.2);
   --text: #231912;
@@ -25,6 +27,8 @@ body.dark-mode {
   --bg: #211915;
   --bg-strong: #2d231e;
   --testcase-section: #312621;
+  // --testcase-card-bg: #29211d;
+  --testcase-card-bg: rgba(255, 255, 255, 0.03);
   --panel-border: rgba(255, 228, 201, 0.08);
   --panel-border-strong: rgba(255, 228, 201, 0.16);
   --text: #f1e4d6;
@@ -39,6 +43,7 @@ body.dark-mode {
   --shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.42);
   --shadow-md: 0 18px 45px rgba(0, 0, 0, 0.28);
   --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.18);
+
 }
 
 @keyframes rise-in {
@@ -66,6 +71,7 @@ body {
   color: var(--text);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   background: var(--bg);
+  overflow-y: scroll;
 }
 
 * {
@@ -93,11 +99,10 @@ body.dark-mode::before {
 
 #root {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-  gap: 24px;
   min-height: 100vh;
   padding: 24px;
+  // Reserve space for the fixed excalidraw panel on the right
+  padding-right: calc(54vw);
 }
 
 .left-side {
@@ -207,7 +212,6 @@ a {
   position: sticky;
   top: 0;
   z-index: 4;
-  margin-bottom: 16px;
   background: var(--testcase-section);
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
@@ -222,7 +226,7 @@ body.dark-mode .testcase-section {
 }
 
 body.dark-mode .testcase-section summary {
-  background: linear-gradient(180deg, #3a2d27, #2f241f);
+  // background: linear-gradient(180deg, #3a2d27, #2f241f);
 }
 
 .panel-header {
@@ -292,12 +296,15 @@ body.dark-mode #dark-mode-toggle {
 }
 
 #excalidraw {
-  position: sticky;
+  position: fixed;
   top: 24px;
-  height: calc(100vh - 48px);
+  right: 24px;
+  bottom: 24px;
+  width: calc(54vw - 48px);
+  min-width: 420px;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-xl);
-  overflow: hidden;
+  overflow: clip;
   box-shadow: var(--shadow-lg);
   background: radial-gradient(
       circle at top left,
@@ -450,13 +457,13 @@ details summary {
   z-index: 2;
 }
 
-body.dark-mode details summary {
-  background: linear-gradient(
-    180deg,
-    rgba(54, 40, 35, 0.96),
-    rgba(39, 29, 25, 0.96)
-  );
-}
+// body.dark-mode details summary {
+//   background: linear-gradient(
+//     180deg,
+//     rgba(54, 40, 35, 0.96),
+//     rgba(39, 29, 25, 0.96)
+//   );
+// }
 
 details summary::-webkit-details-marker {
   display: none;
@@ -534,7 +541,16 @@ body.dark-mode .details-summary-meta {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 0 14px 14px;
+  padding: 0 10px;
+
+}
+
+.testcase-card {
+  margin-top: 20px;
+  padding: 10px;
+  background: var(--testcase-card-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
 }
 
 .testcase-card-header {
@@ -598,6 +614,40 @@ body.dark-mode .details-summary-meta {
   padding: 46px 16px 16px;
 }
 
+.testcase-definition-textarea {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
+    var(--code-bg);
+  color: var(--code-text);
+  font-family: "SFMono-Regular", "Consolas", monospace;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.65;
+  white-space: pre;
+  padding: 16px 16px;
+  resize: vertical;
+}
+
+body.dark-mode .testcase-definition-textarea {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.diagram-preview-clickable {
+  cursor: pointer;
+  transition: outline-color 180ms ease, box-shadow 180ms ease;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+
+.diagram-preview-clickable:hover {
+  outline-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 .copy-mermaid-button {
   border-color: rgba(255, 255, 255, 0.08);
   background: linear-gradient(135deg, #275f7b, #1d485d);
@@ -613,14 +663,14 @@ body.dark-mode .details-summary-meta {
 
 .diagram-preview-panel {
   min-width: 0;
-  border: 1px solid var(--panel-border);
+  // border: 1px solid var(--panel-border);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.38);
+  // background: rgba(255, 255, 255, 0.38);
   padding: 14px;
 }
 
 body.dark-mode .diagram-preview-panel {
-  background: rgba(255, 255, 255, 0.03);
+  // background: rgba(255, 255, 255, 0.03);
 }
 
 .diagram-preview-title {
@@ -669,7 +719,7 @@ body.dark-mode .diagram-preview-panel {
 
 @media (max-width: 1240px) {
   #root {
-    grid-template-columns: 1fr;
+    padding-right: 24px;
   }
 
   .left-side {
@@ -679,6 +729,10 @@ body.dark-mode .diagram-preview-panel {
   #excalidraw {
     position: relative;
     top: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    min-width: auto;
     height: 72vh;
   }
 }
