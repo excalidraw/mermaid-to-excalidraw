@@ -15,6 +15,53 @@ export interface MermaidData {
 
 export type ActiveTestCaseIndex = number | "custom" | null;
 
+const THEME_STORAGE_KEY = "mermaid-to-excalidraw-theme";
+
+type ThemeMode = "light" | "dark";
+
+interface ThemeState {
+  mode: ThemeMode;
+  isUserPreference: boolean;
+}
+
+const getSystemThemeMode = (): ThemeMode => {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const readStoredThemeMode = (): ThemeMode | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const storedThemeMode = window.sessionStorage.getItem(THEME_STORAGE_KEY);
+    return storedThemeMode === "dark" || storedThemeMode === "light"
+      ? storedThemeMode
+      : null;
+  } catch (error) {
+    console.error("Failed to read theme from sessionStorage:", error);
+    return null;
+  }
+};
+
+const writeStoredThemeMode = (mode: ThemeMode) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(THEME_STORAGE_KEY, mode);
+  } catch (error) {
+    console.error("Failed to save theme to sessionStorage:", error);
+  }
+};
+
 const App = () => {
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
@@ -24,11 +71,35 @@ const App = () => {
 
   const [activeTestCaseIndex, setActiveTestCaseIndex] =
     useState<ActiveTestCaseIndex>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check system preference for dark mode
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const [themeState, setThemeState] = useState<ThemeState>(() => {
+    const storedThemeMode = readStoredThemeMode();
+    if (storedThemeMode) {
+      return {
+        mode: storedThemeMode,
+        isUserPreference: true,
+      };
+    }
+
+    return {
+      mode: getSystemThemeMode(),
+      isUserPreference: false,
+    };
   });
+  const isDarkMode = themeState.mode === "dark";
   const deferredMermaidData = useDeferredValue(mermaidData);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((currentThemeState) => {
+      const nextThemeMode =
+        currentThemeState.mode === "dark" ? "light" : "dark";
+      writeStoredThemeMode(nextThemeMode);
+
+      return {
+        mode: nextThemeMode,
+        isUserPreference: true,
+      };
+    });
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -42,7 +113,16 @@ const App = () => {
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
+      setThemeState((currentThemeState) => {
+        if (currentThemeState.isUserPreference) {
+          return currentThemeState;
+        }
+
+        return {
+          mode: e.matches ? "dark" : "light",
+          isUserPreference: false,
+        };
+      });
     };
 
     mediaQuery.addEventListener("change", handleChange);
@@ -54,18 +134,18 @@ const App = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.altKey && event.shiftKey && event.key === "D") {
         event.preventDefault();
-        setIsDarkMode((prev) => !prev);
+        toggleTheme();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [toggleTheme]);
 
   const handleOnChange = useCallback(
     async (
       definition: MermaidData["definition"],
-      activeTestCaseIndex: ActiveTestCaseIndex,
+      activeTestCaseIndex: ActiveTestCaseIndex
     ) => {
       try {
         setActiveTestCaseIndex(activeTestCaseIndex);
@@ -93,14 +173,15 @@ const App = () => {
         });
       }
     },
-    [],
+    []
   );
 
   return (
     <>
       <button
+        className="playground-button"
         id="dark-mode-toggle"
-        onClick={() => setIsDarkMode(!isDarkMode)}
+        onClick={toggleTheme}
         title={
           isDarkMode
             ? "Switch to light mode (Alt+Shift+D)"
@@ -111,45 +192,40 @@ const App = () => {
       </button>
 
       <div className="left-side">
-        <div style={{ display: "flex" }}>
-          <section id="custom-test">
-            <h1>{"Custom Test"}</h1>
-            {"Supports only "}
-            <a
-              target="_blank"
-              href="https://mermaid.js.org/syntax/flowchart.html"
-            >
-              {"Flowchart"}
-            </a>
-            {", "}
-            <a
-              target="_blank"
-              href="https://mermaid.js.org/syntax/sequenceDiagram.html"
-            >
-              {"Sequence "}
-            </a>
-            {"and "}
-            <a
-              target="_blank"
-              href="https://mermaid.js.org/syntax/classDiagram.html"
-            >
-              {"Class "}
-            </a>
-            {"diagrams."}
-            <br />
-            <CustomTest
-              activeTestCaseIndex={activeTestCaseIndex}
-              mermaidData={deferredMermaidData}
-              onChange={handleOnChange}
-            />
-          </section>
+        <header className="playground-hero">
+          <div className="playground-hero-copy">
+            <p className="playground-kicker">{"Mermaid to Excalidraw"}</p>
+          </div>
+          <a
+            className="playground-doc-link"
+            target="_blank"
+            rel="noreferrer"
+            href="https://mermaid.js.org/intro/syntax-reference.html"
+          >
+            {"Mermaid docs"}
+          </a>
           <GitHubCorner />
-        </div>
+        </header>
 
-        <Testcases
-          activeTestCaseIndex={activeTestCaseIndex}
-          onChange={handleOnChange}
-        />
+        <section id="custom-test" className="">
+          <CustomTest
+            activeTestCaseIndex={activeTestCaseIndex}
+            mermaidData={deferredMermaidData}
+            onChange={handleOnChange}
+          />
+        </section>
+
+        <section className="playground-panel">
+          <div className="panel-header">
+            <div>
+              <p className="panel-kicker">{"Examples"}</p>
+            </div>
+          </div>
+          <Testcases
+            activeTestCaseIndex={activeTestCaseIndex}
+            onChange={handleOnChange}
+          />
+        </section>
       </div>
       <div id="excalidraw">
         <ExcalidrawWrapper

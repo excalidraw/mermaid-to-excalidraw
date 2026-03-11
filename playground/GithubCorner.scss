@@ -1,6 +1,18 @@
+.github-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #fff;
+  z-index: 3;
+
+  svg {
+    width: 50px;
+    height: 50px;
+  }
+}
+
 .github-corner:hover .octo-arm {
   animation: octocat-wave 560ms ease-in-out;
- 
 }
 
 @keyframes octocat-wave {
@@ -21,10 +33,20 @@
 }
 
 @media (max-width: 500px) {
+  .github-corner {
+    top: -12px;
+    right: -12px;
+
+    svg {
+      width: 64px;
+      height: 64px;
+    }
+  }
+
   .github-corner .octo-arm {
     animation: octocat-wave 560ms ease-in-out;
   }
-  
+
   .github-corner:hover .octo-arm {
     animation: none;
   }

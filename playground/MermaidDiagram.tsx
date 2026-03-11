@@ -1,4 +1,4 @@
-import { useState, useTransition, useEffect } from "react";
+import { useEffect, useState } from "react";
 import mermaid from "mermaid";
 
 interface MermaidProps {
@@ -6,29 +6,39 @@ interface MermaidProps {
   definition: string;
 }
 
+let renderCounter = 0;
+
 export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
   const [svg, setSvg] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    const render = async (id: string, definition: string) => {
+    let isCancelled = false;
+    // Mermaid removes any existing DOM node with the render ID before drawing.
+    const renderId = `mermaid-diagram-${id}-${renderCounter++}`;
+
+    const render = async (definition: string) => {
       try {
         setError(null);
 
-        const { svg } = await mermaid.render(
-          `mermaid-diagram-${id}`,
-          definition
-        );
-        startTransition(() => {
+        const { svg } = await mermaid.render(renderId, definition);
+
+        if (!isCancelled) {
           setSvg(svg);
-        });
+        }
       } catch (err) {
-        setError(String(err));
+        if (!isCancelled) {
+          setSvg("");
+          setError(String(err));
+        }
       }
     };
 
-    render(id, definition);
+    render(definition);
+
+    return () => {
+      isCancelled = true;
+    };
   }, [definition, id]);
 
   return (

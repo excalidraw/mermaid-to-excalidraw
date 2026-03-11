@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MermaidDiagram } from "./MermaidDiagram.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
+import { usePersistedSectionState } from "./usePersistedSectionState.ts";
 
 interface CustomTestProps {
   onChange: (
@@ -19,6 +20,10 @@ const CustomTest = ({
   activeTestCaseIndex,
 }: CustomTestProps) => {
   const isActive = activeTestCaseIndex === "custom";
+  const {
+    isExpanded: isParsedDataExpanded,
+    handleToggle: handleParsedDataToggle,
+  } = usePersistedSectionState("custom:parsed-data");
   const [textareaValue, setTextareaValue] = useState(() => {
     // Load from localStorage on initial mount
     try {
@@ -38,6 +43,7 @@ const CustomTest = ({
   return (
     <>
       <form
+        className="custom-test-form"
         onSubmit={(e) => {
           e.preventDefault();
 
@@ -54,6 +60,9 @@ const CustomTest = ({
           onChange(definition, "custom");
         }}
       >
+        <label className="field-label" htmlFor="mermaid-input">
+          {"Mermaid definition"}
+        </label>
         <textarea
           id="mermaid-input"
           rows={10}
@@ -70,28 +79,47 @@ const CustomTest = ({
 
             onChange(value, "custom");
           }}
-          style={{ marginTop: "1rem" }}
-          placeholder="Input Mermaid Syntax"
+          placeholder="Paste or type Mermaid syntax here"
         />
-        <br />
-        <button type="submit" id="render-excalidraw-btn">
-          {"Render to Excalidraw"}
-        </button>
+        <div className="custom-test-actions">
+          <button
+            className="playground-button"
+            type="submit" id="render-excalidraw-btn"
+          >
+            {"Render to Excalidraw"}
+          </button>
+          <p className="custom-test-hint">
+            {"The live Excalidraw canvas updates on the right."}
+          </p>
+        </div>
       </form>
 
       {isActive && (
         <>
-          <MermaidDiagram
-            definition={mermaidData.definition}
-            id="custom-diagram"
-          />
+          <section className="custom-preview-card">
+            <div className="preview-badge">{"Live Mermaid SVG"}</div>
+            <div className="diagram-preview-surface custom-diagram-surface">
+              <MermaidDiagram
+                definition={mermaidData.definition}
+                id="custom-diagram"
+              />
+            </div>
+          </section>
 
-          <details id="parsed-data-details">
+          <details
+            id="parsed-data-details"
+            open={isParsedDataExpanded}
+            onToggle={handleParsedDataToggle}
+          >
             <summary>{"Parsed data from parseMermaid"}</summary>
-            <pre id="custom-parsed-data">
-              {JSON.stringify(mermaidData.output, null, 2)}
-            </pre>
-            {mermaidData.error && <div id="error">{mermaidData.error}</div>}
+            {isParsedDataExpanded ? (
+              <>
+                <pre id="custom-parsed-data">
+                  {JSON.stringify(mermaidData.output, null, 2)}
+                </pre>
+                {mermaidData.error && <div id="error">{mermaidData.error}</div>}
+              </>
+            ) : null}
           </details>
         </>
       )}
