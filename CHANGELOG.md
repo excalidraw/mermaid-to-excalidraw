@@ -1,5 +1,10 @@
 ## Unreleased
 
+### v2.1.0
+
+- Upgrade mermaid to 11.12.1
+- Add ERD support
+
 ### Features
 
 - Support ClassDef for styling the nodes by [@ad1992](https://github.com/ad1992) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/71

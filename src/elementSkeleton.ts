@@ -1,20 +1,23 @@
-import { ExcalidrawTextElement } from "@excalidraw/excalidraw/types/element/types.js";
+import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
 import { entityCodesToText } from "./utils.js";
-import { ValidLinearElement } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ValidLinearElement } from "@excalidraw/excalidraw/element/transform";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
+import { cleanCSSValue, resolveElementTextColor } from "./parser/cssUtils.js";
 
 export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
   label?: {
     text: string | null;
     fontSize?: number;
+    textAlign?: ExcalidrawTextElement["textAlign"];
+    verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];
-  points?: number[][];
+  points?: readonly [number, number][];
   sequenceNumber?: Container;
-  startArrowhead?: ValidLinearElement["startArrowhead"];
-  endArrowhead?: ValidLinearElement["endArrowhead"];
+  startArrowhead?: SupportedArrowhead;
+  endArrowhead?: SupportedArrowhead;
   start?: ValidLinearElement["start"];
   end?: ValidLinearElement["end"];
 };
@@ -42,6 +45,7 @@ export type Text = {
   width?: number;
   height?: number;
   fontSize: number;
+  color?: string;
   groupId?: string;
   metadata?: { [key: string]: any };
 };
@@ -55,6 +59,7 @@ export type Container = {
     text: string | null;
     fontSize: number;
     color?: string;
+    textAlign?: ExcalidrawTextElement["textAlign"];
     verticalAlign?: ExcalidrawTextElement["verticalAlign"];
   };
   width?: number;
@@ -70,13 +75,25 @@ export type Container = {
 
 export type Node = Container | Line | Arrow | Text;
 
+export type CardinalityArrowhead =
+  | "cardinality_one"
+  | "cardinality_many"
+  | "cardinality_one_or_many"
+  | "cardinality_exactly_one"
+  | "cardinality_zero_or_one"
+  | "cardinality_zero_or_many";
+
+export type SupportedArrowhead =
+  | ValidLinearElement["startArrowhead"]
+  | CardinalityArrowhead;
+
 export const createArrowSkeletonFromSVG = (
   arrowNode: SVGLineElement | SVGPathElement,
   opts?: {
     label?: string;
     strokeStyle?: ValidLinearElement["strokeStyle"];
-    startArrowhead?: ValidLinearElement["startArrowhead"];
-    endArrowhead?: ValidLinearElement["endArrowhead"];
+    startArrowhead?: SupportedArrowhead;
+    endArrowhead?: SupportedArrowhead;
   }
 ) => {
   const arrow = {} as Arrow;
@@ -102,9 +119,9 @@ export const createArrowSkeletonFromSVG = (
       .split(",")
       .map((coord) => parseFloat(coord));
 
-    const points: Arrow["points"] = [];
+    const points: [number, number][] = [];
     commands.forEach((command) => {
-      const currPoints = command
+      const currPoints: [number, number][] = command
         .substring(1)
         .trim()
         .split(" ")
@@ -134,7 +151,12 @@ export const createArrowSkeletonFromSVG = (
     arrow.endY = arrow.endY - offset;
   }
 
-  arrow.strokeColor = arrowNode.getAttribute("stroke");
+  const strokeAttr = arrowNode.getAttribute("stroke");
+  const strokeColor =
+    (strokeAttr && strokeAttr !== "none" ? strokeAttr : "") ||
+    getComputedStyle(arrowNode as Element).stroke ||
+    "";
+  arrow.strokeColor = strokeColor ? cleanCSSValue(strokeColor) : null;
   arrow.strokeWidth = Number(arrowNode.getAttribute("stroke-width"));
   arrow.type = "arrow";
   arrow.strokeStyle = opts?.strokeStyle || "solid";
@@ -153,8 +175,8 @@ export const createArrowSkeletion = (
     label?: Arrow["label"];
     strokeColor?: Arrow["strokeColor"];
     strokeStyle?: Arrow["strokeStyle"];
-    startArrowhead?: Arrow["startArrowhead"];
-    endArrowhead?: Arrow["endArrowhead"];
+    startArrowhead?: SupportedArrowhead;
+    endArrowhead?: SupportedArrowhead;
     start?: Arrow["start"];
     end?: Arrow["end"];
     points?: Arrow["points"];
@@ -180,6 +202,7 @@ export const createTextSkeleton = (
     width?: number;
     height?: number;
     fontSize?: number;
+    color?: string;
     groupId?: string;
     metadata?: { [key: string]: any };
   }
@@ -194,6 +217,7 @@ export const createTextSkeleton = (
 
     fontSize: opts?.fontSize || DEFAULT_FONT_SIZE,
     id: opts?.id,
+    color: opts?.color,
     groupId: opts?.groupId,
     metadata: opts?.metadata,
   };
@@ -223,6 +247,7 @@ export const createTextSkeletonFromSVG = (
   node.y = y;
   const fontSize = parseInt(getComputedStyle(textNode).fontSize);
   node.fontSize = fontSize;
+  node.color = resolveElementTextColor(textNode);
   return node;
 };
 
@@ -233,6 +258,7 @@ export const createContainerSkeletonFromSVG = (
     id?: string;
     label?: {
       text: string;
+      textAlign?: ExcalidrawTextElement["textAlign"];
       verticalAlign?: ExcalidrawTextElement["verticalAlign"];
     };
     subtype?: Container["subtype"];
@@ -250,6 +276,7 @@ export const createContainerSkeletonFromSVG = (
     container.label = {
       text: entityCodesToText(label.text),
       fontSize: 16,
+      textAlign: label?.textAlign,
       verticalAlign: label?.verticalAlign,
     };
   }
@@ -263,7 +290,7 @@ export const createContainerSkeletonFromSVG = (
     case "highlight":
       const bgColor = node.getAttribute("fill");
       if (bgColor) {
-        container.bgColor = bgColor;
+        container.bgColor = cleanCSSValue(bgColor);
       }
       break;
     case "note":
@@ -294,7 +321,8 @@ export const createLineSkeletonFromSVG = (
   }
   // Make sure lines don't overlap with the nodes, in mermaid it overlaps but isn't visible as its pushed back and containers are non transparent
   line.endY = endY;
-  line.strokeColor = lineNode.getAttribute("stroke");
+  const strokeColor = lineNode.getAttribute("stroke");
+  line.strokeColor = strokeColor ? cleanCSSValue(strokeColor) : null;
   line.strokeWidth = Number(lineNode.getAttribute("stroke-width"));
   line.type = "line";
   return line;

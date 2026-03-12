@@ -7,14 +7,14 @@ import {
 } from "../transformToExcalidrawSkeleton.js";
 import { GraphConverter } from "../GraphConverter.js";
 
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
 import type { Class } from "../../parser/class.js";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
     const elements: ExcalidrawElementSkeleton[] = [];
 
-    Object.values(chart.nodes).forEach((node) => {
+    chart.nodes.forEach((node) => {
       if (!node || !node.length) {
         return;
       }

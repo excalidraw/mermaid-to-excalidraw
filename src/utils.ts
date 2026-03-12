@@ -58,6 +58,35 @@ export const decodeEntities = function (text: string): string {
   return text.replace(/ﬂ°°/g, "#").replace(/ﬂ°/g, "&").replace(/¶ß/g, ";");
 };
 
+const DEFAULT_POINT_DEDUPE_THRESHOLD = 0.5;
+
+export const dedupeConsecutivePoints = <T extends [number, number]>(
+  points: readonly T[],
+  threshold = DEFAULT_POINT_DEDUPE_THRESHOLD
+): T[] => {
+  const dedupedPoints: T[] = [];
+
+  points.forEach((point) => {
+    const previousPoint = dedupedPoints[dedupedPoints.length - 1];
+    if (!previousPoint) {
+      dedupedPoints.push(point);
+      return;
+    }
+
+    const distance = Math.hypot(
+      point[0] - previousPoint[0],
+      point[1] - previousPoint[1]
+    );
+    if (distance <= threshold) {
+      return;
+    }
+
+    dedupedPoints.push(point);
+  });
+
+  return dedupedPoints;
+};
+
 // Extract edge position start, end, and points (reflectionPoints)
 interface EdgePositionData {
   startX: number;

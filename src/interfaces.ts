@@ -1,5 +1,5 @@
-import { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/types/data/transform.js";
-import { BinaryFiles } from "@excalidraw/excalidraw/types/types.js";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type { BinaryFiles } from "@excalidraw/excalidraw/types";
 
 export enum VERTEX_TYPE {
   ROUND = "round",
@@ -7,6 +7,7 @@ export enum VERTEX_TYPE {
   DOUBLECIRCLE = "doublecircle",
   CIRCLE = "circle",
   DIAMOND = "diamond",
+  CYLINDER = "cylinder",
 }
 export enum LABEL_STYLE_PROPERTY {
   COLOR = "color",
@@ -17,6 +18,15 @@ export enum CONTAINER_STYLE_PROPERTY {
   STROKE_WIDTH = "stroke-width",
   STROKE_DASHARRAY = "stroke-dasharray",
 }
+
+export type ContainerStyle = {
+  [key in CONTAINER_STYLE_PROPERTY]?: string;
+};
+
+export type LabelStyle = {
+  [key in LABEL_STYLE_PROPERTY]?: string;
+};
+
 export interface Vertex {
   id: string;
   type: VERTEX_TYPE;
@@ -27,8 +37,8 @@ export interface Vertex {
   width: number;
   height: number;
   link?: string;
-  containerStyle: { [key in CONTAINER_STYLE_PROPERTY]?: string };
-  labelStyle: { [key in LABEL_STYLE_PROPERTY]?: string };
+  containerStyle: ContainerStyle;
+  labelStyle: LabelStyle;
 }
 
 export interface SubGraph {
@@ -40,6 +50,8 @@ export interface SubGraph {
   y: number;
   width: number;
   height: number;
+  containerStyle: ContainerStyle;
+  labelStyle: LabelStyle;
 }
 
 export interface Position {

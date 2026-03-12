@@ -3,7 +3,7 @@ import {
   Excalidraw,
   convertToExcalidrawElements,
 } from "@excalidraw/excalidraw";
-import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types/types.js";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import type { MermaidData } from "./";
@@ -11,22 +11,26 @@ import type { MermaidData } from "./";
 interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
   mermaidOutput: MermaidData["output"];
+  theme: "light" | "dark";
+  apiRef?: React.MutableRefObject<ExcalidrawImperativeAPI | null>;
 }
 
 const ExcalidrawWrapper = ({
   mermaidDefinition,
   mermaidOutput,
+  theme,
+  apiRef,
 }: ExcalidrawWrapperProps) => {
-  const [excalidrawAPI, setExcalidrawAPI] =
+  const [readyExcalidrawAPI, setReadyExcalidrawAPI] =
     useState<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
-    if (!excalidrawAPI) {
+    if (!readyExcalidrawAPI || readyExcalidrawAPI.isDestroyed) {
       return;
     }
 
     if (mermaidDefinition === "" || mermaidOutput === null) {
-      excalidrawAPI.resetScene();
+      readyExcalidrawAPI.resetScene();
       return;
     }
 
@@ -34,28 +38,42 @@ const ExcalidrawWrapper = ({
       fontSize: DEFAULT_FONT_SIZE,
     });
 
-    excalidrawAPI.updateScene({
+    readyExcalidrawAPI.updateScene({
       elements: convertToExcalidrawElements(elements),
     });
-    excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
+    readyExcalidrawAPI.scrollToContent(readyExcalidrawAPI.getSceneElements(), {
       fitToContent: true,
     });
 
     if (files) {
-      excalidrawAPI.addFiles(Object.values(files));
+      readyExcalidrawAPI.addFiles(Object.values(files));
     }
-  }, [mermaidDefinition, mermaidOutput]);
+  }, [mermaidDefinition, mermaidOutput, readyExcalidrawAPI]);
 
   return (
     <div className="excalidraw-wrapper">
       <Excalidraw
+        theme={theme}
         initialData={{
           appState: {
             viewBackgroundColor: "#fafafa",
             currentItemFontFamily: 1,
           },
         }}
-        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        onExcalidrawAPI={(api) => {
+          if (apiRef) {
+            apiRef.current = api;
+          }
+        }}
+        onInitialize={(api) => {
+          setReadyExcalidrawAPI(api);
+        }}
+        onUnmount={() => {
+          setReadyExcalidrawAPI(null);
+          if (apiRef) {
+            apiRef.current = null;
+          }
+        }}
       />
     </div>
   );

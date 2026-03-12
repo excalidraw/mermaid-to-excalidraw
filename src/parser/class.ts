@@ -1,6 +1,10 @@
 import { nanoid } from "nanoid";
 
-import { computeEdgePositions, getTransformAttr } from "../utils.js";
+import {
+  computeEdgePositions,
+  entityCodesToText,
+  getTransformAttr,
+} from "../utils.js";
 import {
   Arrow,
   Container,
@@ -12,6 +16,27 @@ import {
   createLineSkeletonFromSVG,
   createTextSkeleton,
 } from "../elementSkeleton.js";
+import {
+  cleanCSSValue,
+  isValidCSSColor,
+  parseCSSDeclarations,
+  resolveElementTextColor,
+} from "./cssUtils.js";
+
+const parseStyleStrings = (styles?: string[]) => {
+  const styleObj: Record<string, string> = {};
+  if (!styles) {
+    return styleObj;
+  }
+  styles.forEach((style) => {
+    parseCSSDeclarations(style).forEach(({ property, value }) => {
+      if (property && value) {
+        styleObj[property] = cleanCSSValue(value);
+      }
+    });
+  });
+  return styleObj;
+};
 
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import type {
@@ -20,7 +45,7 @@ import type {
   ClassRelation,
   NamespaceNode,
 } from "mermaid/dist/diagrams/class/classTypes.js";
-import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/types/element/types.js";
+import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/element/types";
 
 // Taken from mermaidParser.relationType
 const RELATION_TYPE = {
@@ -92,9 +117,52 @@ const getArrowhead = (type: RELATION_TYPE_VALUES) => {
   return arrowhead;
 };
 
+const accumulateTranslation = (node: Element, stopAt?: Element | null) => {
+  let tx = 0;
+  let ty = 0;
+  let current: Element | null = node;
+
+  while (current && current !== stopAt) {
+    const { transformX, transformY } = getTransformAttr(current);
+    tx += transformX;
+    ty += transformY;
+    current = current.parentElement;
+  }
+
+  return { tx, ty };
+};
+
+type ClassTextSection = "header" | "members" | "methods" | "other";
+
+const getClassTextSection = (
+  textNode: Element,
+  classNode: Element
+): ClassTextSection => {
+  let current: Element | null = textNode;
+
+  while (current && current !== classNode) {
+    if (current.classList.contains("annotation-group")) {
+      return "header";
+    }
+    if (current.classList.contains("label-group")) {
+      return "header";
+    }
+    if (current.classList.contains("members-group")) {
+      return "members";
+    }
+    if (current.classList.contains("methods-group")) {
+      return "methods";
+    }
+    current = current.parentElement;
+  }
+
+  return "other";
+};
+
 const parseClasses = (
   classes: { [key: string]: ClassNode },
-  containerEl: Element
+  containerEl: Element,
+  lookUpDomId?: (id: string) => string | undefined
 ) => {
   const nodes: Container[] = [];
   const lines: Line[] = [];
@@ -103,32 +171,167 @@ const parseClasses = (
   Object.values(classes).forEach((classNode) => {
     const { domId, id: classId } = classNode;
     const groupId = nanoid();
-    const domNode = containerEl.querySelector(`[data-id=${classId}]`);
+
+    const classStyles = parseStyleStrings(
+      // @ts-ignore
+      (classNode as any).styles || (classNode as any).cssStyles
+    );
+
+    // Mermaid v11 generates class groups with ids like "classId-<id>-<n>"
+    // but the domId stored on the class might not exactly match. Try a
+    // few fallbacks so we can find the correct group.
+    let lookedUpId: string | undefined;
+    try {
+      lookedUpId = lookUpDomId ? lookUpDomId(classId) : undefined;
+    } catch {
+      lookedUpId = undefined;
+    }
+
+    const findByPrefix = (id: string) => {
+      const regex = new RegExp(`^classId-${id}(?:-|$)`);
+      const all = Array.from(
+        containerEl.querySelectorAll<SVGGElement>("[id]")
+      ).filter((el) => regex.test(el.id));
+      return all[0];
+    };
+
+    const domNode =
+      (lookedUpId &&
+        containerEl.querySelector<SVGGElement>(`#${lookedUpId}`)) ||
+      containerEl.querySelector<SVGGElement>(`#${domId}`) ||
+      containerEl.querySelector<SVGGElement>(`[data-id='${classId}']`) ||
+      findByPrefix(classId);
+
     if (!domNode) {
       throw Error(`DOM Node with id ${domId} not found`);
     }
-    const { transformX, transformY } = getTransformAttr(domNode);
 
-    const container = createContainerSkeletonFromSVG(
-      domNode.firstChild as SVGRectElement,
-      "rectangle",
-      { id: classId, groupId }
+    // Prefer the explicit rect if present, otherwise fall back to the group bbox
+    const containerSource =
+      (domNode.querySelector("rect") as SVGGraphicsElement | null) || domNode;
+
+    const containerBBox = containerSource.getBBox();
+    const { tx: containerTx, ty: containerTy } = accumulateTranslation(
+      containerSource,
+      containerEl
     );
-    container.x += transformX;
-    container.y += transformY;
-    container.metadata = { classId };
+
+    const container: Container = {
+      type: "rectangle",
+      id: classId,
+      groupId,
+      x: containerBBox.x + containerTx,
+      y: containerBBox.y + containerTy,
+      width: containerBBox.width,
+      height: containerBBox.height,
+      metadata: { classId },
+    };
+
+    // Apply styles from rendered shape (fill/stroke/dash)
+    const fill = containerSource.getAttribute("fill");
+    const stroke = containerSource.getAttribute("stroke");
+    const strokeWidth = containerSource.getAttribute("stroke-width");
+    const dashArray = containerSource.getAttribute("stroke-dasharray");
+
+    const computed = getComputedStyle(containerSource as Element);
+    // Only fall back to computed styles when an explicit attribute exists; otherwise leave undefined for defaults
+    const resolvedFill = cleanCSSValue(
+      fill || classStyles.fill || (fill ? computed.fill : "")
+    );
+    const resolvedStroke = cleanCSSValue(
+      stroke || classStyles.stroke || (stroke ? computed.stroke : "")
+    );
+    const resolvedStrokeWidth =
+      strokeWidth ||
+      classStyles["stroke-width"] ||
+      (strokeWidth ? computed.strokeWidth : "");
+    const resolvedDash =
+      dashArray ||
+      classStyles["stroke-dasharray"] ||
+      (dashArray
+        ? computed.strokeDasharray === "none"
+          ? ""
+          : computed.strokeDasharray
+        : "");
+
+    const isMeaningfulColor = (value: string) => {
+      if (!value) {
+        return false;
+      }
+      if (!isValidCSSColor(value)) {
+        return false;
+      }
+      const v = value.toLowerCase();
+      return !(
+        v === "none" ||
+        v === "transparent" ||
+        v === "rgba(0, 0, 0, 0)" ||
+        v === "black" ||
+        v === "#000" ||
+        v === "#000000" ||
+        v === "rgb(0, 0, 0)" ||
+        v === "rgba(0, 0, 0, 1)"
+      );
+    };
+
+    if (isMeaningfulColor(resolvedFill)) {
+      container.bgColor = resolvedFill;
+    } else {
+      container.bgColor = undefined;
+    }
+    if (isMeaningfulColor(resolvedStroke)) {
+      container.strokeColor = resolvedStroke;
+    } else {
+      container.strokeColor = undefined;
+    }
+    if (resolvedStrokeWidth) {
+      container.strokeWidth = Number(resolvedStrokeWidth);
+    } else {
+      container.strokeWidth = undefined;
+    }
+    if (resolvedDash && resolvedDash.trim().length > 0) {
+      container.strokeStyle = "dashed";
+    } else {
+      container.strokeStyle = undefined;
+    }
+
     nodes.push(container);
 
-    const lineNodes = Array.from(
-      domNode.querySelectorAll(".divider")
-    ) as SVGLineElement[];
+    // Divider lines inside the class container (members/methods split)
+    const lineNodes = [
+      ...Array.from(domNode.querySelectorAll("line")),
+      ...Array.from(domNode.querySelectorAll("g.divider path")),
+    ] as SVGGraphicsElement[];
 
     lineNodes.forEach((lineNode) => {
-      const startX = Number(lineNode.getAttribute("x1"));
-      const startY = Number(lineNode.getAttribute("y1"));
-      const endX = Number(lineNode.getAttribute("x2"));
-      const endY = Number(lineNode.getAttribute("y2"));
+      const { tx, ty } = accumulateTranslation(lineNode, containerEl);
+
+      let startX: number;
+      let startY: number;
+      let endX: number;
+      let endY: number;
+
+      if (lineNode.tagName.toLowerCase() === "line") {
+        startX = Number(lineNode.getAttribute("x1")) + tx;
+        startY = Number(lineNode.getAttribute("y1")) + ty;
+        endX = Number(lineNode.getAttribute("x2")) + tx;
+        endY = Number(lineNode.getAttribute("y2")) + ty;
+      } else {
+        const bbox = lineNode.getBBox();
+        startX = bbox.x + tx;
+        endX = bbox.x + bbox.width + tx;
+        const centerY = bbox.y + bbox.height / 2 + ty;
+        startY = centerY;
+        endY = centerY;
+      }
+
+      // Skip zero-length lines (happens when class has no members)
+      if (startX === endX && startY === endY) {
+        return;
+      }
+
       const line = createLineSkeletonFromSVG(
+        // @ts-ignore
         lineNode,
         startX,
         startY,
@@ -139,47 +342,150 @@ const parseClasses = (
           id: nanoid(),
         }
       );
-      line.startX += transformX;
-      line.startY += transformY;
-      line.endX += transformX;
-      line.endY += transformY;
+      // Only inherit styling when explicitly set; otherwise keep defaults
+      if (container.strokeColor) {
+        line.strokeColor = container.strokeColor;
+      } else {
+        line.strokeColor = undefined;
+      }
+      if (container.strokeWidth !== undefined) {
+        line.strokeWidth = container.strokeWidth;
+      } else {
+        line.strokeWidth = undefined;
+      }
+      if (container.strokeStyle) {
+        line.strokeStyle = container.strokeStyle;
+      } else {
+        line.strokeStyle = undefined;
+      }
       line.metadata = { classId };
+
       lines.push(line);
     });
 
-    const labelNodes = domNode.querySelector(".label")?.children;
+    // Parse text elements (class titles, members, methods)
+    const textElements = Array.from(
+      domNode.querySelectorAll("text, foreignObject")
+    ) as SVGGraphicsElement[];
 
-    if (!labelNodes) {
-      throw "label nodes not found";
-    }
+    const parsedTextElements: Array<{
+      section: ClassTextSection;
+      text: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      fontSize: number;
+      color?: string;
+    }> = [];
 
-    Array.from(labelNodes).forEach((node) => {
-      const label = node.textContent;
-      if (!label) {
+    textElements.forEach((textNode) => {
+      const isForeignObject =
+        textNode.tagName.toLowerCase() === "foreignobject";
+
+      const tspans = !isForeignObject
+        ? Array.from(textNode.querySelectorAll("tspan"))
+        : [];
+
+      const rawText = tspans.length
+        ? tspans
+            .map((span) => span.textContent?.trim())
+            .filter(Boolean)
+            .join("\n")
+        : textNode.textContent?.trim() || "";
+
+      if (!rawText) {
         return;
       }
 
-      const id = nanoid();
-      const { transformX: textTransformX, transformY: textTransformY } =
-        getTransformAttr(node);
-      const boundingBox = (node as SVGForeignObjectElement).getBBox();
-      const offsetY = 10;
+      const boundingBox = textNode.getBBox();
+      const { ty } = accumulateTranslation(textNode, containerEl);
+      let fontSize = parseFloat(getComputedStyle(textNode).fontSize || "");
 
-      const textElement = createTextSkeleton(
-        transformX + textTransformX,
-        transformY + textTransformY + offsetY,
-        label,
-        {
-          width: boundingBox.width,
-          height: boundingBox.height,
-          id,
-          groupId,
-          metadata: { classId },
+      if (isForeignObject && (!Number.isFinite(fontSize) || !fontSize)) {
+        const inner = textNode.querySelector<HTMLElement>("div, span, p");
+        if (inner) {
+          fontSize = parseFloat(getComputedStyle(inner).fontSize || "");
         }
+      }
+
+      if (!Number.isFinite(fontSize) || fontSize <= 0) {
+        fontSize = Math.max(12, boundingBox.height * 0.6);
+      }
+
+      // Slightly reduce font size to better fit the original box dimensions
+      fontSize = fontSize * 0.9;
+
+      const resolvedTextColor = resolveElementTextColor(
+        textNode,
+        classStyles.color
       );
 
-      text.push(textElement);
+      parsedTextElements.push({
+        section: getClassTextSection(textNode, domNode),
+        text: entityCodesToText(rawText),
+        x: boundingBox.x,
+        y: boundingBox.y + ty,
+        width:
+          container && container.width
+            ? Math.max(container.width - 8, boundingBox.width)
+            : boundingBox.width,
+        height: boundingBox.height,
+        fontSize,
+        color: resolvedTextColor,
+      });
     });
+
+    const headerTextElements = parsedTextElements
+      .filter((element) => element.section === "header")
+      .sort((a, b) => a.y - b.y || a.x - b.x);
+
+    if (!container.label) {
+      const fallbackHeaderTextElements =
+        headerTextElements.length === 0 && parsedTextElements.length === 1
+          ? parsedTextElements
+          : headerTextElements;
+
+      if (fallbackHeaderTextElements.length > 0) {
+        container.label = {
+          text: fallbackHeaderTextElements
+            .map((element) => element.text)
+            .join("\n"),
+          fontSize: Math.max(
+            ...fallbackHeaderTextElements.map((element) => element.fontSize)
+          ),
+          color: fallbackHeaderTextElements.find((element) => element.color)
+            ?.color,
+          verticalAlign: "top",
+        };
+      }
+    }
+
+    parsedTextElements
+      .filter((element) => {
+        if (headerTextElements.length > 0) {
+          return element.section !== "header";
+        }
+        return !(container.label && parsedTextElements.length === 1);
+      })
+      .forEach((element) => {
+        const textElement = createTextSkeleton(
+          (container?.x || 0) + 4,
+          element.y,
+          element.text,
+          {
+            width: element.width,
+            height: element.height,
+            fontSize: element.fontSize,
+            color: element.color,
+            id: nanoid(),
+            groupId,
+            metadata: { classId },
+          }
+        );
+
+        text.push(textElement);
+      });
   });
   return { nodes, lines, text };
 };
@@ -235,16 +541,24 @@ const parseRelations = (
 ) => {
   const edges = containerEl.querySelector(".edgePaths")?.children;
 
-  if (!edges) {
-    throw new Error("No Edges found!");
+  // If there are no relations, return empty arrays
+  if (!edges || relations.length === 0) {
+    return { arrows: [], text: [] };
   }
   const arrows: Arrow[] = [];
   const text: Text[] = [];
 
   relations.forEach((relationNode, index) => {
     const { id1, id2, relation } = relationNode;
-    const node1 = classNodes.find((node) => node.id === id1)!;
-    const node2 = classNodes.find((node) => node.id === id2)!;
+    const node1 = classNodes.find((node) => node.id === id1);
+    const node2 = classNodes.find((node) => node.id === id2);
+
+    if (!node1) {
+      throw new Error(`parseRelations: Cannot find node with id ${id1}`);
+    }
+    if (!node2) {
+      throw new Error(`parseRelations: Cannot find node with id ${id2}`);
+    }
 
     const strokeStyle = getStrokeStyle(relation.lineType);
     const startArrowhead = getArrowhead(relation.type1);
@@ -416,27 +730,45 @@ export const parseMermaidClassDiagram = (
   diagram: Diagram,
   containerEl: Element
 ): Class => {
-  diagram.parse();
+  // In Mermaid v11, use diagram.db instead of parser.yy
+  //@ts-ignore - ClassDB type not properly exported
+  const db = diagram.db;
+
   //@ts-ignore
-  const mermaidParser = diagram.parser.yy;
-  const direction = mermaidParser.getDirection();
+  const direction: "LR" | "RL" | "TB" | "BT" = db.getDirection?.() || "TB";
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
   const text: Array<Text> = [];
   const classNodes: Array<Container> = [];
 
-  const namespaces: NamespaceNode[] = mermaidParser.getNamespaces();
+  //@ts-ignore
+  const namespaces: NamespaceNode[] = db.getNamespaces?.() || [];
 
-  const classes = mermaidParser.getClasses();
-  if (Object.keys(classes).length) {
-    const classData = parseClasses(classes, containerEl);
+  //@ts-ignore
+  const classesData = db.getClasses?.() || {};
+
+  // Convert Map to object if necessary
+  const classes: { [key: string]: ClassNode } =
+    classesData instanceof Map ? Object.fromEntries(classesData) : classesData;
+
+  if (classes && Object.keys(classes).length) {
+    const lookUpDomId =
+      //@ts-ignore
+      typeof db.lookUpDomId === "function"
+        ? //@ts-ignore
+          db.lookUpDomId.bind(db)
+        : undefined;
+
+    const classData = parseClasses(classes, containerEl, lookUpDomId);
     nodes.push(classData.nodes);
     lines.push(...classData.lines);
     text.push(...classData.text);
     classNodes.push(...classData.nodes);
   }
-  const relations = mermaidParser.getRelations();
+
+  //@ts-ignore
+  const relations = db.getRelations?.() || [];
   const { arrows, text: relationTitles } = parseRelations(
     relations,
     classNodes,
@@ -444,12 +776,14 @@ export const parseMermaidClassDiagram = (
     direction
   );
 
-  const { notes, connectors } = parseNotes(
-    mermaidParser.getNotes(),
+  //@ts-ignore
+  const notes = db.getNotes?.() || [];
+  const { notes: noteContainers, connectors } = parseNotes(
+    notes,
     containerEl,
     classNodes
   );
-  nodes.push(notes);
+  nodes.push(noteContainers);
   arrows.push(...connectors);
   text.push(...relationTitles);
 

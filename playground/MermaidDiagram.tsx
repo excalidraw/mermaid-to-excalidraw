@@ -1,44 +1,59 @@
-import { useState, useTransition, useEffect } from "react";
+import { useEffect, useState } from "react";
 import mermaid from "mermaid";
+import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue.ts";
 
 interface MermaidProps {
   id: string;
   definition: string;
 }
 
+let renderCounter = 0;
+
 export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
   const [svg, setSvg] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
 
   useEffect(() => {
-    const render = async (id: string, definition: string) => {
-      try {
-        setError(null);
+    let isCancelled = false;
+    // Mermaid removes any existing DOM node with the render ID before drawing.
+    const renderId = `mermaid-diagram-${id}-${renderCounter++}`;
+    const tempContainer = document.createElement("div");
+    tempContainer.setAttribute(
+      "style",
+      `opacity: 0; position: fixed; z-index: -1; left: -99999px; top: -99999px;`
+    );
 
-        const { svg } = await mermaid.render(
-          `mermaid-diagram-${id}`,
-          definition
+    if (!definition.trim()) {
+      setSvg("");
+      return;
+    }
+
+    document.body.appendChild(tempContainer);
+
+    const render = async (definition: string) => {
+      try {
+        const { svg } = await runMermaidTaskSequentially(() =>
+          mermaid.render(renderId, definition, tempContainer)
         );
-        startTransition(() => {
+
+        if (!isCancelled) {
           setSvg(svg);
-        });
+        }
       } catch (err) {
-        setError(String(err));
+        if (!isCancelled) {
+          setSvg("");
+        }
+      } finally {
+        tempContainer.remove();
       }
     };
 
-    render(id, definition);
+    render(definition);
+
+    return () => {
+      isCancelled = true;
+      tempContainer.remove();
+    };
   }, [definition, id]);
 
-  return (
-    <>
-      <div
-        style={{ width: "50%" }}
-        className="mermaid"
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
-      {error && <div id="error">{error}</div>}
-    </>
-  );
+  return <div className="mermaid" dangerouslySetInnerHTML={{ __html: svg }} />;
 };
