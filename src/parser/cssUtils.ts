@@ -155,6 +155,65 @@ export const isValidCSSColor = (value: string): boolean => {
   return false;
 };
 
+const getStyleDeclarationValue = (element: Element, property: string) => {
+  const styleText = element.getAttribute("style");
+  if (!styleText) {
+    return "";
+  }
+
+  return (
+    parseCSSDeclarations(styleText).find(
+      (declaration) => declaration.property === property
+    )?.value || ""
+  );
+};
+
+const resolveFirstValidCSSColor = (
+  ...values: Array<string | null | undefined>
+): string | undefined => {
+  for (const rawValue of values) {
+    const value = cleanCSSValue(rawValue || "");
+    if (isValidCSSColor(value)) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
+
+export const resolveElementTextColor = (
+  node: Element,
+  fallbackColor?: string
+): string | undefined => {
+  const textNode =
+    node.querySelector<HTMLElement>("text, foreignObject, div, span, p") ||
+    (node as HTMLElement);
+
+  const inlineFill = resolveFirstValidCSSColor(
+    textNode.getAttribute?.("fill"),
+    getStyleDeclarationValue(textNode, "fill"),
+    (textNode as any).style?.fill
+  );
+  if (inlineFill) {
+    return inlineFill;
+  }
+
+  const inlineColor = resolveFirstValidCSSColor(
+    textNode.getAttribute?.("color"),
+    getStyleDeclarationValue(textNode, "color"),
+    (textNode as any).style?.color
+  );
+  if (inlineColor) {
+    return inlineColor;
+  }
+
+  const explicitFallbackColor = resolveFirstValidCSSColor(fallbackColor);
+  if (explicitFallbackColor) {
+    return explicitFallbackColor;
+  }
+  return undefined;
+};
+
 /**
  * Cleans an array of CSS style strings, removing !important from each value
  * This is useful for processing style arrays from Mermaid data structures.

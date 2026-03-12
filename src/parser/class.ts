@@ -20,6 +20,7 @@ import {
   cleanCSSValue,
   isValidCSSColor,
   parseCSSDeclarations,
+  resolveElementTextColor,
 } from "./cssUtils.js";
 
 const parseStyleStrings = (styles?: string[]) => {
@@ -415,11 +416,9 @@ const parseClasses = (
       // Slightly reduce font size to better fit the original box dimensions
       fontSize = fontSize * 0.9;
 
-      const resolvedTextColor = cleanCSSValue(
-        (textNode as any).style?.color ||
-          (getComputedStyle(textNode) as any).fill ||
-          classStyles.color ||
-          ""
+      const resolvedTextColor = resolveElementTextColor(
+        textNode,
+        classStyles.color
       );
 
       parsedTextElements.push({
@@ -433,9 +432,7 @@ const parseClasses = (
             : boundingBox.width,
         height: boundingBox.height,
         fontSize,
-        color: isValidCSSColor(resolvedTextColor)
-          ? resolvedTextColor
-          : undefined,
+        color: resolvedTextColor,
       });
     });
 

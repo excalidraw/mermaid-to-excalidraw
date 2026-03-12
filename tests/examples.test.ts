@@ -192,7 +192,16 @@ const collectColorEntries = (elements: any[]): ColorEntry[] => {
   const entries: ColorEntry[] = [];
 
   elements.forEach((element, index) => {
-    if (typeof element.strokeColor === "string" && element.strokeColor) {
+    if (
+      element.type === "text" &&
+      typeof element.strokeColor === "string" &&
+      element.strokeColor
+    ) {
+      entries.push({
+        path: `elements[${index}].strokeColor`,
+        value: element.strokeColor,
+      });
+    } else if (typeof element.strokeColor === "string" && element.strokeColor) {
       entries.push({
         path: `elements[${index}].strokeColor`,
         value: element.strokeColor,
@@ -438,6 +447,98 @@ id1[Database]`);
     expect(textNodes).toContain("+bool is_wild");
   });
 
+  it("preserves styled class text colors from direct style declarations", async () => {
+    const definition = `classDiagram
+    class User {
+        +String username
+        +String email
+        +login()
+        +logout()
+    }
+
+    class Profile {
+        +String bio
+        +String avatarUrl
+        +updateProfile()
+    }
+
+    class Post {
+        +int id
+        +String content
+        +DateTime createdAt
+        +publish()
+    }
+
+    class Comment {
+        +String text
+        +submit()
+    }
+
+    User "1" -- "1" Profile : has
+    User "1" -- "*" Post : creates
+    Post "1" -- "*" Comment : contains
+    User "1" -- "*" Comment : writes
+
+    style User fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b
+    style Profile fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
+    style Post fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    style Comment fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+
+    expect(
+      result.elements.find(
+        (element: any) => element.type === "rectangle" && element.id === "User"
+      )
+    ).toMatchObject({
+      strokeColor: "#01579b",
+      label: {
+        strokeColor: "#01579b",
+      },
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" &&
+          String(element.text).includes("+String username")
+      )
+    ).toMatchObject({
+      strokeColor: "#01579b",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" &&
+          String(element.text).includes("+String bio")
+      )
+    ).toMatchObject({
+      strokeColor: "#4a148c",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && String(element.text).includes("+publish()")
+      )
+    ).toMatchObject({
+      strokeColor: "#1b5e20",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && String(element.text).includes("+submit()")
+      )
+    ).toMatchObject({
+      strokeColor: "#e65100",
+    });
+  });
+
   it("uses centered container labels for ERD entity headers while keeping attributes as text", async () => {
     const definition = `erDiagram
   PERSON ||--o{ CAR : owns
@@ -481,6 +582,27 @@ id1[Database]`);
     expect(textNodes).toContain("driversLicense");
     expect(textNodes).toContain("registrationNumber");
     expect(textNodes).toContain("The license #");
+  });
+
+  it("does not assign text colors to unstyled sequence diagrams", async () => {
+    const definition = `sequenceDiagram
+  actor Alice
+  actor Bob
+  Alice->>Bob: Hi Bob
+  Bob->>Alice: Hi Alice`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const textElements = result.elements.filter(
+      (element: any) => element.type === "text"
+    );
+
+    expect(textElements.length).toBeGreaterThan(0);
+    textElements.forEach((element: any) => {
+      expect(element.strokeColor).toBeUndefined();
+    });
   });
 
   it("uses font size 18 for ERD entity table text without changing relationship labels", async () => {
@@ -576,8 +698,7 @@ id1[Database]`);
       .flat()
       .filter(
         (node: any) =>
-          node.type === "rectangle" &&
-          String(node.id).startsWith("entity-")
+          node.type === "rectangle" && String(node.id).startsWith("entity-")
       );
 
     expect(entityContainers.length).toBeGreaterThanOrEqual(2);
@@ -615,8 +736,7 @@ id1[Database]`);
       .flat()
       .filter(
         (node: any) =>
-          node.type === "rectangle" &&
-          String(node.id).startsWith("entity-")
+          node.type === "rectangle" && String(node.id).startsWith("entity-")
       );
     const personContainer = entityContainers.find((node: any) =>
       String(node.id).startsWith("entity-PERSON-")
@@ -640,6 +760,108 @@ id1[Database]`);
         strokeWidth: 4,
         strokeStyle: "dashed",
       });
+    });
+  });
+
+  it("preserves styled ERD header and attribute text colors", async () => {
+    const definition = `erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    PRODUCT ||--o{ LINE-ITEM : included-in
+    CATEGORY ||--o{ PRODUCT : categorizes
+
+    CUSTOMER {
+        int customer_id PK
+        string first_name
+        string last_name
+        string email
+        string phone
+    }
+    ORDER {
+        int order_id PK
+        int customer_id FK
+        datetime order_date
+        string status
+        decimal total_amount
+    }
+    LINE-ITEM {
+        int line_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }
+    PRODUCT {
+        int product_id PK
+        string name
+        string sku
+        decimal price
+        int stock_quantity
+    }
+    CATEGORY {
+        int category_id PK
+        string name
+        string description
+    }
+
+    style CUSTOMER fill:#2d3436,stroke:#00cec9,stroke-width:2px,color:#00cec9
+    style ORDER fill:#2d3436,stroke:#0984e3,stroke-width:2px,color:#0984e3
+    style LINE-ITEM fill:#2d3436,stroke:#6c5ce7,stroke-width:2px,color:#6c5ce7
+    style PRODUCT fill:#2d3436,stroke:#e17055,stroke-width:2px,color:#e17055
+    style CATEGORY fill:#2d3436,stroke:#fdcb6e,stroke-width:2px,color:#fdcb6e`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("erd");
+
+    const result = graphToExcalidraw(graph);
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "rectangle" && element.label?.text === "CUSTOMER"
+      )
+    ).toMatchObject({
+      backgroundColor: "#2d3436",
+      strokeColor: "#00cec9",
+      label: {
+        strokeColor: "#00cec9",
+      },
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && element.text === "customer_id"
+      )
+    ).toMatchObject({
+      strokeColor: "#00cec9",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && element.text === "order_date"
+      )
+    ).toMatchObject({
+      strokeColor: "#0984e3",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && element.text === "unit_price"
+      )
+    ).toMatchObject({
+      strokeColor: "#6c5ce7",
+    });
+
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "text" && element.text === "description"
+      )
+    ).toMatchObject({
+      strokeColor: "#fdcb6e",
     });
   });
 

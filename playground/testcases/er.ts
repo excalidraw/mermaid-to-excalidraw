@@ -111,4 +111,53 @@ export const ERD_DIAGRAM_TESTCASES: TestCase[] = [
   classDef foo stroke:#f00
   classDef bar stroke:#0f0`,
   },
+  {
+    type: "erd",
+    name: "Styled ERD Text Colors",
+    definition: `erDiagram
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    PRODUCT ||--o{ LINE-ITEM : included-in
+    CATEGORY ||--o{ PRODUCT : categorizes
+
+    CUSTOMER {
+        int customer_id PK
+        string first_name
+        string last_name
+        string email
+        string phone
+    }
+    ORDER {
+        int order_id PK
+        int customer_id FK
+        datetime order_date
+        string status
+        decimal total_amount
+    }
+    LINE-ITEM {
+        int line_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }
+    PRODUCT {
+        int product_id PK
+        string name
+        string sku
+        decimal price
+        int stock_quantity
+    }
+    CATEGORY {
+        int category_id PK
+        string name
+        string description
+    }
+
+    style CUSTOMER fill:#2d3436,stroke:#00cec9,stroke-width:2px,color:#00cec9
+    style ORDER fill:#2d3436,stroke:#0984e3,stroke-width:2px,color:#0984e3
+    style LINE-ITEM fill:#2d3436,stroke:#6c5ce7,stroke-width:2px,color:#6c5ce7
+    style PRODUCT fill:#2d3436,stroke:#e17055,stroke-width:2px,color:#e17055
+    style CATEGORY fill:#2d3436,stroke:#fdcb6e,stroke-width:2px,color:#fdcb6e`,
+  },
 ];

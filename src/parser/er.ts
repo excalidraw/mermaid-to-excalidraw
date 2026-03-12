@@ -15,6 +15,7 @@ import {
   cleanCSSValue,
   isValidCSSColor,
   parseCSSDeclarations,
+  resolveElementTextColor,
 } from "./cssUtils.js";
 
 import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
@@ -126,25 +127,6 @@ const getFontSize = (node: Element) => {
   return fontSize;
 };
 
-const getResolvedTextColor = (
-  node: Element,
-  fallbackColor?: string
-): string | undefined => {
-  const textNode =
-    node.querySelector<HTMLElement>("text, foreignObject, div, span, p") ||
-    (node as HTMLElement);
-  const color = cleanCSSValue(
-    textNode.getAttribute?.("fill") ||
-      (textNode as any).style?.color ||
-      getComputedStyle(textNode).fill ||
-      getComputedStyle(textNode).color ||
-      fallbackColor ||
-      ""
-  );
-
-  return isValidCSSColor(color) ? color : undefined;
-};
-
 const parseTextGroup = (
   group: SVGGraphicsElement,
   containerEl: Element,
@@ -166,7 +148,7 @@ const parseTextGroup = (
     width: bbox.width,
     height: bbox.height,
     fontSize: getFontSize(group),
-    color: getResolvedTextColor(group, fallbackColor),
+    color: resolveElementTextColor(group, fallbackColor),
   };
 };
 

@@ -274,4 +274,43 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
   style Animal fill:#f9f,stroke:#333,stroke-width:4px
   style Mineral fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5`,
   },
+  {
+    type: "class",
+    name: "Styled Class Text Colors",
+    definition: `classDiagram
+    class User {
+        +String username
+        +String email
+        +login()
+        +logout()
+    }
+
+    class Profile {
+        +String bio
+        +String avatarUrl
+        +updateProfile()
+    }
+
+    class Post {
+        +int id
+        +String content
+        +DateTime createdAt
+        +publish()
+    }
+
+    class Comment {
+        +String text
+        +submit()
+    }
+
+    User "1" -- "1" Profile : has
+    User "1" -- "*" Post : creates
+    Post "1" -- "*" Comment : contains
+    User "1" -- "*" Comment : writes
+
+    style User fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b
+    style Profile fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
+    style Post fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    style Comment fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100`,
+  },
 ];

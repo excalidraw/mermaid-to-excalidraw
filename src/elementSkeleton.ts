@@ -2,7 +2,7 @@ import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types
 import { entityCodesToText } from "./utils.js";
 import type { ValidLinearElement } from "@excalidraw/excalidraw/element/transform";
 import { DEFAULT_FONT_SIZE } from "./constants.js";
-import { cleanCSSValue } from "./parser/cssUtils.js";
+import { cleanCSSValue, resolveElementTextColor } from "./parser/cssUtils.js";
 
 export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   type: "arrow";
@@ -247,6 +247,7 @@ export const createTextSkeletonFromSVG = (
   node.y = y;
   const fontSize = parseInt(getComputedStyle(textNode).fontSize);
   node.fontSize = fontSize;
+  node.color = resolveElementTextColor(textNode);
   return node;
 };
 
