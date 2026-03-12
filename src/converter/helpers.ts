@@ -1,5 +1,5 @@
 import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
-import type { Arrowhead } from "@excalidraw/element/types";
+import type { Arrowhead } from "@excalidraw/excalidraw/element/types";
 import {
   ContainerStyle,
   CONTAINER_STYLE_PROPERTY,
@@ -25,7 +25,7 @@ export interface ArrowType {
  */
 const MERMAID_EDGE_TYPE_MAPPER: { [key: string]: ArrowType } = {
   arrow_circle: {
-    endArrowhead: "dot",
+    endArrowhead: "circle",
   },
   arrow_cross: {
     endArrowhead: "bar",
@@ -35,8 +35,8 @@ const MERMAID_EDGE_TYPE_MAPPER: { [key: string]: ArrowType } = {
     startArrowhead: null,
   },
   double_arrow_circle: {
-    endArrowhead: "dot",
-    startArrowhead: "dot",
+    endArrowhead: "circle",
+    startArrowhead: "circle",
   },
   double_arrow_cross: {
     endArrowhead: "bar",

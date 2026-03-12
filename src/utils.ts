@@ -60,7 +60,7 @@ export const decodeEntities = function (text: string): string {
 
 const DEFAULT_POINT_DEDUPE_THRESHOLD = 0.5;
 
-export const dedupeConsecutivePoints = <T extends readonly [number, number]>(
+export const dedupeConsecutivePoints = <T extends [number, number]>(
   points: readonly T[],
   threshold = DEFAULT_POINT_DEDUPE_THRESHOLD
 ): T[] => {

@@ -14,7 +14,7 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];
-  points?: readonly (readonly [number, number])[];
+  points?: readonly [number, number][];
   sequenceNumber?: Container;
   startArrowhead?: SupportedArrowhead;
   endArrowhead?: SupportedArrowhead;
@@ -119,9 +119,9 @@ export const createArrowSkeletonFromSVG = (
       .split(",")
       .map((coord) => parseFloat(coord));
 
-    const points: (readonly [number, number])[] = [];
+    const points: [number, number][] = [];
     commands.forEach((command) => {
-      const currPoints: readonly (readonly [number, number])[] = command
+      const currPoints: [number, number][] = command
         .substring(1)
         .trim()
         .split(" ")

@@ -9,6 +9,7 @@ import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
 import { ERD } from "./parser/er.js";
 import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
+import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";
 
 const normalizeLinearElementPoints = (
@@ -21,7 +22,7 @@ const normalizeLinearElementPoints = (
         return element;
       }
 
-      const points = element.points as readonly (readonly [number, number])[];
+      const points = element.points as readonly LocalPoint[];
       if (points.length < 2) {
         return element;
       }

@@ -1,4 +1,8 @@
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type {
+  ExcalidrawElementSkeleton,
+  ValidContainer,
+  ValidLinearElement,
+} from "@excalidraw/excalidraw/element/transform";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { Arrow, Line, Node, Text } from "../elementSkeleton.js";
 
@@ -62,11 +66,8 @@ export const transformToExcalidrawContainerSkeleton = (
     textAlign: element.label?.textAlign,
     verticalAlign: element.label?.verticalAlign || "middle",
     strokeColor: element.label?.color || "#000",
-  } as ExcalidrawElementSkeleton["label"];
-
-  if (element.groupId) {
-    label.groupIds = [element.groupId];
-  }
+    ...(element.groupId ? { groupIds: [element.groupId] } : {}),
+  } as NonNullable<ValidContainer["label"]>;
 
   let extraProps = {};
   if (element.type === "rectangle" && element.subtype === "activation") {
@@ -75,7 +76,7 @@ export const transformToExcalidrawContainerSkeleton = (
       fillStyle: "solid",
     };
   }
-  const container: ExcalidrawElementSkeleton = {
+  const container: ValidContainer = {
     id: element.id,
     type: element.type,
     x: element.x,
@@ -98,7 +99,7 @@ export const transformToExcalidrawContainerSkeleton = (
 };
 
 export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
-  const arrowElement: ExcalidrawElementSkeleton = {
+  const arrowElement: ValidLinearElement = {
     type: "arrow",
     x: arrow.startX,
     y: arrow.startY,
