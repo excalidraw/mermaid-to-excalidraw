@@ -6,6 +6,7 @@ import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class.ts";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er.ts";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart.ts";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence.ts";
+import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported.ts";
 
 const PLAYGROUND_TESTCASES = [
@@ -13,6 +14,7 @@ const PLAYGROUND_TESTCASES = [
   ...SEQUENCE_DIAGRAM_TESTCASES,
   ...CLASS_DIAGRAM_TESTCASES,
   ...ERD_DIAGRAM_TESTCASES,
+  ...STATE_DIAGRAM_TESTCASES,
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
 ];
 

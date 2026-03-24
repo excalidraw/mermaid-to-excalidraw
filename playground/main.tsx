@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./index.tsx";
 import mermaid from "mermaid";
 import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants.ts";
+import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts.ts";
 
 // Initialize Mermaid
 mermaid.initialize({
@@ -14,8 +15,10 @@ mermaid.initialize({
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+void ensureExcalidrawFontsLoaded().finally(() => {
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});

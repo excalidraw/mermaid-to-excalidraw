@@ -2,6 +2,7 @@ import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
 import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { ERD_DIAGRAM_TESTCASES } from "./testcases/er.ts";
+import { STATE_DIAGRAM_TESTCASES } from "./testcases/state.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
@@ -118,6 +119,11 @@ const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
       testcases: ERD_DIAGRAM_TESTCASES,
       documentationHref:
         "https://mermaid.js.org/syntax/entityRelationshipDiagram.html",
+    },
+    {
+      name: "State",
+      testcases: STATE_DIAGRAM_TESTCASES,
+      documentationHref: "https://mermaid.js.org/syntax/stateDiagram.html",
     },
     {
       name: "Unsupported",

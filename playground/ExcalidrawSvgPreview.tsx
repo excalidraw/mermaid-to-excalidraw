@@ -6,6 +6,7 @@ import {
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { parseMermaid } from "../src/parseMermaid";
+import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
 
 interface ExcalidrawSvgPreviewProps {
   definition: string;
@@ -49,6 +50,7 @@ const generateExcalidrawSvg = async (definition: string): Promise<string> => {
       const { elements, files } = graphToExcalidraw(parsedMermaid, {
         fontSize: DEFAULT_FONT_SIZE,
       });
+      await ensureExcalidrawFontsLoaded();
 
       const svgElement = await exportToSvg({
         elements: convertToExcalidrawElements(elements),
