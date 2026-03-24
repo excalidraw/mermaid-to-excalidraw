@@ -7,6 +7,7 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import type { MermaidData } from "./";
+import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
 
 interface ExcalidrawWrapperProps {
   mermaidDefinition: MermaidData["definition"];
@@ -25,29 +26,45 @@ const ExcalidrawWrapper = ({
     useState<ExcalidrawImperativeAPI | null>(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (!readyExcalidrawAPI || readyExcalidrawAPI.isDestroyed) {
-      return;
+      return undefined;
     }
 
     if (mermaidDefinition === "" || mermaidOutput === null) {
       readyExcalidrawAPI.resetScene();
-      return;
+      return undefined;
     }
 
-    const { elements, files } = graphToExcalidraw(mermaidOutput, {
-      fontSize: DEFAULT_FONT_SIZE,
-    });
+    void (async () => {
+      await ensureExcalidrawFontsLoaded();
+      if (isCancelled || readyExcalidrawAPI.isDestroyed) {
+        return;
+      }
 
-    readyExcalidrawAPI.updateScene({
-      elements: convertToExcalidrawElements(elements),
-    });
-    readyExcalidrawAPI.scrollToContent(readyExcalidrawAPI.getSceneElements(), {
-      fitToContent: true,
-    });
+      const { elements, files } = graphToExcalidraw(mermaidOutput, {
+        fontSize: DEFAULT_FONT_SIZE,
+      });
 
-    if (files) {
-      readyExcalidrawAPI.addFiles(Object.values(files));
-    }
+      readyExcalidrawAPI.updateScene({
+        elements: convertToExcalidrawElements(elements),
+      });
+      readyExcalidrawAPI.scrollToContent(
+        readyExcalidrawAPI.getSceneElements(),
+        {
+          fitToContent: true,
+        }
+      );
+
+      if (files) {
+        readyExcalidrawAPI.addFiles(Object.values(files));
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [mermaidDefinition, mermaidOutput, readyExcalidrawAPI]);
 
   return (

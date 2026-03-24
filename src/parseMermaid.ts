@@ -3,6 +3,7 @@ import type { MermaidConfig } from "mermaid";
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import type { FlowDB } from "mermaid/dist/diagrams/flowchart/flowDb.js";
 import type { ErDB } from "mermaid/dist/diagrams/er/erDb.js";
+import type { StateDB } from "mermaid/dist/diagrams/state/stateDb.js";
 
 import { GraphImage } from "./interfaces.js";
 import { MERMAID_CONFIG } from "./constants.js";
@@ -11,6 +12,7 @@ import { Flowchart, parseMermaidFlowChartDiagram } from "./parser/flowchart.js";
 import { Sequence, parseMermaidSequenceDiagram } from "./parser/sequence.js";
 import { Class, parseMermaidClassDiagram } from "./parser/class.js";
 import { ERD, parseMermaidERDiagram } from "./parser/er.js";
+import { State, parseMermaidStateDiagram } from "./parser/state.js";
 import { runMermaidTaskSequentially } from "./mermaidExecutionQueue.js";
 
 // Track initialization state to avoid redundant mermaid.initialize() calls
@@ -61,7 +63,7 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
 export const parseMermaid = async (
   definition: string,
   config: MermaidConfig = MERMAID_CONFIG
-): Promise<Flowchart | GraphImage | Sequence | Class | ERD> => {
+): Promise<Flowchart | GraphImage | Sequence | Class | ERD | State> => {
   return runMermaidTaskSequentially(async () => {
     const resolvedFontSize =
       config.themeVariables?.fontSize ?? MERMAID_CONFIG.themeVariables.fontSize;
@@ -115,7 +117,7 @@ export const parseMermaid = async (
       // Append SVG to DOM temporarily to allow querying element dimensions/positions
       svgContainer.innerHTML = svg;
 
-      let data: Flowchart | GraphImage | Sequence | Class | ERD;
+      let data: Flowchart | GraphImage | Sequence | Class | ERD | State;
 
       try {
         switch (diagram.type) {
@@ -138,6 +140,14 @@ export const parseMermaid = async (
           }
           case "er": {
             data = parseMermaidERDiagram(diagram.db as ErDB, svgContainer);
+            break;
+          }
+          case "state":
+          case "stateDiagram": {
+            data = parseMermaidStateDiagram(
+              diagram.db as StateDB,
+              svgContainer
+            );
             break;
           }
           default: {

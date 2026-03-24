@@ -1,5 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { cpSync, mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
@@ -15,7 +21,31 @@ export default defineConfig({
   define: {
     "process.env.IS_PREACT": JSON.stringify("false"),
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "copy-excalifont",
+      configResolved() {
+        const require_ = createRequire(import.meta.url);
+        const excalidrawEntry = require_.resolve("@excalidraw/excalidraw");
+        const srcFontsDir = resolve(
+          dirname(excalidrawEntry),
+          "fonts",
+          "Excalifont"
+        );
+        const destFontsDir = resolve(
+          __dirname,
+          "..",
+          "public",
+          "fonts",
+          "Excalifont"
+        );
+
+        mkdirSync(destFontsDir, { recursive: true });
+        cpSync(srcFontsDir, destFontsDir, { recursive: true });
+      },
+    },
+  ],
   server: {
     port: 3418,
     open: true,

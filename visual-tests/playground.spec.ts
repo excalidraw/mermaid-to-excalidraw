@@ -3,14 +3,24 @@ import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
 import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
+import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
 
+test.describe.configure({ mode: "serial" });
+
 const ALL_TESTCASES = [
-  ...FLOWCHART_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "flowchart" })),
+  ...FLOWCHART_DIAGRAM_TESTCASES.map((tc) => ({
+    ...tc,
+    chartType: "flowchart",
+  })),
   ...SEQUENCE_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "sequence" })),
   ...CLASS_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "class" })),
   ...ERD_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "erd" })),
-  ...UNSUPPORTED_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "unsupported" })),
+  ...STATE_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "state" })),
+  ...UNSUPPORTED_DIAGRAM_TESTCASES.map((tc) => ({
+    ...tc,
+    chartType: "unsupported",
+  })),
 ];
 
 function slugify(s: string): string {

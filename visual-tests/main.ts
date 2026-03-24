@@ -2,9 +2,10 @@ import mermaid from "mermaid";
 import {
   convertToExcalidrawElements,
   exportToSvg,
-  Fonts,
   FONT_FAMILY,
 } from "@excalidraw/excalidraw";
+import { charWidth } from "@excalidraw/element";
+import { getFontString } from "@excalidraw/common";
 
 import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
@@ -15,7 +16,9 @@ import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
 import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
+import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
+import { ensureExcalidrawFontsLoaded } from "../playground/loadExcalidrawFonts";
 
 interface TestCase {
   type: string;
@@ -28,6 +31,7 @@ const ALL_TESTCASES: TestCase[] = [
   ...SEQUENCE_DIAGRAM_TESTCASES,
   ...CLASS_DIAGRAM_TESTCASES,
   ...ERD_DIAGRAM_TESTCASES,
+  ...STATE_DIAGRAM_TESTCASES,
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
 ];
 
@@ -39,6 +43,8 @@ mermaid.initialize({
 const mermaidOutput = document.getElementById("mermaid-output")!;
 const excalidrawOutput = document.getElementById("excalidraw-output")!;
 const errorDiv = document.getElementById("error")!;
+const SVG_EXPORT_PADDING = 4;
+const EXCALIDRAW_SVG_EXPORT_PADDING = 16;
 
 let renderCounter = 0;
 let currentRenderGeneration = 0;
@@ -47,6 +53,124 @@ const cleanupMermaidTempContainers = () => {
   document
     .querySelectorAll<HTMLDivElement>(".mermaid-to-excalidraw-svg-container")
     .forEach((el) => el.remove());
+};
+
+const clearExcalidrawTextMeasureCache = (
+  elements: ReadonlyArray<{
+    fontSize?: unknown;
+    label?: { fontSize?: unknown };
+  }>
+) => {
+  const fontSizes = new Set<number>([DEFAULT_FONT_SIZE]);
+
+  elements.forEach((element) => {
+    if (typeof element.fontSize === "number") {
+      fontSizes.add(element.fontSize);
+    }
+    if (typeof element.label?.fontSize === "number") {
+      fontSizes.add(element.label.fontSize);
+    }
+  });
+
+  fontSizes.forEach((fontSize) => {
+    charWidth.clearCache(
+      getFontString({
+        fontSize,
+        fontFamily: FONT_FAMILY.Excalifont,
+      })
+    );
+  });
+};
+
+const getSvgViewBox = (svg: SVGSVGElement) => {
+  const viewBox = svg.viewBox.baseVal;
+  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+    return {
+      x: viewBox.x,
+      y: viewBox.y,
+      width: viewBox.width,
+      height: viewBox.height,
+    };
+  }
+
+  const width = Number(svg.getAttribute("width")) || 0;
+  const height = Number(svg.getAttribute("height")) || 0;
+  return { x: 0, y: 0, width, height };
+};
+
+const getSvgContentRects = (
+  svg: SVGSVGElement,
+  source: "mermaid" | "excalidraw"
+) => {
+  if (source === "mermaid") {
+    return Array.from(
+      svg.querySelectorAll<SVGGraphicsElement>(
+        "g, path, rect, circle, ellipse, polygon, polyline, line, foreignObject, text"
+      )
+    )
+      .filter((element) => !element.closest("defs"))
+      .map((element) => element.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 || rect.height > 0);
+  }
+
+  return Array.from(svg.children)
+    .filter(
+      (element) =>
+        element instanceof SVGGraphicsElement &&
+        element.tagName !== "metadata" &&
+        element.tagName !== "defs" &&
+        !(
+          element.tagName === "rect" &&
+          element.parentElement === svg &&
+          element.hasAttribute("fill")
+        )
+    )
+    .map((element) => element.getBoundingClientRect())
+    .filter((rect) => rect.width > 0 || rect.height > 0);
+};
+
+const cropSvgToRenderedContent = (
+  svg: SVGSVGElement,
+  source: "mermaid" | "excalidraw",
+  padding = SVG_EXPORT_PADDING
+) => {
+  const contentRects = getSvgContentRects(svg, source);
+  if (contentRects.length === 0) {
+    return;
+  }
+
+  const svgRect = svg.getBoundingClientRect();
+  if (!svgRect.width || !svgRect.height) {
+    return;
+  }
+
+  const currentViewBox = getSvgViewBox(svg);
+  if (!currentViewBox.width || !currentViewBox.height) {
+    return;
+  }
+
+  const minLeft = Math.min(...contentRects.map((rect) => rect.left));
+  const minTop = Math.min(...contentRects.map((rect) => rect.top));
+  const maxRight = Math.max(...contentRects.map((rect) => rect.right));
+  const maxBottom = Math.max(...contentRects.map((rect) => rect.bottom));
+
+  const scaleX = currentViewBox.width / svgRect.width;
+  const scaleY = currentViewBox.height / svgRect.height;
+
+  const nextViewBox = {
+    x: currentViewBox.x + (minLeft - svgRect.left) * scaleX - padding,
+    y: currentViewBox.y + (minTop - svgRect.top) * scaleY - padding,
+    width: (maxRight - minLeft) * scaleX + padding * 2,
+    height: (maxBottom - minTop) * scaleY + padding * 2,
+  };
+
+  svg.setAttribute(
+    "viewBox",
+    `${nextViewBox.x} ${nextViewBox.y} ${nextViewBox.width} ${nextViewBox.height}`
+  );
+  svg.setAttribute("width", `${nextViewBox.width}`);
+  svg.setAttribute("height", `${nextViewBox.height}`);
+  svg.style.maxWidth = "";
 };
 
 // ── Render cache (dev only) ──
@@ -104,7 +228,7 @@ async function renderTestCase(index: number): Promise<void> {
     document.body.appendChild(tempContainer);
 
     const { svg: mermaidSvg } = await runMermaidTaskSequentially(() =>
-      mermaid.render(renderId, testcase.definition, tempContainer),
+      mermaid.render(renderId, testcase.definition, tempContainer)
     );
     tempContainer.remove();
     if (isStale()) {
@@ -113,24 +237,9 @@ async function renderTestCase(index: number): Promise<void> {
 
     mermaidOutput.innerHTML = mermaidSvg;
 
-    // Mermaid adds internal padding around diagram content. Use getBBox()
-    // to find the actual content bounds and crop the viewBox to fit tightly.
-    // Skip for extreme aspect ratios (e.g. Gantt charts) where cropping
-    // would make the SVG too short when CSS constrains the width.
     const mRenderedSvg = mermaidOutput.querySelector("svg");
     if (mRenderedSvg) {
-      const PAD = 4; // small breathing room
-      const bbox = mRenderedSvg.getBBox();
-      const vbW = bbox.width + PAD * 2;
-      const vbH = bbox.height + PAD * 2;
-      if (vbW / vbH < 10) {
-        const vbX = bbox.x - PAD;
-        const vbY = bbox.y - PAD;
-        mRenderedSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
-        mRenderedSvg.setAttribute("width", `${vbW}`);
-        mRenderedSvg.removeAttribute("height");
-        mRenderedSvg.style.maxWidth = "";
-      }
+      cropSvgToRenderedContent(mRenderedSvg, "mermaid");
     }
 
     // Render excalidraw SVG
@@ -142,9 +251,13 @@ async function renderTestCase(index: number): Promise<void> {
     const { elements, files } = graphToExcalidraw(parsed, {
       fontSize: DEFAULT_FONT_SIZE,
     });
+    await ensureExcalidrawFontsLoaded();
+    clearExcalidrawTextMeasureCache(elements);
+    if (isStale()) {
+      return;
+    }
 
     const excalidrawElements = convertToExcalidrawElements(elements);
-
     // Fix seeds to make rendering deterministic across runs
     for (const el of excalidrawElements) {
       (el as any).seed = 1;
@@ -157,13 +270,17 @@ async function renderTestCase(index: number): Promise<void> {
         viewBackgroundColor: "#ffffff",
       },
       files: files ?? null,
-      exportPadding: 4,
+      exportPadding: EXCALIDRAW_SVG_EXPORT_PADDING,
     });
     if (isStale()) {
       return;
     }
 
     excalidrawOutput.innerHTML = svgElement.outerHTML;
+    const eRenderedSvg = excalidrawOutput.querySelector("svg");
+    if (eRenderedSvg) {
+      cropSvgToRenderedContent(eRenderedSvg, "excalidraw");
+    }
 
     // Let SVGs size naturally — CSS flexbox handles panel alignment.
 
@@ -275,32 +392,22 @@ async function renderAllTestCases(): Promise<void> {
       document.body.appendChild(tempContainer);
 
       const { svg: mermaidSvg } = await runMermaidTaskSequentially(() =>
-        mermaid.render(renderId, tc.definition, tempContainer),
+        mermaid.render(renderId, tc.definition, tempContainer)
       );
       tempContainer.remove();
       mOut.innerHTML = mermaidSvg;
 
-      // Crop mermaid SVG padding (same as single-case view)
       const mRenderedSvg = mOut.querySelector("svg");
       if (mRenderedSvg) {
-        const PAD = 4;
-        const bbox = mRenderedSvg.getBBox();
-        const vbW = bbox.width + PAD * 2;
-        const vbH = bbox.height + PAD * 2;
-        if (vbW / vbH < 10) {
-          const vbX = bbox.x - PAD;
-          const vbY = bbox.y - PAD;
-          mRenderedSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
-          mRenderedSvg.setAttribute("width", `${vbW}`);
-          mRenderedSvg.removeAttribute("height");
-          mRenderedSvg.style.maxWidth = "";
-        }
+        cropSvgToRenderedContent(mRenderedSvg, "mermaid");
       }
 
       const parsed = await parseMermaid(tc.definition);
       const { elements, files } = graphToExcalidraw(parsed, {
         fontSize: DEFAULT_FONT_SIZE,
       });
+      await ensureExcalidrawFontsLoaded();
+      clearExcalidrawTextMeasureCache(elements);
       const excalidrawElements = convertToExcalidrawElements(elements);
       for (const el of excalidrawElements) {
         (el as any).seed = 1;
@@ -312,9 +419,13 @@ async function renderAllTestCases(): Promise<void> {
           viewBackgroundColor: "#ffffff",
         },
         files: files ?? null,
-        exportPadding: 4,
+        exportPadding: EXCALIDRAW_SVG_EXPORT_PADDING,
       });
       eOut.innerHTML = svgElement.outerHTML;
+      const eRenderedSvg = eOut.querySelector("svg");
+      if (eRenderedSvg) {
+        cropSvgToRenderedContent(eRenderedSvg, "excalidraw");
+      }
 
       cleanupMermaidTempContainers();
     } catch (err) {
@@ -342,26 +453,10 @@ function hideAllView(): void {
 (window as any).TEST_CASE_COUNT = ALL_TESTCASES.length;
 (window as any).ALL_TESTCASES = ALL_TESTCASES;
 
-// Preload Excalifont before any test case runs.
-// convertToExcalidrawElements measures text synchronously via Canvas API,
-// so Excalifont must be loaded BEFORE it runs, not after.
-//
-// Font files are copied from @excalidraw/excalidraw dist into public/fonts/
-// by visual-tests/copy-fonts.mjs (run automatically via the test:visual script).
-// EXCALIDRAW_ASSET_PATH tells the Fonts loader to resolve relative font URIs
-// (e.g. "./fonts/Excalifont/...") against our public dir instead of esm.sh CDN.
+// Keep the visual harness on the same font-loading path as the playground
+// preview so text measurement and wrapping stay consistent.
 (async () => {
-  (window as any).EXCALIDRAW_ASSET_PATH = "/";
-
-  await Fonts.loadElementsFonts([
-    {
-      type: "text",
-      fontFamily: FONT_FAMILY.Excalifont,
-      text: "preload",
-      originalText: "preload",
-    } as any,
-  ]);
-  await document.fonts.ready;
+  await ensureExcalidrawFontsLoaded();
 
   (window as any).__HARNESS_READY__ = true;
 })();

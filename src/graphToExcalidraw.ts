@@ -9,6 +9,8 @@ import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
 import { ERD } from "./parser/er.js";
 import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
+import { State } from "./parser/state.js";
+import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";
 
@@ -41,7 +43,7 @@ const normalizeLinearElementPoints = (
 };
 
 export const graphToExcalidraw = (
-  graph: Flowchart | GraphImage | Sequence | Class | ERD,
+  graph: Flowchart | GraphImage | Sequence | Class | ERD | State,
   options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   const result = (() => {
@@ -64,6 +66,10 @@ export const graphToExcalidraw = (
 
       case "erd": {
         return erToExcalidrawSkeletonConvertor.convert(graph, options);
+      }
+
+      case "state": {
+        return stateToExcalidrawSkeletonConvertor.convert(graph, options);
       }
 
       default: {
