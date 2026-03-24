@@ -233,6 +233,79 @@ const collectColorEntries = (elements: any[]): ColorEntry[] => {
   return entries;
 };
 
+const getAbsoluteLinearPoints = (element: any): Array<[number, number]> => {
+  const points =
+    Array.isArray(element?.points) && element.points.length
+      ? element.points
+      : [
+          [0, 0],
+          [element?.width ?? 0, element?.height ?? 0],
+        ];
+
+  return points.map(
+    ([x, y]: [number, number]) =>
+      [Number(element?.x ?? 0) + x, Number(element?.y ?? 0) + y] as [
+        number,
+        number,
+      ]
+  );
+};
+
+const isPointNearRectangle = (
+  [x, y]: [number, number],
+  rectangle: { x: number; y: number; width: number; height: number },
+  tolerance = 24
+) => {
+  return (
+    x >= rectangle.x - tolerance &&
+    x <= rectangle.x + rectangle.width + tolerance &&
+    y >= rectangle.y - tolerance &&
+    y <= rectangle.y + rectangle.height + tolerance
+  );
+};
+
+const isPointInsideRectangleInterior = (
+  [x, y]: [number, number],
+  rectangle: { x: number; y: number; width: number; height: number },
+  inset = 4
+) => {
+  return (
+    x > rectangle.x + inset &&
+    x < rectangle.x + rectangle.width - inset &&
+    y > rectangle.y + inset &&
+    y < rectangle.y + rectangle.height - inset
+  );
+};
+
+const distanceToRectangleOutline = (
+  [x, y]: [number, number],
+  rectangle: { x: number; y: number; width: number; height: number }
+) => {
+  const left = rectangle.x;
+  const right = rectangle.x + rectangle.width;
+  const top = rectangle.y;
+  const bottom = rectangle.y + rectangle.height;
+
+  const deltaX =
+    x < left ? left - x : x > right ? x - right : Math.min(x - left, right - x);
+  const deltaY =
+    y < top ? top - y : y > bottom ? y - bottom : Math.min(y - top, bottom - y);
+
+  if (x >= left && x <= right && y >= top && y <= bottom) {
+    return Math.min(deltaX, deltaY);
+  }
+
+  if (x >= left && x <= right) {
+    return deltaY;
+  }
+
+  if (y >= top && y <= bottom) {
+    return deltaX;
+  }
+
+  return Math.hypot(deltaX, deltaY);
+};
+
 const hasConsecutiveDuplicatePoints = (
   points: readonly (readonly [number, number])[]
 ) => {
@@ -445,6 +518,265 @@ id1[Database]`);
     expect(textNodes).toContain("+String beakColor");
     expect(textNodes).toContain("-int sizeInFeet");
     expect(textNodes).toContain("+bool is_wild");
+  });
+
+  it("keeps class relation routing aligned with Mermaid edges when notes are present", async () => {
+    const definition = `classDiagram
+    class Vehicle
+    class Car
+    class Engine
+
+    Vehicle <|-- Car : Inheritance
+    Vehicle *-- Engine : Composition
+
+    note for Vehicle "Base class"`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    const rectangles = new Map(
+      result.elements
+        .filter((element: any) => element.type === "rectangle" && element.id)
+        .map((element: any) => [element.id, element])
+    );
+
+    const inheritanceArrow = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.label?.text === "Inheritance" &&
+        element.start?.id === "Vehicle" &&
+        element.end?.id === "Car"
+    ) as any;
+    const compositionArrow = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.label?.text === "Composition" &&
+        element.start?.id === "Vehicle" &&
+        element.end?.id === "Engine"
+    ) as any;
+    const noteConnector = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.start?.id === "note0" &&
+        element.end?.id === "Vehicle"
+    ) as any;
+
+    expect(inheritanceArrow).toBeTruthy();
+    expect(compositionArrow).toBeTruthy();
+    expect(noteConnector).toBeTruthy();
+
+    expect(inheritanceArrow.strokeStyle).toBe("solid");
+    expect(compositionArrow.strokeStyle).toBe("solid");
+    expect(noteConnector.strokeStyle).toBe("dotted");
+
+    expect(inheritanceArrow.points.length).toBe(2);
+    expect(compositionArrow.points.length).toBe(2);
+    expect(noteConnector.points.length).toBeGreaterThanOrEqual(2);
+
+    const inheritancePoints = getAbsoluteLinearPoints(inheritanceArrow);
+    const compositionPoints = getAbsoluteLinearPoints(compositionArrow);
+    const noteConnectorPoints = getAbsoluteLinearPoints(noteConnector);
+
+    expect(
+      isPointNearRectangle(
+        inheritancePoints[0],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointInsideRectangleInterior(
+        inheritancePoints[0],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(false);
+    expect(
+      isPointNearRectangle(
+        inheritancePoints[inheritancePoints.length - 1],
+        rectangles.get("Car") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointInsideRectangleInterior(
+        inheritancePoints[inheritancePoints.length - 1],
+        rectangles.get("Car") as any
+      )
+    ).toBe(false);
+
+    expect(
+      isPointNearRectangle(
+        compositionPoints[0],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointInsideRectangleInterior(
+        compositionPoints[0],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(false);
+    expect(
+      isPointNearRectangle(
+        compositionPoints[compositionPoints.length - 1],
+        rectangles.get("Engine") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointInsideRectangleInterior(
+        compositionPoints[compositionPoints.length - 1],
+        rectangles.get("Engine") as any
+      )
+    ).toBe(false);
+
+    expect(
+      isPointNearRectangle(
+        noteConnectorPoints[0],
+        rectangles.get("note0") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointNearRectangle(
+        noteConnectorPoints[noteConnectorPoints.length - 1],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(true);
+    expect(
+      isPointInsideRectangleInterior(
+        noteConnectorPoints[noteConnectorPoints.length - 1],
+        rectangles.get("Vehicle") as any
+      )
+    ).toBe(false);
+  });
+
+  it("simplifies straight class relations to two points while keeping endpoints on the outline", async () => {
+    const definition = `classDiagram
+    classA <|-- classB
+    classC *-- classD
+    classE o-- classF
+    classG <-- classH`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    const rectangles = new Map(
+      result.elements
+        .filter((element: any) => element.type === "rectangle" && element.id)
+        .map((element: any) => [element.id, element])
+    );
+
+    const arrows = result.elements.filter(
+      (element: any) => element.type === "arrow"
+    ) as any[];
+
+    expect(arrows).toHaveLength(4);
+
+    arrows.forEach((arrow) => {
+      expect(arrow.points).toHaveLength(2);
+
+      const absolutePoints = getAbsoluteLinearPoints(arrow);
+      const startRectangle = rectangles.get(arrow.start?.id) as any;
+      const endRectangle = rectangles.get(arrow.end?.id) as any;
+
+      expect(startRectangle).toBeTruthy();
+      expect(endRectangle).toBeTruthy();
+
+      expect(
+        distanceToRectangleOutline(absolutePoints[0], startRectangle)
+      ).toBeLessThanOrEqual(8);
+      expect(
+        distanceToRectangleOutline(
+          absolutePoints[absolutePoints.length - 1],
+          endRectangle
+        )
+      ).toBeLessThanOrEqual(8);
+
+      expect(
+        isPointInsideRectangleInterior(absolutePoints[0], startRectangle)
+      ).toBe(false);
+      expect(
+        isPointInsideRectangleInterior(
+          absolutePoints[absolutePoints.length - 1],
+          endRectangle
+        )
+      ).toBe(false);
+    });
+  });
+
+  it("uses straight connectors for non-self class relations in LR layouts", async () => {
+    const definition = `classDiagram
+    direction LR
+    class Student {
+      -idCard : IdCard
+    }
+    class IdCard{
+      -id : int
+      -name : string
+    }
+    class Bike{
+      -id : int
+      -name : string
+    }
+    Student "1" --o "1" IdCard : carries
+    Student "1" --o "1" Bike : rides`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    const arrows = result.elements.filter(
+      (element: any) =>
+        element.type === "arrow" &&
+        ["carries", "rides"].includes(element.label?.text)
+    ) as any[];
+
+    expect(arrows).toHaveLength(2);
+    arrows.forEach((arrow) => {
+      expect(arrow.points).toHaveLength(2);
+    });
+  });
+
+  it("merges self-referencing class relations into a single loop and emits multiplicities once per endpoint", async () => {
+    const definition = `classDiagram
+    class Snake {
+      +Integer length
+    }
+    Snake "1" -- "1" Snake : eats`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    const snake = result.elements.find(
+      (element: any) => element.type === "rectangle" && element.id === "Snake"
+    ) as any;
+    const loopArrow = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.label?.text === "eats" &&
+        element.start?.id === "Snake" &&
+        element.end?.id === "Snake"
+    ) as any;
+    const multiplicityTexts = result.elements.filter(
+      (element: any) => element.type === "text" && element.text === "1"
+    ) as any[];
+
+    expect(snake).toBeTruthy();
+    expect(loopArrow).toBeTruthy();
+    expect(multiplicityTexts).toHaveLength(2);
+    expect(loopArrow.points.length).toBeGreaterThan(4);
+    expect(hasConsecutiveDuplicatePoints(loopArrow.points)).toBe(false);
+    expect(
+      multiplicityTexts.every((element) => element.y > snake.y + snake.height)
+    ).toBe(true);
+
+    const loopPoints = getAbsoluteLinearPoints(loopArrow);
+    const xs = loopPoints.map(([x]) => x);
+    const ys = loopPoints.map(([, y]) => y);
+
+    expect(Math.min(...xs)).toBeLessThan(snake.x);
+    expect(Math.max(...xs)).toBeGreaterThan(snake.x + snake.width);
+    expect(Math.max(...ys)).toBeGreaterThan(snake.y + snake.height);
   });
 
   it("preserves styled class text colors from direct style declarations", async () => {

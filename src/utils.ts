@@ -87,6 +87,61 @@ export const dedupeConsecutivePoints = <T extends [number, number]>(
   return dedupedPoints;
 };
 
+export const getPathCoordinates = (path: SVGPathElement) => {
+  const dAttr = path.getAttribute("d");
+  if (!dAttr) {
+    return null;
+  }
+
+  const numericTokens = Array.from(
+    dAttr.matchAll(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi),
+    (match) => Number(match[0])
+  );
+
+  if (numericTokens.length < 4) {
+    return null;
+  }
+
+  return {
+    startX: numericTokens[0],
+    startY: numericTokens[1],
+    endX: numericTokens[numericTokens.length - 2],
+    endY: numericTokens[numericTokens.length - 1],
+  };
+};
+
+export const getDecodedEdgePoints = (
+  edgePath: SVGPathElement
+): Position[] => {
+  const encodedPoints = edgePath.getAttribute("data-points");
+  if (!encodedPoints) {
+    const coords = getPathCoordinates(edgePath);
+    return coords
+      ? [
+          { x: coords.startX, y: coords.startY },
+          { x: coords.endX, y: coords.endY },
+        ]
+      : [];
+  }
+
+  try {
+    const decoded = atob(encodedPoints);
+    const points = JSON.parse(decoded);
+    return Array.isArray(points)
+      ? points.filter(
+          (point): point is Position =>
+            point &&
+            typeof point.x === "number" &&
+            typeof point.y === "number" &&
+            Number.isFinite(point.x) &&
+            Number.isFinite(point.y)
+        )
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 // Extract edge position start, end, and points (reflectionPoints)
 interface EdgePositionData {
   startX: number;

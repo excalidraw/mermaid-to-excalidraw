@@ -65,7 +65,7 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
     setPoints(List~int~ points)
     getPoints() List~int~
   }
-  
+
   Square : -List~string~ messages
   Square : +setMessages(List~string~ messages)
   Square : +getMessages() List~string~
@@ -259,6 +259,36 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
   },
   {
     type: "class",
+    name: "Class with Routed Notes and Mixed Arrowheads",
+    definition: `classDiagram
+  class Vehicle {
+    +startEngine() void
+    +stopEngine() void
+  }
+
+  class Car
+  class Motorcycle
+  class Engine
+  class Driver {
+    +drive(Vehicle vehicle) void
+  }
+
+  Vehicle <|-- Car : Inheritance
+  Vehicle <|-- Motorcycle : Inheritance
+  Vehicle *-- Engine : Composition
+  Driver o-- Vehicle : Aggregation
+
+  note for Vehicle "Base class for all transport types"
+  note for Engine "Internal combustion or electric"
+
+  style Vehicle fill:#f9f,stroke:#333,stroke-width:2px
+  style Car fill:#bbf,stroke:#333,stroke-width:1px
+  style Motorcycle fill:#bbf,stroke:#333,stroke-width:1px
+  style Engine fill:#dfd,stroke:#333,stroke-width:1px
+  style Driver fill:#ffd,stroke:#333,stroke-width:1px`,
+  },
+  {
+    type: "class",
     name: "Classes with partial match",
     definition: `classDiagram
     Foobar <|-- Foo
@@ -312,5 +342,14 @@ export const CLASS_DIAGRAM_TESTCASES: TestCase[] = [
     style Profile fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
     style Post fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
     style Comment fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100`,
+  },
+  {
+    type: "class",
+    name: "self-refrencing Class",
+    definition: `classDiagram
+    class Snake {
+        +Integer length
+    }
+    Snake "1" -- "1" Snake : eats`,
   },
 ];

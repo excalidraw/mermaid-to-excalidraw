@@ -1,8 +1,10 @@
 import { nanoid } from "nanoid";
 
 import {
-  computeEdgePositions,
+  dedupeConsecutivePoints,
   entityCodesToText,
+  getDecodedEdgePoints,
+  getPathCoordinates,
   getTransformAttr,
 } from "../utils.js";
 import {
@@ -22,6 +24,7 @@ import {
   parseCSSDeclarations,
   resolveElementTextColor,
 } from "./cssUtils.js";
+import type { Position } from "../interfaces.js";
 
 const parseStyleStrings = (styles?: string[]) => {
   const styleObj: Record<string, string> = {};
@@ -130,6 +133,330 @@ const accumulateTranslation = (node: Element, stopAt?: Element | null) => {
   }
 
   return { tx, ty };
+};
+
+const ARROWHEAD_OFFSET_SHAPES = new Set([
+  "triangle_outline",
+  "diamond",
+  "diamond_outline",
+]);
+
+const simplifyRoutePoints = (
+  points: readonly Position[],
+  tolerance = 0.5
+): Position[] => {
+  if (points.length <= 2) {
+    return [...points];
+  }
+
+  const simplifiedPoints: Position[] = [points[0]];
+
+  for (let index = 1; index < points.length - 1; index++) {
+    const previousPoint = simplifiedPoints[simplifiedPoints.length - 1];
+    const currentPoint = points[index];
+    const nextPoint = points[index + 1];
+
+    const baseX = nextPoint.x - previousPoint.x;
+    const baseY = nextPoint.y - previousPoint.y;
+    const baseLength = Math.hypot(baseX, baseY);
+
+    if (!baseLength) {
+      continue;
+    }
+
+    const areaTwice = Math.abs(
+      baseX * (currentPoint.y - previousPoint.y) -
+        baseY * (currentPoint.x - previousPoint.x)
+    );
+    const distanceFromSegment = areaTwice / baseLength;
+    const projection =
+      ((currentPoint.x - previousPoint.x) * baseX +
+        (currentPoint.y - previousPoint.y) * baseY) /
+      (baseLength * baseLength);
+
+    if (
+      distanceFromSegment <= tolerance &&
+      projection >= -tolerance &&
+      projection <= 1 + tolerance
+    ) {
+      continue;
+    }
+
+    simplifiedPoints.push(currentPoint);
+  }
+
+  simplifiedPoints.push(points[points.length - 1]);
+  return simplifiedPoints;
+};
+
+const getEdgeRoutePoints = (edgePath: SVGPathElement): Position[] => {
+  const routePoints = dedupeConsecutivePoints(
+    getDecodedEdgePoints(edgePath).map(
+      (point) => [point.x, point.y] as [number, number]
+    )
+  ).map(([x, y]) => ({ x, y }));
+
+  const renderedPathCoordinates = getPathCoordinates(edgePath);
+  if (renderedPathCoordinates && routePoints.length >= 2) {
+    routePoints[0] = {
+      x: renderedPathCoordinates.startX,
+      y: renderedPathCoordinates.startY,
+    };
+    routePoints[routePoints.length - 1] = {
+      x: renderedPathCoordinates.endX,
+      y: renderedPathCoordinates.endY,
+    };
+  }
+
+  return simplifyRoutePoints(routePoints);
+};
+
+const movePointAwayFromAdjacent = (
+  point: Position,
+  adjacentPoint: Position,
+  distance: number
+): Position => {
+  const dx = point.x - adjacentPoint.x;
+  const dy = point.y - adjacentPoint.y;
+  const magnitude = Math.hypot(dx, dy);
+
+  if (!magnitude) {
+    return point;
+  }
+
+  return {
+    x: point.x + (dx / magnitude) * distance,
+    y: point.y + (dy / magnitude) * distance,
+  };
+};
+
+const setArrowRoutePoints = (arrow: Arrow, points: readonly Position[]) => {
+  const dedupedPoints = dedupeConsecutivePoints(
+    points.map((point) => [point.x, point.y] as [number, number])
+  ).map(([x, y]) => ({ x, y }));
+
+  if (dedupedPoints.length < 2) {
+    throw new Error("Arrow route must contain at least two points");
+  }
+
+  const startPoint = dedupedPoints[0];
+  const endPoint = dedupedPoints[dedupedPoints.length - 1];
+
+  arrow.startX = startPoint.x;
+  arrow.startY = startPoint.y;
+  arrow.endX = endPoint.x;
+  arrow.endY = endPoint.y;
+  arrow.points = dedupedPoints.map((point) => [
+    point.x - startPoint.x,
+    point.y - startPoint.y,
+  ]);
+};
+
+const adjustArrowPosition = (arrow: Arrow) => {
+  const routePoints = arrow.points
+    ?.map(([x, y]) => ({ x: arrow.startX + x, y: arrow.startY + y }))
+    .filter(
+      (point): point is Position =>
+        Number.isFinite(point.x) && Number.isFinite(point.y)
+    );
+
+  if (!routePoints || routePoints.length < 2) {
+    return arrow;
+  }
+
+  const updatedPoints = [...routePoints];
+  const shouldUpdateStartArrowhead =
+    !!arrow.startArrowhead && ARROWHEAD_OFFSET_SHAPES.has(arrow.startArrowhead);
+  const shouldUpdateEndArrowhead =
+    !!arrow.endArrowhead && ARROWHEAD_OFFSET_SHAPES.has(arrow.endArrowhead);
+
+  if (!shouldUpdateStartArrowhead && !shouldUpdateEndArrowhead) {
+    return arrow;
+  }
+
+  if (shouldUpdateStartArrowhead) {
+    updatedPoints[0] = movePointAwayFromAdjacent(
+      updatedPoints[0],
+      updatedPoints[1],
+      MERMAID_ARROW_HEAD_OFFSET
+    );
+  }
+
+  if (shouldUpdateEndArrowhead) {
+    const lastIndex = updatedPoints.length - 1;
+    updatedPoints[lastIndex] = movePointAwayFromAdjacent(
+      updatedPoints[lastIndex],
+      updatedPoints[lastIndex - 1],
+      MERMAID_ARROW_HEAD_OFFSET
+    );
+  }
+
+  setArrowRoutePoints(arrow, updatedPoints);
+  return arrow;
+};
+
+const applyPathStylingToArrow = (edgePath: SVGPathElement, arrow: Arrow) => {
+  const strokeColor = cleanCSSValue(
+    edgePath.getAttribute("stroke") || getComputedStyle(edgePath).stroke || ""
+  );
+  const strokeWidth = parseFloat(
+    edgePath.getAttribute("stroke-width") ||
+      getComputedStyle(edgePath).strokeWidth ||
+      "1"
+  );
+
+  if (isValidCSSColor(strokeColor) && strokeColor !== "none") {
+    arrow.strokeColor = strokeColor;
+  }
+  if (Number.isFinite(strokeWidth) && strokeWidth > 0) {
+    arrow.strokeWidth = strokeWidth;
+  }
+};
+
+const mergeEdgeRoutePoints = (edgePaths: readonly SVGPathElement[]) => {
+  const mergedPoints: Position[] = [];
+
+  edgePaths.forEach((edgePath) => {
+    getEdgeRoutePoints(edgePath).forEach((point) => {
+      const previousPoint = mergedPoints[mergedPoints.length - 1];
+      if (
+        previousPoint &&
+        previousPoint.x === point.x &&
+        previousPoint.y === point.y
+      ) {
+        return;
+      }
+
+      mergedPoints.push(point);
+    });
+  });
+
+  return simplifyRoutePoints(mergedPoints);
+};
+
+const createArrowFromRoutePoints = (
+  routePoints: readonly Position[],
+  primaryEdgePath: SVGPathElement | undefined,
+  opts: NonNullable<Parameters<typeof createArrowSkeletion>[4]>
+) => {
+  if (routePoints.length < 2) {
+    throw new Error(
+      `Class diagram edge ${primaryEdgePath?.id || "<unknown>"} is missing usable path points`
+    );
+  }
+
+  const startPoint = routePoints[0];
+  const endPoint = routePoints[routePoints.length - 1];
+  const arrow = createArrowSkeletion(
+    startPoint.x,
+    startPoint.y,
+    endPoint.x,
+    endPoint.y,
+    {
+      id:
+        primaryEdgePath?.getAttribute("data-id") ||
+        primaryEdgePath?.id ||
+        undefined,
+      ...opts,
+      points: routePoints.map((point) => [
+        point.x - startPoint.x,
+        point.y - startPoint.y,
+      ]),
+    }
+  );
+
+  if (primaryEdgePath) {
+    applyPathStylingToArrow(primaryEdgePath, arrow);
+  }
+  return adjustArrowPosition(arrow);
+};
+
+const createPreservedRouteArrowFromEdgePaths = (
+  edgePaths: readonly SVGPathElement[],
+  opts: NonNullable<Parameters<typeof createArrowSkeletion>[4]>
+) =>
+  createArrowFromRoutePoints(mergeEdgeRoutePoints(edgePaths), edgePaths[0], opts);
+
+// Standard class relations read better in Excalidraw as direct connections.
+// Keep this separate from preserved-route arrows so we can remove/adjust this
+// policy later without touching self-loops or note connectors.
+const createStraightClassRelationArrowFromEdgePath = (
+  edgePath: SVGPathElement,
+  opts: NonNullable<Parameters<typeof createArrowSkeletion>[4]>
+) => {
+  const routePoints = getEdgeRoutePoints(edgePath);
+  return createArrowFromRoutePoints(
+    [routePoints[0], routePoints[routePoints.length - 1]],
+    edgePath,
+    opts
+  );
+};
+
+const createArrowFromEdgePath = (
+  edgePath: SVGPathElement,
+  opts: NonNullable<Parameters<typeof createArrowSkeletion>[4]>
+) => createPreservedRouteArrowFromEdgePaths([edgePath], opts);
+
+const getSelfRelationEdgePaths = (
+  classId: string,
+  containerEl: Element
+): SVGPathElement[] => {
+  const cyclicPathIds = [
+    `${classId}-cyclic-special-1`,
+    `${classId}-cyclic-special-mid`,
+    `${classId}-cyclic-special-2`,
+  ];
+
+  return cyclicPathIds
+    .map((pathId) =>
+      containerEl.querySelector<SVGPathElement>(
+        `path[id="${pathId}"][data-edge="true"]`
+      )
+    )
+    .filter((path): path is SVGPathElement => path !== null);
+};
+
+const getArrowRoutePoints = (arrow: Arrow): Position[] => {
+  return (
+    arrow.points
+      ?.map(([x, y]) => ({ x: arrow.startX + x, y: arrow.startY + y }))
+      .filter(
+        (point): point is Position =>
+          Number.isFinite(point.x) && Number.isFinite(point.y)
+      ) || []
+  );
+};
+
+const getSelfRelationTitlePosition = (
+  arrow: Arrow,
+  side: "start" | "end"
+): Position | null => {
+  const routePoints = getArrowRoutePoints(arrow);
+  if (routePoints.length < 2) {
+    return null;
+  }
+
+  const isStart = side === "start";
+  const endpoint = isStart ? routePoints[0] : routePoints[routePoints.length - 1];
+  const adjacentPoint = isStart
+    ? routePoints[1]
+    : routePoints[routePoints.length - 2];
+
+  const horizontalDirection =
+    adjacentPoint.x === endpoint.x
+      ? isStart
+        ? -1
+        : 1
+      : Math.sign(adjacentPoint.x - endpoint.x);
+  const verticalDirection =
+    adjacentPoint.y === endpoint.y
+      ? 1
+      : Math.sign(adjacentPoint.y - endpoint.y);
+
+  return {
+    x: endpoint.x + horizontalDirection * 20,
+    y: endpoint.y + (verticalDirection >= 0 ? 12 : -28),
+  };
 };
 
 type ClassTextSection = "header" | "members" | "methods" | "other";
@@ -490,65 +817,28 @@ const parseClasses = (
   return { nodes, lines, text };
 };
 
-// update arrow position by certain offset for triangle and diamond arrow head types
-// as mermaid calculates the position until the start of arrowhead
-// for reference - https://github.com/mermaid-js/mermaid/issues/5417
-const adjustArrowPosition = (direction: string, arrow: Arrow) => {
-  // The arrowhead shapes where we need to update the position by a 16px offset
-  const arrowHeadShapes = ["triangle_outline", "diamond", "diamond_outline"];
-
-  const shouldUpdateStartArrowhead =
-    arrow.startArrowhead && arrowHeadShapes.includes(arrow.startArrowhead);
-
-  const shouldUpdateEndArrowhead =
-    arrow.endArrowhead && arrowHeadShapes.includes(arrow.endArrowhead);
-
-  if (!shouldUpdateEndArrowhead && !shouldUpdateStartArrowhead) {
-    return arrow;
-  }
-
-  if (shouldUpdateStartArrowhead) {
-    if (direction === "LR") {
-      arrow.startX -= MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "RL") {
-      arrow.startX += MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "TB") {
-      arrow.startY -= MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "BT") {
-      arrow.startY += MERMAID_ARROW_HEAD_OFFSET;
-    }
-  }
-
-  if (shouldUpdateEndArrowhead) {
-    if (direction === "LR") {
-      arrow.endX += MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "RL") {
-      arrow.endX -= MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "TB") {
-      arrow.endY += MERMAID_ARROW_HEAD_OFFSET;
-    } else if (direction === "BT") {
-      arrow.endY -= MERMAID_ARROW_HEAD_OFFSET;
-    }
-  }
-  return arrow;
-};
-
 const parseRelations = (
   relations: ClassRelation[],
   classNodes: Container[],
   containerEl: Element,
   direction: "LR" | "RL" | "TB" | "BT"
 ) => {
-  const edges = containerEl.querySelector(".edgePaths")?.children;
+  const relationEdges = Array.from(
+    containerEl.querySelectorAll<SVGPathElement>(
+      '.edgePaths path[data-edge="true"]:not([id^="edgeNote"]):not([id*="-cyclic-special-"])'
+    )
+  );
 
   // If there are no relations, return empty arrays
-  if (!edges || relations.length === 0) {
+  if (relations.length === 0) {
     return { arrows: [], text: [] };
   }
   const arrows: Arrow[] = [];
   const text: Text[] = [];
 
-  relations.forEach((relationNode, index) => {
+  let relationEdgeIndex = 0;
+
+  relations.forEach((relationNode) => {
     const { id1, id2, relation } = relationNode;
     const node1 = classNodes.find((node) => node.id === id1);
     const node2 = classNodes.find((node) => node.id === id2);
@@ -564,29 +854,48 @@ const parseRelations = (
     const startArrowhead = getArrowhead(relation.type1);
     const endArrowhead = getArrowhead(relation.type2);
 
-    const edgePositionData = computeEdgePositions(
-      edges[index] as SVGPathElement
-    );
-    const arrowSkeletion = createArrowSkeletion(
-      edgePositionData.startX,
-      edgePositionData.startY,
-      edgePositionData.endX,
-      edgePositionData.endY,
-      {
+    let arrow: Arrow;
+
+    if (id1 === id2) {
+      const edgePaths = getSelfRelationEdgePaths(id1, containerEl);
+      if (!edgePaths.length) {
+        throw new Error(
+          `parseRelations: Cannot find rendered SVG edge for relation ${id1} -> ${id2}`
+        );
+      }
+
+      arrow = createPreservedRouteArrowFromEdgePaths(edgePaths, {
         strokeStyle,
         startArrowhead,
         endArrowhead,
         label: relationNode.title ? { text: relationNode.title } : undefined,
         start: { type: "rectangle", id: node1.id },
         end: { type: "rectangle", id: node2.id },
+      });
+    } else {
+      const edgePath = relationEdges[relationEdgeIndex];
+      if (!edgePath) {
+        throw new Error(
+          `parseRelations: Cannot find rendered SVG edge for relation ${id1} -> ${id2}`
+        );
       }
-    );
 
-    const arrow = adjustArrowPosition(direction, arrowSkeletion);
+      relationEdgeIndex += 1;
+      arrow = createStraightClassRelationArrowFromEdgePath(edgePath, {
+        strokeStyle,
+        startArrowhead,
+        endArrowhead,
+        label: relationNode.title ? { text: relationNode.title } : undefined,
+        start: { type: "rectangle", id: node1.id },
+        end: { type: "rectangle", id: node2.id },
+      });
+    }
+
     arrows.push(arrow);
 
     // Add cardianlities and Multiplicities
     const { relationTitle1, relationTitle2 } = relationNode;
+    const isSelfRelation = id1 === id2;
     const offsetX = 20;
     const offsetY = 15;
     const directionOffset = 15;
@@ -594,39 +903,50 @@ const parseRelations = (
     let y;
 
     if (relationTitle1 && relationTitle1 !== "none") {
-      switch (direction) {
-        case "TB":
-          x = arrow.startX - offsetX;
-          if (arrow.endX < arrow.startX) {
-            x -= directionOffset;
-          }
+      if (isSelfRelation) {
+        const position = getSelfRelationTitlePosition(arrow, "start");
+        if (position) {
+          x = position.x;
+          y = position.y;
+        }
+      } else {
+        switch (direction) {
+          case "TB":
+            x = arrow.startX - offsetX;
+            if (arrow.endX < arrow.startX) {
+              x -= directionOffset;
+            }
+            y = arrow.startY + offsetY;
+            break;
+          case "BT":
+            x = arrow.startX + offsetX;
+            if (arrow.endX > arrow.startX) {
+              x += directionOffset;
+            }
+            y = arrow.startY - offsetY;
+            break;
+          case "LR":
+            x = arrow.startX + offsetX;
+            y = arrow.startY + offsetY;
+            if (arrow.endY > arrow.startY) {
+              y += directionOffset;
+            }
+            break;
+          case "RL":
+            x = arrow.startX - offsetX;
+            y = arrow.startY - offsetY;
+            if (arrow.startY > arrow.endY) {
+              y -= directionOffset;
+            }
+            break;
+          default:
+            x = arrow.startX - offsetX;
           y = arrow.startY + offsetY;
-          break;
-        case "BT":
-          x = arrow.startX + offsetX;
-          if (arrow.endX > arrow.startX) {
-            x += directionOffset;
-          }
-          y = arrow.startY - offsetY;
-          break;
-        case "LR":
-          x = arrow.startX + offsetX;
-          y = arrow.startY + offsetY;
-          if (arrow.endY > arrow.startY) {
-            y += directionOffset;
-          }
-          break;
-        case "RL":
-          x = arrow.startX - offsetX;
-          y = arrow.startY - offsetY;
-          if (arrow.startY > arrow.endY) {
-            y -= directionOffset;
-          }
-          break;
-        default:
-          x = arrow.startX - offsetX;
-          y = arrow.startY + offsetY;
+        }
       }
+
+      x ??= arrow.startX - offsetX;
+      y ??= arrow.startY + offsetY;
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
         fontSize: 16,
@@ -635,39 +955,50 @@ const parseRelations = (
       text.push(relationTitleElement);
     }
     if (relationTitle2 && relationTitle2 !== "none") {
-      switch (direction) {
-        case "TB":
-          x = arrow.endX + offsetX;
-          if (arrow.endX < arrow.startX) {
-            x += directionOffset;
-          }
+      if (isSelfRelation) {
+        const position = getSelfRelationTitlePosition(arrow, "end");
+        if (position) {
+          x = position.x;
+          y = position.y;
+        }
+      } else {
+        switch (direction) {
+          case "TB":
+            x = arrow.endX + offsetX;
+            if (arrow.endX < arrow.startX) {
+              x += directionOffset;
+            }
+            y = arrow.endY - offsetY;
+            break;
+          case "BT":
+            x = arrow.endX - offsetX;
+            if (arrow.endX > arrow.startX) {
+              x -= directionOffset;
+            }
+            y = arrow.endY + offsetY;
+            break;
+          case "LR":
+            x = arrow.endX - offsetX;
+            y = arrow.endY - offsetY;
+            if (arrow.endY > arrow.startY) {
+              y -= directionOffset;
+            }
+            break;
+          case "RL":
+            x = arrow.endX + offsetX;
+            y = arrow.endY + offsetY;
+            if (arrow.startY > arrow.endY) {
+              y += directionOffset;
+            }
+            break;
+          default:
+            x = arrow.endX + offsetX;
           y = arrow.endY - offsetY;
-          break;
-        case "BT":
-          x = arrow.endX - offsetX;
-          if (arrow.endX > arrow.startX) {
-            x -= directionOffset;
-          }
-          y = arrow.endY + offsetY;
-          break;
-        case "LR":
-          x = arrow.endX - offsetX;
-          y = arrow.endY - offsetY;
-          if (arrow.endY > arrow.startY) {
-            y -= directionOffset;
-          }
-          break;
-        case "RL":
-          x = arrow.endX + offsetX;
-          y = arrow.endY + offsetY;
-          if (arrow.startY > arrow.endY) {
-            y += directionOffset;
-          }
-          break;
-        default:
-          x = arrow.endX + offsetX;
-          y = arrow.endY - offsetY;
+        }
       }
+
+      x ??= arrow.endX + offsetX;
+      y ??= arrow.endY + offsetY;
 
       const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
         fontSize: 16,
@@ -686,7 +1017,7 @@ const parseNotes = (
 ) => {
   const noteContainers: Container[] = [];
   const connectors: Arrow[] = [];
-  notes.forEach((note) => {
+  notes.forEach((note, index) => {
     const { id, text, class: classId } = note;
     const node = containerEl.querySelector<SVGSVGElement>(`#${id}`);
     if (!node) {
@@ -709,6 +1040,24 @@ const parseNotes = (
       if (!classNode) {
         throw new Error(`class node with id ${classId} not found!`);
       }
+
+      const edgePath = containerEl.querySelector<SVGPathElement>(
+        `path[id="edgeNote${index + 1}"][data-edge="true"]`
+      );
+
+      if (edgePath) {
+        connectors.push(
+          createArrowFromEdgePath(edgePath, {
+            strokeStyle: "dotted",
+            startArrowhead: null,
+            endArrowhead: null,
+            start: { id: container.id, type: "rectangle" },
+            end: { id: classNode.id, type: "rectangle" },
+          })
+        );
+        return;
+      }
+
       const startX = container.x + (container.width || 0) / 2;
       const startY = container.y + (container.height || 0);
       const endX = startX;

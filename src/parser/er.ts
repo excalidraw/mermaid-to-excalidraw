@@ -10,7 +10,12 @@ import {
   createArrowSkeletion,
   createTextSkeleton,
 } from "../elementSkeleton.js";
-import { entityCodesToText, getTransformAttr } from "../utils.js";
+import {
+  entityCodesToText,
+  getDecodedEdgePoints,
+  getPathCoordinates,
+  getTransformAttr,
+} from "../utils.js";
 import {
   cleanCSSValue,
   isValidCSSColor,
@@ -152,29 +157,6 @@ const parseTextGroup = (
   };
 };
 
-const getPathCoordinates = (path: SVGPathElement) => {
-  const dAttr = path.getAttribute("d");
-  if (!dAttr) {
-    return null;
-  }
-
-  const numericTokens = Array.from(
-    dAttr.matchAll(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi),
-    (match) => Number(match[0])
-  );
-
-  if (numericTokens.length < 4) {
-    return null;
-  }
-
-  return {
-    startX: numericTokens[0],
-    startY: numericTokens[1],
-    endX: numericTokens[numericTokens.length - 2],
-    endY: numericTokens[numericTokens.length - 1],
-  };
-};
-
 const getDividerLine = (
   dividerNode: SVGPathElement | SVGLineElement,
   containerEl: Element,
@@ -264,38 +246,6 @@ const getStrokeStyle = (pattern?: string) => {
       return "dashed" as const;
     default:
       return "solid" as const;
-  }
-};
-
-const getDecodedEdgePoints = (
-  edgePath: SVGPathElement
-): Array<{ x: number; y: number }> => {
-  const encodedPoints = edgePath.getAttribute("data-points");
-  if (!encodedPoints) {
-    const coords = getPathCoordinates(edgePath);
-    return coords
-      ? [
-          { x: coords.startX, y: coords.startY },
-          { x: coords.endX, y: coords.endY },
-        ]
-      : [];
-  }
-
-  try {
-    const decoded = atob(encodedPoints);
-    const points = JSON.parse(decoded);
-    return Array.isArray(points)
-      ? points.filter(
-          (point): point is { x: number; y: number } =>
-            point &&
-            typeof point.x === "number" &&
-            typeof point.y === "number" &&
-            Number.isFinite(point.x) &&
-            Number.isFinite(point.y)
-        )
-      : [];
-  } catch {
-    return [];
   }
 };
 
