@@ -1,4 +1,4 @@
-import { TestCase } from "../SingleTestCase";
+import type { TestCase } from "../SingleTestCase";
 
 export const FLOWCHART_DIAGRAM_TESTCASES: TestCase[] = [
   {
@@ -374,7 +374,7 @@ style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 
     definition: `graph TD
     %% Node styles work fine
     classDef criticalNode fill:#ff5252,stroke:#b71c1c,color:#fff
-    
+
     subgraph SG_RED ["CRITICAL MODULE"]
         Node01["Important Service"]:::criticalNode
     end
@@ -499,7 +499,7 @@ C -->|Two| E[Result two]
     name: "Multiple Edges, Relations to a Single Entity",
     definition: `flowchart LR
     style Entity1 fill: gold, stroke:#333, stroke-width:4px
-    
+
     Entity1[Entity 1]
     Entity2[Entity 2 fa:fa-suitcase]
     Entity3[Entity 3 fa:fa-suitcase]
@@ -507,7 +507,7 @@ C -->|Two| E[Result two]
     Entity5[Entity 5]
     Entity6[Entity 6<br><sub>Entity6</sub>]
     Entity7[Entity 7]
-    
+
     Entity2 -..->|Relation1| Entity1
     Entity3 -..->|Relation2| Entity1
     Entity4 -..->|Relation3| Entity1
@@ -516,7 +516,7 @@ C -->|Two| E[Result two]
     Entity5 -..->|Relation6| Entity1
     Entity6 -..->|Relation7| Entity1
     Entity7 -..->|Relation8| Entity1
-    
+
     Entity8[Entity 8<br><sub>Entity8</sub>]
     Entity1[Entity 1]
     Entity9[Entity 9<br><sub>Entity9</sub>]
@@ -531,7 +531,7 @@ C -->|Two| E[Result two]
     Entity17[Entity 17 fa:fa-suitcase]
     Entity18[Entity 18 fa:fa-suitcase]
     Entity19[Entity 19 fa:fa-suitcase]
-    
+
     Entity1 -..->|Relation9| Entity8
     Entity1 -..->|Relation10| Entity9
     Entity1 -..->|Relation11| Entity10
@@ -552,7 +552,7 @@ C -->|Two| E[Result two]
   },
   {
     name: "When some edges aren't present in DOM",
-    definition: `flowchart TB   
+    definition: `flowchart TB
     subgraph conference
         frontend
         backend

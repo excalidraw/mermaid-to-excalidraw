@@ -29,3 +29,7 @@ yarn-error.log*
 
 .claude
 CLAUDE.md
+
+playwright-report
+test-results
+visual-tests/public

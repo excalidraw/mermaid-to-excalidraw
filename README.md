@@ -91,6 +91,12 @@ try {
 
 Try out [here](https://mermaid-to-excalidraw.vercel.app).
 
+## Development
+
+- `yarn test:visual` to run visual tests
+- `yarn test:visual:update` to update visual tests
+- `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
+
 ## API
 
 Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/api).

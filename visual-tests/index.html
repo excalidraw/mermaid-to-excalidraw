@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Test Harness</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #fff;
+        font-family: sans-serif;
+      }
+      /* Dev mode: fill viewport, no scroll (single case view) */
+      body:not(.pw):not(.showing-all) {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      #nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid #eee;
+        font-size: 13px;
+        flex: none;
+      }
+      #nav button {
+        padding: 4px 12px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+      }
+      #nav button:hover {
+        background: #f5f5f5;
+      }
+      #nav select {
+        padding: 4px;
+        font-size: 13px;
+        max-width: 400px;
+      }
+      body.pw #nav {
+        display: none;
+      }
+      body.pw .panel {
+        flex: 1 1 0 !important;
+      }
+      body.pw .panel svg {
+        width: 100%;
+      }
+      #container {
+        padding: 32px;
+      }
+      body:not(.pw) #container {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #container-panels {
+        display: flex;
+        align-items: stretch;
+        gap: 32px;
+      }
+      body:not(.pw) #container-panels {
+        flex: 1;
+        min-height: 0;
+      }
+      .panel {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      body:not(.pw) .panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      body:not(.pw) .panel > div:last-child {
+        flex: 1;
+        min-height: 0;
+      }
+      .panel h4 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #999;
+        margin-bottom: 8px;
+        flex: none;
+      }
+      .panel svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      body:not(.pw) .panel svg {
+        max-height: 100%;
+      }
+      .panel-toolbar {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      .panel-toolbar button {
+        padding: 2px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        background: #fff;
+      }
+      .panel-toolbar button:hover {
+        background: #f5f5f5;
+      }
+      body.pw .panel-toolbar {
+        display: none;
+      }
+      #case-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        padding: 0 0 12px;
+        width: 100%;
+      }
+      #error {
+        color: red;
+        padding: 32px;
+      }
+
+      /* Show-all grid */
+      #all-container {
+        display: none;
+        padding: 16px;
+      }
+      #all-container.active {
+        display: block;
+      }
+      #all-container .all-card {
+        margin-bottom: 24px;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 16px;
+      }
+      #all-container .all-card-title {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        text-decoration: none;
+        margin-bottom: 12px;
+        cursor: pointer;
+      }
+      #all-container .all-card-title:hover {
+        color: #000;
+      }
+      #all-container .all-card-body {
+        display: flex;
+        align-items: stretch;
+        gap: 24px;
+      }
+      #all-container .all-card-body .panel {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      #all-container .all-card-body .panel svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+      #all-container .all-card-error {
+        color: red;
+        font-size: 13px;
+        padding: 8px 0;
+      }
+
+      /* Overlap mode: stack excalidraw panel over mermaid panel */
+      #nav button.active {
+        background: #e0e0ff;
+        border-color: #99f;
+      }
+      body.overlap #container-panels {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      body.overlap #container-panels > .panel {
+        grid-row: 1;
+        grid-column: 1;
+      }
+      body.overlap #container-panels > .panel:last-child h4,
+      body.overlap #container-panels > .panel:last-child .panel-toolbar {
+        visibility: hidden;
+      }
+      body.overlap #excalidraw-output {
+        opacity: 0.5;
+      }
+      body.overlap #all-container .all-card-body {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      body.overlap #all-container .all-card-body > .panel {
+        grid-row: 1;
+        grid-column: 1;
+      }
+      body.overlap #all-container .all-card-body > .panel:last-child {
+        opacity: 0.5;
+      }
+
+      /* Dark mode */
+      html:has(body.dark:not(.pw)) {
+        filter: invert(93%) hue-rotate(180deg);
+      }
+    </style>
+  </head>
+  <body>
+    <nav id="nav">
+      <button id="prev">&larr; Prev</button>
+      <select id="picker"></select>
+      <button id="next">Next &rarr;</button>
+      <button id="show-all">Show All</button>
+      <button id="overlap-btn">Overlap (q)</button>
+      <button id="dark-btn">Dark</button>
+    </nav>
+    <div id="container">
+      <div id="case-label"></div>
+      <div id="container-panels">
+        <div class="panel">
+          <h4>Mermaid SVG</h4>
+          <div class="panel-toolbar">
+            <button id="copy-mermaid-svg">copy svg</button>
+          </div>
+          <div id="mermaid-output"></div>
+        </div>
+        <div class="panel">
+          <h4>Excalidraw SVG</h4>
+          <div class="panel-toolbar">
+            <button id="copy-excalidraw-svg">copy svg</button>
+            <button id="copy-mermaid-def">copy mermaid</button>
+          </div>
+          <div id="excalidraw-output"></div>
+        </div>
+      </div>
+    </div>
+    <div id="error"></div>
+    <div id="all-container"></div>
+    <script type="module" src="./main.ts"></script>
+    <script type="module">
+      // Wait for harness to be ready, then wire up nav
+      const wait = () =>
+        new Promise((r) => {
+          const check = () =>
+            window.__HARNESS_READY__ ? r() : setTimeout(check, 50);
+          check();
+        });
+      await wait();
+
+      const picker = document.getElementById("picker");
+      const cases = window.ALL_TESTCASES;
+
+      cases.forEach((tc, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `#${i} [${tc.type}] ${tc.name}`;
+        picker.appendChild(opt);
+      });
+
+      const isPw = new URLSearchParams(location.search).has("pw");
+      if (isPw) document.body.classList.add("pw");
+
+      let showingAll = false;
+      let overlapping = false;
+      const overlapBtn = document.getElementById("overlap-btn");
+
+      let darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const darkBtn = document.getElementById("dark-btn");
+
+      const updateUrl = ({ push = false } = {}) => {
+        if (isPw) return;
+        const params = new URLSearchParams();
+        params.set("case", picker.value);
+        if (showingAll) params.set("all", "");
+        if (overlapping) params.set("overlap", "");
+        if (darkMode) params.set("dark", "");
+        const url = `?${params.toString()}`;
+        if (push) {
+          history.pushState(null, "", url);
+        } else {
+          history.replaceState(null, "", url);
+        }
+      };
+
+      const syncOverlapState = () => {
+        document.body.classList.toggle("overlap", overlapping);
+        overlapBtn.classList.toggle("active", overlapping);
+      };
+      syncOverlapState();
+
+      const syncDarkState = () => {
+        document.body.classList.toggle("dark", darkMode);
+        darkBtn.textContent = darkMode ? "☀️ Light" : "🌙 Dark";
+      };
+      syncDarkState();
+
+      const go = (i, { push = false } = {}) => {
+        i = Math.max(0, Math.min(cases.length - 1, i));
+        picker.value = i;
+        updateUrl({ push });
+        window.renderTestCase(i);
+      };
+
+      picker.addEventListener("change", () => go(+picker.value));
+      document
+        .getElementById("prev")
+        .addEventListener("click", () => go(+picker.value - 1));
+      document
+        .getElementById("next")
+        .addEventListener("click", () => go(+picker.value + 1));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") go(+picker.value - 1);
+        if (e.key === "ArrowRight") go(+picker.value + 1);
+        if (e.key === "q") {
+          overlapping = !overlapping;
+          syncOverlapState();
+          updateUrl();
+        }
+        if (e.key === "D" && e.altKey && e.shiftKey) {
+          e.preventDefault();
+          darkMode = !darkMode;
+          syncDarkState();
+          updateUrl();
+        }
+      });
+
+      // Scroll up/down switches cases in single mode when page isn't scrollable.
+      // Accumulates scroll deltas so rapid scrolling skips multiple cases.
+      let pendingIndex = null;
+      let scrollTimer = null;
+      const SCROLL_STEP = 100; // pixels of deltaY per case step
+      let accumulatedDelta = 0;
+      document.addEventListener(
+        "wheel",
+        (e) => {
+          if (showingAll) return;
+          const isScrollable =
+            document.documentElement.scrollHeight > window.innerHeight;
+          if (isScrollable) return;
+          e.preventDefault();
+          accumulatedDelta += e.deltaY;
+          const steps = Math.trunc(accumulatedDelta / SCROLL_STEP);
+          if (steps !== 0) {
+            accumulatedDelta -= steps * SCROLL_STEP;
+            pendingIndex = (pendingIndex ?? +picker.value) + steps;
+            pendingIndex = Math.max(
+              0,
+              Math.min(cases.length - 1, pendingIndex),
+            );
+            picker.value = pendingIndex;
+            updateUrl();
+          }
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(() => {
+            if (pendingIndex != null) {
+              go(pendingIndex);
+              pendingIndex = null;
+            }
+            accumulatedDelta = 0;
+          }, 150);
+        },
+        { passive: false },
+      );
+
+      // Copy buttons
+      document
+        .getElementById("copy-mermaid-svg")
+        .addEventListener("click", () => {
+          const svg = document.querySelector("#mermaid-output svg");
+          if (svg) navigator.clipboard.writeText(svg.outerHTML);
+        });
+      document
+        .getElementById("copy-excalidraw-svg")
+        .addEventListener("click", () => {
+          const svg = document.querySelector("#excalidraw-output svg");
+          if (svg) navigator.clipboard.writeText(svg.outerHTML);
+        });
+      document
+        .getElementById("copy-mermaid-def")
+        .addEventListener("click", () => {
+          const tc = cases[+picker.value];
+          if (tc) navigator.clipboard.writeText(tc.definition);
+        });
+
+      const showAllBtn = document.getElementById("show-all");
+
+      const showSingle = (i) => {
+        showingAll = false;
+        document.body.classList.remove("showing-all");
+        showAllBtn.textContent = "Show All";
+        window.hideAllView();
+        go(i, { push: true });
+      };
+      window.__showSingle__ = showSingle;
+
+      const enterShowAll = ({ push = false } = {}) => {
+        showingAll = true;
+        document.body.classList.add("showing-all");
+        showAllBtn.textContent = "Show Single";
+        updateUrl({ push });
+        window.renderAllTestCases();
+      };
+
+      showAllBtn.addEventListener("click", () => {
+        if (showingAll) {
+          showSingle(+picker.value);
+        } else {
+          enterShowAll({ push: true });
+        }
+      });
+
+      overlapBtn.addEventListener("click", () => {
+        overlapping = !overlapping;
+        syncOverlapState();
+        updateUrl();
+      });
+
+      darkBtn.addEventListener("click", () => {
+        darkMode = !darkMode;
+        syncDarkState();
+        updateUrl();
+      });
+
+      // Restore full UI state from current URL params.
+      const restoreFromUrl = () => {
+        const p = new URLSearchParams(location.search);
+        const wantAll = p.has("all");
+        const wantOverlap = p.has("overlap");
+        const wantDark = p.has("dark");
+        const wantCase = +(p.get("case") ?? 0);
+
+        overlapping = wantOverlap;
+        syncOverlapState();
+        darkMode = wantDark;
+        syncDarkState();
+
+        if (wantAll && !showingAll) {
+          enterShowAll();
+        } else if (!wantAll && showingAll) {
+          showingAll = false;
+          document.body.classList.remove("showing-all");
+          showAllBtn.textContent = "Show All";
+          window.hideAllView();
+        }
+
+        if (!wantAll) {
+          picker.value = wantCase;
+          window.renderTestCase(wantCase);
+        }
+      };
+
+      window.addEventListener("popstate", restoreFromUrl);
+
+      // Load initial state from URL params.
+      // In pw mode, only render if ?case= is explicitly set (for debugging);
+      // otherwise skip to avoid redundant renders across parallel workers.
+      if (isPw) {
+        const initialParams = new URLSearchParams(location.search);
+        if (initialParams.has("case")) {
+          go(+(initialParams.get("case") ?? 0));
+        }
+      } else {
+        restoreFromUrl();
+      }
+    </script>
+  </body>
+</html>

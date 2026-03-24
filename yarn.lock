@@ -1119,41 +1119,41 @@
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.42.0.tgz#484a1d638de2911e6f5a30c12f49c7e4a3270fb6"
   integrity sha512-6SWlXpWU5AvId8Ac7zjzmIOqMOba/JWY8XZ4A7q7Gn1Vlfg/SFFIlrtHXt9nPn4op9ZPAkl91Jao+QQv3r/ukw==
 
-"@excalidraw/common@0.18.0-816c81c":
-  version "0.18.0-816c81c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/common/-/common-0.18.0-816c81c.tgz#8b4ea61f6a866b1c04c4ee35994b3ca2b68b0739"
-  integrity sha512-trDWhlYruUquUE15qebwjPqn2ov4A+gnMGUa/i4zaimXJlWLBSgwWuSn5PS9baE+xD/Qmka/9g9A4yan/AO9Qw==
+"@excalidraw/common@0.18.0-a9ca16e":
+  version "0.18.0-a9ca16e"
+  resolved "https://registry.yarnpkg.com/@excalidraw/common/-/common-0.18.0-a9ca16e.tgz#5f25de8f43639e60f1cfbd36b0a92e185c7d32fc"
+  integrity sha512-8CcTHyDW7hmZvORh5xmHxxfjDdlpR86DJNrMM+zRsP3SEYouY5xWPGQXGQKFs7KVNoTfV/GxMI5NEZ3Mpje11w==
   dependencies:
     tinycolor2 "1.6.0"
 
-"@excalidraw/element@0.18.0-816c81c":
-  version "0.18.0-816c81c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/element/-/element-0.18.0-816c81c.tgz#fa4038a97877be9d7524f813aba2760f31ec355f"
-  integrity sha512-krvXRa5lvpTLWeL0Hrh6a0ptb0drHTveq8mPgElDfF23jJ98AID4//xxq3A8pMNh5+efn68XkTEAPwX28FkJYg==
+"@excalidraw/element@0.18.0-a9ca16e":
+  version "0.18.0-a9ca16e"
+  resolved "https://registry.yarnpkg.com/@excalidraw/element/-/element-0.18.0-a9ca16e.tgz#2060c9b123898a37c8450f99e6b66600ab8026b2"
+  integrity sha512-wHDIf3Uw4sen5OZks1HVARZhMdZRlY280L7jojJm2MhLNVgPdfM9yxXqbQkpyfq/x8WRjnzZZlvxvnJ/C060mQ==
   dependencies:
-    "@excalidraw/common" "0.18.0-816c81c"
-    "@excalidraw/math" "0.18.0-816c81c"
+    "@excalidraw/common" "0.18.0-a9ca16e"
+    "@excalidraw/math" "0.18.0-a9ca16e"
 
 "@excalidraw/eslint-config@1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@excalidraw/eslint-config/-/eslint-config-1.0.3.tgz#2122ef7413ae77874ae9848ce0f1c6b3f0d8bbbd"
   integrity sha512-GemHNF5Z6ga0BWBSX7GJaNBUchLu6RwTcAB84eX1MeckRNhNasAsPCdelDlFalz27iS4RuYEQh0bPE8SRxJgbQ==
 
-"@excalidraw/excalidraw@^0.18.0-816c81c":
-  version "0.18.0-816c81c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.18.0-816c81c.tgz#dc45daad65b2288e4e2be3583055a836dc098749"
-  integrity sha512-Evl1W5NOZ9yo6JrsUQWax02oBlNT2XhI5TIDFOXDltmWNu1kYAVKdRyYFB1gLc132mEPUP3AijLFaD5PCRtDzg==
+"@excalidraw/excalidraw@^0.18.0-a9ca16e":
+  version "0.18.0-a9ca16e"
+  resolved "https://registry.yarnpkg.com/@excalidraw/excalidraw/-/excalidraw-0.18.0-a9ca16e.tgz#280e1842a088ab6f354f6a1100e30a1ba0d67ced"
+  integrity sha512-hWQiIUywFGxjxpXaNvW0xjmluZYOasawRbnO9yjkxJwa8bQqZ7cVM7ck7JmH7z6qNs+vaZf80ggmngPbP3UroA==
   dependencies:
     "@braintree/sanitize-url" "6.0.2"
     "@codemirror/commands" "^6.0.0"
     "@codemirror/language" "^6.0.0"
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.0.0"
-    "@excalidraw/common" "0.18.0-816c81c"
-    "@excalidraw/element" "0.18.0-816c81c"
+    "@excalidraw/common" "0.18.0-a9ca16e"
+    "@excalidraw/element" "0.18.0-a9ca16e"
     "@excalidraw/laser-pointer" "1.3.1"
-    "@excalidraw/math" "0.18.0-816c81c"
-    "@excalidraw/mermaid-to-excalidraw" "2.1.0"
+    "@excalidraw/math" "0.18.0-a9ca16e"
+    "@excalidraw/mermaid-to-excalidraw" "2.1.1"
     "@excalidraw/random-username" "1.1.0"
     "@lezer/highlight" "^1.0.0"
     browser-fs-access "0.38.0"
@@ -1192,17 +1192,17 @@
   resolved "https://registry.yarnpkg.com/@excalidraw/markdown-to-text/-/markdown-to-text-0.1.2.tgz#1703705e7da608cf478f17bfe96fb295f55a23eb"
   integrity sha512-1nDXBNAojfi3oSFwJswKREkFm5wrSjqay81QlyRv2pkITG/XYB5v+oChENVBQLcxQwX4IUATWvXM5BcaNhPiIg==
 
-"@excalidraw/math@0.18.0-816c81c":
-  version "0.18.0-816c81c"
-  resolved "https://registry.yarnpkg.com/@excalidraw/math/-/math-0.18.0-816c81c.tgz#b6233894ef02c40250b2828bdcdcee188d448fa7"
-  integrity sha512-MKZrDCTaIOoneVoV7MrPkiSWLLZW0GltoOYCmQNx9LMpJiFidaCKE3WFMcz6x2l8E0Ytz0NMJJuc9+WZg+HcPg==
+"@excalidraw/math@0.18.0-a9ca16e":
+  version "0.18.0-a9ca16e"
+  resolved "https://registry.yarnpkg.com/@excalidraw/math/-/math-0.18.0-a9ca16e.tgz#5fb25ef35a630f79cd2493dbff3f0ddb871c491b"
+  integrity sha512-lyPAnQl6N9FvCESSqtQp+KukNUUJJDsmeCoPYfRUazfZc8dtuAYbEuhxuN3s2qiCaLL97K3nJBi2CaLEfrIiyw==
   dependencies:
-    "@excalidraw/common" "0.18.0-816c81c"
+    "@excalidraw/common" "0.18.0-a9ca16e"
 
-"@excalidraw/mermaid-to-excalidraw@2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@excalidraw/mermaid-to-excalidraw/-/mermaid-to-excalidraw-2.1.0.tgz#a5b9cf87c3185558cda7f9687d87b9937f452358"
-  integrity sha512-RMd+c2b7WzzUjhERMpKwp8PhF2/XlHDjr/zK+Gxfp8K9sVlafPYJ5OEa/GkN6edi2rBUXRfW+41WdO6L56b6Kw==
+"@excalidraw/mermaid-to-excalidraw@2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@excalidraw/mermaid-to-excalidraw/-/mermaid-to-excalidraw-2.1.1.tgz#659c934a607dd2cf57f2a69282588ee2b0722959"
+  integrity sha512-jU+frqcxazsY+t5yOBf2mgrQy+WUrbrzA36if3SQB/Vwaf2qOJjnWxucNafgZZk/3+9xGmRotUeOviSOJG+wYA==
   dependencies:
     "@excalidraw/markdown-to-text" "0.1.2"
     "@mermaid-js/parser" "^0.6.3"
@@ -1428,6 +1428,13 @@
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
+
+"@playwright/test@^1.58.2":
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.58.2.tgz#b0ad585d2e950d690ef52424967a42f40c6d2cbd"
+  integrity sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==
+  dependencies:
+    playwright "1.58.2"
 
 "@radix-ui/number@1.1.1":
   version "1.1.1"
@@ -3900,7 +3907,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
 
-fsevents@~2.3.2:
+fsevents@2.3.2, fsevents@~2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
@@ -5085,6 +5092,20 @@ pkg-types@^2.3.0:
     confbox "^0.2.2"
     exsolve "^1.0.7"
     pathe "^2.0.3"
+
+playwright-core@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.58.2.tgz#ac5f5b4b10d29bcf934415f0b8d133b34b0dcb13"
+  integrity sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==
+
+playwright@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.58.2.tgz#afe547164539b0bcfcb79957394a7a3fa8683cfd"
+  integrity sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==
+  dependencies:
+    playwright-core "1.58.2"
+  optionalDependencies:
+    fsevents "2.3.2"
 
 png-chunk-text@1.0.0:
   version "1.0.0"

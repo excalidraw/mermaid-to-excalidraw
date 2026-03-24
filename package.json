@@ -17,7 +17,10 @@
     "preview": "yarn run build:playground && vite preview --outDir ./public",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:dev": "vite --config visual-tests/vite.config.ts"
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
@@ -28,7 +31,8 @@
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
-    "@excalidraw/excalidraw": "^0.18.0-816c81c",
+    "@excalidraw/excalidraw": "^0.18.0-a9ca16e",
+    "@playwright/test": "^1.58.2",
     "@types/mermaid": "^9.2.0",
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.4",

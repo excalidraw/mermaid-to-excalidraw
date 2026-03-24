@@ -1,4 +1,4 @@
-import { TestCase } from "../SingleTestCase";
+import type { TestCase } from "../SingleTestCase";
 
 export const SEQUENCE_DIAGRAM_TESTCASES: TestCase[] = [
   {
