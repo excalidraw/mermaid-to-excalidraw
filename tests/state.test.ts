@@ -1,5 +1,6 @@
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
 import { parseMermaid } from "../src/parseMermaid.js";
+import type { State } from "../src/parser/state.js";
 
 type BBox = {
   x: number;
@@ -166,6 +167,19 @@ describe("state diagrams", () => {
     SVGElement.prototype.getBoundingClientRect;
   const originalGetComputedTextLength =
     SVGElement.prototype.getComputedTextLength;
+  const originalGetCanvasContext = HTMLCanvasElement.prototype.getContext;
+
+  const browserMeasuredWidthPerFontSize = new Map<string, number>([
+    ["The state with a note", 201.0959014892578 / 18],
+    [
+      "The state with a really long note that should wrap notes",
+      508.2657165527344 / 18,
+    ],
+    ["State2", 63.73797607421875 / 18],
+    ["State3", 62.08198547363281 / 18],
+    ["State4", 61.66798400878906 / 18],
+    ["This is the note to the left.", 255.00584411621094 / 18],
+  ]);
 
   beforeAll(() => {
     Object.defineProperty(SVGElement.prototype, "getBBox", {
@@ -196,6 +210,28 @@ describe("state diagrams", () => {
         return Math.max((this.textContent ?? "").length * 8, 1);
       },
     });
+
+    Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+      configurable: true,
+      value: function getContext(contextId: string) {
+        if (contextId !== "2d") {
+          return null;
+        }
+
+        return {
+          font: "",
+          measureText(text: string) {
+            const fontSize = Number.parseFloat(this.font) || 0;
+            const widthPerFontSize =
+              browserMeasuredWidthPerFontSize.get(text) ?? text.length * 0.6;
+
+            return {
+              width: widthPerFontSize * fontSize,
+            };
+          },
+        } as Pick<CanvasRenderingContext2D, "font" | "measureText">;
+      },
+    });
   });
 
   afterAll(() => {
@@ -212,6 +248,11 @@ describe("state diagrams", () => {
     Object.defineProperty(SVGElement.prototype, "getComputedTextLength", {
       configurable: true,
       value: originalGetComputedTextLength,
+    });
+
+    Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+      configurable: true,
+      value: originalGetCanvasContext,
     });
   });
 
@@ -241,7 +282,7 @@ describe("state diagrams", () => {
       result.elements.find((element: any) => element.id === "Input")
     ).toMatchObject({
       label: {
-        fontSize: 18,
+        fontSize: 16,
       },
     });
     expect(
@@ -380,15 +421,13 @@ describe("state diagrams", () => {
 
     expect(graph.type).toBe("state");
 
+    const endNode = graph.nodes.find((node) => node.shape === "stateEnd");
     const result = graphToExcalidraw(graph);
     const endState = result.elements.find(
-      (element: any) =>
-        element.type === "ellipse" &&
-        !String(element.id).endsWith("__inner") &&
-        element.id !== "[*]_start"
+      (element: any) => element.id === endNode?.id
     );
-    const endStateInner = result.elements.find((element: any) =>
-      String(element.id).endsWith("__inner")
+    const endStateInner = result.elements.find(
+      (element: any) => element.id === `${endNode?.id}__inner`
     );
 
     expect(endState).toBeTruthy();
@@ -399,6 +438,10 @@ describe("state diagrams", () => {
     expect(endStateInner?.backgroundColor).toBeTruthy();
     expect(endStateInner?.width).toBeLessThan(endState?.width ?? Infinity);
     expect(endStateInner?.height).toBeLessThan(endState?.height ?? Infinity);
+    expect(endState?.groupIds).toEqual(endStateInner?.groupIds);
+    expect(endState?.groupIds).toEqual([
+      `state_end_group_${String(endState?.id)}`,
+    ]);
   });
 
   it("renders fork and join pseudo states as unlabeled bars", async () => {
@@ -501,9 +544,9 @@ describe("state diagrams", () => {
     expect(multilineNote?.width).toBe(multilineNoteNode?.width);
     expect(leftNote?.width).toBe(leftNoteNode?.width);
     expect(state2?.width).toBe(state2Node?.width);
-    expect(notedState?.label?.fontSize).toBe(18);
-    expect(leftNote?.label?.fontSize).toBe(18);
-    expect(state2?.label?.fontSize).toBe(18);
+    expect(notedState?.label?.fontSize).toBe(16);
+    expect(leftNote?.label?.fontSize).toBe(16);
+    expect(state2?.label?.fontSize).toBe(16);
     expect(
       result.elements.filter(
         (element: any) =>
@@ -512,6 +555,98 @@ describe("state diagrams", () => {
           element.strokeStyle === "dashed"
       )
     ).toHaveLength(2);
+  });
+
+  it("keeps browser-sized state labels at the default 16px when wrapping already fits", () => {
+    const graph: State = {
+      type: "state",
+      nodes: [
+        {
+          id: "State1",
+          shape: "rect",
+          text: "The state with a note",
+          description: [],
+          x: 0,
+          y: 0,
+          width: 209.375,
+          height: 46,
+          containerStyle: {},
+          labelStyle: {},
+          isRenderable: true,
+        },
+        {
+          id: "State2",
+          shape: "rect",
+          text: "State2",
+          description: [],
+          x: 0,
+          y: 0,
+          width: 73.390625,
+          height: 46,
+          containerStyle: {},
+          labelStyle: {},
+          isRenderable: true,
+        },
+        {
+          id: "State2----note-2",
+          shape: "note",
+          text: "This is the note to the left.",
+          description: [],
+          x: 0,
+          y: 0,
+          width: 230,
+          height: 90,
+          containerStyle: {},
+          labelStyle: {},
+          isRenderable: true,
+        },
+      ],
+      edges: [],
+    };
+
+    const result = graphToExcalidraw(graph);
+    const state1 = result.elements.find(
+      (element: any) => element.id === "State1"
+    );
+    const state2 = result.elements.find(
+      (element: any) => element.id === "State2"
+    );
+    const note = result.elements.find(
+      (element: any) => element.id === "State2----note-2"
+    );
+
+    expect(state1?.label?.fontSize).toBe(16);
+    expect(state2?.label?.fontSize).toBe(16);
+    expect(note?.label?.fontSize).toBe(16);
+  });
+
+  it("keeps long single-line state labels at the default font size so they can wrap", () => {
+    const graph: State = {
+      type: "state",
+      nodes: [
+        {
+          id: "State1",
+          shape: "rect",
+          text: "The state with a really long note that should wrap notes",
+          description: [],
+          x: 0,
+          y: 0,
+          width: 216,
+          height: 106,
+          containerStyle: {},
+          labelStyle: {},
+          isRenderable: true,
+        },
+      ],
+      edges: [],
+    };
+
+    const result = graphToExcalidraw(graph);
+    const state1 = result.elements.find(
+      (element: any) => element.id === "State1"
+    );
+
+    expect(state1?.label?.fontSize).toBe(16);
   });
 
   it("supports spaces in state names together with ::: styling", async () => {
@@ -534,7 +669,7 @@ describe("state diagrams", () => {
       strokeWidth: 2,
       label: {
         text: "Your state with spaces in it",
-        fontSize: 18,
+        fontSize: 16,
         strokeColor: "#1864ab",
       },
     });

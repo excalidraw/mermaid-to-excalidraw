@@ -103,6 +103,19 @@ export const STATE_DIAGRAM_TESTCASES: TestCase[] = [
   {
     name: "Multiline Notes",
     definition: `stateDiagram-v2
+    State1: The state with a note
+    note right of State1
+      Important information!
+      You can write notes.
+    end note
+    State1 --> State2
+    note left of State2 : This is the note to the left.
+`,
+    type: "state",
+  },
+  {
+    name: "Multiline Notes v2",
+    definition: `stateDiagram-v2
     State1: The state with a really long note that should wrap notes
     note right of State1
       Important information!

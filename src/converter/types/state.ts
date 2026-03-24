@@ -14,11 +14,14 @@ import {
 import type { State, StateEdge, StateNode } from "../../parser/state.js";
 
 const point = (x: number, y: number) => [x, y] as LocalPoint;
-const DEFAULT_STATE_NODE_LABEL_FONT_SIZE = 18;
+const DEFAULT_STATE_NODE_LABEL_FONT_SIZE = 16;
 const MIN_STATE_NODE_LABEL_FONT_SIZE = 14;
-const STATE_NODE_LABEL_FONT_SIZE_STEP = 2;
+const STATE_NODE_LABEL_FONT_SIZE_STEP = 1;
 const DEFAULT_STATE_FILLED_COLOR = "#000000";
-const STATE_NODE_LABEL_HORIZONTAL_PADDING = 36;
+const EXCALIDRAW_BOUND_TEXT_PADDING = 5;
+const STATE_NODE_LABEL_HORIZONTAL_PADDING = EXCALIDRAW_BOUND_TEXT_PADDING * 2;
+const STATE_NODE_LABEL_VERTICAL_PADDING = EXCALIDRAW_BOUND_TEXT_PADDING * 2;
+const EXCALIDRAW_LINE_HEIGHT = 1.25;
 
 const STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL = new Set<StateNode["shape"]>([
   "choice",
@@ -28,6 +31,9 @@ const STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL = new Set<StateNode["shape"]>([
   "stateEnd",
   "divider",
 ]);
+
+const getStateEndGroupIds = (node: StateNode) =>
+  node.shape === "stateEnd" ? [`state_end_group_${node.id}`] : undefined;
 
 const getNodeText = (node: StateNode) => {
   if (node.shape === "rectWithTitle" && node.description.length) {
@@ -45,14 +51,6 @@ const getLabelMeasureContext = () => {
   }
 
   if (typeof document === "undefined") {
-    labelMeasureContext = null;
-    return labelMeasureContext;
-  }
-
-  if (
-    typeof navigator !== "undefined" &&
-    /jsdom/i.test(navigator.userAgent || "")
-  ) {
     labelMeasureContext = null;
     return labelMeasureContext;
   }
@@ -75,20 +73,106 @@ const measureLabelLineWidthAtFontSize = (line: string, fontSize: number) => {
   return context.measureText(line).width;
 };
 
-const getNodeLabelFontSize = (node: StateNode) => {
-  const text = getNodeText(node);
-  if (!text || STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL.has(node.shape)) {
-    return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+const wrapLabelWord = (word: string, fontSize: number, maxWidth: number) => {
+  if (measureLabelLineWidthAtFontSize(word, fontSize) <= maxWidth) {
+    return [word];
   }
 
-  if (!text.includes("\n")) {
-    return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+  const wrappedParts: string[] = [];
+  let currentPart = "";
+
+  for (const char of word) {
+    const candidatePart = `${currentPart}${char}`;
+    if (
+      currentPart &&
+      measureLabelLineWidthAtFontSize(candidatePart, fontSize) > maxWidth
+    ) {
+      wrappedParts.push(currentPart);
+      currentPart = char;
+      continue;
+    }
+
+    currentPart = candidatePart;
   }
 
-  const availableWidth = Math.max(
-    1,
-    node.width - STATE_NODE_LABEL_HORIZONTAL_PADDING
+  if (currentPart) {
+    wrappedParts.push(currentPart);
+  }
+
+  return wrappedParts;
+};
+
+const wrapLabelLine = (line: string, fontSize: number, maxWidth: number) => {
+  if (!line.trim()) {
+    return line;
+  }
+
+  if (measureLabelLineWidthAtFontSize(line, fontSize) <= maxWidth) {
+    return line;
+  }
+
+  const words = line.split(/\s+/).filter(Boolean);
+  const wrappedLines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const wrappedWordParts = wrapLabelWord(word, fontSize, maxWidth);
+
+    for (const [wordPartIndex, wordPart] of wrappedWordParts.entries()) {
+      const separator = currentLine ? (wordPartIndex === 0 ? " " : "") : "";
+      const candidateLine = currentLine
+        ? `${currentLine}${separator}${wordPart}`
+        : wordPart;
+      if (
+        measureLabelLineWidthAtFontSize(candidateLine, fontSize) <= maxWidth
+      ) {
+        currentLine = candidateLine;
+        continue;
+      }
+
+      if (currentLine) {
+        wrappedLines.push(currentLine);
+      }
+      currentLine = wordPart;
+    }
+
+    if (wrappedWordParts.length > 1) {
+      continue;
+    }
+  }
+
+  wrappedLines.push(currentLine);
+  return wrappedLines.join("\n");
+};
+
+const getWrappedLabelMetrics = (
+  lines: string[],
+  fontSize: number,
+  availableWidth: number
+) => {
+  const wrappedText = lines
+    .map((line) => wrapLabelLine(line, fontSize, availableWidth))
+    .join("\n");
+  const wrappedLines = wrappedText.split("\n");
+  const width = Math.max(
+    ...wrappedLines.map((line) =>
+      measureLabelLineWidthAtFontSize(line, fontSize)
+    )
   );
+  const height = wrappedLines.length * fontSize * EXCALIDRAW_LINE_HEIGHT;
+
+  return {
+    width,
+    height,
+  };
+};
+
+const findLargestLabelFontSizeThatFitsBounds = (
+  text: string,
+  availableWidth: number,
+  availableHeight: number,
+  fallbackFontSize: number
+) => {
   const lines = text.split("\n");
 
   for (
@@ -96,16 +180,55 @@ const getNodeLabelFontSize = (node: StateNode) => {
     fontSize >= MIN_STATE_NODE_LABEL_FONT_SIZE;
     fontSize -= STATE_NODE_LABEL_FONT_SIZE_STEP
   ) {
-    const longestLineWidth = Math.max(
-      ...lines.map((line) => measureLabelLineWidthAtFontSize(line, fontSize))
-    );
+    const { height } = getWrappedLabelMetrics(lines, fontSize, availableWidth);
 
-    if (longestLineWidth <= availableWidth) {
+    if (height <= availableHeight) {
       return fontSize;
     }
   }
 
-  return MIN_STATE_NODE_LABEL_FONT_SIZE;
+  return fallbackFontSize;
+};
+
+const getNodeLabelFontSize = (node: StateNode) => {
+  const text = getNodeText(node);
+  if (!text || STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL.has(node.shape)) {
+    return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+  }
+
+  const availableWidth = Math.max(
+    1,
+    node.width - STATE_NODE_LABEL_HORIZONTAL_PADDING
+  );
+  const availableHeight = Math.max(
+    1,
+    node.height - STATE_NODE_LABEL_VERTICAL_PADDING
+  );
+  const lines = text.split("\n");
+
+  if (lines.length > 1) {
+    const longestLineWidth = Math.max(
+      ...lines.map((line) =>
+        measureLabelLineWidthAtFontSize(
+          line,
+          DEFAULT_STATE_NODE_LABEL_FONT_SIZE
+        )
+      )
+    );
+
+    if (longestLineWidth <= availableWidth) {
+      return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+    }
+  }
+
+  return findLargestLabelFontSizeThatFitsBounds(
+    text,
+    availableWidth,
+    availableHeight,
+    lines.length === 1
+      ? DEFAULT_STATE_NODE_LABEL_FONT_SIZE
+      : MIN_STATE_NODE_LABEL_FONT_SIZE
+  );
 };
 
 const createLabel = (node: StateNode): ValidContainer["label"] | undefined => {
@@ -158,6 +281,9 @@ const createContainerElement = (node: StateNode): ValidContainer => {
   return {
     id: node.id,
     type: elementType,
+    ...(getStateEndGroupIds(node)
+      ? { groupIds: getStateEndGroupIds(node) }
+      : {}),
     x: node.x,
     y: node.y,
     width: node.width,
@@ -215,6 +341,7 @@ const createEndStateInnerEllipse = (node: StateNode): ValidContainer => {
   return {
     id: `${node.id}__inner`,
     type: "ellipse",
+    groupIds: getStateEndGroupIds(node),
     x: node.x + inset,
     y: node.y + inset,
     width: Math.max(1, node.width - inset * 2),
