@@ -8,7 +8,9 @@ export const entityCodesToText = (input: string): string => {
   // eg #9829; => &#9829;
   const inputWithDecimalCode = input
     .replace(/#(\d+);/g, "&#$1;")
-    .replace(/#([a-z]+);/g, "&$1;");
+    .replace(/#([a-z]+);/g, "&$1;")
+    .replace(/\\n/g, "\n")
+    .replace(/<br\s*\/?>/gi, "\n");
 
   // Render the decimal code as html character, eg &#9829; => ♥
   const element = document.createElement("textarea");
