@@ -5,6 +5,7 @@ import {
   Container,
   Line,
   Node,
+  SupportedArrowhead,
   Text,
   createArrowSkeletonFromSVG,
   createContainerSkeletonFromSVG,
@@ -129,6 +130,24 @@ const getStrokeStyle = (type: number) => {
       break;
   }
   return strokeStyle;
+};
+
+const getSequenceEndArrowhead = (
+  messageType: (typeof SEQUENCE_ARROW_TYPES)[ARROW_KEYS]
+): SupportedArrowhead => {
+  switch (messageType) {
+    case "SOLID_OPEN":
+    case "DOTTED_OPEN":
+      return null;
+    case "SOLID":
+    case "DOTTED":
+      return "triangle";
+    case "SOLID_CROSS":
+    case "DOTTED_CROSS":
+      return "bar";
+    default:
+      return "arrow";
+  }
 };
 
 const attachSequenceNumberToArrow = (
@@ -422,10 +441,7 @@ const computeArrows = (
     const arrow = createArrowSkeletonFromSVG(arrowNode, {
       label: message?.message,
       strokeStyle: getStrokeStyle(message.type),
-      endArrowhead:
-        messageType === "SOLID_OPEN" || messageType === "DOTTED_OPEN"
-          ? null
-          : "arrow",
+      endArrowhead: getSequenceEndArrowhead(messageType),
     });
     // Attach to actors if available
     const from = actorMap[message.from];

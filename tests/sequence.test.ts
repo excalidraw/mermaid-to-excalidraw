@@ -168,4 +168,93 @@ describe("Sequence parser", () => {
     expect(result.arrows[0].start?.id).toBe("Alice-top-0");
     expect(result.arrows[0].end?.id).toBe("Bob-top-0");
   });
+
+  it("assigns arrowheads for sequence message types", () => {
+    const container = document.createElement("div");
+    const svg = createSvgElement("svg");
+    container.appendChild(svg);
+
+    const actorData = new Map([
+      [
+        "Alice",
+        { name: "Alice", description: "Alice", type: "actor" as const },
+      ],
+      ["Bob", { name: "Bob", description: "Bob", type: "actor" as const }],
+    ]);
+
+    [120, 300].forEach((x, index) => {
+      const name = index === 0 ? "Alice" : "Bob";
+      const actorTop = createSvgElement("g", {
+        class: "actor-man actor-top",
+        name,
+      });
+      actorTop.appendChild(createSvgElement("circle", { cx: x, cy: 30, r: 12 }));
+      const actorBottom = createSvgElement("g", {
+        class: "actor-man actor-bottom",
+        name,
+      });
+      actorBottom.appendChild(
+        createSvgElement("circle", { cx: x, cy: 320, r: 12 })
+      );
+
+      svg.appendChild(
+        createSvgElement("line", {
+          class: "actor-line 200",
+          name,
+          x1: x,
+          y1: 80,
+          x2: x,
+          y2: 280,
+        })
+      );
+      svg.appendChild(actorTop);
+      svg.appendChild(actorBottom);
+    });
+
+    [140, 180, 220, 260, 300, 340].forEach((y) => {
+      svg.appendChild(
+        createSvgElement("line", {
+          class: "messageLine0",
+          x1: 120,
+          y1: y,
+          x2: 300,
+          y2: y,
+        })
+      );
+    });
+
+    const messages = [
+      { type: 0, from: "Alice", to: "Bob", message: "solid", wrap: true },
+      { type: 1, from: "Alice", to: "Bob", message: "dotted", wrap: true },
+      { type: 3, from: "Alice", to: "Bob", message: "solid cross", wrap: true },
+      { type: 4, from: "Alice", to: "Bob", message: "dotted cross", wrap: true },
+      { type: 5, from: "Alice", to: "Bob", message: "solid open", wrap: true },
+      { type: 6, from: "Alice", to: "Bob", message: "dotted open", wrap: true },
+    ];
+
+    const diagram = {
+      text: `sequenceDiagram
+  actor Alice
+  actor Bob`,
+      db: {
+        getBoxes: () => [],
+        getActors: () => actorData,
+        getMessages: () => messages,
+      },
+      parser: {
+        parse: vi.fn(),
+      },
+    } as unknown as Diagram;
+
+    const result = parseMermaidSequenceDiagram(diagram, container);
+
+    expect(result.arrows.map((arrow) => arrow.endArrowhead)).toEqual([
+      "triangle",
+      "triangle",
+      "bar",
+      "bar",
+      null,
+      null,
+    ]);
+  });
 });
