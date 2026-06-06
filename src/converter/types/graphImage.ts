@@ -1,6 +1,6 @@
 import { GraphConverter } from "../GraphConverter.js";
 import type { FileId } from "@excalidraw/excalidraw/element/types";
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/data/transform";
 import type { BinaryFiles } from "@excalidraw/excalidraw/types";
 import { nanoid } from "nanoid";
 import { GraphImage } from "../../interfaces.js";

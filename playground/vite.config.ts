@@ -1,11 +1,17 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { cpSync, mkdirSync } from "node:fs";
+import { cpSync, createReadStream, existsSync, mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const getExcalifontSourceDir = () => {
+  const require_ = createRequire(import.meta.url);
+  const excalidrawEntry = require_.resolve("@excalidraw/excalidraw");
+  return resolve(dirname(excalidrawEntry), "fonts", "Excalifont");
+};
 
 export default defineConfig({
   resolve: {
@@ -26,13 +32,7 @@ export default defineConfig({
     {
       name: "copy-excalifont",
       configResolved() {
-        const require_ = createRequire(import.meta.url);
-        const excalidrawEntry = require_.resolve("@excalidraw/excalidraw");
-        const srcFontsDir = resolve(
-          dirname(excalidrawEntry),
-          "fonts",
-          "Excalifont"
-        );
+        const srcFontsDir = getExcalifontSourceDir();
         const destFontsDir = resolve(
           __dirname,
           "..",
@@ -43,6 +43,28 @@ export default defineConfig({
 
         mkdirSync(destFontsDir, { recursive: true });
         cpSync(srcFontsDir, destFontsDir, { recursive: true });
+      },
+      configureServer(server) {
+        const srcFontsDir = getExcalifontSourceDir();
+
+        server.middlewares.use((req, res, next) => {
+          if (!req.url?.startsWith("/fonts/Excalifont/")) {
+            next();
+            return;
+          }
+
+          const { pathname } = new URL(req.url, "http://localhost");
+          const filename = basename(decodeURIComponent(pathname));
+          const fontPath = resolve(srcFontsDir, filename);
+
+          if (!fontPath.startsWith(srcFontsDir) || !existsSync(fontPath)) {
+            next();
+            return;
+          }
+
+          res.setHeader("Content-Type", "font/woff2");
+          createReadStream(fontPath).pipe(res);
+        });
       },
     },
   ],

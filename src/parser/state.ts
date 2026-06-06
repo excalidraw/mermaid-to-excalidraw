@@ -440,6 +440,18 @@ const getStateDescription = (node: MermaidStateNode) => {
 const createNodeElementResolver = (containerEl: Element) => {
   const usedElements = new Set<Element>();
 
+  const findElementByIdOrRenderedSuffix = (id?: string) => {
+    if (!id) {
+      return null;
+    }
+
+    return (
+      Array.from(containerEl.querySelectorAll<SVGGraphicsElement>("[id]")).find(
+        (element) => element.id === id || element.id.endsWith(`-${id}`)
+      ) || null
+    );
+  };
+
   const markAndReturn = (element: SVGGraphicsElement | null) => {
     if (element) {
       usedElements.add(element);
@@ -454,17 +466,18 @@ const createNodeElementResolver = (containerEl: Element) => {
   };
 
   return (node: MermaidStateNode): SVGGraphicsElement | null => {
-    const selectors = [
-      `[id='${node.domId}']`,
-      `[id='${node.id}']`,
-      `[data-id='${node.id}']`,
-    ];
+    const idMatch =
+      findElementByIdOrRenderedSuffix(node.domId) ||
+      findElementByIdOrRenderedSuffix(node.id);
+    if (idMatch) {
+      return markAndReturn(idMatch);
+    }
 
-    for (const selector of selectors) {
-      const element = containerEl.querySelector<SVGGraphicsElement>(selector);
-      if (element) {
-        return markAndReturn(element);
-      }
+    const dataIdMatch = containerEl.querySelector<SVGGraphicsElement>(
+      `[data-id='${node.id}']`
+    );
+    if (dataIdMatch) {
+      return markAndReturn(dataIdMatch);
     }
 
     // Mermaid generates random ids for anonymous divider sections during parse
@@ -618,7 +631,10 @@ const parseStateEdge = (
   edge: MermaidStateEdge,
   containerEl: Element
 ): StateEdge | null => {
-  const edgeEl = containerEl.querySelector<SVGPathElement>(`[id='${edge.id}']`);
+  const edgeEl =
+    Array.from(containerEl.querySelectorAll<SVGPathElement>("path[id]")).find(
+      (element) => element.id === edge.id || element.id.endsWith(`-${edge.id}`)
+    ) || null;
   if (!edgeEl) {
     return null;
   }

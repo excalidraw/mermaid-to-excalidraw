@@ -23,6 +23,8 @@ export default defineConfig({
   },
   expect: {
     toHaveScreenshot: {
+      pathTemplate:
+        "{testDir}/{testFileName}-snapshots/{arg}-{projectName}-linux{ext}",
       maxDiffPixels: 2,
     },
   },

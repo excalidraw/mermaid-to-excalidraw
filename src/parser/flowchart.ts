@@ -199,9 +199,10 @@ const parseSubGraph = (
   });
 
   // Get position
-  const el: SVGSVGElement | null = containerEl.querySelector(
-    `[id='${data.id}']`
-  );
+  const el: SVGSVGElement | null =
+    Array.from(containerEl.querySelectorAll<SVGSVGElement>("[id]")).find(
+      (element) => element.id === data.id || element.id.endsWith(`-${data.id}`)
+    ) || null;
   if (!el) {
     throw new Error("SubGraph element not found");
   }

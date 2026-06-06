@@ -28,7 +28,7 @@ const ExcalidrawWrapper = ({
   useEffect(() => {
     let isCancelled = false;
 
-    if (!readyExcalidrawAPI || readyExcalidrawAPI.isDestroyed) {
+    if (!readyExcalidrawAPI) {
       return undefined;
     }
 
@@ -39,7 +39,7 @@ const ExcalidrawWrapper = ({
 
     void (async () => {
       await ensureExcalidrawFontsLoaded();
-      if (isCancelled || readyExcalidrawAPI.isDestroyed) {
+      if (isCancelled) {
         return;
       }
 
@@ -77,19 +77,11 @@ const ExcalidrawWrapper = ({
             currentItemFontFamily: 1,
           },
         }}
-        onExcalidrawAPI={(api) => {
+        excalidrawAPI={(api) => {
           if (apiRef) {
             apiRef.current = api;
           }
-        }}
-        onInitialize={(api) => {
           setReadyExcalidrawAPI(api);
-        }}
-        onUnmount={() => {
-          setReadyExcalidrawAPI(null);
-          if (apiRef) {
-            apiRef.current = null;
-          }
         }}
       />
     </div>

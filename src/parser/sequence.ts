@@ -244,7 +244,11 @@ const applyRectStyles = (container: Container, rect: Element) => {
 const parseActor = (
   actors: { [key: string]: Actor } | Map<string, Actor>,
   containerEl: Element
-): { nodes: Array<Node[]>; lines: Array<Line>; actorMap: Record<string, ParsedActor> } => {
+): {
+  nodes: Array<Node[]>;
+  lines: Array<Line>;
+  actorMap: Record<string, ParsedActor>;
+} => {
   const actorTopNodes = Array.from(
     containerEl.querySelectorAll<SVGElement>(".actor-top")
   );

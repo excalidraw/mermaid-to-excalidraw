@@ -248,7 +248,7 @@ const getAbsoluteLinearPoints = (element: any): Array<[number, number]> => {
     ([x, y]: [number, number]) =>
       [Number(element?.x ?? 0) + x, Number(element?.y ?? 0) + y] as [
         number,
-        number,
+        number
       ]
   );
 };

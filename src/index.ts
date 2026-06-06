@@ -40,7 +40,7 @@ export interface ExcalidrawConfig {
 
 const parseMermaidToExcalidraw = async (
   definition: string,
-  config?: MermaidConfig,
+  config?: MermaidConfig
 ) => {
   const mermaidConfig = config || {};
   const fontSize =

@@ -1,4 +1,4 @@
-import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
+import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/data/transform";
 import { nanoid } from "nanoid";
 
 import { GraphConverter } from "../GraphConverter.js";

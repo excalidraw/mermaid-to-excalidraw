@@ -1,7 +1,11 @@
-import { useState, useCallback, useDeferredValue, useEffect, useRef } from "react";
 import {
-  convertToExcalidrawElements,
-} from "@excalidraw/excalidraw";
+  useState,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+} from "react";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
@@ -151,7 +155,7 @@ const App = () => {
   const handleInsertMermaidSvg = useCallback(
     (svgHtml: string, width: number, height: number) => {
       const api = excalidrawAPIRef.current;
-      if (!api || api.isDestroyed) {
+      if (!api) {
         return;
       }
 

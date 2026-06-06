@@ -7,6 +7,7 @@ import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
 
 test.describe.configure({ mode: "serial" });
+test.skip(process.platform !== "linux", "Visual snapshots are Linux-only");
 
 const ALL_TESTCASES = [
   ...FLOWCHART_DIAGRAM_TESTCASES.map((tc) => ({

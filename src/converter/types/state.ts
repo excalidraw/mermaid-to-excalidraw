@@ -2,8 +2,8 @@ import type {
   ExcalidrawElementSkeleton,
   ValidContainer,
   ValidLinearElement,
-} from "@excalidraw/excalidraw/element/transform";
-import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
+} from "@excalidraw/excalidraw/data/transform";
+import type { LocalPoint } from "@excalidraw/math/types";
 
 import { GraphConverter } from "../GraphConverter.js";
 import {

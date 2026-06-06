@@ -110,9 +110,7 @@ export const getPathCoordinates = (path: SVGPathElement) => {
   };
 };
 
-export const getDecodedEdgePoints = (
-  edgePath: SVGPathElement
-): Position[] => {
+export const getDecodedEdgePoints = (edgePath: SVGPathElement): Position[] => {
   const encodedPoints = edgePath.getAttribute("data-points");
   if (!encodedPoints) {
     const coords = getPathCoordinates(edgePath);

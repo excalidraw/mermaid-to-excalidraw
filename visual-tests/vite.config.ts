@@ -19,7 +19,7 @@ export default defineConfig({
       name: "copy-excalifont",
       configResolved() {
         console.info(
-          "\n[task] Copying Excalifont font files from @excalidraw/excalidraw into visual-tests/public/fonts/",
+          "\n[task] Copying Excalifont font files from @excalidraw/excalidraw into visual-tests/public/fonts/"
         );
         // Copy Excalifont woff2 files from @excalidraw/excalidraw dist into
         // visual-tests/public/fonts/ so Vite can serve them as static assets.
@@ -28,13 +28,13 @@ export default defineConfig({
         const srcFontsDir = resolve(
           dirname(excalidrawEntry),
           "fonts",
-          "Excalifont",
+          "Excalifont"
         );
         const destFontsDir = resolve(
           __dirname,
           "public",
           "fonts",
-          "Excalifont",
+          "Excalifont"
         );
         mkdirSync(destFontsDir, { recursive: true });
         cpSync(srcFontsDir, destFontsDir, { recursive: true });

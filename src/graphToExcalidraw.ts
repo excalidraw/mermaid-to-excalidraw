@@ -11,7 +11,7 @@ import { ERD } from "./parser/er.js";
 import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
 import { State } from "./parser/state.js";
 import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
-import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
+import type { LocalPoint } from "@excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";
 
 const normalizeLinearElementPoints = (

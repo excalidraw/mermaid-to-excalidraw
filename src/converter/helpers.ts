@@ -9,7 +9,7 @@ import {
   Vertex,
 } from "../interfaces.js";
 import { ExcalidrawVertexElement } from "../types.js";
-import type { Mutable } from "@excalidraw/excalidraw/common/utility-types";
+import type { Mutable } from "@excalidraw/common/utility-types";
 import { removeMarkdown } from "@excalidraw/markdown-to-text";
 import { Edge } from "../parser/flowchart.js";
 
