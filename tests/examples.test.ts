@@ -475,6 +475,22 @@ id1[Database]`);
     });
   });
 
+  it("assigns unique ids to parallel edges between the same nodes", async () => {
+    const graph = await parseMermaid(`flowchart LR
+A --> B
+A --> B`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const arrows = result.elements.filter(
+      (element: any) => element.type === "arrow"
+    );
+
+    expect(arrows).toHaveLength(2);
+    const arrowIds = arrows.map((arrow: any) => arrow.id);
+    expect(new Set(arrowIds).size).toBe(arrows.length);
+  });
+
   it("uses rectangle labels for class headers while keeping members as text", async () => {
     const definition = `classDiagram
   class Duck

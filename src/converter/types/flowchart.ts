@@ -276,7 +276,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         return;
       }
 
-      const arrowId = `${edge.start}_${edge.end}`;
+      const arrowId = edge.id ?? `${edge.start}_${edge.end}`;
       const containerElement: ValidLinearElement = {
         id: arrowId,
         type: "arrow",
