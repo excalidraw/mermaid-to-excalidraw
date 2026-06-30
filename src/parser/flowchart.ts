@@ -1,5 +1,6 @@
 import {
   computeEdgePositions,
+  convertBrTagsToNewlines,
   entityCodesToText,
   getTransformAttr,
 } from "../utils.js";
@@ -248,7 +249,7 @@ const parseSubGraph = (
   return {
     id: data.id,
     nodeIds,
-    text: entityCodesToText(data.title),
+    text: entityCodesToText(convertBrTagsToNewlines(data.title)),
     labelType: "text",
     ...position,
     ...dimension,
@@ -326,7 +327,7 @@ const parseVertex = (
   return {
     id: vertex.id,
     labelType: vertex.labelType,
-    text: entityCodesToText(vertex.text || ""),
+    text: entityCodesToText(convertBrTagsToNewlines(vertex.text || "")),
     type: vertex.type as any,
     link: link || undefined,
     ...position,
@@ -358,7 +359,7 @@ const parseEdge = (
   return {
     ...edge,
     ...edgePositionData,
-    text: entityCodesToText(edge.text),
+    text: entityCodesToText(convertBrTagsToNewlines(edge.text)),
   };
 };
 

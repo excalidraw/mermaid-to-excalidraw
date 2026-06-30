@@ -391,6 +391,24 @@ describe("playground examples", () => {
     expect(flowchart.vertices.C?.containerStyle["stroke-width"]).toBe("2px");
   });
 
+  it("converts <br> tags in flowchart labels to newlines (#9708)", async () => {
+    const definition = `flowchart TD
+    A["User Registration<br>Process"] --> B["Validate Input<br/>Data"]
+    B --> C{"Is Data<br />Valid?"}
+    C -->|"Yes<br>path"| D["Done"]`;
+
+    const graph = await parseMermaid(definition);
+    expect(graph.type).toBe("flowchart");
+
+    const flowchart = graph;
+    // Node labels with <br>, <br/> and <br /> should render as multi-line text
+    expect(flowchart.vertices.A?.text).toBe("User Registration\nProcess");
+    expect(flowchart.vertices.B?.text).toBe("Validate Input\nData");
+    expect(flowchart.vertices.C?.text).toBe("Is Data\nValid?");
+    // Edge labels should be handled too
+    expect(flowchart.edges.find((edge) => edge.text)?.text).toBe("Yes\npath");
+  });
+
   it("preserves direct flowchart node styling for fill, stroke, dash, and label color", async () => {
     const definition = `flowchart LR
 id1(Start)-->id2(Stop)
