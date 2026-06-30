@@ -1,6 +1,7 @@
 import {
   getTransformAttr,
   entityCodesToText,
+  convertBrTagsToNewlines,
   computeEdgePositions,
   dedupeConsecutivePoints,
 } from "../src/utils.js";
@@ -10,6 +11,24 @@ describe("Test Utils", () => {
     it("should convert entity codes to text", () => {
       expect(entityCodesToText("#9829;")).toBe("♥");
       expect(entityCodesToText("#6672;")).toBe("ᨐ");
+    });
+  });
+
+  describe("Test convertBrTagsToNewlines", () => {
+    it("should convert <br>, <br/> and <br /> variants to newlines", () => {
+      expect(convertBrTagsToNewlines("a<br>b")).toBe("a\nb");
+      expect(convertBrTagsToNewlines("a<br/>b")).toBe("a\nb");
+      expect(convertBrTagsToNewlines("a<br />b")).toBe("a\nb");
+      expect(convertBrTagsToNewlines("a<BR>b")).toBe("a\nb");
+    });
+
+    it("should convert multiple <br> tags in a single string", () => {
+      expect(convertBrTagsToNewlines("a<br>b<br/>c")).toBe("a\nb\nc");
+    });
+
+    it("should leave text without <br> tags untouched", () => {
+      expect(convertBrTagsToNewlines("hello world")).toBe("hello world");
+      expect(convertBrTagsToNewlines("")).toBe("");
     });
   });
 

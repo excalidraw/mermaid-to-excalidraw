@@ -16,6 +16,14 @@ export const entityCodesToText = (input: string): string => {
   return element.value;
 };
 
+// Mermaid allows `<br>` (and the `<br/>` / `<br />` variants) inside node and
+// edge labels to denote a line break. Convert them to real newlines so the
+// text is rendered as multi-line in Excalidraw instead of showing the literal
+// tag. See https://github.com/excalidraw/excalidraw/issues/9708
+export const convertBrTagsToNewlines = (input: string): string => {
+  return input.replace(/<br\s*\/?>/gi, "\n");
+};
+
 export const getTransformAttr = (el: Element) => {
   const transformAttr = el.getAttribute("transform");
   const translateMatch = transformAttr?.match(
