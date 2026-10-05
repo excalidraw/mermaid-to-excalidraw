@@ -4,12 +4,22 @@
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "mermaid-to-excalidraw": "cli/index.mjs"
+  },
   "files": [
-    "dist/*"
+    "dist",
+    "cli/*.mjs"
   ],
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "build": "rimraf -rf ./dist && cross-env tsc -b src",
+    "build": "rimraf -rf ./dist && cross-env tsc -b src && yarn build:cli",
+    "build:cli": "tsc --noEmit --project cli/browser/tsconfig.json && node cli/build.mjs",
+    "cli": "node cli/index.mjs",
+    "test:cli": "node --test cli/tests/*.mjs",
     "test:code": "eslint --max-warnings=0 --ext .js,.ts,.tsx .",
     "dev": "vite playground --mode development",
     "start": "vite playground --mode development",
@@ -27,6 +37,9 @@
     "@mermaid-js/parser": "^0.6.3",
     "mermaid": "^11.12.1",
     "nanoid": "4.0.2"
+  },
+  "optionalDependencies": {
+    "playwright": "1.58.2"
   },
   "devDependencies": {
     "@babel/core": "7.12.0",
