@@ -3,13 +3,14 @@ import {
   convertToExcalidrawElements,
   exportToSvg,
   FONT_FAMILY,
+  Fonts,
 } from "@excalidraw/excalidraw";
 import { charWidth } from "@excalidraw/element";
 import { getFontString } from "@excalidraw/common";
 
 import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { parseMermaid } from "../src/parseMermaid";
+import { parseMermaid, resolveMermaidConfig } from "../src/parseMermaid";
 import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
@@ -35,24 +36,102 @@ const ALL_TESTCASES: TestCase[] = [
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
 ];
 
-mermaid.initialize({
-  ...MERMAID_CONFIG,
-  themeVariables: { fontSize: `${DEFAULT_FONT_SIZE}px` },
-});
+// Apply Playwright-mode layout before the harness reports ready, so the first
+// render in a page is never measured under the interactive layout.
+if (new URLSearchParams(location.search).has("pw")) {
+  document.body.classList.add("pw");
+}
+
+// Mermaid draws shapes with rough.js, which randomizes curve control points
+// unless seeded. Unseeded, every render jitters by sub-pixels, both in the
+// Mermaid panel and in the bboxes parseMermaid reads geometry from.
+const HARNESS_MERMAID_CONFIG = { ...MERMAID_CONFIG, handDrawnSeed: 1 };
+
+// Must match the config parseMermaid initializes with. Otherwise the Mermaid
+// panel of whichever case renders first in a page (before parseMermaid has
+// re-initialized Mermaid) is laid out differently from all later cases.
+mermaid.initialize(resolveMermaidConfig(HARNESS_MERMAID_CONFIG));
 
 const mermaidOutput = document.getElementById("mermaid-output")!;
 const excalidrawOutput = document.getElementById("excalidraw-output")!;
 const errorDiv = document.getElementById("error")!;
 const SVG_EXPORT_PADDING = 4;
 const EXCALIDRAW_SVG_EXPORT_PADDING = 16;
+const EXCALIFONT_PROBE_TEXT = "This is the note to the left.";
 
 let renderCounter = 0;
 let currentRenderGeneration = 0;
 
-const cleanupMermaidTempContainers = () => {
-  document
-    .querySelectorAll<HTMLDivElement>(".mermaid-to-excalidraw-svg-container")
-    .forEach((el) => el.remove());
+const renderMermaidSvg = async (renderId: string, definition: string) => {
+  const tempContainer = document.createElement("div");
+  tempContainer.style.cssText =
+    "opacity:0;position:fixed;z-index:-1;left:-99999px;top:-99999px;";
+  document.body.appendChild(tempContainer);
+
+  try {
+    const { svg } = await runMermaidTaskSequentially(() =>
+      mermaid.render(renderId, definition, tempContainer)
+    );
+    return svg;
+  } finally {
+    tempContainer.remove();
+  }
+};
+
+// Excalifont is split into unicode-range subsets that load lazily. Load the
+// subsets a case needs before measuring its text, otherwise glyphs outside the
+// preloaded subset are measured with fallback metrics and the layout depends
+// on which cases happened to run earlier in the same page.
+const loadExcalifontGlyphs = async (
+  elements: ReadonlyArray<{
+    type?: string;
+    text?: unknown;
+    label?: { text?: unknown };
+  }>
+) => {
+  const text = elements
+    .flatMap((element) => [
+      element.type === "text" ? element.text : undefined,
+      element.label?.text,
+    ])
+    .filter((value): value is string => typeof value === "string")
+    .join("");
+
+  if (text) {
+    await Fonts.loadElementsFonts([
+      {
+        type: "text",
+        fontFamily: FONT_FAMILY.Excalifont,
+        originalText: text,
+      } as any,
+    ]);
+  }
+};
+
+// `ensureExcalidrawFontsLoaded` gives up silently after a timeout. Rendering
+// with fallback metrics would produce plausible but wrong snapshots, so fail
+// loudly instead.
+const assertExcalifontMetricsActive = () => {
+  const context = document.createElement("canvas").getContext("2d");
+  if (!context) {
+    return;
+  }
+
+  const measure = (font: string) => {
+    context.font = font;
+    return context.measureText(EXCALIFONT_PROBE_TEXT).width;
+  };
+  const excalifontWidth = measure(
+    getFontString({
+      fontSize: DEFAULT_FONT_SIZE,
+      fontFamily: FONT_FAMILY.Excalifont,
+    })
+  );
+  const fallbackWidth = measure(`${DEFAULT_FONT_SIZE}px sans-serif`);
+
+  if (Math.abs(excalifontWidth - fallbackWidth) < 0.5) {
+    throw new Error("Excalifont metrics are not active (font failed to load)");
+  }
 };
 
 const clearExcalidrawTextMeasureCache = (
@@ -221,16 +300,10 @@ async function renderTestCase(index: number): Promise<void> {
 
   try {
     // Render mermaid SVG
-    const renderId = `vt-mermaid-${renderCounter++}`;
-    const tempContainer = document.createElement("div");
-    tempContainer.style.cssText =
-      "opacity:0;position:fixed;z-index:-1;left:-99999px;top:-99999px;";
-    document.body.appendChild(tempContainer);
-
-    const { svg: mermaidSvg } = await runMermaidTaskSequentially(() =>
-      mermaid.render(renderId, testcase.definition, tempContainer)
+    const mermaidSvg = await renderMermaidSvg(
+      `vt-mermaid-${renderCounter++}`,
+      testcase.definition
     );
-    tempContainer.remove();
     if (isStale()) {
       return;
     }
@@ -243,7 +316,10 @@ async function renderTestCase(index: number): Promise<void> {
     }
 
     // Render excalidraw SVG
-    const parsed = await parseMermaid(testcase.definition);
+    const parsed = await parseMermaid(
+      testcase.definition,
+      HARNESS_MERMAID_CONFIG
+    );
     if (isStale()) {
       return;
     }
@@ -252,6 +328,7 @@ async function renderTestCase(index: number): Promise<void> {
       fontSize: DEFAULT_FONT_SIZE,
     });
     await ensureExcalidrawFontsLoaded();
+    await loadExcalifontGlyphs(elements);
     clearExcalidrawTextMeasureCache(elements);
     if (isStale()) {
       return;
@@ -294,9 +371,7 @@ async function renderTestCase(index: number): Promise<void> {
     // Expose last render's elements for debugging
     (window as any).__LAST_ELEMENTS__ = excalidrawElements;
     (window as any).__LAST_SKELETON__ = elements;
-    cleanupMermaidTempContainers();
   } catch (err) {
-    cleanupMermaidTempContainers();
     if (isStale()) {
       return;
     }
@@ -385,16 +460,10 @@ async function renderAllTestCases(): Promise<void> {
     allContainer.appendChild(card);
 
     try {
-      const renderId = `vt-all-${renderCounter++}`;
-      const tempContainer = document.createElement("div");
-      tempContainer.style.cssText =
-        "opacity:0;position:fixed;z-index:-1;left:-99999px;top:-99999px;";
-      document.body.appendChild(tempContainer);
-
-      const { svg: mermaidSvg } = await runMermaidTaskSequentially(() =>
-        mermaid.render(renderId, tc.definition, tempContainer)
+      const mermaidSvg = await renderMermaidSvg(
+        `vt-all-${renderCounter++}`,
+        tc.definition
       );
-      tempContainer.remove();
       mOut.innerHTML = mermaidSvg;
 
       const mRenderedSvg = mOut.querySelector("svg");
@@ -402,11 +471,12 @@ async function renderAllTestCases(): Promise<void> {
         cropSvgToRenderedContent(mRenderedSvg, "mermaid");
       }
 
-      const parsed = await parseMermaid(tc.definition);
+      const parsed = await parseMermaid(tc.definition, HARNESS_MERMAID_CONFIG);
       const { elements, files } = graphToExcalidraw(parsed, {
         fontSize: DEFAULT_FONT_SIZE,
       });
       await ensureExcalidrawFontsLoaded();
+      await loadExcalifontGlyphs(elements);
       clearExcalidrawTextMeasureCache(elements);
       const excalidrawElements = convertToExcalidrawElements(elements);
       for (const el of excalidrawElements) {
@@ -426,10 +496,7 @@ async function renderAllTestCases(): Promise<void> {
       if (eRenderedSvg) {
         cropSvgToRenderedContent(eRenderedSvg, "excalidraw");
       }
-
-      cleanupMermaidTempContainers();
     } catch (err) {
-      cleanupMermaidTempContainers();
       const errDiv = document.createElement("div");
       errDiv.className = "all-card-error";
       errDiv.textContent = String(err);
@@ -457,6 +524,10 @@ function hideAllView(): void {
 // preview so text measurement and wrapping stay consistent.
 (async () => {
   await ensureExcalidrawFontsLoaded();
+  assertExcalifontMetricsActive();
 
   (window as any).__HARNESS_READY__ = true;
-})();
+})().catch((error) => {
+  console.error(error);
+  (window as any).__HARNESS_ERROR__ = String(error);
+});

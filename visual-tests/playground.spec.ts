@@ -6,8 +6,6 @@ import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
 
-test.describe.configure({ mode: "serial" });
-
 const ALL_TESTCASES = [
   ...FLOWCHART_DIAGRAM_TESTCASES.map((tc) => ({
     ...tc,
@@ -30,13 +28,23 @@ function slugify(s: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-// Shared page instance — reused across all tests (no reload between cases)
+// One page per worker, reused across that worker's tests (no reload between
+// cases). Tests run in parallel and in no fixed order, so each render must not
+// depend on what rendered before it in the same page.
 let sharedPage: Page;
 
 test.beforeAll(async ({ browser }) => {
   sharedPage = await browser.newPage();
   await sharedPage.goto("/?pw");
-  await sharedPage.waitForFunction(() => (window as any).__HARNESS_READY__);
+  await sharedPage.waitForFunction(
+    () => (window as any).__HARNESS_READY__ || (window as any).__HARNESS_ERROR__
+  );
+  const harnessError = await sharedPage.evaluate(
+    () => (window as any).__HARNESS_ERROR__
+  );
+  if (harnessError) {
+    throw new Error(`Visual test harness failed to start: ${harnessError}`);
+  }
 });
 
 test.afterAll(async () => {

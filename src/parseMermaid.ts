@@ -60,25 +60,35 @@ const convertSvgToGraphImage = (svgContainer: HTMLDivElement) => {
   return graphImage;
 };
 
+/**
+ * The config `parseMermaid` initializes Mermaid with. Exported so callers that
+ * render Mermaid themselves (e.g. the visual test harness) get the same layout.
+ */
+export const resolveMermaidConfig = (
+  config: MermaidConfig = MERMAID_CONFIG
+) => {
+  const resolvedFontSize =
+    config.themeVariables?.fontSize ?? MERMAID_CONFIG.themeVariables.fontSize;
+
+  return {
+    ...MERMAID_CONFIG,
+    ...config,
+    fontSize: resolvedFontSize,
+    themeVariables: {
+      ...MERMAID_CONFIG.themeVariables,
+      ...config.themeVariables,
+      fontSize: resolvedFontSize,
+    },
+  };
+};
+
 export const parseMermaid = async (
   definition: string,
   config: MermaidConfig = MERMAID_CONFIG
 ): Promise<Flowchart | GraphImage | Sequence | Class | ERD | State> => {
   return runMermaidTaskSequentially(async () => {
-    const resolvedFontSize =
-      config.themeVariables?.fontSize ?? MERMAID_CONFIG.themeVariables.fontSize;
-
     // Only re-initialize mermaid if config has changed (performance optimization)
-    const mergedConfig = {
-      ...MERMAID_CONFIG,
-      ...config,
-      fontSize: resolvedFontSize,
-      themeVariables: {
-        ...MERMAID_CONFIG.themeVariables,
-        ...config.themeVariables,
-        fontSize: resolvedFontSize,
-      },
-    };
+    const mergedConfig = resolveMermaidConfig(config);
     const configHash = hashConfig(mergedConfig);
 
     if (configHash !== lastConfigHash) {
