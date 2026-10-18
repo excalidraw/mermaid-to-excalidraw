@@ -12,8 +12,9 @@ import {
 
 const GROUP_RECT_PADDING = 10;
 const GROUP_LABEL_FONT_SIZE = 16;
-const GROUP_LABEL_VERTICAL_OFFSET = 24;
+const GROUP_LABEL_MIN_HEIGHT = 24;
 const GROUP_LABEL_HORIZONTAL_OFFSET = 4;
+const EXCALIDRAW_LINE_HEIGHT = 1.25;
 
 const isTransparentFill = (fill?: string) => {
   if (!fill) {
@@ -29,8 +30,17 @@ const isTransparentFill = (fill?: string) => {
 };
 
 const estimateTextWidth = (text: string, fontSize: number) => {
-  return Math.max(20, Math.round(text.length * fontSize * 0.6));
+  const longestLineLength = Math.max(
+    ...text.split("\n").map((line) => line.length)
+  );
+  return Math.max(20, Math.round(longestLineLength * fontSize * 0.6));
 };
+
+const estimateTextHeight = (text: string, fontSize: number) =>
+  Math.max(
+    GROUP_LABEL_MIN_HEIGHT,
+    text.split("\n").length * fontSize * EXCALIDRAW_LINE_HEIGHT
+  );
 
 const addGroupId = (
   element: ExcalidrawElementSkeleton,
@@ -169,11 +179,24 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           return;
         }
 
-        // Draw a plain rectangle that hugs the grouped content.
-        const groupRectX = minX - GROUP_RECT_PADDING;
-        const groupRectY = minY - GROUP_RECT_PADDING;
-        const groupRectWidth = maxX - minX + GROUP_RECT_PADDING * 2;
-        const groupRectHeight = maxY - minY + GROUP_RECT_PADDING * 2;
+        const groupLabelHeight = name
+          ? estimateTextHeight(name, GROUP_LABEL_FONT_SIZE)
+          : 0;
+        const groupLabelWidth = name
+          ? estimateTextWidth(name, GROUP_LABEL_FONT_SIZE)
+          : 0;
+        const contentWidth = maxX - minX + GROUP_RECT_PADDING * 2;
+        const groupRectWidth = Math.max(
+          contentWidth,
+          groupLabelWidth + GROUP_RECT_PADDING * 2
+        );
+        // Reserve a header inside the group instead of placing its title above
+        // the border, where multiline names otherwise collide with neighbors.
+        const groupRectX =
+          minX - GROUP_RECT_PADDING - (groupRectWidth - contentWidth) / 2;
+        const groupRectY = minY - GROUP_RECT_PADDING - groupLabelHeight;
+        const groupRectHeight =
+          maxY - minY + GROUP_RECT_PADDING * 2 + groupLabelHeight;
         const groupRectId = nanoid();
         const groupId = nanoid();
         const groupRect = transformToExcalidrawContainerSkeleton({
@@ -218,9 +241,9 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
             id: nanoid(),
             text: name,
             x: groupRectX + GROUP_LABEL_HORIZONTAL_OFFSET,
-            y: groupRectY - GROUP_LABEL_VERTICAL_OFFSET,
-            width: estimateTextWidth(name, GROUP_LABEL_FONT_SIZE),
-            height: GROUP_LABEL_FONT_SIZE + 8,
+            y: groupRectY + GROUP_RECT_PADDING,
+            width: groupLabelWidth,
+            height: groupLabelHeight,
             fontSize: GROUP_LABEL_FONT_SIZE,
             color: "#1f1f1f",
             groupId,

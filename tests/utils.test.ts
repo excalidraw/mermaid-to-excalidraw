@@ -3,9 +3,29 @@ import {
   entityCodesToText,
   computeEdgePositions,
   dedupeConsecutivePoints,
+  toCssString,
 } from "../src/utils.js";
 
 describe("Test Utils", () => {
+  describe("Test toCssString", () => {
+    it("selects ids containing backslashes, quotes and newlines", () => {
+      const container = document.createElement("div");
+      const ids = ["flowchart-A\\nB-0", 'say "hi"', "line\nbreak", "plain"];
+      ids.forEach((id) => {
+        const element = document.createElement("span");
+        element.id = id;
+        container.appendChild(element);
+      });
+
+      ids.forEach((id) => {
+        expect(container.querySelector(`[id=${toCssString(id)}]`)?.id).toBe(id);
+      });
+      expect(container.querySelector(`[id*=${toCssString("A\\nB")}]`)?.id).toBe(
+        ids[0]
+      );
+    });
+  });
+
   describe("Test entityCodesToText", () => {
     it("should convert entity codes to text", () => {
       expect(entityCodesToText("#9829;")).toBe("♥");

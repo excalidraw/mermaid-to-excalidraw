@@ -15,6 +15,7 @@ import { cleanCSSValue } from "./cssUtils.js";
 
 import type { Diagram } from "mermaid/dist/Diagram.js";
 import type { StrokeStyle } from "@excalidraw/excalidraw/element/types";
+import { decodeMermaidText, getTextContentWithLineBreaks } from "../text.js";
 
 type ARROW_KEYS = keyof typeof SEQUENCE_ARROW_TYPES;
 
@@ -169,10 +170,15 @@ const createActorSymbol = (
   }
   const groupId = nanoid();
   const children = Array.from(rootNode.children);
+  const firstTextChild = children.find((child) => child.tagName === "text");
   const nodeElements: Node[] = [];
   children.forEach((child, index) => {
+    if (child.tagName === "text" && child !== firstTextChild) {
+      return;
+    }
+
     const id = `${opts?.id}-${index}`;
-    let ele;
+    let ele: Node;
     switch (child.tagName) {
       case "line":
         const startX = Number(child.getAttribute("x1"));
@@ -190,10 +196,28 @@ const createActorSymbol = (
         );
         break;
       case "text":
-        ele = createTextSkeletonFromSVG(child as SVGTextElement, text, {
-          groupId,
-          id,
-        });
+        const textElement = createTextSkeletonFromSVG(
+          child as SVGTextElement,
+          text,
+          {
+            groupId,
+            id,
+          }
+        );
+        if (text.includes("\n")) {
+          const centerX = textElement.x + (textElement.width || 0) / 2;
+          const lines = text.split("\n");
+          textElement.width = Math.max(
+            textElement.width || 0,
+            ...lines.map((line) => line.length * textElement.fontSize * 0.6)
+          );
+          textElement.height = Math.max(
+            textElement.height || 0,
+            lines.length * textElement.fontSize * 1.25
+          );
+          textElement.x = centerX - textElement.width / 2;
+        }
+        ele = textElement;
         break;
       case "circle":
         ele = createContainerSkeletonFromSVG(
@@ -244,7 +268,11 @@ const applyRectStyles = (container: Container, rect: Element) => {
 const parseActor = (
   actors: { [key: string]: Actor } | Map<string, Actor>,
   containerEl: Element
-): { nodes: Array<Node[]>; lines: Array<Line>; actorMap: Record<string, ParsedActor> } => {
+): {
+  nodes: Array<Node[]>;
+  lines: Array<Line>;
+  actorMap: Record<string, ParsedActor>;
+} => {
   const actorTopNodes = Array.from(
     containerEl.querySelectorAll<SVGElement>(".actor-top")
   );
@@ -299,7 +327,7 @@ const parseActor = (
     if (!topRootNode || !bottomRootNode) {
       throw "root not found";
     }
-    const text = actor.description;
+    const text = decodeMermaidText(actor.description);
     if (actor.type === "participant") {
       // creating top actor node element
       const topNodeElement = createContainerSkeletonFromSVG(
@@ -538,16 +566,92 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
     containerEl.querySelectorAll(".loopText")
   ) as SVGTextElement[];
 
+  const frameLabelTypes = new Set([
+    MESSAGE_TYPE.LOOP_START,
+    MESSAGE_TYPE.ALT_START,
+    MESSAGE_TYPE.ALT_ELSE,
+    MESSAGE_TYPE.OPT_START,
+    MESSAGE_TYPE.PAR_START,
+    MESSAGE_TYPE.PAR_AND,
+    MESSAGE_TYPE.CRITICAL_START,
+    MESSAGE_TYPE.CRITICAL_OPTION,
+    MESSAGE_TYPE.BREAK_START,
+    MESSAGE_TYPE.PAR_OVER_START,
+  ]);
+  const frameMessages = messages
+    .filter((message) => frameLabelTypes.has(message.type))
+    .map((message) => message.message);
   const criticalMessages = messages
     .filter((message) => message.type === MESSAGE_TYPE.CRITICAL_START)
     .map((message) => message.message);
+  const textNodeGroups: SVGTextElement[][] = [];
 
   loopTextNodes.forEach((node) => {
-    const text = node.textContent || "";
+    const previousGroup = textNodeGroups[textNodeGroups.length - 1];
+    const previousNode = previousGroup?.[previousGroup.length - 1];
+    const y = node.getBBox().y;
+    const previousY = previousNode?.getBBox().y;
+    const fontSize = parseFloat(getComputedStyle(node).fontSize) || 20;
+    const continuesPreviousLabel =
+      previousNode?.parentElement === node.parentElement &&
+      previousY !== undefined &&
+      Math.abs(y - previousY) <= fontSize * 1.5;
+
+    if (continuesPreviousLabel) {
+      previousGroup.push(node);
+    } else {
+      textNodeGroups.push([node]);
+    }
+  });
+
+  const unusedFrameMessageIndexes = new Set(
+    frameMessages.map((_message, index) => index)
+  );
+  const normalizeWhitespace = (text: string) =>
+    text.replace(/\s+/g, " ").trim();
+  // Matches a rendered label back to its frame message, to recognize critical
+  // regions. Mermaid's `wrap` option replaces spaces with line breaks.
+  const findFrameMessage = (renderedText: string) => {
+    const renderedLabel = normalizeWhitespace(
+      renderedText.match(/^\[([\s\S]*)\]$/)?.[1] ?? renderedText
+    );
+    const index = Array.from(unusedFrameMessageIndexes).find(
+      (candidate) =>
+        normalizeWhitespace(frameMessages[candidate]) === renderedLabel
+    );
+    if (index === undefined) {
+      return undefined;
+    }
+    unusedFrameMessageIndexes.delete(index);
+    return frameMessages[index];
+  };
+
+  textNodeGroups.forEach((nodeGroup) => {
+    const node = nodeGroup[0];
+    const text = nodeGroup
+      .map((textNode) => getTextContentWithLineBreaks(textNode))
+      .join("\n");
+    const frameMessage = findFrameMessage(text);
     const textElement = createTextSkeletonFromSVG(node, text);
-    // The text is rendered between [ ] in DOM hence getting the text excluding the [ ]
-    const rawText = text.match(/\[(.*?)\]/)?.[1] || "";
-    const isCritical = criticalMessages.includes(rawText);
+    if (nodeGroup.length > 1) {
+      // Mermaid renders each line as its own centered <text>; keep the lines'
+      // measured extent and center them like Mermaid does.
+      const boxes = nodeGroup.map((textNode) => textNode.getBBox());
+      const centerX = Number(node.getAttribute("x"));
+      const top = Math.min(...boxes.map((box) => box.y));
+      const bottom = Math.max(...boxes.map((box) => box.y + box.height));
+      textElement.width = Math.max(...boxes.map((box) => box.width));
+      textElement.height = Math.max(
+        bottom - top,
+        text.split("\n").length * textElement.fontSize * 1.25
+      );
+      // With center alignment Excalidraw treats `x` as the text's center and
+      // offsets it by its own measured width.
+      textElement.x = centerX;
+      textElement.textAlign = "center";
+    }
+    const isCritical =
+      frameMessage !== undefined && criticalMessages.includes(frameMessage);
     // For critical label the coordinates are not accurate in mermaid as there is
     // no padding left hence shifting the text next to critical label by 16px (font size)
     if (isCritical) {
@@ -562,7 +666,9 @@ const parseLoops = (messages: Message[], containerEl: Element) => {
   const labelTextNode = Array.from(containerEl?.querySelectorAll(".labelText"));
 
   labelBoxes.forEach((labelBox, index) => {
-    const text = labelTextNode[index]?.textContent || "";
+    const text = labelTextNode[index]
+      ? getTextContentWithLineBreaks(labelTextNode[index])
+      : "";
     const container = createContainerSkeletonFromSVG(labelBox, "rectangle", {
       label: { text },
     });
@@ -596,6 +702,109 @@ const computeHighlights = (containerEl: Element) => {
   return nodes;
 };
 
+const expandMultilineParticipantRows = (
+  actors: Array<Node[]>,
+  lines: Line[],
+  arrows: Arrow[],
+  highlights: Container[],
+  notes: Container[],
+  activations: Container[],
+  loops: Loop | undefined
+) => {
+  const actorElements = actors.flat();
+  const topParticipants = actorElements.filter(
+    (node): node is Container =>
+      node.type === "rectangle" &&
+      node.subtype === "actor" &&
+      Boolean(node.id?.endsWith("-top"))
+  );
+  const bottomParticipants = actorElements.filter(
+    (node): node is Container =>
+      node.type === "rectangle" &&
+      node.subtype === "actor" &&
+      Boolean(node.id?.endsWith("-bottom"))
+  );
+  // Participant boxes only grow as much as their own labels need. Like in
+  // Mermaid, stick-figure labels may hang below the row, so they only push the
+  // content below the row down rather than stretching every box.
+  const boxGrowth = Math.max(
+    0,
+    ...topParticipants.map((participant) => {
+      const lineCount = participant.label?.text?.split("\n").length || 1;
+      const fontSize = participant.label?.fontSize || 16;
+      const requiredHeight = lineCount * fontSize * 1.25 + 10;
+      return requiredHeight - (participant.height || 0);
+    })
+  );
+  const expansionHeight = Math.max(
+    boxGrowth,
+    ...actorElements
+      .filter(
+        (node): node is Text =>
+          node.type === "text" &&
+          Boolean(node.id?.includes("-top-")) &&
+          node.text.includes("\n")
+      )
+      .map((text) => {
+        const contentTop = Math.min(...lines.map((line) => line.startY));
+        return text.y + (text.height || 0) + 5 - contentTop;
+      })
+  );
+
+  if (expansionHeight <= 0) {
+    return;
+  }
+
+  topParticipants.forEach((participant) => {
+    participant.height = (participant.height || 0) + boxGrowth;
+  });
+  bottomParticipants.forEach((participant) => {
+    participant.y += expansionHeight;
+    participant.height = (participant.height || 0) + boxGrowth;
+  });
+
+  // Stick-figure actors are made from several primitives rather than one
+  // bound container. Keep their bottom row aligned with participant boxes.
+  actorElements.forEach((node) => {
+    if (!node.id?.includes("-bottom-")) {
+      return;
+    }
+    if (node.type === "line" || node.type === "arrow") {
+      node.startY += expansionHeight;
+      node.endY += expansionHeight;
+    } else {
+      node.y += expansionHeight;
+    }
+  });
+
+  // Lifelines run from the (grown) top boxes to the shifted bottom row.
+  lines.forEach((line) => {
+    line.startY += boxGrowth;
+    line.endY += expansionHeight;
+  });
+  arrows.forEach((arrow) => {
+    arrow.startY += expansionHeight;
+    arrow.endY += expansionHeight;
+    if (arrow.sequenceNumber) {
+      arrow.sequenceNumber.y += expansionHeight;
+    }
+  });
+
+  [...highlights, ...notes, ...activations].forEach((node) => {
+    node.y += expansionHeight;
+  });
+  loops?.lines.forEach((line) => {
+    line.startY += expansionHeight;
+    line.endY += expansionHeight;
+  });
+  loops?.texts.forEach((text) => {
+    text.y += expansionHeight;
+  });
+  loops?.nodes.forEach((node) => {
+    node.y += expansionHeight;
+  });
+};
+
 export const parseMermaidSequenceDiagram = (
   diagram: Diagram,
   containerEl: Element
@@ -608,17 +817,36 @@ export const parseMermaidSequenceDiagram = (
   // Clean CSS values from groups to remove !important declarations
   const groups = rawGroups.map((group: Group) => ({
     ...group,
+    name:
+      typeof group.name === "string"
+        ? decodeMermaidText(group.name)
+        : group.name,
     fill: cleanCSSValue(group.fill || ""),
   }));
 
   const bgHightlights = computeHighlights(containerEl);
   const actorData = mermaidParser.getActors();
   const { nodes: actors, lines, actorMap } = parseActor(actorData, containerEl);
-  const messages = mermaidParser.getMessages();
+  const messages = mermaidParser.getMessages().map((message) => ({
+    ...message,
+    message:
+      typeof message.message === "string"
+        ? decodeMermaidText(message.message)
+        : message.message,
+  }));
   const arrows = computeArrows(messages, containerEl, actorMap);
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(messages, containerEl);
+  expandMultilineParticipantRows(
+    actors,
+    lines,
+    arrows,
+    bgHightlights,
+    notes,
+    activations,
+    loops
+  );
   nodes.push(bgHightlights);
   nodes.push(...actors);
   nodes.push(notes);

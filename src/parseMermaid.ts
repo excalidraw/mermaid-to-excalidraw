@@ -14,6 +14,10 @@ import { Class, parseMermaidClassDiagram } from "./parser/class.js";
 import { ERD, parseMermaidERDiagram } from "./parser/er.js";
 import { State, parseMermaidStateDiagram } from "./parser/state.js";
 import { runMermaidTaskSequentially } from "./mermaidExecutionQueue.js";
+import {
+  withLineBreakFallback,
+  withMermaidLineBreaks,
+} from "./mermaidLineBreaks.js";
 
 // Track initialization state to avoid redundant mermaid.initialize() calls
 // which can cause performance issues during streaming
@@ -96,12 +100,19 @@ export const parseMermaid = async (
       lastConfigHash = configHash;
     }
 
-    // Parse the diagram definition
+    // Parse the diagram definition, falling back to `\n` for `<br>` where
+    // only that parses. The render then uses whichever definition parsed.
     // Note: mermaidAPI.getDiagramFromText is deprecated but there's no public
     // alternative that provides access to diagram.db (needed for extracting nodes/edges).
     // See: https://github.com/mermaid-js/mermaid/issues/XXX
-    const diagram: Diagram = await mermaid.mermaidAPI.getDiagramFromText(
-      encodeEntities(definition)
+    const { parsedDefinition, diagram } = await withLineBreakFallback(
+      definition,
+      async (candidate) => ({
+        parsedDefinition: candidate,
+        diagram: (await mermaid.mermaidAPI.getDiagramFromText(
+          encodeEntities(candidate)
+        )) as Diagram,
+      })
     );
 
     // Use unique render IDs to avoid conflicts when streaming (performance optimization)
@@ -122,7 +133,9 @@ export const parseMermaid = async (
 
     try {
       // Render the SVG diagram to be able to query DOM elements
-      const { svg } = await mermaid.render(renderId, definition, svgContainer);
+      const { svg } = await withMermaidLineBreaks(parsedDefinition, () =>
+        mermaid.render(renderId, parsedDefinition, svgContainer)
+      );
 
       // Append SVG to DOM temporarily to allow querying element dimensions/positions
       svgContainer.innerHTML = svg;

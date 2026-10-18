@@ -1,8 +1,9 @@
 import {
   computeEdgePositions,
-  entityCodesToText,
   getTransformAttr,
+  toCssString,
 } from "../utils.js";
+import { decodeMermaidText } from "../text.js";
 import {
   ContainerStyle,
   CONTAINER_STYLE_PROPERTY,
@@ -199,8 +200,8 @@ const parseSubGraph = (
   });
 
   // Get position
-  const el: SVGSVGElement | null = containerEl.querySelector(
-    `[id='${data.id}']`
+  const el = containerEl.querySelector<SVGSVGElement>(
+    `[id=${toCssString(data.id)}]`
   );
   if (!el) {
     throw new Error("SubGraph element not found");
@@ -248,7 +249,7 @@ const parseSubGraph = (
   return {
     id: data.id,
     nodeIds,
-    text: entityCodesToText(data.title),
+    text: decodeMermaidText(data.title),
     labelType: "text",
     ...position,
     ...dimension,
@@ -263,8 +264,8 @@ const parseVertex = (
   classes: Map<string, FlowClass> | Record<string, never>
 ): Vertex | undefined => {
   // Find Vertex element
-  const node: SVGSVGElement | null = containerEl.querySelector(
-    `[id*="${vertex.domId}"]`
+  const node = containerEl.querySelector<SVGSVGElement>(
+    `[id*=${toCssString(vertex.domId)}]`
   );
   if (!node) {
     return undefined;
@@ -326,7 +327,7 @@ const parseVertex = (
   return {
     id: vertex.id,
     labelType: vertex.labelType,
-    text: entityCodesToText(vertex.text || ""),
+    text: decodeMermaidText(vertex.text || ""),
     type: vertex.type as any,
     link: link || undefined,
     ...position,
@@ -336,13 +337,20 @@ const parseVertex = (
   };
 };
 
+const findEdgePath = (containerEl: Element, edgeId: string | undefined) =>
+  edgeId
+    ? containerEl.querySelector<SVGPathElement>(
+        `path[id*=${toCssString(edgeId)}]`
+      )
+    : null;
+
 const parseEdge = (
   edge: FlowEdge,
   edgeIndex: number,
   containerEl: Element
 ): Edge => {
   // Find edge element
-  const node = containerEl.querySelector<SVGPathElement>(`[id*="${edge.id}"]`);
+  const node = findEdgePath(containerEl, edge.id);
 
   if (!node) {
     throw new Error("Edge element not found");
@@ -358,7 +366,7 @@ const parseEdge = (
   return {
     ...edge,
     ...edgePositionData,
-    text: entityCodesToText(edge.text),
+    text: decodeMermaidText(edge.text),
   };
 };
 
@@ -447,7 +455,7 @@ export const parseMermaidFlowChartDiagram = (
   const edges: Edge[] = (Array.isArray(edgesData) ? edgesData : [])
     .map((edge: any) => {
       // Filter out edges not found in the DOM
-      if (!containerEl.querySelector(`[id*="${edge.id}"]`)) {
+      if (!findEdgePath(containerEl, edge.id)) {
         return null;
       }
 

@@ -8,10 +8,6 @@ import { Arrow, Line, Node, Text } from "../elementSkeleton.js";
 
 const point = (x: number, y: number) => [x, y] as LocalPoint;
 
-export const normalizeText = (text: string) => {
-  return text.replace(/\\n/g, "\n");
-};
-
 export const transformToExcalidrawLineSkeleton = (line: Line) => {
   const lineElement: ExcalidrawElementSkeleton = {
     type: "line",
@@ -43,11 +39,14 @@ export const transformToExcalidrawTextSkeleton = (element: Text) => {
     y: element.y,
     width: element.width,
     height: element.height,
-    text: normalizeText(element.text) || "",
+    text: element.text || "",
     fontSize: element.fontSize,
     verticalAlign: "top",
     strokeColor: element.color,
   };
+  if (element.textAlign) {
+    Object.assign(textElement, { textAlign: element.textAlign });
+  }
   if (element.groupId) {
     Object.assign(textElement, { groupIds: [element.groupId] });
   }
@@ -61,7 +60,7 @@ export const transformToExcalidrawContainerSkeleton = (
   element: Exclude<Node, Line | Arrow | Text>
 ) => {
   const label = {
-    text: normalizeText(element?.label?.text || ""),
+    text: element?.label?.text || "",
     fontSize: element?.label?.fontSize,
     textAlign: element.label?.textAlign,
     verticalAlign: element.label?.verticalAlign || "middle",
@@ -113,7 +112,7 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
     endArrowhead: (arrow?.endArrowhead || null) as any,
     startArrowhead: (arrow?.startArrowhead || null) as any,
     label: {
-      text: normalizeText(arrow?.label?.text || ""),
+      text: arrow?.label?.text || "",
       fontSize: 16,
       textAlign: arrow?.label?.textAlign,
       verticalAlign: arrow?.label?.verticalAlign,

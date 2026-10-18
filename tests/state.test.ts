@@ -335,6 +335,71 @@ describe("state diagrams", () => {
     });
   });
 
+  it("converts line break syntax in state ids", async () => {
+    const graph = await parseMermaid(`stateDiagram-v2
+    Still --> Mov\\ning
+    Moving --> Still
+    class Moving movement
+    class Still stopped`);
+    expect(graph.type).toBe("state");
+
+    const result = graphToExcalidraw(graph);
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: expect.objectContaining({ text: "Mov\ning" }),
+        }),
+      ])
+    );
+  });
+
+  it("normalizes state descriptions, transitions, and notes without phantom states", async () => {
+    const graph = await parseMermaid(`stateDiagram-v2
+    %% ignored<br>comment\\ntext
+    A: First<br>Second
+    A --> B: Edge\\nLabel
+    note right of B: Note<br>Body`);
+    expect(graph.type).toBe("state");
+
+    const stateIds = graph.nodes
+      .filter((node) => node.shape !== "note" && node.isRenderable)
+      .map((node) => node.id);
+    expect(stateIds).toEqual(["A", "B"]);
+
+    const result = graphToExcalidraw(graph);
+    const labels = result.elements
+      .map((element: any) => element.label?.text)
+      .filter(Boolean);
+
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "First\nSecond",
+        "B",
+        "Edge\nLabel",
+        "Note\nBody",
+      ])
+    );
+    expect(labels.some((text: string) => text.includes("ignored"))).toBe(false);
+    expect(labels.some((text: string) => text.includes("m2e_"))).toBe(false);
+  });
+
+  it("normalizes reserved-looking state descriptions and note bodies", async () => {
+    const graph = await parseMermaid(`stateDiagram-v2
+    style: First\\nSecond
+    note right of style
+      click\\nguide
+    end note`);
+    expect(graph.type).toBe("state");
+
+    const result = graphToExcalidraw(graph);
+    const labels = result.elements
+      .map((element: any) => element.label?.text)
+      .filter(Boolean);
+    expect(labels).toEqual(
+      expect.arrayContaining(["First\nSecond", "click\nguide"])
+    );
+  });
+
   it("does not preserve Mermaid default colors for unstyled states and notes", async () => {
     const graph = await parseMermaid(`stateDiagram-v2
     [*] --> Idle

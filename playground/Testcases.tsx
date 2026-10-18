@@ -4,6 +4,7 @@ import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
 import { ERD_DIAGRAM_TESTCASES } from "./testcases/er.ts";
 import { STATE_DIAGRAM_TESTCASES } from "./testcases/state.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
+import { LINE_BREAK_TESTCASES } from "./testcases/lineBreaks.ts";
 
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
@@ -128,6 +129,11 @@ const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
     {
       name: "Unsupported",
       testcases: UNSUPPORTED_DIAGRAM_TESTCASES,
+      documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
+    },
+    {
+      name: "Line Breaks",
+      testcases: LINE_BREAK_TESTCASES,
       documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
     },
   ].map((section, index, sections) => ({
