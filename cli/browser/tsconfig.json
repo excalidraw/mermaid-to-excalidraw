@@ -1,0 +1,4 @@
+{
+  "extends": "../../playground/tsconfig.json",
+  "include": ["./main.ts"]
+}
