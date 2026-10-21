@@ -7,9 +7,10 @@ import {
 } from "../interfaces.js";
 import {
   computeEdgePositions,
-  entityCodesToText,
   getTransformAttr,
+  toCssString,
 } from "../utils.js";
+import { decodeMermaidText } from "../text.js";
 import {
   cleanCSSValue,
   isValidCSSColor,
@@ -416,8 +417,8 @@ const trimSharedTrailingLineIndentation = (lines: string[]) => {
 
 const getStateLabelText = (node: MermaidStateNode) => {
   const labelLines = Array.isArray(node.label)
-    ? node.label.map((entry) => entityCodesToText(entry))
-    : entityCodesToText(node.label || "").split("\n");
+    ? node.label.map((entry) => decodeMermaidText(entry))
+    : decodeMermaidText(node.label || "").split("\n");
   const labelText = trimSharedTrailingLineIndentation(labelLines).join("\n");
 
   return labelText;
@@ -433,7 +434,7 @@ const getStateDescription = (node: MermaidStateNode) => {
     : [node.description];
 
   return description
-    .map((entry) => entityCodesToText(entry))
+    .map((entry) => decodeMermaidText(entry))
     .filter((entry) => entry.length > 0);
 };
 
@@ -454,17 +455,15 @@ const createNodeElementResolver = (containerEl: Element) => {
   };
 
   return (node: MermaidStateNode): SVGGraphicsElement | null => {
-    const selectors = [
-      `[id='${node.domId}']`,
-      `[id='${node.id}']`,
-      `[data-id='${node.id}']`,
-    ];
-
-    for (const selector of selectors) {
-      const element = containerEl.querySelector<SVGGraphicsElement>(selector);
-      if (element) {
-        return markAndReturn(element);
-      }
+    const element = containerEl.querySelector<SVGGraphicsElement>(
+      [
+        ...(node.domId ? [`[id=${toCssString(node.domId)}]`] : []),
+        `[id=${toCssString(node.id)}]`,
+        `[data-id=${toCssString(node.id)}]`,
+      ].join(", ")
+    );
+    if (element) {
+      return markAndReturn(element);
     }
 
     // Mermaid generates random ids for anonymous divider sections during parse
@@ -618,7 +617,9 @@ const parseStateEdge = (
   edge: MermaidStateEdge,
   containerEl: Element
 ): StateEdge | null => {
-  const edgeEl = containerEl.querySelector<SVGPathElement>(`[id='${edge.id}']`);
+  const edgeEl = containerEl.querySelector<SVGPathElement>(
+    `path[id=${toCssString(edge.id)}]`
+  );
   if (!edgeEl) {
     return null;
   }
@@ -673,7 +674,7 @@ const parseStateEdge = (
     id: edge.id,
     start: edge.start,
     end: edge.end,
-    text: entityCodesToText(edge.label || ""),
+    text: decodeMermaidText(edge.label || ""),
     ...edgePositionData,
     strokeColor: edgeStyle.strokeColor,
     strokeWidth: edgeStyle.strokeWidth,

@@ -8,6 +8,7 @@ import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart.t
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence.ts";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported.ts";
+import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks.ts";
 
 const PLAYGROUND_TESTCASES = [
   ...FLOWCHART_DIAGRAM_TESTCASES,
@@ -16,6 +17,7 @@ const PLAYGROUND_TESTCASES = [
   ...ERD_DIAGRAM_TESTCASES,
   ...STATE_DIAGRAM_TESTCASES,
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
+  ...LINE_BREAK_TESTCASES,
 ];
 
 type BBox = {
@@ -248,7 +250,7 @@ const getAbsoluteLinearPoints = (element: any): Array<[number, number]> => {
     ([x, y]: [number, number]) =>
       [Number(element?.x ?? 0) + x, Number(element?.y ?? 0) + y] as [
         number,
-        number,
+        number
       ]
   );
 };
@@ -458,6 +460,19 @@ id1[(Database)]`);
     expect(node.label.fontSize).toBeGreaterThanOrEqual(12);
   });
 
+  it("shrinks multiline cylindrical labels to fit their longest line", async () => {
+    const graph = await parseMermaid(`flowchart LR
+id1[(Data<br>base)]`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const node = result.elements.find((element: any) => element.id === "id1");
+
+    expect(node).toMatchObject({ label: { text: "Data\nbase" } });
+    expect(node.label.fontSize).toBeLessThan(DEFAULT_FONT_SIZE);
+    expect(node.label.fontSize).toBeGreaterThanOrEqual(12);
+  });
+
   it("keeps the default font size for non-cylindrical flowchart nodes", async () => {
     const graph = await parseMermaid(`flowchart LR
 id1[Database]`);
@@ -473,6 +488,626 @@ id1[Database]`);
         fontSize: DEFAULT_FONT_SIZE,
       },
     });
+  });
+
+  it("converts flowchart <br> tags to newlines in node and edge labels", async () => {
+    const graph = await parseMermaid(`flowchart LR
+id1["First line<br>Second line"] -->|"Edge line 1<br/>Edge line 2"| id2["Done"]`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const node = result.elements.find((element: any) => element.id === "id1");
+    const edge = result.elements.find(
+      (element: any) => element.id === "id1_id2"
+    );
+
+    expect(node).toMatchObject({
+      label: {
+        text: "First line\nSecond line",
+      },
+    });
+    expect(edge).toMatchObject({
+      label: {
+        text: "Edge line 1\nEdge line 2",
+      },
+    });
+  });
+
+  it("converts flowchart <br> tags before stripping markdown labels", async () => {
+    const graph = await parseMermaid(`flowchart LR
+subgraph "One"
+a("\`hor<br>se\`") -- "edge label" --> b{{"\`The **dog** in the hog\`"}}
+end`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const horse = result.elements.find((element: any) => element.id === "a");
+    const dog = result.elements.find((element: any) => element.id === "b");
+
+    expect(horse).toMatchObject({
+      label: {
+        text: "hor\nse",
+      },
+    });
+    expect(dog).toMatchObject({
+      label: {
+        text: "The dog in the hog",
+      },
+    });
+  });
+
+  it("falls back to \\n where Mermaid only parses \\n, not <br>", async () => {
+    const flowchart = await parseMermaid(`flowchart TD
+subgraph Title<br>two
+  A<br>B --> C
+end
+style A<br>B fill:#ff0000`);
+    expect(flowchart.type).toBe("flowchart");
+    const flowchartResult = graphToExcalidraw(flowchart);
+    expect(
+      flowchartResult.elements.find(
+        (element: any) =>
+          element.type === "rectangle" && element.label?.text === "A\nB"
+      )
+    ).toMatchObject({ backgroundColor: "#ff0000" });
+    expect(
+      flowchartResult.elements.some(
+        (element: any) => element.label?.text === "Title\ntwo"
+      )
+    ).toBe(true);
+
+    const sequence = await parseMermaid(`sequenceDiagram
+participant A<br>B
+A<br>B->>C: hello<br>there`);
+    expect(sequence.type).toBe("sequence");
+    expect(
+      graphToExcalidraw(sequence).elements.map(
+        (element: any) => element.label?.text ?? element.text
+      )
+    ).toEqual(expect.arrayContaining(["A\nB", "hello\nthere"]));
+  });
+
+  it("reports the original error when neither line break syntax parses", async () => {
+    await expect(
+      parseMermaid(`classDiagram
+class A<br>B`)
+    ).rejects.toThrow(/<br>/);
+  });
+
+  it("converts flowchart line break syntax in bare node ids", async () => {
+    const graph = await parseMermaid(`flowchart TD
+Start --> St\\nop`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: expect.objectContaining({ text: "Start" }),
+        }),
+        expect.objectContaining({
+          label: expect.objectContaining({ text: "St\nop" }),
+        }),
+      ])
+    );
+  });
+
+  it("does not turn flowchart comments or long edge labels into nodes", async () => {
+    const graph = await parseMermaid(`flowchart LR
+%% ignored<br>comment\\ntext
+A -- Edge<br>Label --> B`);
+    expect(graph.type).toBe("flowchart");
+    expect(Object.keys(graph.vertices)).toEqual(["A", "B"]);
+
+    const result = graphToExcalidraw(graph);
+    const rectangles = result.elements.filter(
+      (element: any) => element.type === "rectangle"
+    );
+    const arrows = result.elements.filter(
+      (element: any) => element.type === "arrow"
+    );
+
+    expect(rectangles).toHaveLength(2);
+    expect(arrows).toHaveLength(1);
+    expect(arrows[0]).toMatchObject({
+      label: { text: "Edge\nLabel" },
+    });
+  });
+
+  it("preserves escaped line break text and escaped HTML tags", async () => {
+    const graph = await parseMermaid(`flowchart LR
+A[Break\\nHere] --> B[Literal\\\\nText] --> C[one&lt;br&gt;two]`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    expect(
+      result.elements
+        .filter((element: any) => element.type === "rectangle")
+        .map((element: any) => element.label?.text)
+    ).toEqual(["Break\nHere", "Literal\\nText", "one<br>two"]);
+  });
+
+  it("keeps styles and links attached to bare multiline node ids", async () => {
+    const graph = await parseMermaid(`flowchart TD
+A\\nB --> C
+style A\\nB fill:#ff0000
+click A\\nB "https://example.com/a"`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    expect(
+      result.elements.find(
+        (element: any) =>
+          element.type === "rectangle" && element.label?.text === "A\nB"
+      )
+    ).toMatchObject({
+      label: { text: "A\nB" },
+      backgroundColor: "#ff0000",
+    });
+  });
+
+  it("renders multiline subgraph titles without creating phantom nodes", async () => {
+    const graph = await parseMermaid(`flowchart TD
+subgraph first [First<br>Second]
+  A --> B
+end`);
+    expect(graph.type).toBe("flowchart");
+    expect(graph.subGraphs).toHaveLength(1);
+    expect(Object.keys(graph.vertices)).toEqual(["A", "B"]);
+
+    const result = graphToExcalidraw(graph);
+    const subgraph = result.elements.find(
+      (element: any) => element.id === graph.subGraphs[0].id
+    );
+
+    expect(subgraph).toMatchObject({
+      label: { text: "First\nSecond" },
+    });
+    expect(subgraph.label.fontSize).toBeLessThanOrEqual(DEFAULT_FONT_SIZE);
+
+    const children = graph.subGraphs[0].nodeIds
+      .map((nodeId) =>
+        result.elements.find((element: any) => element.id === nodeId)
+      )
+      .filter(Boolean) as any[];
+    const childTop = Math.min(...children.map((element) => element.y));
+    const labelHeight =
+      subgraph.label.text.split("\n").length * subgraph.label.fontSize * 1.25;
+    expect(childTop).toBeGreaterThanOrEqual(subgraph.y + labelHeight + 10);
+    expect(subgraph.y + subgraph.height).toBeGreaterThanOrEqual(
+      Math.max(...children.map((element) => element.y + element.height))
+    );
+  });
+
+  it("preserves Mermaid's arrowhead clearance for unchanged subgraphs", async () => {
+    const graph = await parseMermaid(`flowchart TB
+subgraph one
+  a1 --> a2
+end
+subgraph two
+  b1 --> b2
+end
+one --> two`);
+    expect(graph.type).toBe("flowchart");
+
+    const parsedEdge = graph.edges.find(
+      (edge) => edge.start === "one" && edge.end === "two"
+    )!;
+    const result = graphToExcalidraw(graph);
+    const arrow = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.start?.id === "one" &&
+        element.end?.id === "two"
+    ) as any;
+    const routePoints = getAbsoluteLinearPoints(arrow);
+
+    expect(routePoints).toHaveLength(parsedEdge.reflectionPoints.length);
+    routePoints.forEach((point, index) => {
+      expect(point[0]).toBeCloseTo(parsedEdge.reflectionPoints[index].x);
+      expect(point[1]).toBeCloseTo(parsedEdge.reflectionPoints[index].y);
+    });
+  });
+
+  it("expands subgraphs for arbitrarily tall multiline titles", async () => {
+    const graph = await parseMermaid(`flowchart TD
+subgraph tall [One<br>Two<br>Three<br>Four<br>Five<br>Six<br>Seven<br>Eight<br>Nine<br>Ten]
+  A --> B
+end`);
+    expect(graph.type).toBe("flowchart");
+
+    const originalEdge = graph.edges[0];
+    const originalNodeTop = graph.vertices.A!.y;
+    const result = graphToExcalidraw(graph);
+    const subgraph = result.elements.find(
+      (element: any) => element.id === graph.subGraphs[0].id
+    ) as any;
+    const nodeA = result.elements.find(
+      (element: any) => element.id === "A"
+    ) as any;
+    const nodeB = result.elements.find(
+      (element: any) => element.id === "B"
+    ) as any;
+    const arrow = result.elements.find(
+      (element: any) => element.id === "A_B"
+    ) as any;
+
+    expect(subgraph.label.text.split("\n")).toHaveLength(10);
+    expect(subgraph.label.fontSize).toBe(DEFAULT_FONT_SIZE);
+    const labelBottom =
+      subgraph.y +
+      subgraph.label.text.split("\n").length * subgraph.label.fontSize * 1.25 +
+      10;
+    expect(Math.min(nodeA.y, nodeB.y)).toBeGreaterThanOrEqual(labelBottom);
+    expect(subgraph.y + subgraph.height).toBeGreaterThanOrEqual(
+      Math.max(nodeA.y + nodeA.height, nodeB.y + nodeB.height)
+    );
+
+    const verticalShift = nodeA.y - originalNodeTop;
+    expect(verticalShift).toBeGreaterThan(0);
+    expect(arrow.y - originalEdge.startY).toBeCloseTo(verticalShift);
+    expect(arrow.points).toHaveLength(originalEdge.reflectionPoints.length);
+    arrow.points.forEach((point: [number, number], index: number) => {
+      expect(point[0]).toBeCloseTo(
+        originalEdge.reflectionPoints[index].x -
+          originalEdge.reflectionPoints[0].x
+      );
+      expect(point[1]).toBeCloseTo(
+        originalEdge.reflectionPoints[index].y -
+          originalEdge.reflectionPoints[0].y
+      );
+    });
+  });
+
+  it("keeps edges attached to arbitrarily tall multiline subgraphs", async () => {
+    const graph = await parseMermaid(`flowchart TD
+subgraph tall [A<br>B<br>C<br>D<br>E<br>F<br>G<br>H<br>I<br>J]
+  X --> Y
+end
+tall --> Z`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const parsedSubgraph = graph.subGraphs[0];
+    const subgraph = result.elements.find(
+      (element: any) => element.id === parsedSubgraph.id
+    ) as any;
+    const arrow = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.start?.id === parsedSubgraph.id &&
+        element.end?.id === "Z"
+    ) as any;
+
+    expect(subgraph).toBeTruthy();
+    expect(arrow).toBeTruthy();
+    const startPoint = getAbsoluteLinearPoints(arrow)[0];
+    expect(distanceToRectangleOutline(startPoint, subgraph)).toBeLessThan(1);
+    expect(isPointInsideRectangleInterior(startPoint, subgraph)).toBe(false);
+  });
+
+  it("reflows nodes and edges around wide multiline subgraph titles", async () => {
+    const graph = await parseMermaid(`flowchart LR
+subgraph sg [A_very_very_very_very_very_very_long_title<br>Second]
+  X --> Y
+end
+Z --> sg
+sg --> Q`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    const subgraph = result.elements.find(
+      (element: any) => element.id === "sg"
+    ) as any;
+    const leftNode = result.elements.find(
+      (element: any) => element.id === "Z"
+    ) as any;
+    const rightNode = result.elements.find(
+      (element: any) => element.id === "Q"
+    ) as any;
+    const incoming = result.elements.find(
+      (element: any) => element.type === "arrow" && element.end?.id === "sg"
+    ) as any;
+    const outgoing = result.elements.find(
+      (element: any) => element.type === "arrow" && element.start?.id === "sg"
+    ) as any;
+
+    expect(leftNode.x + leftNode.width).toBeLessThanOrEqual(subgraph.x);
+    expect(rightNode.x).toBeGreaterThanOrEqual(subgraph.x + subgraph.width);
+    const incomingEnd = getAbsoluteLinearPoints(incoming).at(-1)!;
+    const outgoingStart = getAbsoluteLinearPoints(outgoing)[0];
+    expect(distanceToRectangleOutline(incomingEnd, subgraph)).toBeLessThan(1);
+    expect(distanceToRectangleOutline(outgoingStart, subgraph)).toBeLessThan(1);
+  });
+
+  it("keeps nested multiline subgraph labels clear of their contents", async () => {
+    const graph = await parseMermaid(`flowchart TD
+subgraph outer [Outer<br>Group]
+  subgraph tall [One<br>Two<br>Three<br>Four<br>Five<br>Six<br>Seven<br>Eight<br>Nine<br>Ten]
+    A --> B
+  end
+  B --> C
+end`);
+    expect(graph.type).toBe("flowchart");
+
+    const result = graphToExcalidraw(graph);
+    graph.subGraphs.forEach((parsedSubgraph) => {
+      const subgraph = result.elements.find(
+        (element: any) => element.id === parsedSubgraph.id
+      ) as any;
+      const children = parsedSubgraph.nodeIds
+        .map((nodeId) =>
+          result.elements.find((element: any) => element.id === nodeId)
+        )
+        .filter(Boolean) as any[];
+      expect(subgraph).toBeTruthy();
+      expect(children.length).toBeGreaterThan(0);
+
+      const requiredHeaderHeight =
+        subgraph.label.text.split("\n").length *
+          subgraph.label.fontSize *
+          1.25 +
+        10;
+      expect(
+        Math.min(...children.map((child) => child.y))
+      ).toBeGreaterThanOrEqual(subgraph.y + requiredHeaderHeight);
+      expect(subgraph.y + subgraph.height).toBeGreaterThanOrEqual(
+        Math.max(...children.map((child) => child.y + child.height))
+      );
+    });
+
+    result.elements
+      .filter((element: any) => element.type === "arrow")
+      .forEach((arrow: any) => {
+        expect(arrow.points.length).toBeGreaterThanOrEqual(2);
+        arrow.points.flat().forEach((coordinate: number) => {
+          expect(Number.isFinite(coordinate)).toBe(true);
+        });
+      });
+  });
+
+  it("preserves references to multiline subgraphs and dotted edge labels", async () => {
+    const graph = await parseMermaid(`flowchart TD
+subgraph foo [Foo<br>Bar]
+  A
+end
+foo --> B
+A -. Edge<br>Label .- B`);
+    expect(graph.type).toBe("flowchart");
+    expect(graph.edges).toHaveLength(2);
+    expect(graph.edges.map((edge) => edge.text)).toContain("Edge\nLabel");
+  });
+
+  it("preserves line breaks in class aliases", async () => {
+    const graph = await parseMermaid(`classDiagram
+class Animal["First<br>Second"]`);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    expect(
+      result.elements.find((element: any) => element.id === "Animal")
+    ).toMatchObject({
+      label: { text: "First\nSecond" },
+    });
+  });
+
+  it("preserves line breaks in class members", async () => {
+    const graph = await parseMermaid(`classDiagram
+class Animal {
+  +first<br>second
+}`);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "text",
+          text: "+first\nsecond",
+        }),
+      ])
+    );
+  });
+
+  it("preserves line breaks in inline class members", async () => {
+    const graph = await parseMermaid(`classDiagram
+class Animal["First<br>Second"] { +first<br>second }
+class Dog["Good\\nboy"]`);
+    expect(graph.type).toBe("class");
+
+    expect(graph.text).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: "+first\nsecond" }),
+      ])
+    );
+    const result = graphToExcalidraw(graph);
+    expect(
+      result.elements.find((element: any) => element.id === "Animal")
+    ).toMatchObject({ label: { text: "First\nSecond" } });
+    expect(
+      result.elements.find((element: any) => element.id === "Dog")
+    ).toMatchObject({ label: { text: "Good\nboy" } });
+  });
+
+  it("keeps multiline class members at their siblings' font size", async () => {
+    const graph = await parseMermaid(`classDiagram
+class Animal {
+  +first<br>second<br>third
+  +other
+  +do\\nwork()
+  +done()
+}`);
+    expect(graph.type).toBe("class");
+
+    const textByContent = (text: string) =>
+      graph.text.find((element) => element.text === text);
+    const firstMember = textByContent("+first\nsecond\nthird");
+    const nextMember = textByContent("+other");
+    const firstMethod = textByContent("+do\nwork()");
+    const nextMethod = textByContent("+done()");
+    expect(firstMember).toBeTruthy();
+    expect(firstMethod).toBeTruthy();
+    expect(firstMember!.fontSize).toBe(nextMember!.fontSize);
+    expect(firstMethod!.fontSize).toBe(nextMethod!.fontSize);
+  });
+
+  it("shifts downstream class ranks after large multiline expansion", async () => {
+    const graph = await parseMermaid(`classDiagram
+class A {
+  +one<br>two<br>three<br>four<br>five<br>six<br>seven<br>eight<br>nine<br>ten
+}
+class B {
+  +next
+}
+A --> B`);
+    expect(graph.type).toBe("class");
+
+    const baselineGraph = await parseMermaid(`classDiagram
+class A {
+  +one
+}
+class B {
+  +next
+}
+A --> B`);
+    expect(baselineGraph.type).toBe("class");
+
+    const classA = graph.nodes
+      .flat()
+      .find((element) => element.type === "rectangle" && element.id === "A");
+    const classB = graph.nodes
+      .flat()
+      .find((element) => element.type === "rectangle" && element.id === "B");
+    const baselineClassA = baselineGraph.nodes
+      .flat()
+      .find((element) => element.type === "rectangle" && element.id === "A");
+    const baselineClassB = baselineGraph.nodes
+      .flat()
+      .find((element) => element.type === "rectangle" && element.id === "B");
+    const classBText = graph.text.find((element) => element.text === "+next");
+    const relation = graph.arrows.find(
+      (arrow) => arrow.start?.id === "A" && arrow.end?.id === "B"
+    );
+
+    expect(classA).toBeTruthy();
+    expect(classB).toBeTruthy();
+    expect(baselineClassA).toBeTruthy();
+    expect(baselineClassB).toBeTruthy();
+    expect(classBText).toBeTruthy();
+    expect(relation).toBeTruthy();
+    const originalGap =
+      baselineClassB!.y - (baselineClassA!.y + baselineClassA!.height!);
+    const expandedGap = classB!.y - (classA!.y + classA!.height!);
+    expect(expandedGap).toBeGreaterThanOrEqual(originalGap);
+    expect(classBText!.y).toBeGreaterThan(classB!.y);
+    expect(relation!.endY).toBeGreaterThan(relation!.startY);
+  });
+
+  it("keeps class note connectors attached after multiline rank shifts", async () => {
+    const graph = await parseMermaid(`classDiagram
+direction TB
+class A {
+  +one<br>two<br>three<br>four<br>five<br>six<br>seven<br>eight<br>nine<br>ten
+}
+class B
+A --> B
+note for B "downstream note"`);
+    expect(graph.type).toBe("class");
+
+    const result = graphToExcalidraw(graph);
+    const classB = result.elements.find(
+      (element: any) => element.type === "rectangle" && element.id === "B"
+    ) as any;
+    const connector = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" &&
+        element.start?.id === "note0" &&
+        element.end?.id === "B"
+    ) as any;
+
+    expect(classB).toBeTruthy();
+    expect(connector).toBeTruthy();
+    const connectorPoints = getAbsoluteLinearPoints(connector);
+    const endpoint = connectorPoints[connectorPoints.length - 1];
+    expect(isPointNearRectangle(endpoint, classB)).toBe(true);
+    expect(isPointInsideRectangleInterior(endpoint, classB)).toBe(false);
+  });
+
+  it("preserves line breaks in ER entity aliases", async () => {
+    const graph = await parseMermaid(`erDiagram
+CUSTOMER["First<br>Second"] {
+  string name
+}`);
+    expect(graph.type).toBe("erd");
+
+    const result = graphToExcalidraw(graph);
+    const entity = result.elements.find(
+      (element: any) =>
+        element.type === "rectangle" &&
+        String(element.id).startsWith("entity-CUSTOMER-")
+    );
+
+    expect(entity).toMatchObject({
+      label: { text: "First\nSecond" },
+    });
+  });
+
+  it("preserves line breaks in ER relationships and attribute comments", async () => {
+    const graph = await parseMermaid(`erDiagram
+PERSON ||--|| CAR : "owns<br>drives"
+PERSON ||--o{ BIKE : "rides\\nsometimes"
+PERSON {
+  string name "first<br>last"
+  string id "unique\\nkey"
+}`);
+    expect(graph.type).toBe("erd");
+
+    const result = graphToExcalidraw(graph);
+    expect(result.elements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: "arrow",
+          label: expect.objectContaining({ text: "owns\ndrives" }),
+        }),
+        expect.objectContaining({
+          type: "arrow",
+          label: expect.objectContaining({ text: "rides\nsometimes" }),
+        }),
+        expect.objectContaining({ type: "text", text: "first\nlast" }),
+        expect.objectContaining({ type: "text", text: "unique\nkey" }),
+      ])
+    );
+  });
+
+  it("preserves line breaks in inline ER attributes", async () => {
+    const graph = await parseMermaid(`erDiagram
+PERSON { string name "first<br>last" }`);
+    expect(graph.type).toBe("erd");
+
+    expect(graph.text).toEqual(
+      expect.arrayContaining([expect.objectContaining({ text: "first\nlast" })])
+    );
+  });
+
+  it("keeps escaped newlines literal in class and ER fields", async () => {
+    const evenRun = "\\".repeat(2);
+    const classGraph = await parseMermaid(`classDiagram
+class A {
+  +even${evenRun}nvalue
+}`);
+    expect(classGraph.type).toBe("class");
+    expect(classGraph.text.map((element) => element.text)).toContain(
+      "+even\\nvalue"
+    );
+
+    const erGraph = await parseMermaid(`erDiagram
+PERSON {
+  string even "even${evenRun}nvalue"
+}`);
+    expect(erGraph.type).toBe("erd");
+    expect(erGraph.text.map((element) => element.text)).toContain(
+      "even\\nvalue"
+    );
   });
 
   it("uses rectangle labels for class headers while keeping members as text", async () => {
@@ -937,6 +1572,238 @@ id1[Database]`);
     textElements.forEach((element: any) => {
       expect(element.strokeColor).toBeUndefined();
     });
+  });
+
+  it("preserves line breaks in sequence actors, messages, and notes", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+box First<br>Second
+participant A as First\\nSecond
+participant B
+end
+A->>B: Edge<br>Label
+Note over A,B: Note\\nBody`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const labels = result.elements
+      .map((element: any) => element.label?.text)
+      .filter(Boolean);
+
+    expect(labels).toEqual(
+      expect.arrayContaining(["First\nSecond", "Edge\nLabel", "Note\nBody"])
+    );
+
+    const groupLabel = result.elements.find(
+      (element: any) =>
+        element.type === "text" && element.text === "First\nSecond"
+    );
+    expect(groupLabel).toMatchObject({
+      width: 58,
+      height: 40,
+    });
+
+    const groupId = groupLabel.groupIds[0];
+    const groupRect = result.elements.find(
+      (element: any) =>
+        element.type === "rectangle" &&
+        !element.label?.text &&
+        element.groupIds?.includes(groupId)
+    ) as any;
+    expect(groupRect).toBeTruthy();
+    expect(groupLabel.y).toBeGreaterThanOrEqual(groupRect.y);
+    expect(groupLabel.y + groupLabel.height).toBeLessThanOrEqual(
+      groupRect.y + groupRect.height
+    );
+  });
+
+  it("expands sequence participant rows for tall multiline labels", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+participant A as A<br>B<br>C<br>D
+participant Z
+A->>Z: hello`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const topActor = result.elements.find(
+      (element: any) => element.id === "A-top"
+    ) as any;
+    const bottomActor = result.elements.find(
+      (element: any) => element.id === "A-bottom"
+    ) as any;
+    const message = result.elements.find(
+      (element: any) => element.type === "arrow"
+    ) as any;
+    const lifeline = result.elements.find(
+      (element: any) =>
+        element.type === "line" && element.x === topActor.x + topActor.width / 2
+    ) as any;
+
+    expect(topActor.height).toBeGreaterThanOrEqual(90);
+    expect(lifeline.y).toBe(topActor.y + topActor.height);
+    expect(message.y).toBeGreaterThan(topActor.y + topActor.height);
+    expect(bottomActor.y).toBeGreaterThan(message.y);
+  });
+
+  it("keeps tall sequence messages in Mermaid's reserved vertical space", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+participant A
+participant B
+A->>B: A<br>B<br>C<br>D<br>E<br>F<br>G<br>H<br>I<br>J
+Note over A,B: next note
+B->>A: second`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const firstMessage = result.elements.find(
+      (element: any) =>
+        element.type === "arrow" && element.label?.text.startsWith("A\nB")
+    ) as any;
+    const note = result.elements.find(
+      (element: any) =>
+        element.type === "rectangle" && element.label?.text === "next note"
+    ) as any;
+    const labelHeight = 10 * 16 * 1.25;
+
+    expect(firstMessage).toBeTruthy();
+    expect(note).toBeTruthy();
+    expect(firstMessage.y + labelHeight / 2).toBeLessThanOrEqual(note.y);
+  });
+
+  it("matches nested sequence frame labels to their rendered positions", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+participant A
+participant B
+alt Outer<br>First
+loop Inner\\nLoop
+A->>B: x
+end
+else Outer<br>Second
+critical Critical<br>Main
+B-->>A: y
+option Critical\\nFallback
+A->>B: z
+end
+end`);
+    expect(graph.type).toBe("sequence");
+
+    expect(
+      graph.loops?.texts
+        .slice()
+        .sort((left, right) => left.y - right.y)
+        .map((text) => text.text)
+    ).toEqual([
+      "[Outer\nFirst]",
+      "[Inner\nLoop]",
+      "[Outer\nSecond]",
+      "[Critical\nMain]",
+      "[Critical\nFallback]",
+    ]);
+  });
+
+  it("sizes multiline stick-figure actor labels and their box bounds", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+box Team<br>North
+actor A as One<br>Two<br>Three<br>Four
+end
+participant Z
+A->>Z: hello`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const topLabels = result.elements.filter(
+      (element: any) =>
+        element.type === "text" &&
+        element.id?.startsWith("A-top-") &&
+        element.text === "One\nTwo\nThree\nFour"
+    ) as any[];
+    const bottomLabel = result.elements.find(
+      (element: any) =>
+        element.type === "text" &&
+        element.id?.startsWith("A-bottom-") &&
+        element.text === "One\nTwo\nThree\nFour"
+    ) as any;
+    const groupLabel = result.elements.find(
+      (element: any) =>
+        element.type === "text" && element.text === "Team\nNorth"
+    ) as any;
+    const groupRect = result.elements.find(
+      (element: any) =>
+        element.type === "rectangle" &&
+        !element.label?.text &&
+        element.groupIds?.includes(groupLabel.groupIds[0])
+    ) as any;
+
+    expect(topLabels).toHaveLength(1);
+    expect(topLabels[0].height).toBeGreaterThanOrEqual(100);
+    expect(bottomLabel.y + bottomLabel.height).toBeLessThanOrEqual(
+      groupRect.y + groupRect.height
+    );
+    expect(groupLabel.y).toBeGreaterThanOrEqual(groupRect.y);
+  });
+
+  it("keeps bare multiline sequence participants connected", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+participant A\\nB
+actor C\\nD as Custom<br>Actor
+A\\nB->>C\\nD: Hello<br>there
+Note over A\\nB,C\\nD: Together`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const labels = result.elements
+      .map((element: any) => element.label?.text ?? element.text)
+      .filter(Boolean);
+    const arrows = result.elements.filter(
+      (element: any) => element.type === "arrow"
+    );
+
+    expect(labels).toEqual(
+      expect.arrayContaining(["A\nB", "Custom\nActor", "Hello\nthere"])
+    );
+    expect(
+      arrows.some((arrow: any) => arrow.label?.text === "Hello\nthere")
+    ).toBe(true);
+  });
+
+  it("keeps bare multiline sequence actors in boxes and create flows", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+box Team
+participant A\\nB
+end
+create participant C\\nD
+A\\nB->>C\\nD: create
+destroy C\\nD
+C\\nD--xA\\nB: done`);
+    expect(graph.type).toBe("sequence");
+
+    const result = graphToExcalidraw(graph);
+    const labels = result.elements
+      .map((element: any) => element.label?.text ?? element.text)
+      .filter(Boolean);
+
+    expect(labels).toEqual(expect.arrayContaining(["A\nB", "C\nD"]));
+    expect(graph.groups).toHaveLength(1);
+    expect(graph.groups[0].actorKeys).toHaveLength(1);
+    expect(graph.groups[0].actorKeys[0]).toBe("A\\nB");
+    expect(graph.arrows).toHaveLength(2);
+  });
+
+  it("preserves activation modifiers on bare multiline sequence ids", async () => {
+    const graph = await parseMermaid(`sequenceDiagram
+participant A\\nB
+participant C\\nD
+A\\nB->>+C\\nD: hi<br>there
+C\\nD-->>-A\\nB: bye`);
+    expect(graph.type).toBe("sequence");
+
+    const activations = graph.nodes
+      .flat()
+      .filter((node) => node.subtype === "activation");
+    expect(activations).toHaveLength(1);
+    expect(graph.arrows.map((arrow) => arrow.label?.text)).toEqual([
+      "hi\nthere",
+      "bye",
+    ]);
   });
 
   it("uses font size 18 for ERD entity table text without changing relationship labels", async () => {

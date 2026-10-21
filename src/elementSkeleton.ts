@@ -46,6 +46,7 @@ export type Text = {
   height?: number;
   fontSize: number;
   color?: string;
+  textAlign?: ExcalidrawTextElement["textAlign"];
   groupId?: string;
   metadata?: { [key: string]: any };
 };
@@ -145,8 +146,11 @@ export const createArrowSkeletonFromSVG = (
   }
   if (opts?.label) {
     // In mermaid the text is positioned above arrow but in Excalidraw
-    // its postioned on the arrow hence the elements below it might look cluttered so shifting the arrow by an offset of 10px
-    const offset = 10;
+    // is positioned on the arrow. Move the line up by half the rendered label
+    // height so multiline labels stay in the vertical space Mermaid reserved
+    // above the original message line.
+    const lineCount = entityCodesToText(opts.label).split("\n").length;
+    const offset = (lineCount * 16 * 1.25) / 2;
     arrow.startY = arrow.startY - offset;
     arrow.endY = arrow.endY - offset;
   }

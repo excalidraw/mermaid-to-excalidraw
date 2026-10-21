@@ -2,11 +2,11 @@ import { nanoid } from "nanoid";
 
 import {
   dedupeConsecutivePoints,
-  entityCodesToText,
   getDecodedEdgePoints,
   getPathCoordinates,
   getTransformAttr,
 } from "../utils.js";
+import { decodeMermaidText, getTextContentWithLineBreaks } from "../text.js";
 import {
   Arrow,
   Container,
@@ -341,7 +341,9 @@ const createArrowFromRoutePoints = (
 ) => {
   if (routePoints.length < 2) {
     throw new Error(
-      `Class diagram edge ${primaryEdgePath?.id || "<unknown>"} is missing usable path points`
+      `Class diagram edge ${
+        primaryEdgePath?.id || "<unknown>"
+      } is missing usable path points`
     );
   }
 
@@ -375,7 +377,11 @@ const createPreservedRouteArrowFromEdgePaths = (
   edgePaths: readonly SVGPathElement[],
   opts: NonNullable<Parameters<typeof createArrowSkeletion>[4]>
 ) =>
-  createArrowFromRoutePoints(mergeEdgeRoutePoints(edgePaths), edgePaths[0], opts);
+  createArrowFromRoutePoints(
+    mergeEdgeRoutePoints(edgePaths),
+    edgePaths[0],
+    opts
+  );
 
 // Standard class relations read better in Excalidraw as direct connections.
 // Keep this separate from preserved-route arrows so we can remove/adjust this
@@ -437,7 +443,9 @@ const getSelfRelationTitlePosition = (
   }
 
   const isStart = side === "start";
-  const endpoint = isStart ? routePoints[0] : routePoints[routePoints.length - 1];
+  const endpoint = isStart
+    ? routePoints[0]
+    : routePoints[routePoints.length - 1];
   const adjacentPoint = isStart
     ? routePoints[1]
     : routePoints[routePoints.length - 2];
@@ -710,16 +718,7 @@ const parseClasses = (
       const isForeignObject =
         textNode.tagName.toLowerCase() === "foreignobject";
 
-      const tspans = !isForeignObject
-        ? Array.from(textNode.querySelectorAll("tspan"))
-        : [];
-
-      const rawText = tspans.length
-        ? tspans
-            .map((span) => span.textContent?.trim())
-            .filter(Boolean)
-            .join("\n")
-        : textNode.textContent?.trim() || "";
+      const rawText = getTextContentWithLineBreaks(textNode);
 
       if (!rawText) {
         return;
@@ -750,7 +749,7 @@ const parseClasses = (
 
       parsedTextElements.push({
         section: getClassTextSection(textNode, domNode),
-        text: entityCodesToText(rawText),
+        text: rawText,
         x: boundingBox.x,
         y: boundingBox.y + ty,
         width:
@@ -868,7 +867,9 @@ const parseRelations = (
         strokeStyle,
         startArrowhead,
         endArrowhead,
-        label: relationNode.title ? { text: relationNode.title } : undefined,
+        label: relationNode.title
+          ? { text: decodeMermaidText(relationNode.title) }
+          : undefined,
         start: { type: "rectangle", id: node1.id },
         end: { type: "rectangle", id: node2.id },
       });
@@ -885,7 +886,9 @@ const parseRelations = (
         strokeStyle,
         startArrowhead,
         endArrowhead,
-        label: relationNode.title ? { text: relationNode.title } : undefined,
+        label: relationNode.title
+          ? { text: decodeMermaidText(relationNode.title) }
+          : undefined,
         start: { type: "rectangle", id: node1.id },
         end: { type: "rectangle", id: node2.id },
       });
@@ -941,16 +944,21 @@ const parseRelations = (
             break;
           default:
             x = arrow.startX - offsetX;
-          y = arrow.startY + offsetY;
+            y = arrow.startY + offsetY;
         }
       }
 
       x ??= arrow.startX - offsetX;
       y ??= arrow.startY + offsetY;
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle1, {
-        fontSize: 16,
-      });
+      const relationTitleElement = createTextSkeleton(
+        x,
+        y,
+        decodeMermaidText(relationTitle1),
+        {
+          fontSize: 16,
+        }
+      );
 
       text.push(relationTitleElement);
     }
@@ -993,16 +1001,21 @@ const parseRelations = (
             break;
           default:
             x = arrow.endX + offsetX;
-          y = arrow.endY - offsetY;
+            y = arrow.endY - offsetY;
         }
       }
 
       x ??= arrow.endX + offsetX;
       y ??= arrow.endY + offsetY;
 
-      const relationTitleElement = createTextSkeleton(x, y, relationTitle2, {
-        fontSize: 16,
-      });
+      const relationTitleElement = createTextSkeleton(
+        x,
+        y,
+        decodeMermaidText(relationTitle2),
+        {
+          fontSize: 16,
+        }
+      );
 
       text.push(relationTitleElement);
     }
@@ -1028,7 +1041,7 @@ const parseNotes = (
     const container = createContainerSkeletonFromSVG(rect, "rectangle", {
       id,
       subtype: "note",
-      label: { text },
+      label: { text: decodeMermaidText(text) },
     });
     Object.assign(container, {
       x: container.x + transformX,

@@ -30,6 +30,14 @@ export const getTransformAttr = (el: Element) => {
   return { transformX, transformY };
 };
 
+// Quote a value for a CSS attribute selector, e.g. `[id=${toCssString(id)}]`.
+// Mermaid ids can contain backslashes and quotes (e.g. the bare id `A\nB`),
+// which break naive interpolation into a selector.
+export const toCssString = (value: string) =>
+  `"${value
+    .replace(/["\\]/g, "\\$&")
+    .replace(/[\n\r\f]/g, (char) => `\\${char.charCodeAt(0).toString(16)} `)}"`;
+
 //TODO Once fixed in mermaid this will be removed
 export const encodeEntities = (text: string) => {
   let txt = text;

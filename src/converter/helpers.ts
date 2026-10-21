@@ -13,6 +13,18 @@ import type { Mutable } from "@excalidraw/excalidraw/common/utility-types";
 import { removeMarkdown } from "@excalidraw/markdown-to-text";
 import { Edge } from "../parser/flowchart.js";
 
+const removeMarkdownPreservingLineBreaks = (text: string) => {
+  let lineBreakPlaceholder = "\uE000";
+  while (text.includes(lineBreakPlaceholder)) {
+    lineBreakPlaceholder += "\uE000";
+  }
+
+  return removeMarkdown(text.replace(/\n/g, lineBreakPlaceholder)).replace(
+    new RegExp(lineBreakPlaceholder, "g"),
+    "\n"
+  );
+};
+
 /**
  * Compute groupIds for each element
  */
@@ -58,7 +70,7 @@ export const computeExcalidrawArrowType = (
 export const getText = (element: Vertex | Edge | SubGraph): string => {
   let text = element.text;
   if (element.labelType === "markdown") {
-    text = removeMarkdown(element.text);
+    text = removeMarkdownPreservingLineBreaks(text);
   }
 
   return removeFontAwesomeIcons(text);

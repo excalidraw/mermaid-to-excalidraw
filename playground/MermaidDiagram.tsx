@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import mermaid from "mermaid";
 import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue.ts";
+import {
+  withLineBreakFallback,
+  withMermaidLineBreaks,
+} from "../src/mermaidLineBreaks.ts";
 
 interface MermaidProps {
   id: string;
@@ -32,7 +36,11 @@ export const MermaidDiagram = ({ definition, id }: MermaidProps) => {
     const render = async (definition: string) => {
       try {
         const { svg } = await runMermaidTaskSequentially(() =>
-          mermaid.render(renderId, definition, tempContainer)
+          withLineBreakFallback(definition, (candidate) =>
+            withMermaidLineBreaks(candidate, () =>
+              mermaid.render(renderId, candidate, tempContainer)
+            )
+          )
         );
 
         if (!isCancelled) {

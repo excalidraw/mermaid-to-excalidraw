@@ -12,6 +12,10 @@ import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { parseMermaid, resolveMermaidConfig } from "../src/parseMermaid";
 import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue";
+import {
+  withLineBreakFallback,
+  withMermaidLineBreaks,
+} from "../src/mermaidLineBreaks";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
@@ -19,6 +23,7 @@ import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
+import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks";
 import { ensureExcalidrawFontsLoaded } from "../playground/loadExcalidrawFonts";
 
 interface TestCase {
@@ -34,6 +39,7 @@ const ALL_TESTCASES: TestCase[] = [
   ...ERD_DIAGRAM_TESTCASES,
   ...STATE_DIAGRAM_TESTCASES,
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
+  ...LINE_BREAK_TESTCASES,
 ];
 
 // Apply Playwright-mode layout before the harness reports ready, so the first
@@ -70,7 +76,11 @@ const renderMermaidSvg = async (renderId: string, definition: string) => {
 
   try {
     const { svg } = await runMermaidTaskSequentially(() =>
-      mermaid.render(renderId, definition, tempContainer)
+      withLineBreakFallback(definition, (candidate) =>
+        withMermaidLineBreaks(candidate, () =>
+          mermaid.render(renderId, candidate, tempContainer)
+        )
+      )
     );
     return svg;
   } finally {
@@ -259,6 +269,8 @@ interface CacheEntry {
   mermaidHtml: string;
   excalidrawHtml: string;
   errorText: string;
+  lastElements?: unknown;
+  lastSkeleton?: unknown;
 }
 const renderCache = new Map<number, CacheEntry>();
 
@@ -291,6 +303,8 @@ async function renderTestCase(index: number): Promise<void> {
     errorDiv.textContent = cached.errorText;
     mermaidOutput.innerHTML = cached.mermaidHtml;
     excalidrawOutput.innerHTML = cached.excalidrawHtml;
+    (window as any).__LAST_ELEMENTS__ = cached.lastElements;
+    (window as any).__LAST_SKELETON__ = cached.lastSkeleton;
     return;
   }
 
@@ -366,6 +380,8 @@ async function renderTestCase(index: number): Promise<void> {
       mermaidHtml: mermaidOutput.innerHTML,
       excalidrawHtml: excalidrawOutput.innerHTML,
       errorText: "",
+      lastElements: excalidrawElements,
+      lastSkeleton: elements,
     });
 
     // Expose last render's elements for debugging

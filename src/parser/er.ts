@@ -11,11 +11,11 @@ import {
   createTextSkeleton,
 } from "../elementSkeleton.js";
 import {
-  entityCodesToText,
   getDecodedEdgePoints,
   getPathCoordinates,
   getTransformAttr,
 } from "../utils.js";
+import { decodeMermaidText, getTextContentWithLineBreaks } from "../text.js";
 import {
   cleanCSSValue,
   isValidCSSColor,
@@ -104,17 +104,7 @@ const accumulateTranslation = (node: Element, stopAt?: Element | null) => {
   return { tx, ty };
 };
 
-const getTextContent = (node: Element) => {
-  const tspans = Array.from(node.querySelectorAll("tspan"));
-  const text = tspans.length
-    ? tspans
-        .map((span) => span.textContent?.trim())
-        .filter(Boolean)
-        .join("\n")
-    : node.textContent?.trim() || "";
-
-  return entityCodesToText(text);
-};
+const getTextContent = (node: Element) => getTextContentWithLineBreaks(node);
 
 const getFontSize = (node: Element) => {
   const textNode =
@@ -333,7 +323,7 @@ const parseEntity = (
   const attributeGroups = labelGroups.filter((group) => group !== titleGroup);
 
   const titleText =
-    titleGroup?.text || entityCodesToText(entity.alias || entity.label || "");
+    titleGroup?.text || decodeMermaidText(entity.alias || entity.label || "");
 
   const container: Container = {
     type: "rectangle",
@@ -437,7 +427,7 @@ const parseRelationship = (edge: ERLayoutEdge, containerEl: Element): Arrow => {
       id: edge.id,
       label: edge.label
         ? {
-            text: entityCodesToText(edge.label),
+            text: decodeMermaidText(edge.label),
             fontSize: 16,
             textAlign: "center",
           }
