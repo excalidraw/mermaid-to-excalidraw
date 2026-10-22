@@ -29,6 +29,25 @@ describe("normalizeText", () => {
   });
 });
 
+describe("decodeMermaidText", () => {
+  it("keeps the content of inline HTML tags, but not the tags", () => {
+    expect(decodeMermaidText("Entity 6<br><sub>Entity6</sub>")).toBe(
+      "Entity 6\nEntity6"
+    );
+    expect(
+      decodeMermaidText('<b>bold</b> <span style="color:red">red</span>')
+    ).toBe("bold red");
+  });
+
+  it("keeps escaped tags and comparisons as text", () => {
+    expect(decodeMermaidText("&lt;sub&gt;x&lt;/sub&gt;")).toBe("<sub>x</sub>");
+    expect(decodeMermaidText("#lt;b#gt;")).toBe("<b>");
+    expect(decodeMermaidText("a < b and c > d")).toBe("a < b and c > d");
+    expect(decodeMermaidText("List<String>")).toBe("List<String>");
+    expect(decodeMermaidText("Map<A, B>")).toBe("Map<A, B>");
+  });
+});
+
 describe("replaceEscapedNewlines", () => {
   it("replaces odd slash runs and halves escaped slashes", () => {
     expect(replaceEscapedNewlines("a\\nb", "<br/>")).toBe("a<br/>b");

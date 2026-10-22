@@ -8,6 +8,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: __dirname,
+  // Not the default `node_modules/.vite`, which the playground's dev server
+  // uses for a different set of dependencies: running both at once, each
+  // re-optimization would invalidate the other's (`504 Outdated Optimize Dep`).
+  cacheDir: resolve(__dirname, "../node_modules/.vite-visual-tests"),
   resolve: {
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
@@ -49,6 +53,12 @@ export default defineConfig({
   ],
   server: {
     port: 3419,
-    fs: { allow: [__dirname, resolve(__dirname, "..")] },
+    fs: {
+      allow: [__dirname, resolve(__dirname, "..")],
+      // Vite caches which files exist, but misses files created outside the
+      // root (e.g. a new `src/` module), which then fail to resolve until
+      // the server restarts.
+      cachedChecks: false,
+    },
   },
 });

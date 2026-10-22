@@ -5047,6 +5047,11 @@ pathval@^1.1.1:
   resolved "https://registry.yarnpkg.com/pathval/-/pathval-1.1.1.tgz#8534e77a77ce7ac5a2512ea21e0fdb8fcf6c3d8d"
   integrity sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==
 
+pele@1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/pele/-/pele-1.8.0.tgz#85853ea6207dd619a2cc24592483a5360c1474b9"
+  integrity sha512-AYmHttE70cwNJVXdfPMCANGivFlmc3bGGpMG0GqH5S5vE3RgtEuLlkqbhRfe94Csv/ZEd1TUbv2dMUHpw4p1Bg==
+
 perfect-freehand@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/perfect-freehand/-/perfect-freehand-1.2.0.tgz#706a0f854544f6175772440c51d3b0563eb3988a"

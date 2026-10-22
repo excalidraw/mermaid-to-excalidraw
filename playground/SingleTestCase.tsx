@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { MermaidDiagram } from "./MermaidDiagram";
 import { ExcalidrawSvgPreview } from "./ExcalidrawSvgPreview";
+import { ENGINE_LABELS } from "./engine";
+import type { DiagramEngine } from "../src/parseDiagram";
 
 export interface TestCase {
   type: "class" | "erd" | "flowchart" | "sequence" | "state" | "unsupported";
@@ -9,6 +11,7 @@ export interface TestCase {
 }
 
 export interface SingleTestCaseProps {
+  engine: DiagramEngine;
   testcase: TestCase;
   onChange: (definition: string) => void;
   onInsertMermaidSvg: (svgHtml: string, width: number, height: number) => void;
@@ -41,6 +44,7 @@ const copyToClipboard = async (text: string) => {
 };
 
 const SingleTestCase = ({
+  engine,
   testcase,
   onChange,
   onInsertMermaidSvg,
@@ -126,7 +130,7 @@ const SingleTestCase = ({
 
       <div className="diagram-preview-grid">
         <section className="diagram-preview-panel">
-          <h3 className="diagram-preview-title">{"Mermaid SVG"}</h3>
+          <h3 className="diagram-preview-title">{`${ENGINE_LABELS[engine]} SVG`}</h3>
           <div
             ref={mermaidSvgRef}
             className="diagram-preview-surface diagram-preview-clickable"
@@ -153,6 +157,7 @@ const SingleTestCase = ({
           >
             <MermaidDiagram
               key={editableDefinition}
+              engine={engine}
               definition={editableDefinition}
               id={`${type}-${index}`}
             />
@@ -168,7 +173,10 @@ const SingleTestCase = ({
               onChange(editableDefinition);
             }}
           >
-            <ExcalidrawSvgPreview definition={editableDefinition} />
+            <ExcalidrawSvgPreview
+              engine={engine}
+              definition={editableDefinition}
+            />
           </div>
         </section>
       </div>

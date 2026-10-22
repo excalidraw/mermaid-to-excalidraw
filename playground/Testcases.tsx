@@ -9,8 +9,10 @@ import { LINE_BREAK_TESTCASES } from "./testcases/lineBreaks.ts";
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 import { usePersistedSectionState } from "./usePersistedSectionState.ts";
+import type { DiagramEngine } from "../src/parseDiagram.ts";
 
 interface TestcasesProps {
+  engine: DiagramEngine;
   onChange: (
     definition: MermaidData["definition"],
     activeTestCaseIndex: number | "custom" | null
@@ -20,6 +22,7 @@ interface TestcasesProps {
 }
 
 interface TestcaseSectionProps {
+  engine: DiagramEngine;
   name: string;
   testcases: TestCase[];
   startIndex: number;
@@ -29,6 +32,7 @@ interface TestcaseSectionProps {
 }
 
 const TestcaseSection = ({
+  engine,
   name,
   testcases,
   startIndex,
@@ -78,6 +82,7 @@ const TestcaseSection = ({
             return (
               <SingleTestCase
                 key={`${testcase.type}-${index}`}
+                engine={engine}
                 index={testcaseIndex}
                 onChange={(definition) => {
                   onChange(definition, testcaseIndex);
@@ -93,7 +98,11 @@ const TestcaseSection = ({
   );
 };
 
-const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
+const Testcases = ({
+  engine,
+  onChange,
+  onInsertMermaidSvg,
+}: TestcasesProps) => {
   const testcaseTypes: {
     name: string;
     testcases: TestCase[];
@@ -150,6 +159,7 @@ const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
           return (
             <TestcaseSection
               key={name}
+              engine={engine}
               documentationHref={documentationHref}
               name={name}
               onChange={onChange}

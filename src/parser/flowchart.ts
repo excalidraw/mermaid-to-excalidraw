@@ -47,6 +47,11 @@ export interface Edge {
   endX: number;
   endY: number;
   reflectionPoints: Position[];
+  /**
+   * Where along the edge (0 at its start, 1 at its end, by length) its label
+   * is centered, if not halfway.
+   */
+  labelPosition?: number;
 }
 
 const applyContainerStyleProperty = (

@@ -42,31 +42,11 @@ const estimateTextHeight = (text: string, fontSize: number) =>
     text.split("\n").length * fontSize * EXCALIDRAW_LINE_HEIGHT
   );
 
-const addGroupId = (
-  element: ExcalidrawElementSkeleton,
-  groupId: string,
-  includeLabel = true
-) => {
-  const mutableElement = element as any;
-  const existingGroupIds = mutableElement.groupIds ?? [];
-  if (!existingGroupIds.includes(groupId)) {
-    mutableElement.groupIds = [...existingGroupIds, groupId];
-  }
-
-  if (!includeLabel || !mutableElement.label) {
-    return;
-  }
-
-  const labelGroupIds = mutableElement.label.groupIds ?? [];
-  if (!labelGroupIds.includes(groupId)) {
-    mutableElement.label.groupIds = [...labelGroupIds, groupId];
-  }
-};
-
 export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Sequence) => {
     const elements: ExcalidrawElementSkeleton[] = [];
     const activations: ExcalidrawElementSkeleton[] = [];
+    const notes: ExcalidrawElementSkeleton[] = [];
     Object.values(chart.nodes).forEach((node) => {
       if (!node || !node.length) {
         return;
@@ -93,6 +73,8 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
         }
         if (element.type === "rectangle" && element?.subtype === "activation") {
           activations.push(excalidrawElement);
+        } else if (element.type === "rectangle" && element.subtype === "note") {
+          notes.push(excalidrawElement);
         } else {
           elements.push(excalidrawElement);
         }
@@ -106,6 +88,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
       elements.push(transformToExcalidrawLineSkeleton(line));
     });
 
+    const sequenceNumbers: ExcalidrawElementSkeleton[] = [];
     Object.values(chart.arrows).forEach((arrow) => {
       if (!arrow) {
         return;
@@ -113,12 +96,16 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
 
       elements.push(transformToExcalidrawArrowSkeleton(arrow));
       if (arrow.sequenceNumber) {
-        elements.push(
+        sequenceNumbers.push(
           transformToExcalidrawContainerSkeleton(arrow.sequenceNumber)
         );
       }
     });
     elements.push(...activations);
+    // On top of the lifelines and activations, which a note over them, or a
+    // message's number, can sit on
+    elements.push(...notes);
+    elements.push(...sequenceNumbers);
 
     // loops
     if (chart.loops) {
@@ -137,68 +124,84 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
     if (chart.groups) {
       chart.groups.forEach((group) => {
         const { actorKeys, name } = group;
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = 0;
-        let maxY = 0;
-        if (!actorKeys.length) {
-          return;
-        }
-        const actors = elements.filter((ele) => {
-          if (ele.id) {
-            const hyphenIndex = ele.id.indexOf("-");
-            const id = ele.id.substring(0, hyphenIndex);
-            return actorKeys.includes(id);
-          }
-          return false;
-        });
-        if (!actors.length) {
-          return;
-        }
-
-        actors.forEach((actor) => {
-          if (
-            actor.x === undefined ||
-            actor.y === undefined ||
-            actor.width === undefined ||
-            actor.height === undefined
-          ) {
-            return;
-          }
-          minX = Math.min(minX, actor.x);
-          minY = Math.min(minY, actor.y);
-          maxX = Math.max(maxX, actor.x + actor.width);
-          maxY = Math.max(maxY, actor.y + actor.height);
-        });
-        if (
-          !Number.isFinite(minX) ||
-          !Number.isFinite(minY) ||
-          !Number.isFinite(maxX) ||
-          !Number.isFinite(maxY)
-        ) {
-          return;
-        }
-
         const groupLabelHeight = name
           ? estimateTextHeight(name, GROUP_LABEL_FONT_SIZE)
           : 0;
         const groupLabelWidth = name
           ? estimateTextWidth(name, GROUP_LABEL_FONT_SIZE)
           : 0;
-        const contentWidth = maxX - minX + GROUP_RECT_PADDING * 2;
-        const groupRectWidth = Math.max(
-          contentWidth,
-          groupLabelWidth + GROUP_RECT_PADDING * 2
-        );
-        // Reserve a header inside the group instead of placing its title above
-        // the border, where multiline names otherwise collide with neighbors.
-        const groupRectX =
-          minX - GROUP_RECT_PADDING - (groupRectWidth - contentWidth) / 2;
-        const groupRectY = minY - GROUP_RECT_PADDING - groupLabelHeight;
-        const groupRectHeight =
-          maxY - minY + GROUP_RECT_PADDING * 2 + groupLabelHeight;
-        const groupRectId = nanoid();
-        const groupId = nanoid();
+        let groupRectX: number;
+        let groupRectY: number;
+        let groupRectWidth: number;
+        let groupRectHeight: number;
+
+        if (group.bounds) {
+          ({
+            x: groupRectX,
+            y: groupRectY,
+            width: groupRectWidth,
+            height: groupRectHeight,
+          } = group.bounds);
+        } else {
+          if (!actorKeys.length) {
+            return;
+          }
+          const actors = elements.filter((ele) => {
+            if (ele.id) {
+              const hyphenIndex = ele.id.indexOf("-");
+              const id = ele.id.substring(0, hyphenIndex);
+              return actorKeys.includes(id);
+            }
+            return false;
+          });
+          if (!actors.length) {
+            return;
+          }
+
+          let minX = Infinity;
+          let minY = Infinity;
+          let maxX = 0;
+          let maxY = 0;
+          actors.forEach((actor) => {
+            if (
+              actor.x === undefined ||
+              actor.y === undefined ||
+              actor.width === undefined ||
+              actor.height === undefined
+            ) {
+              return;
+            }
+            minX = Math.min(minX, actor.x);
+            minY = Math.min(minY, actor.y);
+            maxX = Math.max(maxX, actor.x + actor.width);
+            maxY = Math.max(maxY, actor.y + actor.height);
+          });
+          if (
+            !Number.isFinite(minX) ||
+            !Number.isFinite(minY) ||
+            !Number.isFinite(maxX) ||
+            !Number.isFinite(maxY)
+          ) {
+            return;
+          }
+
+          const contentWidth = maxX - minX + GROUP_RECT_PADDING * 2;
+          groupRectWidth = Math.max(
+            contentWidth,
+            groupLabelWidth + GROUP_RECT_PADDING * 2
+          );
+          // Reserve a header inside the group instead of placing its title
+          // above the border, where multiline names otherwise collide with
+          // neighbors.
+          groupRectX =
+            minX - GROUP_RECT_PADDING - (groupRectWidth - contentWidth) / 2;
+          groupRectY = minY - GROUP_RECT_PADDING - groupLabelHeight;
+          groupRectHeight =
+            maxY - minY + GROUP_RECT_PADDING * 2 + groupLabelHeight;
+        }
+        // Not grouped with what's in it: Excalidraw keeps a group's elements
+        // together in z-order, which would put them under the `rect`
+        // highlights drawn over the box
         const groupRect = transformToExcalidrawContainerSkeleton({
           type: "rectangle",
           x: groupRectX,
@@ -208,32 +211,9 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
           bgColor: isTransparentFill(group.fill) ? undefined : group.fill,
           strokeColor: "#1f1f1f",
           strokeWidth: 1,
-          id: groupRectId,
-          groupId,
+          id: nanoid(),
         });
         elements.unshift(groupRect);
-
-        elements.forEach((ele) => {
-          if (ele.id === groupRectId) {
-            return;
-          }
-          if (
-            ele.x === undefined ||
-            ele.y === undefined ||
-            ele.width === undefined ||
-            ele.height === undefined
-          ) {
-            return;
-          }
-          if (
-            ele.x >= minX &&
-            ele.x + ele.width <= maxX &&
-            ele.y >= minY &&
-            ele.y + ele.height <= maxY
-          ) {
-            addGroupId(ele, groupId);
-          }
-        });
 
         if (name) {
           const groupLabel = transformToExcalidrawTextSkeleton({
@@ -246,9 +226,7 @@ export const SequenceToExcalidrawSkeletonConvertor = new GraphConverter({
             height: groupLabelHeight,
             fontSize: GROUP_LABEL_FONT_SIZE,
             color: "#1f1f1f",
-            groupId,
           });
-          addGroupId(groupLabel, groupId, false);
           elements.push(groupLabel);
         }
       });

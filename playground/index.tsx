@@ -1,19 +1,33 @@
-import { useState, useCallback, useDeferredValue, useEffect, useRef } from "react";
 import {
-  convertToExcalidrawElements,
-} from "@excalidraw/excalidraw";
+  useState,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+} from "react";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
-import { parseMermaid } from "../src/parseMermaid.ts";
+import {
+  parseDiagram,
+  type DiagramEngine,
+  type ParsedDiagram,
+} from "../src/parseDiagram.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
+import {
+  DIAGRAM_ENGINES,
+  ENGINE_LABELS,
+  readInitialEngine,
+  writeStoredEngine,
+} from "./engine.ts";
 
 import "@excalidraw/excalidraw/index.css";
 
 export interface MermaidData {
   definition: string;
-  output: Awaited<ReturnType<typeof parseMermaid>> | null;
+  output: ParsedDiagram | null;
   error: string | null;
 }
 
@@ -77,6 +91,7 @@ const App = () => {
 
   const [activeTestCaseIndex, setActiveTestCaseIndex] =
     useState<ActiveTestCaseIndex>(null);
+  const [engine, setEngine] = useState<DiagramEngine>(readInitialEngine);
   const [themeState, setThemeState] = useState<ThemeState>(() => {
     const storedThemeMode = readStoredThemeMode();
     if (storedThemeMode) {
@@ -198,7 +213,7 @@ const App = () => {
       try {
         setActiveTestCaseIndex(activeTestCaseIndex);
 
-        const mermaid = await parseMermaid(definition);
+        const mermaid = await parseDiagram(definition, undefined, engine);
 
         setMermaidData({
           definition,
@@ -221,8 +236,59 @@ const App = () => {
         });
       }
     },
-    []
+    [engine]
   );
+
+  // Re-render the current diagram with the engine picked
+  const latestRenderRef = useRef({ mermaidData, activeTestCaseIndex });
+  latestRenderRef.current = { mermaidData, activeTestCaseIndex };
+  useEffect(() => {
+    const { mermaidData, activeTestCaseIndex } = latestRenderRef.current;
+    if (mermaidData.definition) {
+      handleOnChange(mermaidData.definition, activeTestCaseIndex);
+    }
+  }, [handleOnChange]);
+
+  const handleEngineChange = useCallback((nextEngine: DiagramEngine) => {
+    writeStoredEngine(nextEngine);
+    setEngine(nextEngine);
+  }, []);
+
+  // Tab / Shift+Tab cycle through the engines wherever the focus is, except in
+  // Excalidraw's text editor (where Tab indents)
+  const engineRef = useRef(engine);
+  engineRef.current = engine;
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Tab" ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.isComposing ||
+        (event.target as Element | null)?.closest?.(".excalidraw-wysiwyg")
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      if (event.repeat) {
+        return;
+      }
+
+      const step = event.shiftKey ? -1 : 1;
+      const index = DIAGRAM_ENGINES.indexOf(engineRef.current);
+      handleEngineChange(
+        DIAGRAM_ENGINES[
+          (index + step + DIAGRAM_ENGINES.length) % DIAGRAM_ENGINES.length
+        ]
+      );
+    };
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [handleEngineChange]);
 
   return (
     <>
@@ -244,6 +310,24 @@ const App = () => {
           <div className="playground-hero-copy">
             <p className="playground-kicker">{"Mermaid to Excalidraw"}</p>
           </div>
+          <div
+            className="engine-toggle"
+            role="group"
+            aria-label="Diagram engine"
+            title="The engine that parses and lays out the diagram (Tab)"
+          >
+            {DIAGRAM_ENGINES.map((diagramEngine) => (
+              <button
+                key={diagramEngine}
+                type="button"
+                id={`engine-${diagramEngine}`}
+                aria-pressed={engine === diagramEngine}
+                onClick={() => handleEngineChange(diagramEngine)}
+              >
+                {ENGINE_LABELS[diagramEngine]}
+              </button>
+            ))}
+          </div>
           <a
             className="playground-doc-link"
             target="_blank"
@@ -257,6 +341,7 @@ const App = () => {
 
         <section id="custom-test" className="">
           <CustomTest
+            engine={engine}
             activeTestCaseIndex={activeTestCaseIndex}
             mermaidData={deferredMermaidData}
             onChange={handleOnChange}
@@ -270,6 +355,7 @@ const App = () => {
             </div>
           </div>
           <Testcases
+            engine={engine}
             activeTestCaseIndex={activeTestCaseIndex}
             onChange={handleOnChange}
             onInsertMermaidSvg={handleInsertMermaidSvg}

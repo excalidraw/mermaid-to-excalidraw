@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph WaterStream["Main Water Treatment Stream"]
+        A["Incoming Sewage"] --> B["Screening"]
+        B --> C["Grit Removal"]
+        C --> D["Primary Settling"]
+        D --> E["Biological Treatment"]
+        E --> F["Secondary Clarification"]
+        F --> G["Disinfection"]
+        G --> H{"Quality Check"}
+        H -- "Pass" --> I["Treated-Water Discharge"]
+        H -- "Fail" --> J["Holding Tank"]
+        J --> E
+        F -- "Return Activated Sludge" --> E
+    end
+
+    subgraph SludgeStream["Sludge Processing Branch"]
+        K["Sludge Thickening"]
+        L["Anaerobic Digestion"]
+        M["Dewatering"]
+        K --> L
+        L --> M
+    end
+
+    D -- "Primary Sludge" --> K
+    F -- "Waste Activated Sludge" --> K
+
+    style WaterStream fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style SludgeStream fill:#efebe9,stroke:#5d4037,stroke-width:2px

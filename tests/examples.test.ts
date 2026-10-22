@@ -1602,14 +1602,19 @@ Note over A,B: Note\\nBody`);
       height: 40,
     });
 
-    const groupId = groupLabel.groupIds[0];
     const groupRect = result.elements.find(
       (element: any) =>
         element.type === "rectangle" &&
         !element.label?.text &&
-        element.groupIds?.includes(groupId)
+        element.x <= groupLabel.x &&
+        element.x + element.width >= groupLabel.x + groupLabel.width
     ) as any;
     expect(groupRect).toBeTruthy();
+    // not grouped: Excalidraw would keep a group's elements together in
+    // z-order, under highlights drawn over the box
+    result.elements.forEach((element: any) =>
+      expect(element.groupIds ?? []).toEqual([])
+    );
     expect(groupLabel.y).toBeGreaterThanOrEqual(groupRect.y);
     expect(groupLabel.y + groupLabel.height).toBeLessThanOrEqual(
       groupRect.y + groupRect.height
@@ -1730,7 +1735,8 @@ A->>Z: hello`);
       (element: any) =>
         element.type === "rectangle" &&
         !element.label?.text &&
-        element.groupIds?.includes(groupLabel.groupIds[0])
+        element.x <= groupLabel.x &&
+        element.x + element.width >= groupLabel.x + groupLabel.width
     ) as any;
 
     expect(topLabels).toHaveLength(1);

@@ -64,8 +64,19 @@ Currently `mermaid-to-excalidraw` only supports the :point_down: config params
    * @default 50000
    */
   maxTextSize?: number;
+  /**
+   * The engine that parses and lays out the diagram (experimental, see below).
+   * @default "mermaid"
+   */
+  engine?: "mermaid" | "pele";
 }
 ```
+
+### Engines (experimental)
+
+By default, diagrams are parsed and laid out by [Mermaid](https://mermaid.js.org), rendered in the DOM. With `engine: "pele"`, they're parsed and laid out by [Pele](https://pele.run), which reads the same Mermaid syntax but needs no DOM. Its layout differs from Mermaid's.
+
+Like the Mermaid engine, it converts flowcharts, sequence, class, ER and state diagrams to Excalidraw elements, and inserts other diagram types as an image.
 
 Example code:
 
@@ -96,6 +107,8 @@ Try out [here](https://mermaid-to-excalidraw.vercel.app).
 - `yarn test:visual` to run visual tests
 - `yarn test:visual:update` to update visual tests
 - `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
+  - `?engine=pele` (or the `Engine` button / <kbd>e</kbd> / <kbd>Tab</kbd>) switches the engine
+- `VISUAL_TESTS_ENGINES=mermaid,pele yarn test:visual` to also run visual tests with the Pele engine (its snapshots are prefixed with `pele-`)
 
 ## API
 

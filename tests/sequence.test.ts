@@ -163,9 +163,9 @@ describe("Sequence parser", () => {
     expect(result.type).toBe("sequence");
     expect(result.lines).toHaveLength(2);
     expect(result.arrows).toHaveLength(2);
-    expect(result.arrows[0].start?.type).toBe("ellipse");
-    expect(result.arrows[0].end?.type).toBe("ellipse");
-    expect(result.arrows[0].start?.id).toBe("Alice-top-0");
-    expect(result.arrows[0].end?.id).toBe("Bob-top-0");
+    // not bound to the actors, far up the lifelines (Excalidraw would move
+    // the arrows' ends onto them)
+    expect(result.arrows[0].start).toBeUndefined();
+    expect(result.arrows[0].end).toBeUndefined();
   });
 });

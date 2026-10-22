@@ -20,6 +20,8 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
   endArrowhead?: SupportedArrowhead;
   start?: ValidLinearElement["start"];
   end?: ValidLinearElement["end"];
+  /** `null` for sharp corners. Round by default. */
+  roundness?: ValidLinearElement["roundness"];
 };
 
 export type Line = {

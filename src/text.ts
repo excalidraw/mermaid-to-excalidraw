@@ -25,12 +25,45 @@ export const replaceEscapedNewlines = (text: string, lineBreak: string) =>
 export const normalizeText = (text: string) =>
   replaceEscapedNewlines(text.replace(MERMAID_LINE_BREAK_TAG, "\n"), "\n");
 
+// Inline HTML Mermaid renders in labels (e.g. `<sub>`, `<b>`). Excalidraw text
+// is plain, so only their content is kept. Lowercase only, so generic type
+// parameters (e.g. `Map<K, V>`, `List<A>`) are kept.
+const MERMAID_INLINE_HTML_TAG =
+  /<\/?(?:a|abbr|b|big|cite|code|del|em|font|i|ins|kbd|mark|q|s|samp|small|span|strike|strong|sub|sup|tt|u|var)(?:\s[^<>]*)?\/?>/g;
+
 /**
- * Normalizes real Mermaid break syntax before decoding entities. Keeping this
- * order is important: `&lt;br&gt;` is literal text, not a line break.
+ * Normalizes real Mermaid break syntax and strips inline HTML before decoding
+ * entities. Keeping this order is important: `&lt;br&gt;` and `&lt;sub&gt;`
+ * are literal text, not markup.
  */
 export const decodeMermaidText = (text: string) =>
-  entityCodesToText(normalizeText(text));
+  entityCodesToText(normalizeText(text).replace(MERMAID_INLINE_HTML_TAG, ""));
+
+/**
+ * Runs a parse or render `task` with `definition`. `<br>` doesn't parse
+ * everywhere `\n` does (e.g. bare flowchart ids and subgraph titles, sequence
+ * participants), so if the task fails, it's retried once with `<br>` replaced
+ * by `\n`. If that fails too, the original error is thrown. Definitions that
+ * parse cost nothing extra.
+ */
+export const withLineBreakFallback = async <T>(
+  definition: string,
+  task: (definition: string) => Promise<T>
+) => {
+  try {
+    return await task(definition);
+  } catch (error) {
+    const fallback = definition.replace(MERMAID_LINE_BREAK_TAG, "\\n");
+    if (fallback === definition) {
+      throw error;
+    }
+    try {
+      return await task(fallback);
+    } catch {
+      throw error;
+    }
+  }
+};
 
 const getNodeText = (node: Node): string => {
   if (node.nodeType === Node.TEXT_NODE) {

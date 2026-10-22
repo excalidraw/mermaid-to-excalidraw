@@ -26,6 +26,13 @@ const ALL_TESTCASES = [
   })),
 ];
 
+// Comma-separated engines to test, e.g. `VISUAL_TESTS_ENGINES=mermaid,pele`.
+// Snapshots of engines other than mermaid are prefixed with the engine name.
+const ENGINES = (process.env.VISUAL_TESTS_ENGINES || "mermaid")
+  .split(",")
+  .map((engine) => engine.trim())
+  .filter(Boolean);
+
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -56,24 +63,34 @@ test.afterAll(async () => {
   await sharedPage.close();
 });
 
-ALL_TESTCASES.forEach((tc, index) => {
-  test(`#${index} ${tc.name}`, async () => {
-    await sharedPage.evaluate((i) => (window as any).renderTestCase(i), index);
+ENGINES.forEach((engine) => {
+  const titlePrefix = engine === "mermaid" ? "" : `[${engine}] `;
+  const snapshotPrefix = engine === "mermaid" ? "" : `${engine}-`;
 
-    // Wait for both panels to have SVG content (or error for unsupported)
-    await sharedPage.waitForFunction(
-      () => {
-        const mermaidSvg = document.querySelector("#mermaid-output svg");
-        const excalidrawSvg = document.querySelector("#excalidraw-output svg");
-        const error = document.getElementById("error")?.textContent;
-        return (mermaidSvg && excalidrawSvg) || (error && error.length > 0);
-      },
-      { timeout: 15000 }
-    );
+  ALL_TESTCASES.forEach((tc, index) => {
+    test(`${titlePrefix}#${index} ${tc.name}`, async () => {
+      await sharedPage.evaluate(
+        ([i, engine]) => (window as any).renderTestCase(i, engine),
+        [index, engine] as const
+      );
 
-    const container = sharedPage.locator("#container");
-    await expect(container).toHaveScreenshot(
-      `${index}-${tc.chartType}-${slugify(tc.name)}.png`
-    );
+      // Wait for both panels to have SVG content (or error for unsupported)
+      await sharedPage.waitForFunction(
+        () => {
+          const mermaidSvg = document.querySelector("#mermaid-output svg");
+          const excalidrawSvg = document.querySelector(
+            "#excalidraw-output svg"
+          );
+          const error = document.getElementById("error")?.textContent;
+          return (mermaidSvg && excalidrawSvg) || (error && error.length > 0);
+        },
+        { timeout: 15000 }
+      );
+
+      const container = sharedPage.locator("#container");
+      await expect(container).toHaveScreenshot(
+        `${snapshotPrefix}${index}-${tc.chartType}-${slugify(tc.name)}.png`
+      );
+    });
   });
 });

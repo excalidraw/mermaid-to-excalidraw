@@ -1,0 +1,68 @@
+sequenceDiagram
+    autonumber
+    actor Driver
+    participant App as Assistance App
+    box rgb(240, 245, 255) Matching and Dispatch
+    participant Dispatch as Dispatch Service
+    participant Loc as Location Service
+    end
+    box rgb(245, 255, 240) Field Operations
+    actor Operator as Tow Operator
+    end
+
+    Driver->>App: Report breakdown
+    App->>Loc: Request current coordinates
+    Loc-->>App: Return coordinates
+    App->>Driver: Ask location confirmation
+    Driver->>App: Confirm location
+    App->>Dispatch: Submit assistance request
+
+    rect rgb(240, 245, 255)
+    Dispatch->>Loc: Query nearby tow operators
+    Loc-->>Dispatch: List of candidates
+
+    loop Offering job sequentially
+        Dispatch->>Operator: Send job offer
+        alt Operator rejects or times out
+            Operator-->>Dispatch: Decline offer
+        else Operator accepts
+            Operator-->>Dispatch: Accept job
+        end
+    end
+
+    alt No operator available
+        Dispatch->>App: Job assignment failed
+        App->>Driver: Escalation message: Support calling directly
+    else Operator assigned
+        Dispatch->>App: Notify operator assigned with details
+        App->>Driver: Display operator assignment and ETA
+    end
+    end
+
+    rect rgb(245, 255, 240)
+    opt Driver cancels before operator departure
+        Driver->>App: Request cancellation
+        App->>Dispatch: Cancel service request
+        Dispatch->>Operator: Abort dispatch
+        Dispatch-->>App: Cancellation confirmed
+        App-->>Driver: Display cancellation notice
+    end
+
+    loop Periodic status updates
+        Operator->>Dispatch: Send transit location and updated ETA
+        Dispatch->>App: Push transit update
+        App->>Driver: Refresh live map and ETA
+    end
+
+    Operator->>Dispatch: Update status: Arrived at scene
+    Dispatch->>App: Notify arrival
+    App->>Driver: Alert: Tow operator has arrived
+
+    Operator->>Dispatch: Mark job completed
+    Dispatch->>App: Forward completion confirmation
+    App->>Driver: Request sign-off
+    Driver->>App: Confirm service completion
+    App->>Dispatch: Finalize transaction
+    Dispatch->>App: Generate receipt
+    App->>Driver: Display and email receipt
+    end

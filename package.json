@@ -26,7 +26,8 @@
     "@excalidraw/markdown-to-text": "0.1.2",
     "@mermaid-js/parser": "^0.6.3",
     "mermaid": "^11.12.1",
-    "nanoid": "4.0.2"
+    "nanoid": "4.0.2",
+    "pele": "1.8.0"
   },
   "devDependencies": {
     "@babel/core": "7.12.0",

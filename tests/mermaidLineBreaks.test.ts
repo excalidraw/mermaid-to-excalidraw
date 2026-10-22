@@ -1,9 +1,7 @@
 import mermaid from "mermaid";
 
-import {
-  withLineBreakFallback,
-  withMermaidLineBreaks,
-} from "../src/mermaidLineBreaks.js";
+import { withMermaidLineBreaks } from "../src/mermaidLineBreaks.js";
+import { withLineBreakFallback } from "../src/text.js";
 
 // `mermaidAPI` is frozen: use a copy whose `getDiagramFromText` is observable.
 vi.mock("mermaid", async (importOriginal) => {

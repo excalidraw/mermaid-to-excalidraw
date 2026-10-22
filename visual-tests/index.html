@@ -224,12 +224,13 @@
       <button id="show-all">Show All</button>
       <button id="overlap-btn">Overlap (q)</button>
       <button id="dark-btn">Dark</button>
+      <button id="engine-btn" title="Toggle engine (e / Tab)">Engine</button>
     </nav>
     <div id="container">
       <div id="case-label"></div>
       <div id="container-panels">
         <div class="panel">
-          <h4>Mermaid SVG</h4>
+          <h4 id="reference-title">Mermaid SVG</h4>
           <div class="panel-toolbar">
             <button id="copy-mermaid-svg">copy svg</button>
           </div>
@@ -278,6 +279,13 @@
       let darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const darkBtn = document.getElementById("dark-btn");
 
+      const engineBtn = document.getElementById("engine-btn");
+      const syncEngineState = () => {
+        engineBtn.textContent = `Engine: ${window.getEngine()}`;
+        engineBtn.classList.toggle("active", window.getEngine() === "pele");
+      };
+      syncEngineState();
+
       const updateUrl = ({ push = false } = {}) => {
         if (isPw) return;
         const params = new URLSearchParams();
@@ -285,6 +293,9 @@
         if (showingAll) params.set("all", "");
         if (overlapping) params.set("overlap", "");
         if (darkMode) params.set("dark", "");
+        if (window.getEngine() !== "mermaid") {
+          params.set("engine", window.getEngine());
+        }
         const url = `?${params.toString()}`;
         if (push) {
           history.pushState(null, "", url);
@@ -326,6 +337,13 @@
           overlapping = !overlapping;
           syncOverlapState();
           updateUrl();
+        }
+        if (e.key === "e" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+          toggleEngine();
+        }
+        if (e.key === "Tab" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          if (!e.repeat) toggleEngine();
         }
         if (e.key === "D" && e.altKey && e.shiftKey) {
           e.preventDefault();
@@ -432,6 +450,18 @@
         updateUrl();
       });
 
+      function toggleEngine() {
+        window.setEngine(window.getEngine() === "pele" ? "mermaid" : "pele");
+        syncEngineState();
+        updateUrl();
+        if (showingAll) {
+          window.renderAllTestCases();
+        } else {
+          window.renderTestCase(+picker.value);
+        }
+      }
+      engineBtn.addEventListener("click", toggleEngine);
+
       // Restore full UI state from current URL params.
       const restoreFromUrl = () => {
         const p = new URLSearchParams(location.search);
@@ -439,6 +469,8 @@
         const wantOverlap = p.has("overlap");
         const wantDark = p.has("dark");
         const wantCase = +(p.get("case") ?? 0);
+        window.setEngine(p.get("engine") === "pele" ? "pele" : "mermaid");
+        syncEngineState();
 
         overlapping = wantOverlap;
         syncOverlapState();

@@ -1,0 +1,35 @@
+flowchart TD
+    subgraph Intake["Intake Area"]
+        A["Visitor Check-in"] --> B["Describe Item Fault"]
+        B --> C{"Skilled Volunteer Available?"}
+        C -- No --> D["Refer to Specialist"]
+        C -- Yes --> E{"Can Item Be Assessed Safely?"}
+        E -- No --> F["Decline Unsafe Item"]
+        F --> G["Responsibly Recycled"]
+    end
+
+    subgraph RepairBench["Repair Bench"]
+        E -- Yes --> H["Initial Diagnosis"]
+        H --> I{"Are Replacement Parts Needed?"}
+        I -- No --> J["Attempt Repair"]
+        I -- Yes --> K{"Spare Parts Available On-site?"}
+        K -- Yes --> J
+        K -- No --> L{"Can Visitor Acquire Parts Later?"}
+        L -- Yes --> M["Schedule Return Appointment"]
+        L -- No --> N{"Fixable Without New Parts?"}
+        N -- Yes --> J
+        N -- No --> O{"Worth Professional Service?"}
+        O -- Yes --> D
+        O -- No --> G
+        J --> P["Test Repaired Item"]
+        P --> Q{"Did Test Pass?"}
+        Q -- No --> R{"Can Further Attempts Be Made?"}
+        R -- Yes --> H
+        R -- No --> O
+        Q -- Yes --> S["Item Successfully Repaired"]
+    end
+
+    S --> T["Visitor Departure with Item"]
+    M --> T
+    D --> T
+    G --> U["Disposal at Designated Facility"]

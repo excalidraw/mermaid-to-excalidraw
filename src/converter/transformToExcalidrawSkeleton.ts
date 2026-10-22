@@ -117,9 +117,7 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
       textAlign: arrow?.label?.textAlign,
       verticalAlign: arrow?.label?.verticalAlign,
     },
-    roundness: {
-      type: 2,
-    },
+    roundness: arrow.roundness === undefined ? { type: 2 } : arrow.roundness,
     start: arrow.start,
     end: arrow.end,
   };

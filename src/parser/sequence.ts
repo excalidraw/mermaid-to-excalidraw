@@ -29,6 +29,8 @@ type Group = {
   name: string;
   actorKeys: Array<string>;
   fill: string;
+  /** Where the box is drawn, if known. Otherwise, it's fitted to its actors. */
+  bounds?: { x: number; y: number; width: number; height: number };
 };
 
 type MermaidSequenceParser = {
@@ -60,11 +62,6 @@ type Actor = {
   type: "actor" | "participant";
 };
 
-type ParsedActor = {
-  topId?: string;
-  bottomId?: string;
-  bindType?: "rectangle" | "ellipse";
-};
 // Currently mermaid supported these 6 arrow types, the names are taken from mermaidParser.LINETYPE
 const SEQUENCE_ARROW_TYPES = {
   0: "SOLID",
@@ -271,7 +268,6 @@ const parseActor = (
 ): {
   nodes: Array<Node[]>;
   lines: Array<Line>;
-  actorMap: Record<string, ParsedActor>;
 } => {
   const actorTopNodes = Array.from(
     containerEl.querySelectorAll<SVGElement>(".actor-top")
@@ -282,7 +278,6 @@ const parseActor = (
 
   const nodes: Array<Node[]> = [];
   const lines: Array<Line> = [];
-  const actorMap: Record<string, ParsedActor> = {};
   const actorList =
     actors instanceof Map ? Array.from(actors.values()) : Object.values(actors);
   const actorLineNodes = Array.from(
@@ -347,11 +342,6 @@ const parseActor = (
         "rectangle",
         { id: `${actor.name}-bottom`, label: { text }, subtype: "actor" }
       );
-      actorMap[actor.name] = {
-        topId: `${actor.name}-top`,
-        bottomId: `${actor.name}-bottom`,
-        bindType: "rectangle",
-      };
       applyRectStyles(bottomNodeElement, bottomRootNode);
       nodes.push([bottomNodeElement]);
 
@@ -409,31 +399,13 @@ const parseActor = (
         );
         lines.push(line);
       }
-
-      const topEllipseNode = topNodeElement.find(
-        (node): node is Container => node.type === "ellipse"
-      );
-      const bottomEllipseActorNode = bottomNodeElement.find(
-        (node): node is Container => node.type === "ellipse"
-      );
-      if (topEllipseNode?.id && bottomEllipseActorNode?.id) {
-        actorMap[actor.name] = {
-          topId: topEllipseNode.id,
-          bottomId: bottomEllipseActorNode.id,
-          bindType: "ellipse",
-        };
-      }
     }
   });
 
-  return { nodes, lines, actorMap };
+  return { nodes, lines };
 };
 
-const computeArrows = (
-  messages: Message[],
-  containerEl: Element,
-  actorMap: Record<string, ParsedActor>
-) => {
+const computeArrows = (messages: Message[], containerEl: Element) => {
   const arrows: Arrow[] = [];
 
   const arrowNodes = Array.from<SVGLineElement>(
@@ -455,13 +427,8 @@ const computeArrows = (
           ? null
           : "arrow",
     });
-    // Attach to actors if available
-    const from = actorMap[message.from];
-    const to = actorMap[message.to];
-    if (from?.topId && to?.topId) {
-      arrow.start = { type: from.bindType || "rectangle", id: from.topId };
-      arrow.end = { type: to.bindType || "rectangle", id: to.topId };
-    }
+    // Not bound to the actors: they're far up the lifelines, and Excalidraw
+    // moves a bound arrow's ends onto what it's bound to (e.g. on undo/redo)
     attachSequenceNumberToArrow(arrowNode, arrow);
     arrows.push(arrow);
   });
@@ -826,7 +793,7 @@ export const parseMermaidSequenceDiagram = (
 
   const bgHightlights = computeHighlights(containerEl);
   const actorData = mermaidParser.getActors();
-  const { nodes: actors, lines, actorMap } = parseActor(actorData, containerEl);
+  const { nodes: actors, lines } = parseActor(actorData, containerEl);
   const messages = mermaidParser.getMessages().map((message) => ({
     ...message,
     message:
@@ -834,7 +801,7 @@ export const parseMermaidSequenceDiagram = (
         ? decodeMermaidText(message.message)
         : message.message,
   }));
-  const arrows = computeArrows(messages, containerEl, actorMap);
+  const arrows = computeArrows(messages, containerEl);
   const notes = computeNotes(messages, containerEl);
   const activations = parseActivations(containerEl);
   const loops = parseLoops(messages, containerEl);

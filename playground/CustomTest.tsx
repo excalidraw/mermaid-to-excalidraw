@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { MermaidDiagram } from "./MermaidDiagram.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 import { usePersistedSectionState } from "./usePersistedSectionState.ts";
+import { ENGINE_LABELS } from "./engine.ts";
+import type { DiagramEngine } from "../src/parseDiagram.ts";
 
 interface CustomTestProps {
+  engine: DiagramEngine;
   onChange: (
     definition: MermaidData["definition"],
     activeTestCaseIndex: ActiveTestCaseIndex
@@ -15,6 +18,7 @@ interface CustomTestProps {
 const STORAGE_KEY = "mermaid-to-excalidraw-definition";
 
 const CustomTest = ({
+  engine,
   onChange,
   mermaidData,
   activeTestCaseIndex,
@@ -98,9 +102,13 @@ const CustomTest = ({
       {isActive && (
         <>
           <section className="custom-preview-card">
-            <div className="preview-badge">{"Live Mermaid SVG"}</div>
+            <div className="preview-badge">{`Live ${ENGINE_LABELS[engine]} SVG`}</div>
             <div className="diagram-preview-surface custom-diagram-surface">
-              <MermaidDiagram definition={textareaValue} id="custom-diagram" />
+              <MermaidDiagram
+                engine={engine}
+                definition={textareaValue}
+                id="custom-diagram"
+              />
             </div>
           </section>
 
@@ -109,7 +117,7 @@ const CustomTest = ({
             open={isParsedDataExpanded}
             onToggle={handleParsedDataToggle}
           >
-            <summary>{"Parsed data from parseMermaid"}</summary>
+            <summary>{`Parsed data (${ENGINE_LABELS[engine]})`}</summary>
             {isParsedDataExpanded ? (
               <>
                 <pre id="custom-parsed-data">

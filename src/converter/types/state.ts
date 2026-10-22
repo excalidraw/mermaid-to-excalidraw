@@ -10,6 +10,10 @@ import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawVertexStyle,
 } from "../helpers.js";
+import {
+  transformToExcalidrawLineSkeleton,
+  transformToExcalidrawTextSkeleton,
+} from "../transformToExcalidrawSkeleton.js";
 
 import type { State, StateEdge, StateNode } from "../../parser/state.js";
 
@@ -171,12 +175,13 @@ const findLargestLabelFontSizeThatFitsBounds = (
   text: string,
   availableWidth: number,
   availableHeight: number,
-  fallbackFontSize: number
+  fallbackFontSize: number,
+  maxFontSize: number
 ) => {
   const lines = text.split("\n");
 
   for (
-    let fontSize = DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+    let fontSize = maxFontSize;
     fontSize >= MIN_STATE_NODE_LABEL_FONT_SIZE;
     fontSize -= STATE_NODE_LABEL_FONT_SIZE_STEP
   ) {
@@ -192,8 +197,9 @@ const findLargestLabelFontSizeThatFitsBounds = (
 
 const getNodeLabelFontSize = (node: StateNode) => {
   const text = getNodeText(node);
+  const defaultFontSize = node.fontSize ?? DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
   if (!text || STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL.has(node.shape)) {
-    return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+    return defaultFontSize;
   }
 
   const availableWidth = Math.max(
@@ -209,15 +215,12 @@ const getNodeLabelFontSize = (node: StateNode) => {
   if (lines.length > 1) {
     const longestLineWidth = Math.max(
       ...lines.map((line) =>
-        measureLabelLineWidthAtFontSize(
-          line,
-          DEFAULT_STATE_NODE_LABEL_FONT_SIZE
-        )
+        measureLabelLineWidthAtFontSize(line, defaultFontSize)
       )
     );
 
     if (longestLineWidth <= availableWidth) {
-      return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+      return defaultFontSize;
     }
   }
 
@@ -225,9 +228,8 @@ const getNodeLabelFontSize = (node: StateNode) => {
     text,
     availableWidth,
     availableHeight,
-    lines.length === 1
-      ? DEFAULT_STATE_NODE_LABEL_FONT_SIZE
-      : MIN_STATE_NODE_LABEL_FONT_SIZE
+    lines.length === 1 ? defaultFontSize : MIN_STATE_NODE_LABEL_FONT_SIZE,
+    defaultFontSize
   );
 };
 
@@ -383,6 +385,11 @@ const createArrowElement = (edge: StateEdge): ValidLinearElement => {
           label: {
             text: edge.text,
             fontSize: 16,
+            // Where along the arrow Excalidraw centers the label (where
+            // supported)
+            ...(edge.labelPosition !== undefined
+              ? { labelPosition: edge.labelPosition }
+              : {}),
           },
         }
       : {}),
@@ -411,8 +418,16 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
       }
     });
 
+    chart.lines?.forEach((line) => {
+      elements.push(transformToExcalidrawLineSkeleton(line));
+    });
+
     chart.edges.forEach((edge) => {
       elements.push(createArrowElement(edge));
+    });
+
+    chart.texts?.forEach((text) => {
+      elements.push(transformToExcalidrawTextSkeleton(text));
     });
 
     return { elements };

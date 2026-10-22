@@ -203,31 +203,3 @@ export const withMermaidLineBreaks = async <T>(
     isActive = false;
   }
 };
-
-const LINE_BREAK_TAG = /<br\s*\/?>/gi;
-
-/**
- * Runs a Mermaid parse or render `task` with `definition`. `<br>` doesn't
- * parse everywhere `\n` does (e.g. bare flowchart ids and subgraph titles,
- * sequence participants), so if the task fails, it's retried once with `<br>`
- * replaced by `\n`. If that fails too, the original error is thrown.
- * Definitions that parse cost nothing extra.
- */
-export const withLineBreakFallback = async <T>(
-  definition: string,
-  task: (definition: string) => Promise<T>
-) => {
-  try {
-    return await task(definition);
-  } catch (error) {
-    const fallback = definition.replace(LINE_BREAK_TAG, "\\n");
-    if (fallback === definition) {
-      throw error;
-    }
-    try {
-      return await task(fallback);
-    } catch {
-      throw error;
-    }
-  }
-};

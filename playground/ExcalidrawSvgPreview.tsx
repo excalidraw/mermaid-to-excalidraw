@@ -5,10 +5,11 @@ import {
 } from "@excalidraw/excalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { parseMermaid } from "../src/parseMermaid";
+import { parseDiagram, type DiagramEngine } from "../src/parseDiagram";
 import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
 
 interface ExcalidrawSvgPreviewProps {
+  engine: DiagramEngine;
   definition: string;
 }
 
@@ -33,20 +34,24 @@ const cleanupMermaidTempContainers = () => {
     });
 };
 
-const generateExcalidrawSvg = async (definition: string): Promise<string> => {
-  const cachedSvg = svgCache.get(definition);
+const generateExcalidrawSvg = async (
+  definition: string,
+  engine: DiagramEngine
+): Promise<string> => {
+  const cacheKey = `${engine}:${definition}`;
+  const cachedSvg = svgCache.get(cacheKey);
   if (cachedSvg) {
     return cachedSvg;
   }
 
-  const pendingRender = inFlightSvgCache.get(definition);
+  const pendingRender = inFlightSvgCache.get(cacheKey);
   if (pendingRender) {
     return pendingRender;
   }
 
   const renderPromise = runSequentially(async () => {
     try {
-      const parsedMermaid = await parseMermaid(definition);
+      const parsedMermaid = await parseDiagram(definition, undefined, engine);
       const { elements, files } = graphToExcalidraw(parsedMermaid, {
         fontSize: DEFAULT_FONT_SIZE,
       });
@@ -68,18 +73,19 @@ const generateExcalidrawSvg = async (definition: string): Promise<string> => {
     }
   })
     .then((svg) => {
-      svgCache.set(definition, svg);
+      svgCache.set(cacheKey, svg);
       return svg;
     })
     .finally(() => {
-      inFlightSvgCache.delete(definition);
+      inFlightSvgCache.delete(cacheKey);
     });
 
-  inFlightSvgCache.set(definition, renderPromise);
+  inFlightSvgCache.set(cacheKey, renderPromise);
   return renderPromise;
 };
 
 export const ExcalidrawSvgPreview = ({
+  engine,
   definition,
 }: ExcalidrawSvgPreviewProps) => {
   const [svg, setSvg] = useState("");
@@ -92,7 +98,7 @@ export const ExcalidrawSvgPreview = ({
     setIsLoading(true);
     setError(null);
 
-    generateExcalidrawSvg(definition)
+    generateExcalidrawSvg(definition, engine)
       .then((renderedSvg) => {
         if (!isCancelled) {
           setSvg(renderedSvg);
@@ -113,7 +119,7 @@ export const ExcalidrawSvgPreview = ({
     return () => {
       isCancelled = true;
     };
-  }, [definition]);
+  }, [definition, engine]);
 
   if (error) {
     return <div className="preview-error">{error}</div>;

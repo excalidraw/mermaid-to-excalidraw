@@ -1,6 +1,6 @@
 import { DEFAULT_FONT_SIZE } from "./constants.js";
 import { graphToExcalidraw } from "./graphToExcalidraw.js";
-import { parseMermaid } from "./parseMermaid.js";
+import { DiagramEngine, parseDiagram } from "./parseDiagram.js";
 
 export interface MermaidConfig {
   /**
@@ -32,6 +32,13 @@ export interface MermaidConfig {
    * @default 1000
    */
   maxTextSize?: number;
+  /**
+   * The engine that parses and lays out the diagram. `"pele"` is
+   * experimental. Both convert flowcharts, sequence, class, ER and state
+   * diagrams to Excalidraw elements, and insert other diagrams as images.
+   * @default "mermaid"
+   */
+  engine?: DiagramEngine;
 }
 
 export interface ExcalidrawConfig {
@@ -40,17 +47,21 @@ export interface ExcalidrawConfig {
 
 const parseMermaidToExcalidraw = async (
   definition: string,
-  config?: MermaidConfig,
+  config?: MermaidConfig
 ) => {
-  const mermaidConfig = config || {};
+  const { engine, ...mermaidConfig } = config || {};
   const fontSize =
     parseInt(mermaidConfig.themeVariables?.fontSize ?? "") || DEFAULT_FONT_SIZE;
-  const parsedMermaidData = await parseMermaid(definition, {
-    ...mermaidConfig,
-    themeVariables: {
-      ...mermaidConfig.themeVariables,
+  const parsedMermaidData = await parseDiagram(
+    definition,
+    {
+      ...mermaidConfig,
+      themeVariables: {
+        ...mermaidConfig.themeVariables,
+      },
     },
-  });
+    engine
+  );
   // Only font size supported for excalidraw elements
   const excalidrawElements = graphToExcalidraw(parsedMermaidData, {
     fontSize,
@@ -59,3 +70,4 @@ const parseMermaidToExcalidraw = async (
 };
 
 export { parseMermaidToExcalidraw };
+export type { DiagramEngine };

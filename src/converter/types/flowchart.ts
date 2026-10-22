@@ -700,7 +700,18 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
         points,
         ...(edge.text
-          ? { label: { text: getText(edge), fontSize, groupIds } }
+          ? {
+              label: {
+                text: getText(edge),
+                fontSize,
+                groupIds,
+                // Where along the arrow Excalidraw centers the label (where
+                // supported)
+                ...(edge.labelPosition !== undefined
+                  ? { labelPosition: edge.labelPosition }
+                  : {}),
+              },
+            }
           : {}),
         roundness: {
           type: 2,

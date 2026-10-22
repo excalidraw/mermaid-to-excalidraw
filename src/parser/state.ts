@@ -18,6 +18,7 @@ import {
 } from "./cssUtils.js";
 
 import type { ExcalidrawLinearElement } from "@excalidraw/excalidraw/element/types";
+import type { Line, Text } from "../elementSkeleton.js";
 import type {
   Edge as MermaidStateEdge,
   NodeData as MermaidStateNode,
@@ -49,6 +50,8 @@ export interface StateNode {
   dividerLine?: DividerLine;
   endInnerColor?: string;
   isRenderable: boolean;
+  /** The label's font size, if it was laid out for one (shrunk to fit). */
+  fontSize?: number;
 }
 
 export interface StateEdge {
@@ -65,12 +68,21 @@ export interface StateEdge {
   strokeWidth?: number;
   strokeStyle?: ExcalidrawLinearElement["strokeStyle"];
   isNoteEdge?: boolean;
+  /**
+   * Where along the edge (0 at its start, 1 at its end, by length) its label
+   * is centered, if not halfway.
+   */
+  labelPosition?: number;
 }
 
 export interface State {
   type: "state";
   nodes: StateNode[];
   edges: StateEdge[];
+  /** Drawn as is, e.g. the dashed separators of concurrent regions. */
+  lines?: Line[];
+  /** Drawn as is, e.g. labels drawn beside their transition. */
+  texts?: Text[];
 }
 
 const isMeaningfulCSSColor = (value?: string | null) => {

@@ -14,10 +14,8 @@ import { Class, parseMermaidClassDiagram } from "./parser/class.js";
 import { ERD, parseMermaidERDiagram } from "./parser/er.js";
 import { State, parseMermaidStateDiagram } from "./parser/state.js";
 import { runMermaidTaskSequentially } from "./mermaidExecutionQueue.js";
-import {
-  withLineBreakFallback,
-  withMermaidLineBreaks,
-} from "./mermaidLineBreaks.js";
+import { withMermaidLineBreaks } from "./mermaidLineBreaks.js";
+import { withLineBreakFallback } from "./text.js";
 
 // Track initialization state to avoid redundant mermaid.initialize() calls
 // which can cause performance issues during streaming
