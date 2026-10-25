@@ -1215,6 +1215,18 @@ describe("z-order and fills", () => {
     expect(title.y).toBeGreaterThan(subgraph.y);
   });
 
+  it("labels a double circle once, in its inner circle", async () => {
+    const elements = await convert("flowchart TD\n  id1(((Label)))");
+    const labeled = elements.filter(
+      (element) => element.label?.text === "Label"
+    );
+    expect(labeled).toHaveLength(1);
+    // above the outer one, which is filled
+    expect(elements.indexOf(labeled[0])).toBeGreaterThan(
+      elements.findIndex((element) => element.id === "id1")
+    );
+  });
+
   it("keeps styled fills", async () => {
     const elements = await convert(`flowchart LR
   A --> B

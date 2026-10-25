@@ -551,12 +551,15 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         width: vertex.width,
         height: vertex.height,
         strokeWidth: 2,
-        label: {
-          groupIds,
-          text: vertexText,
-          fontSize: vertexLabelFontSize,
-          ...labelStyle,
-        },
+        // a double circle's label is in its inner circle
+        ...(vertex.type !== VERTEX_TYPE.DOUBLECIRCLE && {
+          label: {
+            groupIds,
+            text: vertexText,
+            fontSize: vertexLabelFontSize,
+            ...labelStyle,
+          },
+        }),
         link: vertex.link || null,
         backgroundColor: NODE_BACKGROUND_COLOR,
         fillStyle: "solid",
