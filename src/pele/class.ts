@@ -12,6 +12,7 @@ import type {
 import type { Class } from "../parser/class.js";
 import { decodeMermaidText } from "../text.js";
 import {
+  getLabelPosition,
   orientRoute,
   pathToLines,
   readEdge,
@@ -168,9 +169,8 @@ const parseRelations = (
     const title = relation.title ? decodeMermaidText(relation.title) : "";
     // A self-relation is a small loop, which its label would cover: the label
     // is put next to it, where Pele drew it, instead.
-    const selfRelationLabel =
-      isSelfRelation &&
-      labels.get(group.getAttribute("data-id")!)?.querySelector("text");
+    const label = labels.get(group.getAttribute("data-id")!);
+    const selfRelationLabel = isSelfRelation && label?.querySelector("text");
     if (selfRelationLabel) {
       selfRelationLabels.push(
         toText(selfRelationLabel, root, options.fontSize)
@@ -179,7 +179,13 @@ const parseRelations = (
 
     return [
       routeToArrow(route, {
-        label: title && !selfRelationLabel ? { text: title } : undefined,
+        label:
+          title && !selfRelationLabel
+            ? {
+                text: title,
+                labelPosition: getLabelPosition(route, label, root),
+              }
+            : undefined,
         strokeStyle:
           relation.relation.lineType === DOTTED_LINE ? "dotted" : "solid",
         startArrowhead: getArrowhead(relation.relation.type1),

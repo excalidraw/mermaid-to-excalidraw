@@ -6,6 +6,8 @@ import {
   getOffset,
   getPathRoute,
   getRouteMarkers,
+  getRoutePosition,
+  getShapeBounds,
   getStyleColor,
   getTextBlock,
   getTextLines,
@@ -165,6 +167,24 @@ export const routeToArrow = (
     ),
     ...extra,
   };
+};
+
+/**
+ * Where along the route Pele drew an edge's label (0 to 1), e.g. away from
+ * other labels.
+ */
+export const getLabelPosition = (
+  route: Position[],
+  label: Element | undefined,
+  root: Element
+) => {
+  const bounds = label && getShapeBounds(label, root);
+  return bounds
+    ? getRoutePosition(route, {
+        x: bounds.x + bounds.width / 2,
+        y: bounds.y + bounds.height / 2,
+      })
+    : undefined;
 };
 
 export const toBounds = (element: {

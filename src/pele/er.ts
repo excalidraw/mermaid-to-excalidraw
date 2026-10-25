@@ -11,6 +11,7 @@ import type {
 import type { ERD } from "../parser/er.js";
 import { decodeMermaidText } from "../text.js";
 import {
+  getLabelPosition,
   orientRoute,
   pathToLines,
   readEdge,
@@ -158,9 +159,9 @@ const parseRelationships = (
     const role = decodeMermaidText(relationship.roleA || "");
     // A self-relationship is a small loop, which its label would cover:
     // the label is put next to it, where Pele drew it, instead.
+    const label = labels.get(group.getAttribute("data-id")!);
     const selfRelationshipLabel =
-      isSelfRelationship &&
-      labels.get(group.getAttribute("data-id")!)?.querySelector("text");
+      isSelfRelationship && label?.querySelector("text");
     if (selfRelationshipLabel) {
       selfRelationshipLabels.push(
         toText(selfRelationshipLabel, root, options.fontSize)
@@ -171,7 +172,11 @@ const parseRelationships = (
       routeToArrow(route, {
         label:
           role && !selfRelationshipLabel
-            ? { text: role, textAlign: "center" }
+            ? {
+                text: role,
+                textAlign: "center",
+                labelPosition: getLabelPosition(route, label, root),
+              }
             : undefined,
         strokeStyle:
           relationship.relSpec.relType === "NON_IDENTIFYING"

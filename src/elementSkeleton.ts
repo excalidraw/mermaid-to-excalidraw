@@ -11,6 +11,8 @@ export type Arrow = Omit<Line, "type" | "strokeStyle"> & {
     fontSize?: number;
     textAlign?: ExcalidrawTextElement["textAlign"];
     verticalAlign?: ExcalidrawTextElement["verticalAlign"];
+    /** Where along the arrow (0 to 1) the label is centered. */
+    labelPosition?: number;
   };
   strokeStyle?: ValidLinearElement["strokeStyle"] | null;
   strokeWidth?: ValidLinearElement["strokeWidth"];

@@ -921,6 +921,9 @@ describe("parsePele class diagrams", () => {
 
     expect(diagram.text.map(({ text }) => text)).toEqual(["1", "*"]);
     expect(diagram.arrows[0].label?.text).toBe("buys");
+    // where Pele drew it
+    expect(diagram.arrows[0].label?.labelPosition).toBeGreaterThan(0);
+    expect(diagram.arrows[0].label?.labelPosition).toBeLessThan(1);
     expect(diagram.nodes[1]).toEqual([
       expect.objectContaining({
         subtype: "note",
@@ -1031,6 +1034,11 @@ describe("parsePele ER diagrams", () => {
         "billed to",
       ],
     ]);
+    // where Pele drew them
+    diagram.arrows.forEach(({ label }) => {
+      expect(label?.labelPosition).toBeGreaterThan(0);
+      expect(label?.labelPosition).toBeLessThan(1);
+    });
   });
 });
 
