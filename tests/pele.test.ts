@@ -383,7 +383,7 @@ describe("parsePele", () => {
     ).toBeCloseTo(1, 2);
   });
 
-  it("fits diamonds to the lines Pele wrapped their label in", () => {
+  it("keeps diamonds at Pele's size, wrapping their label anew in them", () => {
     const model = parse(
       "flowchart LR\n  C{This is the text in the box}"
     ) as FlowchartModel;
@@ -391,24 +391,75 @@ describe("parsePele", () => {
       render(model, { responsive: false, autoDirection: false, fontSize: 20 })
         .svg
     );
-    const lines = Array.from(
-      root.querySelectorAll(".pele-label tspan[y]"),
-      (tspan) => tspan.textContent || ""
-    );
-    expect(lines.length).toBeGreaterThan(1);
-
-    const measureText = (text: string) => text.length * 10;
+    // Pele wrapped it
+    expect(
+      root.querySelectorAll(".pele-label tspan[y]").length
+    ).toBeGreaterThan(1);
+    const original = parsePeleFlowchart(model, root, { fontSize: 20 });
     const { C } = parsePeleFlowchart(model, root, {
       fontSize: 20,
-      measureText,
+      // "This is the text in the box": 189px; Excalidraw fits it, wrapped,
+      // in half the diamond, minus padding
+      measureText: (text) => text.length * 7,
     }).vertices;
-    const longestLine = Math.max(...lines.map(measureText));
-    expect(C!.width / 2 - 10).toBeGreaterThanOrEqual(longestLine);
-    // not the whole label on a single line
-    expect(C!.width / 2 - 10).toBeLessThan(
-      measureText("This is the text in the box")
+
+    // without Pele's line breaks, for Excalidraw to wrap it in the diamond
+    expect(C!.text).toBe("This is the text in the box");
+    expect(C).toMatchObject({
+      x: original.vertices.C!.x,
+      y: original.vertices.C!.y,
+      width: original.vertices.C!.width,
+      height: original.vertices.C!.height,
+    });
+  });
+
+  it("enlarges diamonds a bit to keep a word from being alone on the last line", () => {
+    const model = parse("flowchart LR\n  C{Decision 1}") as FlowchartModel;
+    const root = parseSvg(
+      render(model, { responsive: false, autoDirection: false, fontSize: 20 })
+        .svg
     );
-    expect(C!.height / 2 - 10).toBeGreaterThanOrEqual(lines.length * 20 * 1.25);
+    const before = parsePeleFlowchart(model, root, { fontSize: 20 }).vertices
+      .C!;
+    const measureText = (text: string) => text.length * 9;
+    // too narrow for it on a single line
+    expect(Math.round(before.width / 2) - 10).toBeLessThan(
+      measureText("Decision 1")
+    );
+
+    const after = parsePeleFlowchart(model, root, { fontSize: 20, measureText })
+      .vertices.C!;
+    expect(Math.round(after.width / 2) - 10).toBeGreaterThanOrEqual(
+      measureText("Decision 1")
+    );
+    expect(after.width / after.height).toBeCloseTo(
+      before.width / before.height
+    );
+  });
+
+  it("enlarges diamonds as little as Excalidraw needs, keeping their proportions", () => {
+    const model = parse(
+      "flowchart LR\n  C{Supercalifragilistic word}"
+    ) as FlowchartModel;
+    const root = parseSvg(
+      render(model, { responsive: false, autoDirection: false, fontSize: 20 })
+        .svg
+    );
+    const before = parsePeleFlowchart(model, root, { fontSize: 20 }).vertices
+      .C!;
+    const measureText = (text: string) => text.length * 14;
+    const after = parsePeleFlowchart(model, root, { fontSize: 20, measureText })
+      .vertices.C!;
+
+    // the longest word fits on a line, and not much more
+    const maxWidth = Math.round(after.width / 2) - 10;
+    expect(maxWidth).toBeGreaterThanOrEqual(
+      measureText("Supercalifragilistic")
+    );
+    expect(maxWidth).toBeLessThan(measureText("Supercalifragilistic") + 10);
+    expect(after.width / after.height).toBeCloseTo(
+      before.width / before.height
+    );
   });
 
   it("skips links between a subgraph and its content, which Mermaid doesn't draw", async () => {

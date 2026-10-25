@@ -100,10 +100,14 @@ const parseVertex = (
     id: node.id,
     type: node.type as VERTEX_TYPE,
     labelType: node.labelType,
-    text: withPeleLineBreaks(
-      decodeMermaidText(node.text ?? node.id),
-      group.querySelector(".pele-label")
-    ),
+    // a diamond's label is wrapped anew (see `fitDiamondToLabel`)
+    text:
+      node.type === VERTEX_TYPE.DIAMOND
+        ? decodeMermaidText(node.text ?? node.id)
+        : withPeleLineBreaks(
+            decodeMermaidText(node.text ?? node.id),
+            group.querySelector(".pele-label")
+          ),
     ...bounds,
     // Pele only renders links whose URL scheme is allowed
     link: group.querySelector("a[href]")?.getAttribute("href") || undefined,
@@ -160,18 +164,138 @@ const INSCRIBED_LABEL_SHAPES: Partial<
   },
 };
 
+// How much a diamond may be enlarged to fit its label, and to keep a word
+// from being alone on its last line
+const MAX_DIAMOND_SCALE = 4;
+const MAX_UNORPHANED_DIAMOND_SCALE = 1.35;
+const DIAMOND_SCALE_STEP = 0.02;
+// A wrapped label's last line narrower than this (of the width it's wrapped
+// at) is an orphan, e.g. the "1" of "Decision 1"
+const ORPHAN_WIDTH_RATIO = 1 / 4;
+
 /**
- * Excalidraw fits the label of a diamond or a circle in the rectangle
- * inscribed in it, which is tighter than how Pele sizes them: the label would
- * wrap more, and the shape grow downwards, away from its edges. These shapes
- * are enlarged around their center to fit the lines Pele laid their label out
- * in instead (Excalidraw then wraps it the same way).
+ * The widths of the lines Excalidraw wraps each line of `text` in at
+ * `maxWidth` (breaking lines between words), or null if one of its words is
+ * wider.
+ */
+const wrapLines = (
+  text: string,
+  maxWidth: number,
+  measureText: (text: string) => number | null
+) => {
+  const paragraphs: number[][] = [];
+  for (const line of text.split("\n")) {
+    const widths: number[] = [];
+    let current = "";
+    let currentWidth = 0;
+    for (const word of line.split(" ").filter(Boolean)) {
+      const candidate = current ? `${current} ${word}` : word;
+      const width = measureText(candidate);
+      if (width === null) {
+        return null;
+      }
+      if (width <= maxWidth) {
+        current = candidate;
+        currentWidth = width;
+        continue;
+      }
+      const wordWidth = measureText(word) ?? Infinity;
+      if (wordWidth > maxWidth) {
+        return null;
+      }
+      if (current) {
+        widths.push(currentWidth);
+      }
+      current = word;
+      currentWidth = wordWidth;
+    }
+    widths.push(currentWidth);
+    paragraphs.push(widths);
+  }
+  return paragraphs;
+};
+
+/**
+ * Excalidraw wraps a diamond's label in the rectangle inscribed in it, half
+ * its size: narrower than the lines Pele laid it out in. Diamonds keep Pele's
+ * size (and so are sized like one another, and stay clear of their
+ * neighbors), their label is wrapped anew in it, and they're only enlarged
+ * around their center, keeping their proportions, if it still doesn't fit (a
+ * long word, too many lines) - otherwise Excalidraw would grow them downwards,
+ * away from their edges - or (a bit) to keep a word from being alone on the
+ * last line.
+ */
+const fitDiamondToLabel = (
+  vertex: Vertex,
+  { fontSize, measureText }: PeleFlowchartOptions
+): Vertex => {
+  // (as it is, if it can't be measured)
+  if (!vertex.text || !measureText || measureText(vertex.text) === null) {
+    return vertex;
+  }
+  const padding = EXCALIDRAW_BOUND_TEXT_PADDING * 2;
+  const lineHeight = fontSize * EXCALIDRAW_LINE_HEIGHT;
+  const fits = (scale: number, { withoutOrphans = false } = {}) => {
+    // as Excalidraw sizes the inscribed rectangle (less a pixel of leeway, so
+    // it doesn't wrap the label more)
+    const maxWidth = Math.round((vertex.width * scale) / 2) - padding - 1;
+    const maxHeight = Math.round((vertex.height * scale) / 2) - padding;
+    const paragraphs = wrapLines(vertex.text, maxWidth, measureText);
+    return (
+      !!paragraphs &&
+      paragraphs.flat().length * lineHeight <= maxHeight &&
+      (!withoutOrphans ||
+        paragraphs.every(
+          (widths) =>
+            widths.length < 2 ||
+            widths[widths.length - 1] >= maxWidth * ORPHAN_WIDTH_RATIO
+        ))
+    );
+  };
+  const getScale = (
+    maxScale: number,
+    options?: { withoutOrphans: boolean }
+  ) => {
+    for (let scale = 1; scale <= maxScale; scale += DIAMOND_SCALE_STEP) {
+      if (fits(scale, options)) {
+        return scale;
+      }
+    }
+    return null;
+  };
+
+  const scale =
+    getScale(MAX_UNORPHANED_DIAMOND_SCALE, { withoutOrphans: true }) ??
+    getScale(MAX_DIAMOND_SCALE) ??
+    MAX_DIAMOND_SCALE;
+  const width = vertex.width * scale;
+  const height = vertex.height * scale;
+  return {
+    ...vertex,
+    x: vertex.x - (width - vertex.width) / 2,
+    y: vertex.y - (height - vertex.height) / 2,
+    width,
+    height,
+  };
+};
+
+/**
+ * Excalidraw fits the label of a circle in the square inscribed in it, which
+ * is tighter than how Pele sizes them: the label would wrap more, and the
+ * circle grow downwards, away from its edges. Circles are enlarged around
+ * their center to fit the lines Pele laid their label out in instead
+ * (Excalidraw then wraps it the same way). Diamonds are fit differently (see
+ * `fitDiamondToLabel`).
  */
 const fitShapeToLabel = (
   vertex: Vertex,
   lines: string[],
-  { fontSize, measureText }: PeleFlowchartOptions
+  options: PeleFlowchartOptions
 ): Vertex => {
+  if (vertex.type === VERTEX_TYPE.DIAMOND) {
+    return fitDiamondToLabel(vertex, options);
+  }
+  const { fontSize, measureText } = options;
   const shape = INSCRIBED_LABEL_SHAPES[vertex.type];
   if (!shape || !lines.length) {
     return vertex;
@@ -185,18 +309,15 @@ const fitShapeToLabel = (
   const textWidth = Math.max(...(lineWidths as number[]));
   const textHeight = lines.length * fontSize * EXCALIDRAW_LINE_HEIGHT;
   // +1 for Excalidraw rounding the inscribed rectangle's size
-  let width = Math.max(
+  // circles stay round
+  const size = Math.max(
     vertex.width,
-    shape.ratio * (textWidth + padding + 1) + shape.inset
-  );
-  let height = Math.max(
     vertex.height,
+    shape.ratio * (textWidth + padding + 1) + shape.inset,
     shape.ratio * (textHeight + padding + 1) + shape.inset
   );
-  if (vertex.type !== VERTEX_TYPE.DIAMOND) {
-    // circles stay round
-    width = height = Math.max(width, height);
-  }
+  const width = size;
+  const height = size;
 
   return {
     ...vertex,
