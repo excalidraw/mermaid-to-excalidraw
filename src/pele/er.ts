@@ -25,6 +25,7 @@ import {
   getStyleColor,
   getStyleValue,
   getTextLines,
+  lengthenRouteEnds,
 } from "./svg.js";
 
 export interface PeleERDOptions {
@@ -148,9 +149,12 @@ const parseRelationships = (
     }
 
     const isSelfRelationship = relationship.entityA === relationship.entityB;
+    // room for the cardinality markers at both ends
     const route = isSelfRelationship
       ? edge.route
-      : orientRoute(edge.route, toBounds(start), toBounds(end));
+      : lengthenRouteEnds(
+          orientRoute(edge.route, toBounds(start), toBounds(end))
+        );
     const role = decodeMermaidText(relationship.roleA || "");
     // A self-relationship is a small loop, which its label would cover:
     // the label is put next to it, where Pele drew it, instead.

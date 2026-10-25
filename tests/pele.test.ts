@@ -4,6 +4,7 @@ import { parsePele } from "../src/pele/parsePele.js";
 import {
   evenOutRoute,
   getRoutePosition,
+  lengthenRouteEnds,
   parsePath,
   parseSvg,
   simplifyRoute,
@@ -146,6 +147,59 @@ describe("evenOutRoute", () => {
       { x: 100, y: 100 },
     ];
     expect(evenOutRoute(route)).toEqual(route);
+  });
+});
+
+describe("lengthenRouteEnds", () => {
+  it("moves the bends before short end stubs back, towards the runs before them", () => {
+    // as Pele routes a transition between two states (stubs of 12 and 13)
+    const route = [
+      { x: 354, y: 624 },
+      { x: 354, y: 636 },
+      { x: 321, y: 648 },
+      { x: 232, y: 652 },
+      { x: 142, y: 663 },
+      { x: 109, y: 692 },
+      { x: 109, y: 804 },
+      { x: 165, y: 818 },
+      { x: 190, y: 824 },
+      { x: 190, y: 837 },
+    ];
+    const lengthened = lengthenRouteEnds(route, 30);
+
+    expect(lengthened[0]).toEqual(route[0]);
+    expect(lengthened.at(-1)).toEqual(route.at(-1));
+    // straight for (at least about) 30 at both ends
+    expect(lengthened[1].x).toBe(354);
+    expect(lengthened[1].y - lengthened[0].y).toBe(30);
+    expect(lengthened.at(-2)!.x).toBe(190);
+    expect(lengthened.at(-1)!.y - lengthened.at(-2)!.y).toBe(29);
+    // the runs the route comes from stay where they are
+    expect(lengthened.slice(5, 7)).toEqual(route.slice(5, 7));
+  });
+
+  it("moves the bend after a diagonal back along the stub", () => {
+    // as Pele routes a transition out of a fork: diagonal, then a stub
+    const route = [
+      { x: 491, y: 423 },
+      { x: 372, y: 476 },
+      { x: 372, y: 489 },
+    ];
+    expect(lengthenRouteEnds(route, 30)).toEqual([
+      { x: 491, y: 423 },
+      { x: 372, y: 459 },
+      { x: 372, y: 489 },
+    ]);
+  });
+
+  it("leaves long enough stubs alone", () => {
+    const route = [
+      { x: 0, y: 0 },
+      { x: 0, y: 40 },
+      { x: 100, y: 60 },
+      { x: 100, y: 100 },
+    ];
+    expect(lengthenRouteEnds(route, 30)).toEqual(route);
   });
 });
 

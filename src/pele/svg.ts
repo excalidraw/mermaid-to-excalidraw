@@ -290,6 +290,81 @@ export const simplifyRoute = (points: Position[], epsilon = 0.5) => {
   });
 };
 
+// Lengthens the straight stub a route ends in (see `lengthenRouteEnds`)
+const lengthenRouteEnd = (route: Position[], minLength: number) => {
+  const end = route[route.length - 1];
+  const corner = route[route.length - 2];
+  const dx = end.x - corner.x;
+  const dy = end.y - corner.y;
+  const stub = Math.hypot(dx, dy);
+  const isVertical = Math.abs(dx) < 0.5;
+  if (stub >= minLength || !stub || (!isVertical && Math.abs(dy) >= 0.5)) {
+    return route;
+  }
+  // How far from the end a point is along the stub's axis
+  const along = (point: Position) =>
+    isVertical
+      ? (end.y - point.y) * Math.sign(dy)
+      : (end.x - point.x) * Math.sign(dx);
+  // The bends before the stub, back to the first long segment: one along the
+  // stub's axis (the run the route comes from) stays where it is, another
+  // (e.g. a diagonal one), if it starts far enough back, has its end next to
+  // the stub moved
+  let far = -1;
+  for (let index = route.length - 2; index > 0; index--) {
+    const from = route[index - 1];
+    const to = route[index];
+    if (Math.hypot(to.x - from.x, to.y - from.y) < minLength) {
+      continue;
+    }
+    const isAlongAxis = isVertical
+      ? Math.abs(to.x - from.x) < 0.5
+      : Math.abs(to.y - from.y) < 0.5;
+    if (isAlongAxis) {
+      far = index;
+      break;
+    }
+    if (along(from) >= minLength + 4) {
+      far = index - 1;
+      break;
+    }
+  }
+  if (far < 0) {
+    return route;
+  }
+  const farAlong = along(route[far]);
+  // keeping the bends a little apart from the far end
+  const target = Math.min(minLength, farAlong - 4);
+  if (target <= stub) {
+    return route;
+  }
+  // The bends are moved back towards the far end, keeping their order
+  const scale = (farAlong - target) / (farAlong - stub);
+  return route.map((point, index) => {
+    if (index <= far || index === route.length - 1) {
+      return point;
+    }
+    const moved = target + (along(point) - stub) * scale;
+    return isVertical
+      ? { x: point.x, y: end.y - Math.sign(dy) * moved }
+      : { x: end.x - Math.sign(dx) * moved, y: point.y };
+  });
+};
+
+/**
+ * Pele ends routes in short straight stubs, room for its small arrowheads:
+ * Excalidraw's bigger ones would reach into the bends after them. The bends
+ * next to each end are moved back (towards the run the route comes from), so
+ * that the route ends straight for at least `minLength`, where it can.
+ */
+export const lengthenRouteEnds = (route: Position[], minLength = 30) =>
+  route.length < 3
+    ? route
+    : lengthenRouteEnd(
+        lengthenRouteEnd(route, minLength).slice().reverse(),
+        minLength
+      ).reverse();
+
 /**
  * Excalidraw draws a round arrow as a (uniform) Catmull-Rom spline through its
  * points, which overshoots the corners between long and short segments. Long

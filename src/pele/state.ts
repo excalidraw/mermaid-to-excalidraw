@@ -13,6 +13,7 @@ import { hasClass, pathToLines, readEdge, toText } from "./elements.js";
 import {
   Bounds,
   evenOutRoute,
+  lengthenRouteEnds,
   getElementsByDataId,
   getRoutePosition,
   getFontSize,
@@ -193,7 +194,7 @@ export const parsePeleState = (
     if (!edge || edge.route.length < 2) {
       return [];
     }
-    const { route } = edge;
+    const route = lengthenRouteEnds(edge.route);
     const start = findNodeAt(route[0], allNodes);
     const end = findNodeAt(route[route.length - 1], allNodes);
     if (!start || !end) {
