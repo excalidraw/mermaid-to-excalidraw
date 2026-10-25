@@ -66,6 +66,14 @@ interface PathSegment {
   command: string;
   /** Absolute points: control points first, the segment's end point last. */
   points: Position[];
+  /** An arc's (`A`) parameters. */
+  arc?: {
+    rx: number;
+    ry: number;
+    rotation: number;
+    largeArc: boolean;
+    sweep: boolean;
+  };
 }
 
 const PATH_TOKEN = /[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi;
@@ -95,6 +103,7 @@ export const parsePath = (d: string): PathSegment[] => {
       isRelative ? { x: current.x + x, y: current.y + y } : { x, y };
 
     let points: Position[];
+    let arc: PathSegment["arc"];
     switch (command.toUpperCase()) {
       case "M":
       case "L":
@@ -124,7 +133,13 @@ export const parsePath = (d: string): PathSegment[] => {
         break;
       case "A": {
         // rx ry x-axis-rotation large-arc-flag sweep-flag x y
-        index += 5;
+        arc = {
+          rx: next(),
+          ry: next(),
+          rotation: next(),
+          largeArc: next() !== 0,
+          sweep: next() !== 0,
+        };
         points = [point(next(), next())];
         break;
       }
@@ -139,7 +154,11 @@ export const parsePath = (d: string): PathSegment[] => {
       break;
     }
 
-    segments.push({ command: command.toUpperCase(), points });
+    segments.push({
+      command: command.toUpperCase(),
+      points,
+      ...(arc ? { arc } : {}),
+    });
     current = points[points.length - 1];
 
     if (command.toUpperCase() === "M") {
@@ -166,6 +185,63 @@ const unionBounds = (points: Position[]): Bounds | null => {
     width: Math.max(...xs) - x,
     height: Math.max(...ys) - y,
   };
+};
+
+const ARC_SAMPLES = 24;
+
+/**
+ * Points along an arc (as SVG specifies it, from `start` to `end`), e.g. a
+ * cylinder's caps, which bulge past its end points.
+ */
+const sampleArc = (
+  start: Position,
+  end: Position,
+  { rx, ry, rotation, largeArc, sweep }: NonNullable<PathSegment["arc"]>
+): Position[] => {
+  if (!rx || !ry) {
+    return [];
+  }
+  // https://www.w3.org/TR/SVG/implnote.html#ArcConversionEndpointToCenter
+  const phi = (rotation * Math.PI) / 180;
+  const cos = Math.cos(phi);
+  const sin = Math.sin(phi);
+  const dx = (start.x - end.x) / 2;
+  const dy = (start.y - end.y) / 2;
+  const x1 = cos * dx + sin * dy;
+  const y1 = -sin * dx + cos * dy;
+  const lambda = (x1 * x1) / (rx * rx) + (y1 * y1) / (ry * ry);
+  const scale = Math.max(1, Math.sqrt(lambda));
+  rx = Math.abs(rx) * scale;
+  ry = Math.abs(ry) * scale;
+  const coefficient =
+    (largeArc !== sweep ? 1 : -1) *
+    Math.sqrt(
+      Math.max(
+        0,
+        (rx * rx * ry * ry - rx * rx * y1 * y1 - ry * ry * x1 * x1) /
+          (rx * rx * y1 * y1 + ry * ry * x1 * x1)
+      )
+    );
+  const cx1 = (coefficient * rx * y1) / ry;
+  const cy1 = (-coefficient * ry * x1) / rx;
+  const cx = cos * cx1 - sin * cy1 + (start.x + end.x) / 2;
+  const cy = sin * cx1 + cos * cy1 + (start.y + end.y) / 2;
+  const angle = (x: number, y: number) => Math.atan2(y, x);
+  const theta = angle((x1 - cx1) / rx, (y1 - cy1) / ry);
+  let delta = angle((-x1 - cx1) / rx, (-y1 - cy1) / ry) - theta;
+  if (sweep && delta < 0) {
+    delta += Math.PI * 2;
+  } else if (!sweep && delta > 0) {
+    delta -= Math.PI * 2;
+  }
+
+  return Array.from({ length: ARC_SAMPLES + 1 }, (_, index) => {
+    const t = theta + (delta * index) / ARC_SAMPLES;
+    return {
+      x: cx + rx * cos * Math.cos(t) - ry * sin * Math.sin(t),
+      y: cy + rx * sin * Math.cos(t) + ry * cos * Math.sin(t),
+    };
+  });
 };
 
 /** Corner points of a shape element's bounds, in its local coordinates. */
@@ -206,11 +282,18 @@ const getShapeExtents = (element: Element): Position[] => {
       }
       return points;
     }
-    case "path":
-      // Includes curve control points, which bound the curve.
+    case "path": {
+      // Includes curve control points, which bound the curve, and points
+      // along arcs.
+      let current: Position = { x: 0, y: 0 };
       return parsePath(element.getAttribute("d") || "").flatMap(
-        (segment) => segment.points
+        ({ points, arc }) => {
+          const start = current;
+          current = points[points.length - 1];
+          return arc ? [...sampleArc(start, current, arc), ...points] : points;
+        }
       );
+    }
     default:
       return [];
   }

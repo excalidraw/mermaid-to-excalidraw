@@ -73,16 +73,20 @@ describe("parsePath", () => {
     ]);
   });
 
-  it("skips arc parameters and treats coordinates after a moveto as linetos", () => {
-    expect(
-      parsePath("M-29.11,-24A29.11,6 0 0 1 29.11,-24V24").map(
-        ({ points }) => points[points.length - 1]
-      )
-    ).toEqual([
+  it("reads arc parameters and treats coordinates after a moveto as linetos", () => {
+    const segments = parsePath("M-29.11,-24A29.11,6 0 0 1 29.11,-24V24");
+    expect(segments.map(({ points }) => points[points.length - 1])).toEqual([
       { x: -29.11, y: -24 },
       { x: 29.11, y: -24 },
       { x: 29.11, y: 24 },
     ]);
+    expect(segments[1].arc).toEqual({
+      rx: 29.11,
+      ry: 6,
+      rotation: 0,
+      largeArc: false,
+      sweep: true,
+    });
     expect(parsePath("M0,0 10,0 10,10").map(({ command }) => command)).toEqual([
       "M",
       "L",
@@ -350,6 +354,16 @@ describe("parsePele", () => {
         // away from the right vertex
         expect(C.x + C.width - start.x).toBeGreaterThan(C.width / 8);
       });
+  });
+
+  it("bounds cylinders by their caps, where their edges end", async () => {
+    const flowchart = await parseFlowchart(
+      "flowchart TD\n  A --> B[(Database)]"
+    );
+    const { B } = flowchart.vertices;
+    const [edge] = flowchart.edges;
+    // the top cap bulges above where its sides start
+    expect(edge.endY).toBeCloseTo(B!.y, 0);
   });
 
   it("enlarges diamonds around their center until Excalidraw fits their label", () => {
