@@ -1083,9 +1083,17 @@ describe("z-order and fills", () => {
     const byText = (text: string) =>
       elements.find((element) => element.label?.text === text);
 
-    expect(elements.indexOf(byText("Outer"))).toBeLessThan(
-      firstArrow(elements)
-    );
+    // the composite's box behind the transitions, its title above them
+    const composite = elements.find((element) => element.id === "Outer");
+    const title = elements.find((element) => element.id === "Outer__title");
+    expect(composite.label).toBeUndefined();
+    expect(elements.indexOf(composite)).toBeLessThan(firstArrow(elements));
+    expect(title).toMatchObject({
+      label: { text: "Outer", strokeColor: "#1e1e1e" },
+      backgroundColor: NODE_BACKGROUND_COLOR,
+      strokeColor: "transparent",
+    });
+    expect(elements.indexOf(title)).toBeGreaterThan(lastArrow(elements));
     ["Inner", "Done"].forEach((text) => {
       expect(byText(text).backgroundColor).toBe(NODE_BACKGROUND_COLOR);
       expect(elements.indexOf(byText(text))).toBeGreaterThan(

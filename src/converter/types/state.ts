@@ -255,9 +255,12 @@ const createLabel = (node: StateNode): ValidContainer["label"] | undefined => {
   };
 };
 
-const createContainerElement = (node: StateNode): ValidContainer => {
+const createContainerElement = (
+  node: StateNode,
+  { withLabel = true }: { withLabel?: boolean } = {}
+): ValidContainer => {
   const baseStyle = computeExcalidrawVertexStyle(node.containerStyle);
-  const label = createLabel(node);
+  const label = withLabel ? createLabel(node) : undefined;
   const elementType =
     node.shape === "choice"
       ? "diamond"
@@ -310,6 +313,75 @@ const createContainerElement = (node: StateNode): ValidContainer => {
           fillStyle: "solid",
         }
       : {}),
+  };
+};
+
+// Excalidraw's default stroke (and so text) color
+const DEFAULT_TEXT_COLOR = "#1e1e1e";
+// Excalidraw's corner radius of a rectangle with adaptive roundness
+const ADAPTIVE_RADIUS = 32;
+const PROPORTIONAL_RADIUS = 0.25;
+const getAdaptiveCornerRadius = (width: number, height: number) => {
+  const size = Math.min(width, height);
+  return size <= ADAPTIVE_RADIUS / PROPORTIONAL_RADIUS
+    ? size * PROPORTIONAL_RADIUS
+    : ADAPTIVE_RADIUS;
+};
+
+/**
+ * A composite state's title, on an opaque band (in the composite's fill)
+ * above the transitions, which would otherwise cross it: the composite's box
+ * is behind them. The band covers the title area between the box's rounded
+ * corners.
+ */
+const createCompositeTitleElement = (
+  node: StateNode
+): ValidContainer | null => {
+  const label = createLabel(node);
+  if (!label) {
+    return null;
+  }
+  const baseStyle = computeExcalidrawVertexStyle(node.containerStyle);
+  const strokeWidth = baseStyle.strokeWidth ?? 2;
+  const fontSize = label.fontSize ?? DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+  const lines: string[] = label.text.split("\n");
+  const titleBottom =
+    node.dividerLine?.startY ??
+    node.y +
+      lines.length * fontSize * EXCALIDRAW_LINE_HEIGHT +
+      STATE_NODE_LABEL_VERTICAL_PADDING;
+  const titleWidth =
+    Math.max(
+      ...lines.map((line) => measureLabelLineWidthAtFontSize(line, fontSize))
+    ) +
+    STATE_NODE_LABEL_HORIZONTAL_PADDING +
+    // leeway for Excalidraw to fit it without wrapping
+    2;
+  const width = Math.min(
+    node.width - strokeWidth * 2,
+    Math.max(
+      node.width - getAdaptiveCornerRadius(node.width, node.height) * 2,
+      titleWidth
+    )
+  );
+
+  return {
+    id: `${node.id}__title`,
+    type: "rectangle",
+    x: node.x + (node.width - width) / 2,
+    y: node.y + strokeWidth,
+    width,
+    height: Math.max(1, titleBottom - node.y - strokeWidth),
+    label: {
+      // in the composite's stroke color (the band, which it'd inherit, has
+      // none)
+      strokeColor: baseStyle.strokeColor ?? DEFAULT_TEXT_COLOR,
+      ...label,
+      verticalAlign: "middle",
+    },
+    strokeColor: "transparent",
+    backgroundColor: baseStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
+    fillStyle: "solid",
   };
 };
 
@@ -425,8 +497,13 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
     const nodes = chart.nodes.filter((node) => node.isRenderable);
     const isComposite = (node: StateNode) => node.shape === "roundedWithTitle";
 
-    // composite states behind the transitions, the other states above them
-    nodes.filter(isComposite).forEach(pushNode);
+    const composites = nodes.filter(isComposite);
+
+    // composite states behind the transitions, but their titles and the
+    // other states above them
+    composites.forEach((node) => {
+      elements.push(createContainerElement(node, { withLabel: false }));
+    });
 
     chart.lines?.forEach((line) => {
       elements.push(transformToExcalidrawLineSkeleton(line));
@@ -434,6 +511,17 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
 
     chart.edges.forEach((edge) => {
       elements.push(createArrowElement(edge));
+    });
+
+    composites.forEach((node) => {
+      const titleElement = createCompositeTitleElement(node);
+      if (titleElement) {
+        elements.push(titleElement);
+      }
+      const dividerLineElement = createDividerLineElement(node);
+      if (dividerLineElement) {
+        elements.push(dividerLineElement);
+      }
     });
 
     nodes.filter((node) => !isComposite(node)).forEach(pushNode);
