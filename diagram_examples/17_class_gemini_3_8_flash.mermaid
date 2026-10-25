@@ -1,0 +1,77 @@
+classDiagram
+    direction TB
+
+    class Recipe {
+        +UUID id
+        +String title
+        +String instructions
+        +Int baseServings
+        +scaleServings(int targetServings) Recipe
+    }
+
+    class RecipeIngredient {
+        +Float amount
+        +convertQuantity(Unit targetUnit) Float
+    }
+
+    class Ingredient {
+        +UUID id
+        +String name
+        +String category
+    }
+
+    class Unit {
+        +String name
+        +String abbreviation
+        +String unitType
+    }
+
+    class MealPlan {
+        +UUID id
+        +String name
+        +Date startDate
+        +Date endDate
+        +calculateShortfall(PantryItem[] inventory) ShoppingListEntry[]
+    }
+
+    class MealSlot {
+        +DateTime scheduledTime
+        +String mealType
+        +Int servings
+    }
+
+    class PantryItem {
+        +UUID id
+        +Float quantity
+        +Date expirationDate
+    }
+
+    class ShoppingListEntry {
+        +UUID id
+        +Float requiredQuantity
+        +Boolean isPurchased
+    }
+
+    Recipe "1" *-- "1..*" RecipeIngredient : contains
+    RecipeIngredient "0..*" --> "1" Ingredient : references
+    RecipeIngredient "0..*" --> "1" Unit : measured in
+
+    MealPlan "1" *-- "0..*" MealSlot : contains
+    MealSlot "0..*" --> "1" Recipe : prepares
+
+    PantryItem "0..*" --> "1" Ingredient : stocks
+    PantryItem "0..*" --> "1" Unit : measured in
+
+    ShoppingListEntry "0..*" --> "1" Ingredient : needed
+    ShoppingListEntry "0..*" --> "1" Unit : measured in
+
+    note for Unit "Incompatible measurement units require an explicit conversion rule"
+
+    style Recipe fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B
+    style RecipeIngredient fill:#E8F5E9,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    style Ingredient fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    style Unit fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    style MealPlan fill:#E0F2F1,stroke:#00796B,stroke-width:2px,color:#004D40
+    style MealSlot fill:#E0F7FA,stroke:#0097A7,stroke-width:2px,color:#006064
+    style PantryItem fill:#FFFDE7,stroke:#FBC02D,stroke-width:2px,color:#F57F17
+    style ShoppingListEntry fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px,color:#B71C1C

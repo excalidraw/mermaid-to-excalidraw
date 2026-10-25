@@ -1,0 +1,36 @@
+stateDiagram-v2
+    [*] --> Available
+
+    note right of Available: Simplified operational model
+
+    Available --> Connected: cable plugged in
+    Available --> Unavailable: maintenance scheduled
+    Unavailable --> Available: maintenance completed
+
+    Connected --> Authorizing: user presents credentials
+    Connected --> Available: cable unplugged
+
+    state auth_check <<choice>>
+    Authorizing --> auth_check: validate credentials
+    auth_check --> ActiveSession: [authorized] / start session
+    auth_check --> Connected: [unauthorized] / reject
+
+    state ActiveSession {
+        [*] --> Charging: power delivery initiated
+        Charging --> Suspended: EV or grid request / pause charge
+        Suspended --> Charging: resume condition met / resume charge
+    }
+
+    ActiveSession --> Finishing: driver stop request
+    Finishing --> Available: cable unplugged [billed]
+    Finishing --> Connected: session ended [cable remains]
+
+    ActiveSession --> Faulted: hardware or electrical fault detected
+    Authorizing --> Faulted: critical comms failure
+    Connected --> Faulted: ground fault detected
+    Available --> Faulted: self-test failed
+
+    state diag_check <<choice>>
+    Faulted --> diag_check: run diagnostics
+    diag_check --> Available: [diagnostic passed] / clear fault
+    diag_check --> Unavailable: [diagnostic failed] / request technician

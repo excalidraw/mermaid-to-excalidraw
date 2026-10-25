@@ -1,0 +1,56 @@
+flowchart LR
+    Start([Filmmaker Submits Entry]) --> Upload[Submission Upload]
+
+    subgraph AutomatedChecks["Automated & Administrative Checks"]
+        Upload --> TechCheck{Technical Format Valid?}
+        TechCheck -- No --> DeadlineCheck{Within Replacement Deadline?}
+        DeadlineCheck -- Yes --> RequestReplacement[Request Replacement File]
+        RequestReplacement --> Reupload[Filmmaker Replaces File]
+        Reupload --> TechCheck
+        DeadlineCheck -- No --> TechReject[Technical Rejection]
+        TechCheck -- Yes --> EligCheck{Eligibility Screening Passed?}
+        EligCheck -- No --> Ineligible[Mark Ineligible]
+    end
+
+    TechReject --> NotifyDecline
+    Ineligible --> NotifyDecline
+
+    subgraph ArtisticReview["Artistic Review"]
+        EligCheck -- Yes --> AssignReviewers[Assign to Two Reviewers]
+        AssignReviewers --> IndependentScoring[Independent Scoring]
+        IndependentScoring --> ScoreEval{Score Evaluation}
+        ScoreEval -- Conflicting Scores --> ThirdReview[Assign Third Reviewer]
+        ThirdReview --> ReevaluateScores[Aggregate Three Scores]
+        ScoreEval -- Consensus Pass --> ShortlistPool[Advance to Shortlist Pool]
+        ScoreEval -- Consensus Fail --> ArtisticReject[Mark Declined]
+        ReevaluateScores --> ShortlistCheck{Meets Shortlist Cutoff?}
+        ShortlistCheck -- Yes --> ShortlistPool
+        ShortlistCheck -- No --> ArtisticReject
+        ShortlistPool --> ShortlistDiscussion[Shortlist Committee Discussion]
+        ShortlistDiscussion --> SelectionDecision{Selection Decision}
+        SelectionDecision -- Not Selected --> CommitteeReject[Mark Declined]
+    end
+
+    ArtisticReject --> NotifyDecline
+    CommitteeReject --> NotifyDecline
+
+    subgraph Programming["Programming & Scheduling"]
+        SelectionDecision -- Selected --> RightsCheck{Rights Confirmation Received?}
+        RightsCheck -- No --> HoldStatus[Place on Clearance Hold]
+        HoldStatus --> RightsReminder[Contact Filmmaker for Rights]
+        RightsReminder --> RightsResolve{Resolved Before Lock?}
+        RightsResolve -- Yes --> ConfirmSelection[Rights Cleared]
+        RightsResolve -- No --> RightsDropout[Mark Incomplete Rights]
+        RightsCheck -- Yes --> ConfirmSelection
+        ConfirmSelection --> ScheduleSlot[Assign Festival Screening Slot]
+        ScheduleSlot --> ProgramFinalized[Festival Program Locked]
+    end
+
+    RightsDropout --> NotifyDecline
+
+    subgraph Notifications["Notifications"]
+        ProgramFinalized --> NotifyAccept[Send Acceptance and Screening Details]
+        NotifyDecline[Send Polite Decline Notification]
+        NotifyAccept --> Finish([Process Complete])
+        NotifyDecline --> Finish
+    end
