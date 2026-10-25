@@ -1,5 +1,6 @@
 import {
   parse,
+  PeleError,
   render,
   type ParsedDiagramModel,
   type RenderOptions,
@@ -117,14 +118,61 @@ const getModelRenderOptions = (
     ? { ...getRenderOptions(config), fontFamily: EXCALIFONT_FONT_FAMILY }
     : getRenderOptions(config);
 
-const parsePeleModel = (definition: string, config: PeleConfig) =>
-  withLineBreakFallback(definition, async (candidate) =>
-    parse(candidate, {
-      limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
-      maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
-      config: getPeleConfig(config),
-    })
-  );
+/**
+ * Pele reports syntax errors at the end of a definition (e.g. a missing `end`)
+ * on the line after its last one, with an empty excerpt. They're moved to the
+ * end of its last non-empty line instead, as Mermaid reports them: that's the
+ * line Excalidraw highlights, shows and tries fixing.
+ *
+ * Lines are numbered as Pele (and Mermaid) parse them, i.e. without e.g. the
+ * comments before them, but trailing (blank) lines are always kept.
+ */
+export const pointEndOfInputErrorAtLastLine = (
+  error: unknown,
+  definition: string
+) => {
+  if (
+    !(error instanceof PeleError) ||
+    error.code !== "syntax" ||
+    // not at the end
+    error.snippet.split("\n")[0].trim()
+  ) {
+    return error;
+  }
+  const lines = definition.split(/\r?\n/);
+  let lastIndex = lines.length - 1;
+  while (lastIndex >= 0 && !lines[lastIndex].trim()) {
+    lastIndex--;
+  }
+  const line = error.line - 1 - (lines.length - 1 - lastIndex);
+  if (lastIndex < 0 || line < 1) {
+    return error;
+  }
+
+  const lastLine = lines[lastIndex];
+  const snippet = `${lastLine}\n${"-".repeat(lastLine.length)}^`;
+  error.message = error.message
+    .replace(`on line ${error.line}`, `on line ${line}`)
+    .replace(error.snippet, snippet);
+  error.line = line;
+  error.column = lastLine.length + 1;
+  error.snippet = snippet;
+  return error;
+};
+
+const parsePeleModel = async (definition: string, config: PeleConfig) => {
+  try {
+    return await withLineBreakFallback(definition, async (candidate) =>
+      parse(candidate, {
+        limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
+        maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
+        config: getPeleConfig(config),
+      })
+    );
+  } catch (error) {
+    throw pointEndOfInputErrorAtLastLine(error, definition);
+  }
+};
 
 const renderGraphImage = (
   model: ParsedDiagramModel,

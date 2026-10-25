@@ -598,6 +598,44 @@ describe("parsePele", () => {
       /Parse error on line/
     );
   });
+
+  it("reports errors at the end of a definition at the end of its last line", async () => {
+    // as Mermaid does (Excalidraw highlights and tries fixing that line),
+    // instead of on an empty line after it
+    for (const ending of ["", "\n", "\n  \n"]) {
+      await expect(
+        parsePele(
+          `classDiagram\n  class Animal {\n    +int age\n  Animal <|-- Duck${ending}`
+        )
+      ).rejects.toMatchObject({
+        message: expect.stringMatching(
+          /^Parse error on line 4:\n {2}Animal <\|-- Duck\n-{18}\^\nExpecting/
+        ),
+        line: 4,
+        column: 19,
+      });
+    }
+    // numbered as Pele (and Mermaid) parse it, without its comments
+    await expect(
+      parsePele(
+        `%% a comment\n%% another\nclassDiagram\n  class Animal {\n    +int age\n  Animal <|-- Duck\n`
+      )
+    ).rejects.toMatchObject({
+      message: expect.stringMatching(
+        /^Parse error on line 4:\n {2}Animal <\|-- Duck\n-{18}\^\n/
+      ),
+      line: 4,
+    });
+    // errors elsewhere are kept as they are
+    await expect(
+      parsePele("flowchart TD\n  A[Process (main)] --> B\n  B --> C")
+    ).rejects.toMatchObject({
+      message: expect.stringMatching(
+        /^Parse error on line 2:\n {2}A\[Process \(main\)\] --> B\n-{12}\^\n/
+      ),
+      line: 2,
+    });
+  });
 });
 
 describe("parsePele sequence diagrams", () => {
