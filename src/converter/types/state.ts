@@ -6,6 +6,7 @@ import type {
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 
 import { GraphConverter } from "../GraphConverter.js";
+import { NODE_BACKGROUND_COLOR } from "../../constants.js";
 import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawVertexStyle,
@@ -271,6 +272,12 @@ const createContainerElement = (node: StateNode): ValidContainer => {
     node.shape === "stateStart" ||
     node.shape === "fork" ||
     node.shape === "join";
+  // drawn above the transitions (unlike composite states, behind them)
+  const isOpaqueStateNode =
+    node.shape === "rect" ||
+    node.shape === "rectWithTitle" ||
+    node.shape === "choice" ||
+    node.shape === "note";
   const fillColor =
     baseStyle.backgroundColor ||
     baseStyle.strokeColor ||
@@ -291,6 +298,9 @@ const createContainerElement = (node: StateNode): ValidContainer => {
     width: node.width,
     height: node.height,
     ...(label ? { label } : {}),
+    ...(isOpaqueStateNode
+      ? { backgroundColor: NODE_BACKGROUND_COLOR, fillStyle: "solid" }
+      : {}),
     ...baseStyle,
     ...(hasRoundedCorners ? { roundness: { type: 3 } } : {}),
     ...(isFilledStateNode
@@ -399,12 +409,7 @@ const createArrowElement = (edge: StateEdge): ValidLinearElement => {
 export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: State) => {
     const elements: ExcalidrawElementSkeleton[] = [];
-
-    chart.nodes.forEach((node) => {
-      if (!node.isRenderable) {
-        return;
-      }
-
+    const pushNode = (node: StateNode) => {
       const containerElement = createContainerElement(node);
       elements.push(containerElement);
 
@@ -416,7 +421,12 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
       if (node.shape === "stateEnd") {
         elements.push(createEndStateInnerEllipse(node));
       }
-    });
+    };
+    const nodes = chart.nodes.filter((node) => node.isRenderable);
+    const isComposite = (node: StateNode) => node.shape === "roundedWithTitle";
+
+    // composite states behind the transitions, the other states above them
+    nodes.filter(isComposite).forEach(pushNode);
 
     chart.lines?.forEach((line) => {
       elements.push(transformToExcalidrawLineSkeleton(line));
@@ -425,6 +435,8 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
     chart.edges.forEach((edge) => {
       elements.push(createArrowElement(edge));
     });
+
+    nodes.filter((node) => !isComposite(node)).forEach(pushNode);
 
     chart.texts?.forEach((text) => {
       elements.push(transformToExcalidrawTextSkeleton(text));

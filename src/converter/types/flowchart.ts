@@ -15,7 +15,7 @@ import {
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
-import { DEFAULT_FONT_SIZE } from "../../constants.js";
+import { DEFAULT_FONT_SIZE, NODE_BACKGROUND_COLOR } from "../../constants.js";
 
 const SUBGRAPH_LABEL_HORIZONTAL_PADDING = 32;
 const SUBGRAPH_LABEL_WIDTH_RATIO = 0.62;
@@ -450,7 +450,10 @@ const computeGroupIds = (
 
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
-    const elements: ExcalidrawElementSkeleton[] = [];
+    // subgraphs, then edges, then (opaque) vertices above the edges
+    const subGraphElements: ExcalidrawElementSkeleton[] = [];
+    const edgeElements: ExcalidrawElementSkeleton[] = [];
+    const vertexElements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
     const { getGroupIds, getParentId } = computeGroupIds(graph);
     const safeFontSize = fontSize || DEFAULT_FONT_SIZE;
@@ -526,7 +529,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           ...containerStyle,
         };
 
-        elements.push(containerElement);
+        subGraphElements.push(containerElement);
       });
 
     // Vertices
@@ -568,8 +571,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           ...labelStyle,
         },
         link: vertex.link || null,
+        backgroundColor: NODE_BACKGROUND_COLOR,
+        fillStyle: "solid",
         ...containerStyle,
       };
+      // drawn above the outer one, which is filled
+      let innerCircle: ExcalidrawElementSkeleton | undefined;
 
       switch (vertex.type) {
         case VERTEX_TYPE.STADIUM: {
@@ -585,7 +592,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           // Create new groupId for double circle
           groupIds.push(`doublecircle_${vertex.id}}`);
           // Create inner circle element
-          const innerCircle: ExcalidrawElementSkeleton = {
+          innerCircle = {
             type: "ellipse",
             groupIds,
             x: transformedX + CIRCLE_MARGIN,
@@ -602,7 +609,6 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
             },
           };
           containerElement = { ...containerElement, groupIds, type: "ellipse" };
-          elements.push(innerCircle);
           break;
         }
         case VERTEX_TYPE.CIRCLE: {
@@ -615,7 +621,10 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         }
       }
 
-      elements.push(containerElement);
+      vertexElements.push(containerElement);
+      if (innerCircle) {
+        vertexElements.push(innerCircle);
+      }
     });
 
     // Edges
@@ -650,8 +659,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const arrowType = computeExcalidrawArrowType(edge.type || "arrow_point");
 
       // Bind start and end vertex to arrow
-      const startVertex = elements.find((e) => e.id === edge.start);
-      const endVertex = elements.find((e) => e.id === edge.end);
+      const startVertex = [...vertexElements, ...subGraphElements].find(
+        (e) => e.id === edge.start
+      );
+      const endVertex = [...vertexElements, ...subGraphElements].find(
+        (e) => e.id === edge.end
+      );
       if (!startVertex || !endVertex) {
         return;
       }
@@ -725,11 +738,11 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         },
       };
 
-      elements.push(containerElement);
+      edgeElements.push(containerElement);
     });
 
     return {
-      elements,
+      elements: [...subGraphElements, ...edgeElements, ...vertexElements],
     };
   },
 });

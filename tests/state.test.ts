@@ -1,3 +1,4 @@
+import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
 import { parseMermaid } from "../src/parseMermaid.js";
 import type { State } from "../src/parser/state.js";
@@ -427,11 +428,12 @@ describe("state diagrams", () => {
       (element: any) => element.id === `${endNode?.id}__inner`
     );
 
-    expect(idle?.backgroundColor).toBeUndefined();
+    // opaque in the canvas' color, not in Mermaid's default colors
+    expect(idle?.backgroundColor).toBe(NODE_BACKGROUND_COLOR);
     expect(idle?.strokeColor).toBeUndefined();
-    expect(active?.backgroundColor).toBeUndefined();
+    expect(active?.backgroundColor).toBe(NODE_BACKGROUND_COLOR);
     expect(active?.strokeColor).toBeUndefined();
-    expect(note?.backgroundColor).toBeUndefined();
+    expect(note?.backgroundColor).toBe(NODE_BACKGROUND_COLOR);
     expect(note?.strokeColor).toBeUndefined();
     expect(start).toMatchObject({
       type: "ellipse",

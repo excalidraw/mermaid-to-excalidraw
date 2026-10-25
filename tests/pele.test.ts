@@ -1,3 +1,4 @@
+import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
 import { parsePele } from "../src/pele/parsePele.js";
 import {
@@ -1006,5 +1007,87 @@ describe("parsePele state diagrams", () => {
   [*] --> Idle`);
 
     expect(diagram.nodes.find(({ id }) => id === "Idle")?.fontSize).toBe(20);
+  });
+});
+
+describe("z-order and fills", () => {
+  beforeAll(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
+  const convert = async (definition: string) =>
+    graphToExcalidraw(await parsePele(definition)).elements as any[];
+  const lastArrow = (elements: any[]) =>
+    elements.map((element) => element.type).lastIndexOf("arrow");
+  const firstArrow = (elements: any[]) =>
+    elements.findIndex((element) => element.type === "arrow");
+
+  it("draws flowchart nodes, opaque, above edges, and subgraphs below", async () => {
+    const elements = await convert(`flowchart LR
+  subgraph S [Group]
+    A[Alpha] --> B{Beta}
+  end
+  B --> C((Gamma))`);
+    const node = (id: string) => elements.find((element) => element.id === id);
+
+    ["A", "B", "C"].forEach((id) => {
+      expect(node(id).backgroundColor).toBe(NODE_BACKGROUND_COLOR);
+      expect(elements.indexOf(node(id))).toBeGreaterThan(lastArrow(elements));
+    });
+    expect(elements.indexOf(node("S"))).toBeLessThan(firstArrow(elements));
+  });
+
+  it("keeps styled fills", async () => {
+    const elements = await convert(`flowchart LR
+  A --> B
+  style A fill:#f96`);
+    expect(elements.find((element) => element.id === "A").backgroundColor).toBe(
+      "#f96"
+    );
+  });
+
+  it("draws classes and entities, opaque, above the arrows between them", async () => {
+    for (const definition of [
+      `classDiagram
+  Animal <|-- Duck
+  Animal : +int age`,
+      `erDiagram
+  CUSTOMER ||--o{ ORDER : places`,
+    ]) {
+      const elements = await convert(definition);
+      const boxes = elements.filter(
+        (element) => element.type === "rectangle" && element.label?.text
+      );
+      expect(boxes.length).toBeGreaterThan(0);
+      boxes.forEach((box) => {
+        expect(box.backgroundColor).toBe(NODE_BACKGROUND_COLOR);
+        expect(elements.indexOf(box)).toBeGreaterThan(lastArrow(elements));
+      });
+    }
+  });
+
+  it("draws states, opaque, above transitions, and composite states below", async () => {
+    const elements = await convert(`stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    [*] --> Inner
+    Inner --> Done
+  }`);
+    const byText = (text: string) =>
+      elements.find((element) => element.label?.text === text);
+
+    expect(elements.indexOf(byText("Outer"))).toBeLessThan(
+      firstArrow(elements)
+    );
+    ["Inner", "Done"].forEach((text) => {
+      expect(byText(text).backgroundColor).toBe(NODE_BACKGROUND_COLOR);
+      expect(elements.indexOf(byText(text))).toBeGreaterThan(
+        lastArrow(elements)
+      );
+    });
   });
 });
