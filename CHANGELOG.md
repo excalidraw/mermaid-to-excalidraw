@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Fixes
+
+- Render sequence diagram arrowhead end styles `->>` and `-->>` as closed triangles by [@barremian](https://github.com/barremian) in https://github.com/excalidraw/mermaid-to-excalidraw/pull/101
+
 ### v2.1.0
 
 - Upgrade mermaid to 11.12.1
