@@ -6,10 +6,15 @@ import type {
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 
 import { GraphConverter } from "../GraphConverter.js";
-import { NODE_BACKGROUND_COLOR } from "../../constants.js";
+import {
+  DEFAULT_TEXT_COLOR,
+  NODE_BACKGROUND_COLOR,
+  TITLE_BAND_STROKE_CLEARANCE,
+} from "../../constants.js";
 import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawVertexStyle,
+  measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
 import {
   transformToExcalidrawLineSkeleton,
@@ -46,36 +51,6 @@ const getNodeText = (node: StateNode) => {
   }
 
   return node.text;
-};
-
-let labelMeasureContext: CanvasRenderingContext2D | null | undefined;
-
-const getLabelMeasureContext = () => {
-  if (labelMeasureContext !== undefined) {
-    return labelMeasureContext;
-  }
-
-  if (typeof document === "undefined") {
-    labelMeasureContext = null;
-    return labelMeasureContext;
-  }
-
-  try {
-    labelMeasureContext = document.createElement("canvas").getContext("2d");
-  } catch {
-    labelMeasureContext = null;
-  }
-  return labelMeasureContext;
-};
-
-const measureLabelLineWidthAtFontSize = (line: string, fontSize: number) => {
-  const context = getLabelMeasureContext();
-  if (!context) {
-    return line.length * fontSize * 0.6;
-  }
-
-  context.font = `${fontSize}px Excalifont, sans-serif`;
-  return context.measureText(line).width;
 };
 
 const wrapLabelWord = (word: string, fontSize: number, maxWidth: number) => {
@@ -316,8 +291,6 @@ const createContainerElement = (
   };
 };
 
-// Excalidraw's default stroke (and so text) color
-const DEFAULT_TEXT_COLOR = "#1e1e1e";
 // Excalidraw's corner radius of a rectangle with adaptive roundness
 const ADAPTIVE_RADIUS = 32;
 const PROPORTIONAL_RADIUS = 0.25;
@@ -369,9 +342,12 @@ const createCompositeTitleElement = (
     id: `${node.id}__title`,
     type: "rectangle",
     x: node.x + (node.width - width) / 2,
-    y: node.y + strokeWidth,
+    y: node.y + strokeWidth + TITLE_BAND_STROKE_CLEARANCE,
     width,
-    height: Math.max(1, titleBottom - node.y - strokeWidth),
+    height: Math.max(
+      1,
+      titleBottom - node.y - strokeWidth - TITLE_BAND_STROKE_CLEARANCE
+    ),
     label: {
       // in the composite's stroke color (the band, which it'd inherit, has
       // none)
@@ -382,6 +358,8 @@ const createCompositeTitleElement = (
     strokeColor: "transparent",
     backgroundColor: baseStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
     fillStyle: "solid",
+    // a hand-drawn fill wobbles past its bounds, over the composite's stroke
+    roughness: 0,
   };
 };
 

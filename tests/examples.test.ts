@@ -660,10 +660,15 @@ end`);
       (element: any) => element.id === graph.subGraphs[0].id
     );
 
-    expect(subgraph).toMatchObject({
+    // the title is on a separate band, above the edges
+    const title = result.elements.find(
+      (element: any) => element.id === `${graph.subGraphs[0].id}__title`
+    );
+    expect(subgraph.label).toBeUndefined();
+    expect(title).toMatchObject({
       label: { text: "First\nSecond" },
     });
-    expect(subgraph.label.fontSize).toBeLessThanOrEqual(DEFAULT_FONT_SIZE);
+    expect(title.label.fontSize).toBeLessThanOrEqual(DEFAULT_FONT_SIZE);
 
     const children = graph.subGraphs[0].nodeIds
       .map((nodeId) =>
@@ -672,7 +677,7 @@ end`);
       .filter(Boolean) as any[];
     const childTop = Math.min(...children.map((element) => element.y));
     const labelHeight =
-      subgraph.label.text.split("\n").length * subgraph.label.fontSize * 1.25;
+      title.label.text.split("\n").length * title.label.fontSize * 1.25;
     expect(childTop).toBeGreaterThanOrEqual(subgraph.y + labelHeight + 10);
     expect(subgraph.y + subgraph.height).toBeGreaterThanOrEqual(
       Math.max(...children.map((element) => element.y + element.height))
@@ -732,11 +737,14 @@ end`);
       (element: any) => element.id === "A_B"
     ) as any;
 
-    expect(subgraph.label.text.split("\n")).toHaveLength(10);
-    expect(subgraph.label.fontSize).toBe(DEFAULT_FONT_SIZE);
+    const title = result.elements.find(
+      (element: any) => element.id === `${graph.subGraphs[0].id}__title`
+    ) as any;
+    expect(title.label.text.split("\n")).toHaveLength(10);
+    expect(title.label.fontSize).toBe(DEFAULT_FONT_SIZE);
     const labelBottom =
       subgraph.y +
-      subgraph.label.text.split("\n").length * subgraph.label.fontSize * 1.25 +
+      title.label.text.split("\n").length * title.label.fontSize * 1.25 +
       10;
     expect(Math.min(nodeA.y, nodeB.y)).toBeGreaterThanOrEqual(labelBottom);
     expect(subgraph.y + subgraph.height).toBeGreaterThanOrEqual(
@@ -843,11 +851,11 @@ end`);
       expect(subgraph).toBeTruthy();
       expect(children.length).toBeGreaterThan(0);
 
+      const title = result.elements.find(
+        (element: any) => element.id === `${parsedSubgraph.id}__title`
+      ) as any;
       const requiredHeaderHeight =
-        subgraph.label.text.split("\n").length *
-          subgraph.label.fontSize *
-          1.25 +
-        10;
+        title.label.text.split("\n").length * title.label.fontSize * 1.25 + 10;
       expect(
         Math.min(...children.map((child) => child.y))
       ).toBeGreaterThanOrEqual(subgraph.y + requiredHeaderHeight);

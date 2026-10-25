@@ -25,6 +25,43 @@ const removeMarkdownPreservingLineBreaks = (text: string) => {
   );
 };
 
+let labelMeasureContext: CanvasRenderingContext2D | null | undefined;
+
+const getLabelMeasureContext = () => {
+  if (labelMeasureContext !== undefined) {
+    return labelMeasureContext;
+  }
+
+  if (typeof document === "undefined") {
+    labelMeasureContext = null;
+    return labelMeasureContext;
+  }
+
+  try {
+    labelMeasureContext = document.createElement("canvas").getContext("2d");
+  } catch {
+    labelMeasureContext = null;
+  }
+  return labelMeasureContext;
+};
+
+/**
+ * The width of a line of Excalifont text (estimated when there's no canvas to
+ * measure it on)
+ */
+export const measureLabelLineWidthAtFontSize = (
+  line: string,
+  fontSize: number
+) => {
+  const context = getLabelMeasureContext();
+  if (!context) {
+    return line.length * fontSize * 0.6;
+  }
+
+  context.font = `${fontSize}px Excalifont, sans-serif`;
+  return context.measureText(line).width;
+};
+
 /**
  * Compute groupIds for each element
  */

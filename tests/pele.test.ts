@@ -1098,6 +1098,38 @@ describe("z-order and fills", () => {
     elements.forEach((element) => expect(element.groupIds ?? []).toEqual([]));
   });
 
+  it("draws flowchart subgraph titles above edges, on a band as wide as them", async () => {
+    const elements = await convert(`flowchart TB
+  X --> A
+  subgraph S [Group]
+    A[Alpha] --> B[Beta]
+    C[Gamma]
+  end
+  style S fill:#fee`);
+    const subgraph = elements.find((element) => element.id === "S");
+    const title = elements.find((element) => element.id === "S__title");
+
+    expect(subgraph.label).toBeUndefined();
+    expect(title).toMatchObject({
+      label: { text: "Group" },
+      backgroundColor: "#fee",
+      strokeColor: "transparent",
+      // hand-drawn, its fill would wobble over the subgraph's stroke
+      roughness: 0,
+    });
+    expect(elements.indexOf(title)).toBeGreaterThan(lastArrow(elements));
+    expect(elements.indexOf(title)).toBeLessThan(
+      elements.findIndex((element) => element.id === "A")
+    );
+    // centered, and narrower than the subgraph: edges entering it beside
+    // the title aren't hidden
+    expect(title.width).toBeLessThan(subgraph.width / 2);
+    expect(title.x + title.width / 2).toBeCloseTo(
+      subgraph.x + subgraph.width / 2
+    );
+    expect(title.y).toBeGreaterThan(subgraph.y);
+  });
+
   it("keeps styled fills", async () => {
     const elements = await convert(`flowchart LR
   A --> B

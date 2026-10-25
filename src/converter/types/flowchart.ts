@@ -12,10 +12,16 @@ import {
   computeExcalidrawVertexStyle,
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawArrowType,
+  measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
 import { VERTEX_TYPE } from "../../interfaces.js";
 import { Flowchart } from "../../parser/flowchart.js";
-import { DEFAULT_FONT_SIZE, NODE_BACKGROUND_COLOR } from "../../constants.js";
+import {
+  DEFAULT_FONT_SIZE,
+  DEFAULT_TEXT_COLOR,
+  NODE_BACKGROUND_COLOR,
+  TITLE_BAND_STROKE_CLEARANCE,
+} from "../../constants.js";
 
 const SUBGRAPH_LABEL_HORIZONTAL_PADDING = 32;
 const SUBGRAPH_LABEL_WIDTH_RATIO = 0.62;
@@ -23,6 +29,8 @@ const VERTEX_LABEL_HORIZONTAL_PADDING = 12;
 const MIN_VERTEX_LABEL_FONT_SIZE = 12;
 const EXCALIDRAW_LINE_HEIGHT = 1.25;
 const EXCALIDRAW_BOUND_TEXT_PADDING = 5;
+// a subgraph title's band, beyond its text, on either side
+const SUBGRAPH_TITLE_BAND_PADDING = 8;
 
 const estimateLabelWidth = (text: string, fontSize: number) => {
   const longestLineLength = Math.max(
@@ -389,6 +397,8 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     const subGraphElements: ExcalidrawElementSkeleton[] = [];
     const edgeElements: ExcalidrawElementSkeleton[] = [];
     const vertexElements: ExcalidrawElementSkeleton[] = [];
+    // subgraphs' titles, above the edges crossing them
+    const titleElements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
     const safeFontSize = fontSize || DEFAULT_FONT_SIZE;
     const verticalExpansions = computeVerticalExpansions(graph, safeFontSize);
@@ -456,17 +466,57 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           y: layout.y,
           width,
           height: layout.height,
-          label: {
-            groupIds,
-            text: subGraphText,
-            fontSize: subGraphLabelFontSize,
-            verticalAlign: "top",
-            ...labelStyle,
-          },
           ...containerStyle,
         };
-
         subGraphElements.push(containerElement);
+
+        // The title, on an opaque band (in the subgraph's fill) above the
+        // edges, which would otherwise cross it: the subgraph's box is behind
+        // them. Only as wide as the title, so edges entering the subgraph
+        // elsewhere stay whole.
+        if (subGraphText) {
+          const strokeWidth = containerStyle.strokeWidth ?? 2;
+          const lines = subGraphText.split("\n");
+          const titleWidth = Math.min(
+            width - strokeWidth * 2,
+            Math.max(
+              ...lines.map((line) =>
+                measureLabelLineWidthAtFontSize(line, subGraphLabelFontSize)
+              )
+            ) +
+              (EXCALIDRAW_BOUND_TEXT_PADDING + SUBGRAPH_TITLE_BAND_PADDING) *
+                2 +
+              // leeway for Excalidraw to fit it without wrapping
+              2
+          );
+          titleElements.push({
+            id: `${subGraph.id}__title`,
+            type: "rectangle",
+            groupIds,
+            x: x + (width - titleWidth) / 2,
+            y: layout.y + strokeWidth + TITLE_BAND_STROKE_CLEARANCE,
+            width: Math.max(1, titleWidth),
+            height:
+              lines.length * subGraphLabelFontSize * EXCALIDRAW_LINE_HEIGHT +
+              EXCALIDRAW_BOUND_TEXT_PADDING * 2,
+            strokeColor: "transparent",
+            backgroundColor:
+              containerStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
+            fillStyle: "solid",
+            // a hand-drawn fill wobbles past its bounds, over the subgraph's
+            // stroke
+            roughness: 0,
+            label: {
+              groupIds,
+              text: subGraphText,
+              fontSize: subGraphLabelFontSize,
+              // in the subgraph's stroke color (the band, which it'd
+              // inherit, has none)
+              strokeColor: containerStyle.strokeColor ?? DEFAULT_TEXT_COLOR,
+              ...labelStyle,
+            },
+          });
+        }
       });
 
     // Vertices
@@ -674,7 +724,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     });
 
     return {
-      elements: [...subGraphElements, ...edgeElements, ...vertexElements],
+      elements: [
+        ...subGraphElements,
+        ...edgeElements,
+        ...titleElements,
+        ...vertexElements,
+      ],
     };
   },
 });
