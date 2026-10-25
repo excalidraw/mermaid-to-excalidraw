@@ -1039,6 +1039,9 @@ describe("z-order and fills", () => {
       expect(elements.indexOf(node(id))).toBeGreaterThan(lastArrow(elements));
     });
     expect(elements.indexOf(node("S"))).toBeLessThan(firstArrow(elements));
+    // not grouped with their subgraph: Excalidraw would keep the group
+    // together in z-order, below arrows drawn after it
+    elements.forEach((element) => expect(element.groupIds ?? []).toEqual([]));
   });
 
   it("keeps styled fills", async () => {

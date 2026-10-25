@@ -383,71 +383,6 @@ const computeVertexLabelFontSize = (
   );
 };
 
-const computeGroupIds = (
-  graph: Flowchart
-): {
-  getGroupIds: (elementId: string) => string[];
-  getParentId: (elementId: string) => string | null;
-} => {
-  // Parse the diagram into a tree for rendering and grouping
-  const tree: {
-    [key: string]: {
-      id: string;
-      parent: string | null;
-      isLeaf: boolean; // true = vertex, false = subGraph
-    };
-  } = {};
-  graph.subGraphs.map((subGraph) => {
-    subGraph.nodeIds.forEach((nodeId) => {
-      tree[subGraph.id] = {
-        id: subGraph.id,
-        parent: null,
-        isLeaf: false,
-      };
-      tree[nodeId] = {
-        id: nodeId,
-        parent: subGraph.id,
-        isLeaf: graph.vertices[nodeId] !== undefined,
-      };
-    });
-  });
-  const mapper: {
-    [key: string]: string[];
-  } = {};
-  [...Object.keys(graph.vertices), ...graph.subGraphs.map((c) => c.id)].forEach(
-    (id) => {
-      if (!tree[id]) {
-        return;
-      }
-      let curr = tree[id];
-      const groupIds: string[] = [];
-      if (!curr.isLeaf) {
-        groupIds.push(`subgraph_group_${curr.id}`);
-      }
-
-      while (true) {
-        if (curr.parent) {
-          groupIds.push(`subgraph_group_${curr.parent}`);
-          curr = tree[curr.parent];
-        } else {
-          break;
-        }
-      }
-
-      mapper[id] = groupIds;
-    }
-  );
-
-  return {
-    getGroupIds: (elementId) => {
-      return mapper[elementId] || [];
-    },
-    getParentId: (elementId) => {
-      return tree[elementId] ? tree[elementId].parent : null;
-    },
-  };
-};
-
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
     // subgraphs, then edges, then (opaque) vertices above the edges
@@ -455,7 +390,6 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
     const edgeElements: ExcalidrawElementSkeleton[] = [];
     const vertexElements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
-    const { getGroupIds, getParentId } = computeGroupIds(graph);
     const safeFontSize = fontSize || DEFAULT_FONT_SIZE;
     const verticalExpansions = computeVerticalExpansions(graph, safeFontSize);
     const subGraphLayouts = computeSubGraphLayouts(
@@ -492,7 +426,10 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       .slice()
       .reverse()
       .forEach((subGraph) => {
-        const groupIds = getGroupIds(subGraph.id);
+        // Not grouped with what's in them: Excalidraw keeps a group's elements
+        // together in z-order, which would put the arrows of other subgraphs
+        // above their (opaque) vertices
+        const groupIds: string[] = [];
         const subGraphText = getText(subGraph);
         const subGraphLabelFontSize = safeFontSize;
         const horizontalLayout = subGraphHorizontalLayouts.get(subGraph.id) || {
@@ -537,7 +474,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       if (!vertex) {
         return;
       }
-      const groupIds = getGroupIds(vertex.id);
+      const groupIds: string[] = [];
       const vertexText = getText(vertex);
       const transformedX = vertex.x + (horizontalOffsets.get(vertex.id) || 0);
       const transformedY =
@@ -629,12 +566,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
 
     // Edges
     graph.edges.forEach((edge) => {
-      let groupIds: string[] = [];
-      const startParentId = getParentId(edge.start);
-      const endParentId = getParentId(edge.end);
-      if (startParentId && startParentId === endParentId) {
-        groupIds = getGroupIds(startParentId);
-      }
+      const groupIds: string[] = [];
 
       // Get arrow position data
       const { startX, startY, reflectionPoints } = edge;
