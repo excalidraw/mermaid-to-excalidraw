@@ -13,7 +13,10 @@ export const entityCodesToText = (input: string): string => {
   // Render the decimal code as html character, eg &#9829; => ♥
   const element = document.createElement("textarea");
   element.innerHTML = inputWithDecimalCode;
-  return element.value;
+  // Convert any residual literal <br> tags to newlines.
+  // Mermaid sometimes emits escaped <br> (e.g. &lt;br&gt;) in label text;
+  // after HTML decoding those become literal "<br>" strings rather than newlines.
+  return element.value.replace(/<br\s*\/?\s*>/gi, "\n");
 };
 
 export const getTransformAttr = (el: Element) => {

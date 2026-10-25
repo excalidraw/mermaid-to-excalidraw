@@ -31,6 +31,19 @@ describe("Test Utils", () => {
       expect(entityCodesToText("#9829;")).toBe("♥");
       expect(entityCodesToText("#6672;")).toBe("ᨐ");
     });
+
+    it("should convert <br> variants to newlines", () => {
+      expect(entityCodesToText("Hello<br>World")).toBe("Hello\nWorld");
+      expect(entityCodesToText("Hello<br/>World")).toBe("Hello\nWorld");
+      expect(entityCodesToText("Hello<BR>World")).toBe("Hello\nWorld");
+      expect(entityCodesToText("Hello<br />World")).toBe("Hello\nWorld");
+    });
+
+    it("should convert escaped <br> to newlines after HTML decoding", () => {
+      // Mermaid can emit entity-encoded <br> tags as &lt;br&gt;
+      expect(entityCodesToText("Hello&lt;br&gt;World")).toBe("Hello\nWorld");
+      expect(entityCodesToText("Hello&lt;br/&gt;World")).toBe("Hello\nWorld");
+    });
   });
 
   describe("Test getTransformAttr", () => {
