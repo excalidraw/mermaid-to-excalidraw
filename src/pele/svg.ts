@@ -521,19 +521,53 @@ export const getRouteMarkers = (
 };
 
 /**
+ * Whether `to` steps back from `from` along the segment from `previous`, e.g.
+ * where Pele ends a path a bit inside its marker, and back.
+ */
+const isStepBack = (previous: Position, from: Position, to: Position) => {
+  const a = { x: from.x - previous.x, y: from.y - previous.y };
+  const b = { x: to.x - from.x, y: to.y - from.y };
+  return (
+    Math.abs(a.x * b.y - a.y * b.x) < 0.01 * Math.hypot(a.x, a.y) &&
+    a.x * b.x + a.y * b.y < 0
+  );
+};
+
+/** The route, without steps back at its ends. */
+const dropEndStepBacks = (route: Position[]) => {
+  let result = route;
+  while (
+    result.length > 2 &&
+    isStepBack(
+      result[result.length - 3],
+      result[result.length - 2],
+      result.at(-1)!
+    )
+  ) {
+    result = [...result.slice(0, -2), result.at(-1)!];
+  }
+  while (result.length > 2 && isStepBack(result[2], result[1], result[0])) {
+    result = [result[0], ...result.slice(2)];
+  }
+  return result;
+};
+
+/**
  * Pele shortens edge paths by the length of their arrowheads, which it draws
  * as separate shapes (`.pele-marker`). Excalidraw draws arrowheads at the
  * arrow's end points, so the route is extended to the far end of the markers,
  * i.e. back to the node outline.
  */
 export const extendRouteToMarkers = (
-  route: Position[],
+  path: Position[],
   markerElements: Element[],
   root: Element
 ): Position[] => {
-  if (route.length < 2 || !markerElements.length) {
-    return route;
+  if (path.length < 2 || !markerElements.length) {
+    return path;
   }
+  // (or it'd be extended backwards)
+  const route = dropEndStepBacks(path);
 
   const first = route[0];
   const last = route[route.length - 1];

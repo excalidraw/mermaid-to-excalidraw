@@ -877,6 +877,26 @@ describe("parsePele class diagrams", () => {
     });
   });
 
+  it("ends relations on the class outline, past Pele's step back into their marker", async () => {
+    const diagram = await parseClassDiagram(`classDiagram
+  direction LR
+  class Student {
+    -idCard : IdCard
+  }
+  class IdCard {
+    -id : int
+  }
+  Student "1" --o "1" IdCard : carries
+  Student "1" --* "1" Bike : rides`);
+
+    diagram.arrows.forEach(({ endX, endY, end }) => {
+      const box = diagram.nodes[0].find(({ id }) => id === end?.id)!;
+      expect(endX).toBeCloseTo(box.x, 0);
+      expect(endY).toBeGreaterThan(box.y);
+      expect(endY).toBeLessThan(box.y + box.height!);
+    });
+  });
+
   it("reads cardinalities, notes and namespaces", async () => {
     const diagram = await parseClassDiagram(`classDiagram
   namespace Shapes {
