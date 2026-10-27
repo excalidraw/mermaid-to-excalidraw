@@ -1,5 +1,4 @@
 import type { ClassModel } from "pele";
-import type { NamespaceNode } from "mermaid/dist/diagrams/class/classTypes.js";
 import { nanoid } from "nanoid";
 
 import type {
@@ -9,7 +8,7 @@ import type {
   SupportedArrowhead,
   Text,
 } from "../elementSkeleton.js";
-import type { Class } from "../parser/class.js";
+import type { Class } from "../interfaces.js";
 import { decodeMermaidText } from "../text.js";
 import {
   getLabelPosition,
@@ -304,12 +303,9 @@ export const parsePeleClass = (
     arrows: [...arrows, ...connectors],
     text,
     // The converter frames each namespace's classes
-    namespaces: Array.from(model.namespaces.values()).map(
-      (namespace) =>
-        ({
-          ...namespace,
-          classes: Object.fromEntries(namespace.classes),
-        } as unknown as NamespaceNode)
-    ),
+    namespaces: Array.from(model.namespaces.values()).map((namespace) => ({
+      id: namespace.id,
+      classes: Object.fromEntries(namespace.classes),
+    })),
   };
 };

@@ -21,7 +21,7 @@ import {
   transformToExcalidrawTextSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
 
-import type { State, StateEdge, StateNode } from "../../parser/state.js";
+import type { State, StateEdge, StateNode } from "../../interfaces.js";
 
 const point = (x: number, y: number) => [x, y] as LocalPoint;
 const DEFAULT_STATE_NODE_LABEL_FONT_SIZE = 16;

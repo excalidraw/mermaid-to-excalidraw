@@ -9,7 +9,7 @@ import { GraphConverter } from "../GraphConverter.js";
 import { NODE_BACKGROUND_COLOR } from "../../constants.js";
 
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
-import type { Class } from "../../parser/class.js";
+import type { Class } from "../../interfaces.js";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {

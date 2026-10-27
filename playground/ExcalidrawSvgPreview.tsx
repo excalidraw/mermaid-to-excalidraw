@@ -5,11 +5,10 @@ import {
 } from "@excalidraw/excalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { parseDiagram, type DiagramEngine } from "../src/parseDiagram";
+import { parseDiagram } from "../src/parseDiagram";
 import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
 
 interface ExcalidrawSvgPreviewProps {
-  engine: DiagramEngine;
   definition: string;
 }
 
@@ -26,19 +25,8 @@ const runSequentially = <T,>(task: () => Promise<T>) => {
   return run;
 };
 
-const cleanupMermaidTempContainers = () => {
-  document
-    .querySelectorAll<HTMLDivElement>(".mermaid-to-excalidraw-svg-container")
-    .forEach((container) => {
-      container.remove();
-    });
-};
-
-const generateExcalidrawSvg = async (
-  definition: string,
-  engine: DiagramEngine
-): Promise<string> => {
-  const cacheKey = `${engine}:${definition}`;
+const generateExcalidrawSvg = async (definition: string): Promise<string> => {
+  const cacheKey = definition;
   const cachedSvg = svgCache.get(cacheKey);
   if (cachedSvg) {
     return cachedSvg;
@@ -50,27 +38,23 @@ const generateExcalidrawSvg = async (
   }
 
   const renderPromise = runSequentially(async () => {
-    try {
-      const parsedMermaid = await parseDiagram(definition, undefined, engine);
-      const { elements, files } = graphToExcalidraw(parsedMermaid, {
-        fontSize: DEFAULT_FONT_SIZE,
-      });
-      await ensureExcalidrawFontsLoaded();
+    const parsedMermaid = await parseDiagram(definition);
+    const { elements, files } = graphToExcalidraw(parsedMermaid, {
+      fontSize: DEFAULT_FONT_SIZE,
+    });
+    await ensureExcalidrawFontsLoaded();
 
-      const svgElement = await exportToSvg({
-        elements: convertToExcalidrawElements(elements),
-        appState: {
-          exportBackground: true,
-          viewBackgroundColor: "#ffffff",
-        },
-        files: files ?? null,
-        exportPadding: 16,
-      });
+    const svgElement = await exportToSvg({
+      elements: convertToExcalidrawElements(elements),
+      appState: {
+        exportBackground: true,
+        viewBackgroundColor: "#ffffff",
+      },
+      files: files ?? null,
+      exportPadding: 16,
+    });
 
-      return svgElement.outerHTML;
-    } finally {
-      cleanupMermaidTempContainers();
-    }
+    return svgElement.outerHTML;
   })
     .then((svg) => {
       svgCache.set(cacheKey, svg);
@@ -85,7 +69,6 @@ const generateExcalidrawSvg = async (
 };
 
 export const ExcalidrawSvgPreview = ({
-  engine,
   definition,
 }: ExcalidrawSvgPreviewProps) => {
   const [svg, setSvg] = useState("");
@@ -98,7 +81,7 @@ export const ExcalidrawSvgPreview = ({
     setIsLoading(true);
     setError(null);
 
-    generateExcalidrawSvg(definition, engine)
+    generateExcalidrawSvg(definition)
       .then((renderedSvg) => {
         if (!isCancelled) {
           setSvg(renderedSvg);
@@ -119,7 +102,7 @@ export const ExcalidrawSvgPreview = ({
     return () => {
       isCancelled = true;
     };
-  }, [definition, engine]);
+  }, [definition]);
 
   if (error) {
     return <div className="preview-error">{error}</div>;

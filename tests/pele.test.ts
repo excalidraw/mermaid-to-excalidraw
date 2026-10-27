@@ -11,19 +11,21 @@ import {
 } from "../src/pele/svg.js";
 import { parsePeleFlowchart } from "../src/pele/flowchart.js";
 import { parse, render, type FlowchartModel } from "pele";
-import type { Flowchart } from "../src/parser/flowchart.js";
+import type {
+  Flowchart,
+  Sequence,
+  Class,
+  ERD,
+  State,
+} from "../src/interfaces.js";
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart.ts";
 import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks.ts";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported.ts";
-import type { Sequence } from "../src/parser/sequence.js";
-import type { Class } from "../src/parser/class.js";
 import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class.ts";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er.ts";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
 import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane.ts";
-import type { ERD } from "../src/parser/er.js";
-import type { State } from "../src/parser/state.js";
 
 const parseFlowchart = async (definition: string) => {
   const graph = await parsePele(definition);

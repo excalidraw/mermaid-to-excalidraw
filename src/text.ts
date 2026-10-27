@@ -64,34 +64,3 @@ export const withLineBreakFallback = async <T>(
     }
   }
 };
-
-const getNodeText = (node: Node): string => {
-  if (node.nodeType === Node.TEXT_NODE) {
-    return node.nodeValue || "";
-  }
-
-  if (
-    node.nodeType === Node.ELEMENT_NODE &&
-    (node as Element).tagName.toLowerCase() === "br"
-  ) {
-    return "\n";
-  }
-
-  return Array.from(node.childNodes).map(getNodeText).join("");
-};
-
-/**
- * Reads rendered SVG/HTML label content without losing `<br>` elements.
- * Escaped textual `<br>` remains text because it is represented by a text node.
- */
-export const getTextContentWithLineBreaks = (element: Element) => {
-  const tspans = Array.from(element.querySelectorAll("tspan"));
-  const text = tspans.length
-    ? tspans
-        .map((tspan) => getNodeText(tspan).trim())
-        .filter(Boolean)
-        .join("\n")
-    : getNodeText(element).trim();
-
-  return entityCodesToText(text);
-};

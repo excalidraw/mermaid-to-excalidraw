@@ -14,9 +14,8 @@ import {
   computeExcalidrawArrowType,
   measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
-import { VERTEX_TYPE } from "../../interfaces.js";
+import { VERTEX_TYPE, Flowchart } from "../../interfaces.js";
 import { transformToExcalidrawLineSkeleton } from "../transformToExcalidrawSkeleton.js";
-import { Flowchart } from "../../parser/flowchart.js";
 import {
   DEFAULT_FONT_SIZE,
   DEFAULT_TEXT_COLOR,

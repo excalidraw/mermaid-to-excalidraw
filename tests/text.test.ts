@@ -1,8 +1,8 @@
 import {
   decodeMermaidText,
-  getTextContentWithLineBreaks,
   normalizeText,
   replaceEscapedNewlines,
+  withLineBreakFallback,
 } from "../src/text.js";
 
 describe("normalizeText", () => {
@@ -22,10 +22,6 @@ describe("normalizeText", () => {
   it("distinguishes break elements from escaped break text", () => {
     expect(decodeMermaidText("one&lt;br&gt;two")).toBe("one<br>two");
     expect(decodeMermaidText("one#60;br#62;two")).toBe("one<br>two");
-
-    const element = document.createElement("div");
-    element.innerHTML = "one<br>two &lt;br&gt; three";
-    expect(getTextContentWithLineBreaks(element)).toBe("one\ntwo <br> three");
   });
 });
 
@@ -54,5 +50,50 @@ describe("replaceEscapedNewlines", () => {
     expect(replaceEscapedNewlines("a\\\\nb", "<br/>")).toBe("a\\nb");
     expect(replaceEscapedNewlines("a\\\\\\nb", "<br/>")).toBe("a\\<br/>b");
     expect(replaceEscapedNewlines("a<br>b", "\n")).toBe("a<br>b");
+  });
+});
+
+describe("withLineBreakFallback", () => {
+  it("runs the task once when it succeeds", async () => {
+    const task = vi.fn(async (definition: string) => definition);
+
+    await expect(withLineBreakFallback("A<br>B", task)).resolves.toBe("A<br>B");
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries with \\n when the definition with <br> fails", async () => {
+    const task = vi.fn(async (definition: string) => {
+      if (definition.includes("<br")) {
+        throw new Error("parse error");
+      }
+      return definition;
+    });
+
+    await expect(withLineBreakFallback("A<br>B<BR />C", task)).resolves.toBe(
+      "A\\nB\\nC"
+    );
+    expect(task).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws the original error without retrying when there's no <br>", async () => {
+    const task = vi.fn(async () => {
+      throw new Error("original");
+    });
+
+    await expect(withLineBreakFallback("A\\nB", task)).rejects.toThrow(
+      "original"
+    );
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws the original error when the retry fails too", async () => {
+    const task = vi.fn(async (definition: string) => {
+      throw new Error(definition.includes("<br") ? "original" : "retry");
+    });
+
+    await expect(withLineBreakFallback("A<br>B", task)).rejects.toThrow(
+      "original"
+    );
+    expect(task).toHaveBeenCalledTimes(2);
   });
 });

@@ -2,7 +2,7 @@ import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/t
 import { nanoid } from "nanoid";
 
 import { GraphConverter } from "../GraphConverter.js";
-import { Sequence } from "../../parser/sequence.js";
+import type { Sequence } from "../../interfaces.js";
 import {
   transformToExcalidrawLineSkeleton,
   transformToExcalidrawTextSkeleton,

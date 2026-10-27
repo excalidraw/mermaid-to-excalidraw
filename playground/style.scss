@@ -121,7 +121,7 @@ body.dark-mode::before {
 }
 
 .playground-hero {
-  // Keeps the engine toggle in view while scrolling through the examples
+  // Keeps the header in view while scrolling through the examples
   position: sticky;
   top: 0;
   z-index: 10;
@@ -198,35 +198,6 @@ body.dark-mode::before {
 
 body.dark-mode .playground-doc-link {
   background: rgba(255, 255, 255, 0.03);
-}
-
-.engine-toggle {
-  display: inline-flex;
-  margin-left: auto;
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.engine-toggle button {
-  appearance: none;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.engine-toggle button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-}
-
-body.dark-mode .engine-toggle button[aria-pressed="true"] {
-  color: var(--text);
 }
 
 a {

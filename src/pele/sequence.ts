@@ -2,7 +2,7 @@ import type { SequenceModel } from "pele";
 import { nanoid } from "nanoid";
 
 import type { Arrow, Container, Line, Node, Text } from "../elementSkeleton.js";
-import type { Sequence } from "../parser/sequence.js";
+import type { Sequence } from "../interfaces.js";
 import { decodeMermaidText } from "../text.js";
 import {
   hasClass,

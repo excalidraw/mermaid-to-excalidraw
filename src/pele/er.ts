@@ -8,7 +8,7 @@ import type {
   Line,
   Text,
 } from "../elementSkeleton.js";
-import type { ERD } from "../parser/er.js";
+import type { ERD } from "../interfaces.js";
 import { decodeMermaidText } from "../text.js";
 import {
   getLabelPosition,

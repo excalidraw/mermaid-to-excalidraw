@@ -8,7 +8,7 @@ import { GraphConverter } from "../GraphConverter.js";
 import { NODE_BACKGROUND_COLOR } from "../../constants.js";
 
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
-import type { ERD } from "../../parser/er.js";
+import type { ERD } from "../../interfaces.js";
 
 export const erToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: ERD) => {

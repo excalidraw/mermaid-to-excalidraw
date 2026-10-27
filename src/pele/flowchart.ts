@@ -9,9 +9,10 @@ import {
   SubGraph,
   Vertex,
   VERTEX_TYPE,
+  Edge,
+  Flowchart,
 } from "../interfaces.js";
-import type { Edge, Flowchart } from "../parser/flowchart.js";
-import { isValidCSSColor, parseCSSDeclarations } from "../parser/cssUtils.js";
+import { isValidCSSColor, parseCSSDeclarations } from "../cssUtils.js";
 import { decodeMermaidText } from "../text.js";
 import { hasClass, withPeleLineBreaks } from "./elements.js";
 import {

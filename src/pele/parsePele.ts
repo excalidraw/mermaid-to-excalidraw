@@ -7,12 +7,14 @@ import {
 } from "pele";
 
 import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../constants.js";
-import { GraphImage } from "../interfaces.js";
-import type { Flowchart } from "../parser/flowchart.js";
-import type { Sequence } from "../parser/sequence.js";
-import type { Class } from "../parser/class.js";
-import type { ERD } from "../parser/er.js";
-import type { State } from "../parser/state.js";
+import {
+  GraphImage,
+  Flowchart,
+  Sequence,
+  Class,
+  ERD,
+  State,
+} from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
 import { parsePeleFlowchart } from "./flowchart.js";
 import { parsePeleSequence } from "./sequence.js";

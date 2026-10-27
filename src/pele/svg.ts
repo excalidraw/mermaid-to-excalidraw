@@ -1,5 +1,5 @@
 import { Position } from "../interfaces.js";
-import { isValidCSSColor, parseCSSDeclarations } from "../parser/cssUtils.js";
+import { isValidCSSColor, parseCSSDeclarations } from "../cssUtils.js";
 
 // Pele renders diagrams to an SVG string in which every element carries its
 // final geometry as attributes (shapes centered on a `translate()`, absolute

@@ -1,8 +1,10 @@
 import { ExcalidrawConfig } from "../index.js";
 import { DEFAULT_FONT_SIZE } from "../constants.js";
-import { MermaidToExcalidrawResult } from "../interfaces.js";
-import { Flowchart } from "../parser/flowchart.js";
-import { Sequence } from "../parser/sequence.js";
+import {
+  MermaidToExcalidrawResult,
+  Flowchart,
+  Sequence,
+} from "../interfaces.js";
 
 export class GraphConverter<T = Flowchart | Sequence> {
   private converter;

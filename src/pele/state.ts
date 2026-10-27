@@ -7,8 +7,10 @@ import {
   LABEL_STYLE_PROPERTY,
   LabelStyle,
   Position,
+  State,
+  StateEdge,
+  StateNode,
 } from "../interfaces.js";
-import type { State, StateEdge, StateNode } from "../parser/state.js";
 import { hasClass, pathToLines, readEdge, toText } from "./elements.js";
 import {
   Bounds,

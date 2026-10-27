@@ -1,4 +1,3 @@
-import mermaid from "mermaid";
 import { forgetTextWidths } from "pele";
 import {
   convertToExcalidrawElements,
@@ -9,18 +8,10 @@ import {
 import { charWidth } from "@excalidraw/element";
 import { getFontString } from "@excalidraw/common";
 
-import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { resolveMermaidConfig } from "../src/parseMermaid";
-import {
-  DEFAULT_DIAGRAM_ENGINE,
-  parseDiagram,
-  type DiagramEngine,
-} from "../src/parseDiagram";
+import { parseDiagram } from "../src/parseDiagram";
 import { renderPeleSvg } from "../src/pele/parsePele";
-import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue";
-import { withMermaidLineBreaks } from "../src/mermaidLineBreaks";
-import { withLineBreakFallback } from "../src/text";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
@@ -37,12 +28,6 @@ interface TestCase {
   name: string;
   definition: string;
 }
-
-const DIAGRAM_ENGINES: DiagramEngine[] = ["mermaid", "pele"];
-const ENGINE_LABELS: Record<DiagramEngine, string> = {
-  mermaid: "Mermaid",
-  pele: "Pele",
-};
 
 const ALL_TESTCASES: TestCase[] = [
   ...FLOWCHART_DIAGRAM_TESTCASES,
@@ -61,90 +46,26 @@ if (new URLSearchParams(location.search).has("pw")) {
   document.body.classList.add("pw");
 }
 
-// Mermaid draws shapes with rough.js, which randomizes curve control points
-// unless seeded. Unseeded, every render jitters by sub-pixels, both in the
-// Mermaid panel and in the bboxes parseMermaid reads geometry from.
-const HARNESS_MERMAID_CONFIG = { ...MERMAID_CONFIG, handDrawnSeed: 1 };
-
-// Must match the config parseMermaid initializes with. Otherwise the Mermaid
-// panel of whichever case renders first in a page (before parseMermaid has
-// re-initialized Mermaid) is laid out differently from all later cases.
-mermaid.initialize(resolveMermaidConfig(HARNESS_MERMAID_CONFIG));
-
 const mermaidOutput = document.getElementById("mermaid-output")!;
-const referenceTitle = document.getElementById("reference-title")!;
 const excalidrawOutput = document.getElementById("excalidraw-output")!;
 const errorDiv = document.getElementById("error")!;
 const SVG_EXPORT_PADDING = 4;
 const EXCALIDRAW_SVG_EXPORT_PADDING = 16;
 const EXCALIFONT_PROBE_TEXT = "This is the note to the left.";
 
-let renderCounter = 0;
 let currentRenderGeneration = 0;
 
-const urlEngine = new URLSearchParams(location.search).get("engine");
-let currentEngine: DiagramEngine = DIAGRAM_ENGINES.includes(
-  urlEngine as DiagramEngine
-)
-  ? (urlEngine as DiagramEngine)
-  : DEFAULT_DIAGRAM_ENGINE;
-
-const syncReferenceTitle = () => {
-  referenceTitle.textContent = `${ENGINE_LABELS[currentEngine]} SVG`;
-};
-syncReferenceTitle();
-
-const setEngine = (engine: DiagramEngine) => {
-  if (!DIAGRAM_ENGINES.includes(engine)) {
-    throw new Error(`Unknown engine "${engine}"`);
-  }
-  currentEngine = engine;
-  syncReferenceTitle();
-};
-
-const renderMermaidSvg = async (renderId: string, definition: string) => {
-  const tempContainer = document.createElement("div");
-  tempContainer.style.cssText =
-    "opacity:0;position:fixed;z-index:-1;left:-99999px;top:-99999px;";
-  document.body.appendChild(tempContainer);
-
-  try {
-    const { svg } = await runMermaidTaskSequentially(() =>
-      withLineBreakFallback(definition, (candidate) =>
-        withMermaidLineBreaks(candidate, () =>
-          mermaid.render(renderId, candidate, tempContainer)
-        )
-      )
-    );
-    return svg;
-  } finally {
-    tempContainer.remove();
-  }
-};
-
-// Pele lays flowcharts out with Excalifont metrics (see `parsePele`), so the
+// Pele lays diagrams out with Excalifont metrics (see `parsePele`), so the
 // glyphs must be loaded before it measures, and its width cache cleared of
 // widths measured by earlier cases (possibly before their glyphs loaded).
-const prepareEngineTextMetrics = async (
-  engine: DiagramEngine,
-  definition: string
-) => {
-  if (engine !== "pele") {
-    return;
-  }
+const preparePeleTextMetrics = async (definition: string) => {
   await loadExcalifontGlyphs([{ type: "text", text: definition }]);
   forgetTextWidths();
 };
 
-// The SVG the engine laid the diagram out in
-const renderReferenceSvg = async (
-  engine: DiagramEngine,
-  renderId: string,
-  definition: string
-) =>
-  engine === "pele"
-    ? renderPeleSvg(definition, { fontSize: DEFAULT_FONT_SIZE })
-    : renderMermaidSvg(renderId, definition);
+// The SVG Pele laid the diagram out in
+const renderReferenceSvg = (definition: string) =>
+  renderPeleSvg(definition, { fontSize: DEFAULT_FONT_SIZE });
 
 // Excalifont is split into unicode-range subsets that load lazily. Load the
 // subsets a case needs before measuring its text, otherwise glyphs outside the
@@ -330,9 +251,7 @@ interface CacheEntry {
   lastElements?: unknown;
   lastSkeleton?: unknown;
 }
-const renderCache = new Map<string, CacheEntry>();
-const getCacheKey = (engine: DiagramEngine, index: number) =>
-  `${engine}:${index}`;
+const renderCache = new Map<number, CacheEntry>();
 
 if (import.meta.hot) {
   // Any module update (src files, testcases, this file) → full reload clears
@@ -342,16 +261,12 @@ if (import.meta.hot) {
   });
 }
 
-async function renderTestCase(
-  index: number,
-  engine: DiagramEngine = currentEngine
-): Promise<void> {
+async function renderTestCase(index: number): Promise<void> {
   const testcase = ALL_TESTCASES[index];
   if (!testcase) {
     throw new Error(`No test case at index ${index}`);
   }
-  setEngine(engine);
-  const cacheKey = getCacheKey(engine, index);
+  const cacheKey = index;
 
   // Bump generation so any in-flight render for a previous case bails out.
   const generation = ++currentRenderGeneration;
@@ -378,17 +293,13 @@ async function renderTestCase(
   excalidrawOutput.innerHTML = "";
 
   try {
-    await prepareEngineTextMetrics(engine, testcase.definition);
+    await preparePeleTextMetrics(testcase.definition);
     if (isStale()) {
       return;
     }
 
-    // Render the engine's own SVG
-    const referenceSvg = await renderReferenceSvg(
-      engine,
-      `vt-mermaid-${renderCounter++}`,
-      testcase.definition
-    );
+    // Render Pele's own SVG
+    const referenceSvg = await renderReferenceSvg(testcase.definition);
     if (isStale()) {
       return;
     }
@@ -401,11 +312,7 @@ async function renderTestCase(
     }
 
     // Render excalidraw SVG
-    const parsed = await parseDiagram(
-      testcase.definition,
-      HARNESS_MERMAID_CONFIG,
-      engine
-    );
+    const parsed = await parseDiagram(testcase.definition);
     if (isStale()) {
       return;
     }
@@ -474,7 +381,6 @@ async function renderTestCase(
 }
 
 async function renderAllTestCases(): Promise<void> {
-  const engine = currentEngine;
   const allContainer = document.getElementById("all-container")!;
   allContainer.innerHTML = "";
   allContainer.classList.add("active");
@@ -504,7 +410,7 @@ async function renderAllTestCases(): Promise<void> {
     const toolbar = document.createElement("div");
     toolbar.className = "panel-toolbar";
     const copyMSvg = document.createElement("button");
-    copyMSvg.textContent = `copy ${engine} svg`;
+    copyMSvg.textContent = "copy pele svg";
     const copyESvg = document.createElement("button");
     copyESvg.textContent = "copy excalidraw svg";
     const copyDef = document.createElement("button");
@@ -549,12 +455,8 @@ async function renderAllTestCases(): Promise<void> {
     allContainer.appendChild(card);
 
     try {
-      await prepareEngineTextMetrics(engine, tc.definition);
-      const referenceSvg = await renderReferenceSvg(
-        engine,
-        `vt-all-${renderCounter++}`,
-        tc.definition
-      );
+      await preparePeleTextMetrics(tc.definition);
+      const referenceSvg = await renderReferenceSvg(tc.definition);
       mOut.innerHTML = referenceSvg;
 
       const mRenderedSvg = mOut.querySelector("svg");
@@ -562,11 +464,7 @@ async function renderAllTestCases(): Promise<void> {
         cropSvgToRenderedContent(mRenderedSvg, "reference");
       }
 
-      const parsed = await parseDiagram(
-        tc.definition,
-        HARNESS_MERMAID_CONFIG,
-        engine
-      );
+      const parsed = await parseDiagram(tc.definition);
       const { elements, files } = graphToExcalidraw(parsed, {
         fontSize: DEFAULT_FONT_SIZE,
       });
@@ -610,8 +508,6 @@ function hideAllView(): void {
 
 // Expose to Playwright
 (window as any).renderTestCase = renderTestCase;
-(window as any).setEngine = setEngine;
-(window as any).getEngine = () => currentEngine;
 (window as any).renderAllTestCases = renderAllTestCases;
 (window as any).hideAllView = hideAllView;
 (window as any).TEST_CASE_COUNT = ALL_TESTCASES.length;
