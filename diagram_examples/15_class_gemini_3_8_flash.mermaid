@@ -1,0 +1,104 @@
+classDiagram
+    direction TB
+
+    class Client {
+        -String clientId
+        -String name
+        -String email
+        -String phoneNumber
+        -String companyName
+        +createBooking(DateTime scheduledDate, String location) Booking
+        +getClientHistory() List~Booking~
+    }
+
+    class Booking {
+        -String bookingId
+        -DateTime scheduledStartTime
+        -DateTime scheduledEndTime
+        -String status
+        -Decimal agreedPrice
+        +assignPilot(Pilot pilot) Boolean
+        +assignDrone(Drone drone) Boolean
+        +cancelBooking(String reason) Boolean
+        +completeBooking() Void
+    }
+
+    class MissionPlan {
+        -String planId
+        -Float maxAltitudeMeters
+        -Float speedMetersPerSecond
+        -String capturePattern
+        +estimateDuration() Int
+        +exportPreview() String
+        +addWaypoint(Waypoint wp) Void
+        +reorderWaypoints(List~Int~ sequenceOrder) Void
+    }
+
+    class Waypoint {
+        -Int sequenceNumber
+        -Double latitude
+        -Double longitude
+        -Float altitudeMeters
+        -Float gimbalPitch
+        -Float hoverDurationSeconds
+        +updateCoordinates(Double lat, Double lon, Float alt) Void
+    }
+
+    class Drone {
+        -String serialNumber
+        -String model
+        -Float maxFlightTimeMinutes
+        -String cameraSpecs
+        -String maintenanceStatus
+        +checkAirworthiness() Boolean
+        +logFlightHours(Float hours) Void
+    }
+
+    class Pilot {
+        -String licenseNumber
+        -String name
+        -DateTime certificationExpiry
+        -Int flightHoursTotal
+        -Boolean isAvailable
+        +validateCredentials() Boolean
+        +logFlight(Int durationMinutes) Void
+    }
+
+    class MediaAsset {
+        <<abstract>>
+        -String assetId
+        -String fileName
+        -Int fileSizeBytes
+        -DateTime captureTimestamp
+        -String storageUrl
+        +generateThumbnail() String
+        +deleteAsset() Boolean
+    }
+
+    class Photo {
+        -Int resolutionWidth
+        -Int resolutionHeight
+        -String rawFormat
+        -String colorProfile
+        +applyWatermark(String watermarkText) Void
+    }
+
+    class Video {
+        -Int durationSeconds
+        -Float frameRate
+        -String codec
+        -String resolutionStandard
+        +extractFrames(Int intervalSeconds) List~Photo~
+    }
+
+    Client "1" -- "0..*" Booking : requests
+    Booking "0..*" -- "1" Pilot : assigned to
+    Booking "0..*" -- "1" Drone : utilizes
+    Booking "1" *-- "1" MissionPlan : owns
+    MissionPlan "1" *-- "1..*" Waypoint : contains ordered
+    Booking "1" o-- "0..*" MediaAsset : yields
+
+    MediaAsset <|-- Photo
+    MediaAsset <|-- Video
+
+    note for Booking "Schedule conflicts are checked by application logic"

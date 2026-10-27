@@ -5,13 +5,19 @@ import {
   transformToExcalidrawTextSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
 import { GraphConverter } from "../GraphConverter.js";
+import { NODE_BACKGROUND_COLOR } from "../../constants.js";
 
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
-import type { ERD } from "../../parser/er.js";
+import type { ERD } from "../../interfaces.js";
 
 export const erToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: ERD) => {
     const elements: ExcalidrawElementSkeleton[] = [];
+
+    // relationships below the (opaque) entities they connect
+    chart.arrows.forEach((arrow) => {
+      elements.push(transformToExcalidrawArrowSkeleton(arrow));
+    });
 
     chart.nodes.forEach((node) => {
       if (!node || !node.length) {
@@ -27,7 +33,10 @@ export const erToExcalidrawSkeletonConvertor = new GraphConverter({
             break;
           case "rectangle":
           case "ellipse":
-            excalidrawElement = transformToExcalidrawContainerSkeleton(element);
+            excalidrawElement = transformToExcalidrawContainerSkeleton({
+              ...element,
+              bgColor: element.bgColor ?? NODE_BACKGROUND_COLOR,
+            });
             break;
           case "text":
             excalidrawElement = transformToExcalidrawTextSkeleton(element);
@@ -42,10 +51,6 @@ export const erToExcalidrawSkeletonConvertor = new GraphConverter({
 
     chart.lines.forEach((line) => {
       elements.push(transformToExcalidrawLineSkeleton(line));
-    });
-
-    chart.arrows.forEach((arrow) => {
-      elements.push(transformToExcalidrawArrowSkeleton(arrow));
     });
 
     chart.text.forEach((textElement) => {

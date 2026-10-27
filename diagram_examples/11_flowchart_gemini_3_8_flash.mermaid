@@ -1,0 +1,63 @@
+flowchart TD
+    subgraph Homeowner["Homeowner"]
+        H1["Submit Solar Inquiry"]
+        H2{"Customer Approves Design?"}
+        H3["Customer Feedback"]
+        H4["Final System Handover"]
+    end
+
+    subgraph Installer["Installer Operations"]
+        I1["Schedule Site Survey"]
+        I2["Conduct Site Survey"]
+        I3{"Roof and Electrical Suitable?"}
+        I4["Recommend Remediation or Decline Project"]
+        I5["Generate System Design and Proposal"]
+        I6["Revise System Design"]
+        I7["Order Equipment"]
+        I8["Schedule Installation Crew"]
+        I9["Receive Equipment at Warehouse"]
+        I10["Install Solar System"]
+        I11["Perform Corrective Work"]
+        I12["Final Walkthrough and Commissioning"]
+    end
+
+    subgraph External["External Review and Approvals"]
+        E1["Submit Permit Application to AHJ"]
+        E2{"AHJ Review Passed?"}
+        E3["AHJ Permit Rejection Notice"]
+        E4["Request Municipal Inspection"]
+        E5{"Inspection Passed?"}
+        E6["Submit Interconnection Application to Utility"]
+        E7["Utility Issues Permission to Operate"]
+    end
+
+    H1 --> I1
+    I1 --> I2
+    I2 --> I3
+    I3 -- No --> I4
+    I3 -- Yes --> I5
+    I5 --> H2
+    H2 -- Needs Changes --> H3
+    H3 --> I6
+    I6 --> H2
+    H2 -- Approved --> E1
+    H2 -- Approved --> I7
+    H2 -- Approved --> I8
+
+    E1 --> E2
+    E2 -- Rejected --> E3
+    E3 --> I6
+    E2 -- Approved --> I10
+
+    I7 --> I9
+    I9 --> I10
+    I8 --> I10
+
+    I10 --> E4
+    E4 --> E5
+    E5 -- Failed --> I11
+    I11 --> E4
+    E5 -- Passed --> E6
+    E6 --> E7
+    E7 --> I12
+    I12 --> H4

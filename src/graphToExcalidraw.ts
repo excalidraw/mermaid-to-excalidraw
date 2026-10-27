@@ -1,15 +1,18 @@
 import { ExcalidrawConfig } from "./index.js";
 import { FlowchartToExcalidrawSkeletonConverter } from "./converter/types/flowchart.js";
 import { GraphImageConverter } from "./converter/types/graphImage.js";
-import { GraphImage, MermaidToExcalidrawResult } from "./interfaces.js";
+import {
+  GraphImage,
+  MermaidToExcalidrawResult,
+  Sequence,
+  Flowchart,
+  Class,
+  ERD,
+  State,
+} from "./interfaces.js";
 import { SequenceToExcalidrawSkeletonConvertor } from "./converter/types/sequence.js";
-import { Sequence } from "./parser/sequence.js";
-import { Flowchart } from "./parser/flowchart.js";
-import { Class } from "./parser/class.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
-import { ERD } from "./parser/er.js";
 import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
-import { State } from "./parser/state.js";
 import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";

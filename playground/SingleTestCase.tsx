@@ -3,7 +3,14 @@ import { MermaidDiagram } from "./MermaidDiagram";
 import { ExcalidrawSvgPreview } from "./ExcalidrawSvgPreview";
 
 export interface TestCase {
-  type: "class" | "erd" | "flowchart" | "sequence" | "state" | "unsupported";
+  type:
+    | "class"
+    | "erd"
+    | "flowchart"
+    | "sequence"
+    | "state"
+    | "swimlane"
+    | "unsupported";
   name: string;
   definition: string;
 }
@@ -12,7 +19,6 @@ export interface SingleTestCaseProps {
   testcase: TestCase;
   onChange: (definition: string) => void;
   onInsertMermaidSvg: (svgHtml: string, width: number, height: number) => void;
-  index: number;
   activeTestcaseIndex?: number;
 }
 
@@ -44,9 +50,8 @@ const SingleTestCase = ({
   testcase,
   onChange,
   onInsertMermaidSvg,
-  index,
 }: SingleTestCaseProps) => {
-  const { name, definition, type } = testcase;
+  const { name, definition } = testcase;
   const [editableDefinition, setEditableDefinition] = useState(definition);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const resetCopyStateTimeoutRef = useRef<number | null>(null);
@@ -126,7 +131,7 @@ const SingleTestCase = ({
 
       <div className="diagram-preview-grid">
         <section className="diagram-preview-panel">
-          <h3 className="diagram-preview-title">{"Mermaid SVG"}</h3>
+          <h3 className="diagram-preview-title">{"Pele SVG"}</h3>
           <div
             ref={mermaidSvgRef}
             className="diagram-preview-surface diagram-preview-clickable"
@@ -154,7 +159,6 @@ const SingleTestCase = ({
             <MermaidDiagram
               key={editableDefinition}
               definition={editableDefinition}
-              id={`${type}-${index}`}
             />
           </div>
         </section>

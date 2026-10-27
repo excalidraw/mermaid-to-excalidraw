@@ -49,6 +49,12 @@ export default defineConfig({
   server: {
     port: 3418,
     open: true,
+    fs: {
+      // Vite caches which files exist, but misses files created outside the
+      // root (e.g. a new `src/` module), which then fail to resolve until
+      // the server restarts.
+      cachedChecks: false,
+    },
     warmup: {
       /*
         A small performance improvement so that this file is already transformed, cached when we receive the request :)

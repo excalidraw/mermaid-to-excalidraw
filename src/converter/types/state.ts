@@ -7,11 +7,21 @@ import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 
 import { GraphConverter } from "../GraphConverter.js";
 import {
+  DEFAULT_TEXT_COLOR,
+  NODE_BACKGROUND_COLOR,
+  TITLE_BAND_STROKE_CLEARANCE,
+} from "../../constants.js";
+import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawVertexStyle,
+  measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
+import {
+  transformToExcalidrawLineSkeleton,
+  transformToExcalidrawTextSkeleton,
+} from "../transformToExcalidrawSkeleton.js";
 
-import type { State, StateEdge, StateNode } from "../../parser/state.js";
+import type { State, StateEdge, StateNode } from "../../interfaces.js";
 
 const point = (x: number, y: number) => [x, y] as LocalPoint;
 const DEFAULT_STATE_NODE_LABEL_FONT_SIZE = 16;
@@ -41,36 +51,6 @@ const getNodeText = (node: StateNode) => {
   }
 
   return node.text;
-};
-
-let labelMeasureContext: CanvasRenderingContext2D | null | undefined;
-
-const getLabelMeasureContext = () => {
-  if (labelMeasureContext !== undefined) {
-    return labelMeasureContext;
-  }
-
-  if (typeof document === "undefined") {
-    labelMeasureContext = null;
-    return labelMeasureContext;
-  }
-
-  try {
-    labelMeasureContext = document.createElement("canvas").getContext("2d");
-  } catch {
-    labelMeasureContext = null;
-  }
-  return labelMeasureContext;
-};
-
-const measureLabelLineWidthAtFontSize = (line: string, fontSize: number) => {
-  const context = getLabelMeasureContext();
-  if (!context) {
-    return line.length * fontSize * 0.6;
-  }
-
-  context.font = `${fontSize}px Excalifont, sans-serif`;
-  return context.measureText(line).width;
 };
 
 const wrapLabelWord = (word: string, fontSize: number, maxWidth: number) => {
@@ -171,12 +151,13 @@ const findLargestLabelFontSizeThatFitsBounds = (
   text: string,
   availableWidth: number,
   availableHeight: number,
-  fallbackFontSize: number
+  fallbackFontSize: number,
+  maxFontSize: number
 ) => {
   const lines = text.split("\n");
 
   for (
-    let fontSize = DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+    let fontSize = maxFontSize;
     fontSize >= MIN_STATE_NODE_LABEL_FONT_SIZE;
     fontSize -= STATE_NODE_LABEL_FONT_SIZE_STEP
   ) {
@@ -192,8 +173,9 @@ const findLargestLabelFontSizeThatFitsBounds = (
 
 const getNodeLabelFontSize = (node: StateNode) => {
   const text = getNodeText(node);
+  const defaultFontSize = node.fontSize ?? DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
   if (!text || STATE_PSEUDO_STATE_SHAPES_WITHOUT_LABEL.has(node.shape)) {
-    return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+    return defaultFontSize;
   }
 
   const availableWidth = Math.max(
@@ -209,15 +191,12 @@ const getNodeLabelFontSize = (node: StateNode) => {
   if (lines.length > 1) {
     const longestLineWidth = Math.max(
       ...lines.map((line) =>
-        measureLabelLineWidthAtFontSize(
-          line,
-          DEFAULT_STATE_NODE_LABEL_FONT_SIZE
-        )
+        measureLabelLineWidthAtFontSize(line, defaultFontSize)
       )
     );
 
     if (longestLineWidth <= availableWidth) {
-      return DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+      return defaultFontSize;
     }
   }
 
@@ -225,9 +204,8 @@ const getNodeLabelFontSize = (node: StateNode) => {
     text,
     availableWidth,
     availableHeight,
-    lines.length === 1
-      ? DEFAULT_STATE_NODE_LABEL_FONT_SIZE
-      : MIN_STATE_NODE_LABEL_FONT_SIZE
+    lines.length === 1 ? defaultFontSize : MIN_STATE_NODE_LABEL_FONT_SIZE,
+    defaultFontSize
   );
 };
 
@@ -252,9 +230,12 @@ const createLabel = (node: StateNode): ValidContainer["label"] | undefined => {
   };
 };
 
-const createContainerElement = (node: StateNode): ValidContainer => {
+const createContainerElement = (
+  node: StateNode,
+  { withLabel = true }: { withLabel?: boolean } = {}
+): ValidContainer => {
   const baseStyle = computeExcalidrawVertexStyle(node.containerStyle);
-  const label = createLabel(node);
+  const label = withLabel ? createLabel(node) : undefined;
   const elementType =
     node.shape === "choice"
       ? "diamond"
@@ -269,6 +250,12 @@ const createContainerElement = (node: StateNode): ValidContainer => {
     node.shape === "stateStart" ||
     node.shape === "fork" ||
     node.shape === "join";
+  // drawn above the transitions (unlike composite states, behind them)
+  const isOpaqueStateNode =
+    node.shape === "rect" ||
+    node.shape === "rectWithTitle" ||
+    node.shape === "choice" ||
+    node.shape === "note";
   const fillColor =
     baseStyle.backgroundColor ||
     baseStyle.strokeColor ||
@@ -289,6 +276,9 @@ const createContainerElement = (node: StateNode): ValidContainer => {
     width: node.width,
     height: node.height,
     ...(label ? { label } : {}),
+    ...(isOpaqueStateNode
+      ? { backgroundColor: NODE_BACKGROUND_COLOR, fillStyle: "solid" }
+      : {}),
     ...baseStyle,
     ...(hasRoundedCorners ? { roundness: { type: 3 } } : {}),
     ...(isFilledStateNode
@@ -298,6 +288,78 @@ const createContainerElement = (node: StateNode): ValidContainer => {
           fillStyle: "solid",
         }
       : {}),
+  };
+};
+
+// Excalidraw's corner radius of a rectangle with adaptive roundness
+const ADAPTIVE_RADIUS = 32;
+const PROPORTIONAL_RADIUS = 0.25;
+const getAdaptiveCornerRadius = (width: number, height: number) => {
+  const size = Math.min(width, height);
+  return size <= ADAPTIVE_RADIUS / PROPORTIONAL_RADIUS
+    ? size * PROPORTIONAL_RADIUS
+    : ADAPTIVE_RADIUS;
+};
+
+/**
+ * A composite state's title, on an opaque band (in the composite's fill)
+ * above the transitions, which would otherwise cross it: the composite's box
+ * is behind them. The band covers the title area between the box's rounded
+ * corners.
+ */
+const createCompositeTitleElement = (
+  node: StateNode
+): ValidContainer | null => {
+  const label = createLabel(node);
+  if (!label) {
+    return null;
+  }
+  const baseStyle = computeExcalidrawVertexStyle(node.containerStyle);
+  const strokeWidth = baseStyle.strokeWidth ?? 2;
+  const fontSize = label.fontSize ?? DEFAULT_STATE_NODE_LABEL_FONT_SIZE;
+  const lines: string[] = label.text.split("\n");
+  const titleBottom =
+    node.dividerLine?.startY ??
+    node.y +
+      lines.length * fontSize * EXCALIDRAW_LINE_HEIGHT +
+      STATE_NODE_LABEL_VERTICAL_PADDING;
+  const titleWidth =
+    Math.max(
+      ...lines.map((line) => measureLabelLineWidthAtFontSize(line, fontSize))
+    ) +
+    STATE_NODE_LABEL_HORIZONTAL_PADDING +
+    // leeway for Excalidraw to fit it without wrapping
+    2;
+  const width = Math.min(
+    node.width - strokeWidth * 2,
+    Math.max(
+      node.width - getAdaptiveCornerRadius(node.width, node.height) * 2,
+      titleWidth
+    )
+  );
+
+  return {
+    id: `${node.id}__title`,
+    type: "rectangle",
+    x: node.x + (node.width - width) / 2,
+    y: node.y + strokeWidth + TITLE_BAND_STROKE_CLEARANCE,
+    width,
+    height: Math.max(
+      1,
+      titleBottom - node.y - strokeWidth - TITLE_BAND_STROKE_CLEARANCE
+    ),
+    label: {
+      // in the composite's stroke color (the band, which it'd inherit, has
+      // none)
+      strokeColor: baseStyle.strokeColor ?? DEFAULT_TEXT_COLOR,
+      ...label,
+      verticalAlign: "middle",
+    },
+    strokeColor: "transparent",
+    backgroundColor: baseStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
+    fillStyle: "solid",
+    // a hand-drawn fill wobbles past its bounds, over the composite's stroke
+    roughness: 0,
   };
 };
 
@@ -383,6 +445,11 @@ const createArrowElement = (edge: StateEdge): ValidLinearElement => {
           label: {
             text: edge.text,
             fontSize: 16,
+            // Where along the arrow Excalidraw centers the label (where
+            // supported)
+            ...(edge.labelPosition !== undefined
+              ? { labelPosition: edge.labelPosition }
+              : {}),
           },
         }
       : {}),
@@ -392,12 +459,7 @@ const createArrowElement = (edge: StateEdge): ValidLinearElement => {
 export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: State) => {
     const elements: ExcalidrawElementSkeleton[] = [];
-
-    chart.nodes.forEach((node) => {
-      if (!node.isRenderable) {
-        return;
-      }
-
+    const pushNode = (node: StateNode) => {
       const containerElement = createContainerElement(node);
       elements.push(containerElement);
 
@@ -409,10 +471,41 @@ export const stateToExcalidrawSkeletonConvertor = new GraphConverter({
       if (node.shape === "stateEnd") {
         elements.push(createEndStateInnerEllipse(node));
       }
+    };
+    const nodes = chart.nodes.filter((node) => node.isRenderable);
+    const isComposite = (node: StateNode) => node.shape === "roundedWithTitle";
+
+    const composites = nodes.filter(isComposite);
+
+    // composite states behind the transitions, but their titles and the
+    // other states above them
+    composites.forEach((node) => {
+      elements.push(createContainerElement(node, { withLabel: false }));
+    });
+
+    chart.lines?.forEach((line) => {
+      elements.push(transformToExcalidrawLineSkeleton(line));
     });
 
     chart.edges.forEach((edge) => {
       elements.push(createArrowElement(edge));
+    });
+
+    composites.forEach((node) => {
+      const titleElement = createCompositeTitleElement(node);
+      if (titleElement) {
+        elements.push(titleElement);
+      }
+      const dividerLineElement = createDividerLineElement(node);
+      if (dividerLineElement) {
+        elements.push(dividerLineElement);
+      }
+    });
+
+    nodes.filter((node) => !isComposite(node)).forEach(pushNode);
+
+    chart.texts?.forEach((text) => {
+      elements.push(transformToExcalidrawTextSkeleton(text));
     });
 
     return { elements };

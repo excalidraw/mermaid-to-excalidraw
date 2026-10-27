@@ -1,0 +1,70 @@
+sequenceDiagram
+    autonumber
+    actor Patron
+    participant HomeLibrary as Home Library
+    participant LoanBroker as Loan Broker
+    participant LendingLibrary as Lending Library
+    participant Courier
+
+    Patron->>HomeLibrary: Request unavailable book
+    activate HomeLibrary
+    HomeLibrary->>LoanBroker: Forward ILL request
+    activate LoanBroker
+
+    loop For each candidate lending library
+        LoanBroker->>LendingLibrary: Check availability and request loan
+        activate LendingLibrary
+        alt Candidate declines or times out
+            LendingLibrary-->>LoanBroker: Decline request
+            deactivate LendingLibrary
+        else Candidate accepts
+            LendingLibrary-->>LoanBroker: Accept loan request
+            activate LendingLibrary
+        end
+    end
+
+    alt No lending library accepted
+        LoanBroker-->>HomeLibrary: Request unfilled
+        HomeLibrary-->>Patron: Notify request unfilled
+    else A lending library accepted
+        LoanBroker-->>HomeLibrary: Request confirmed
+        deactivate LoanBroker
+
+        LendingLibrary->>Courier: Hand over packaged book
+        deactivate LendingLibrary
+        activate Courier
+        Courier->>HomeLibrary: Deliver book
+        deactivate Courier
+
+        HomeLibrary-->>Patron: Notify book arrived for pickup
+        Patron->>HomeLibrary: Checkout book
+        HomeLibrary-->>Patron: Issue book with due date
+        deactivate HomeLibrary
+
+        opt Patron requests renewal
+            Patron->>HomeLibrary: Request renewal
+            activate HomeLibrary
+            HomeLibrary->>LendingLibrary: Forward renewal request
+            activate LendingLibrary
+            alt Lender approves renewal
+                LendingLibrary-->>HomeLibrary: Renewal approved with new due date
+                HomeLibrary-->>Patron: Confirm renewal and new due date
+            else Lender rejects renewal
+                LendingLibrary-->>HomeLibrary: Renewal rejected
+                deactivate LendingLibrary
+                HomeLibrary-->>Patron: Inform rejection, original due date stands
+            end
+            deactivate HomeLibrary
+        end
+
+        Patron->>HomeLibrary: Return book
+        activate HomeLibrary
+        HomeLibrary->>Courier: Dispatch book for return
+        deactivate HomeLibrary
+        activate Courier
+        Courier->>LendingLibrary: Deliver returned book
+        deactivate Courier
+        activate LendingLibrary
+        LendingLibrary-->>HomeLibrary: Confirm receipt and close loan
+        deactivate LendingLibrary
+    end

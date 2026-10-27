@@ -5,6 +5,7 @@ import { ERD_DIAGRAM_TESTCASES } from "./testcases/er.ts";
 import { STATE_DIAGRAM_TESTCASES } from "./testcases/state.ts";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
 import { LINE_BREAK_TESTCASES } from "./testcases/lineBreaks.ts";
+import { SWIMLANE_DIAGRAM_TESTCASES } from "./testcases/swimlane.ts";
 
 import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
@@ -78,7 +79,6 @@ const TestcaseSection = ({
             return (
               <SingleTestCase
                 key={`${testcase.type}-${index}`}
-                index={testcaseIndex}
                 onChange={(definition) => {
                   onChange(definition, testcaseIndex);
                 }}
@@ -135,6 +135,11 @@ const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
       name: "Line Breaks",
       testcases: LINE_BREAK_TESTCASES,
       documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
+    },
+    {
+      name: "Swimlane (Pele only)",
+      testcases: SWIMLANE_DIAGRAM_TESTCASES,
+      documentationHref: "https://pele.run",
     },
   ].map((section, index, sections) => ({
     ...section,

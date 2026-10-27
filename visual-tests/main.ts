@@ -1,4 +1,4 @@
-import mermaid from "mermaid";
+import { forgetTextWidths } from "pele";
 import {
   convertToExcalidrawElements,
   exportToSvg,
@@ -8,14 +8,10 @@ import {
 import { charWidth } from "@excalidraw/element";
 import { getFontString } from "@excalidraw/common";
 
-import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../src/constants";
+import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { parseMermaid, resolveMermaidConfig } from "../src/parseMermaid";
-import { runMermaidTaskSequentially } from "../src/mermaidExecutionQueue";
-import {
-  withLineBreakFallback,
-  withMermaidLineBreaks,
-} from "../src/mermaidLineBreaks";
+import { parseDiagram } from "../src/parseDiagram";
+import { renderPeleSvg } from "../src/pele/parsePele";
 
 import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
 import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
@@ -24,6 +20,7 @@ import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
 import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
 import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks";
+import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane";
 import { ensureExcalidrawFontsLoaded } from "../playground/loadExcalidrawFonts";
 
 interface TestCase {
@@ -40,6 +37,7 @@ const ALL_TESTCASES: TestCase[] = [
   ...STATE_DIAGRAM_TESTCASES,
   ...UNSUPPORTED_DIAGRAM_TESTCASES,
   ...LINE_BREAK_TESTCASES,
+  ...SWIMLANE_DIAGRAM_TESTCASES,
 ];
 
 // Apply Playwright-mode layout before the harness reports ready, so the first
@@ -48,16 +46,6 @@ if (new URLSearchParams(location.search).has("pw")) {
   document.body.classList.add("pw");
 }
 
-// Mermaid draws shapes with rough.js, which randomizes curve control points
-// unless seeded. Unseeded, every render jitters by sub-pixels, both in the
-// Mermaid panel and in the bboxes parseMermaid reads geometry from.
-const HARNESS_MERMAID_CONFIG = { ...MERMAID_CONFIG, handDrawnSeed: 1 };
-
-// Must match the config parseMermaid initializes with. Otherwise the Mermaid
-// panel of whichever case renders first in a page (before parseMermaid has
-// re-initialized Mermaid) is laid out differently from all later cases.
-mermaid.initialize(resolveMermaidConfig(HARNESS_MERMAID_CONFIG));
-
 const mermaidOutput = document.getElementById("mermaid-output")!;
 const excalidrawOutput = document.getElementById("excalidraw-output")!;
 const errorDiv = document.getElementById("error")!;
@@ -65,28 +53,19 @@ const SVG_EXPORT_PADDING = 4;
 const EXCALIDRAW_SVG_EXPORT_PADDING = 16;
 const EXCALIFONT_PROBE_TEXT = "This is the note to the left.";
 
-let renderCounter = 0;
 let currentRenderGeneration = 0;
 
-const renderMermaidSvg = async (renderId: string, definition: string) => {
-  const tempContainer = document.createElement("div");
-  tempContainer.style.cssText =
-    "opacity:0;position:fixed;z-index:-1;left:-99999px;top:-99999px;";
-  document.body.appendChild(tempContainer);
-
-  try {
-    const { svg } = await runMermaidTaskSequentially(() =>
-      withLineBreakFallback(definition, (candidate) =>
-        withMermaidLineBreaks(candidate, () =>
-          mermaid.render(renderId, candidate, tempContainer)
-        )
-      )
-    );
-    return svg;
-  } finally {
-    tempContainer.remove();
-  }
+// Pele lays diagrams out with Excalifont metrics (see `parsePele`), so the
+// glyphs must be loaded before it measures, and its width cache cleared of
+// widths measured by earlier cases (possibly before their glyphs loaded).
+const preparePeleTextMetrics = async (definition: string) => {
+  await loadExcalifontGlyphs([{ type: "text", text: definition }]);
+  forgetTextWidths();
 };
+
+// The SVG Pele laid the diagram out in
+const renderReferenceSvg = (definition: string) =>
+  renderPeleSvg(definition, { fontSize: DEFAULT_FONT_SIZE });
 
 // Excalifont is split into unicode-range subsets that load lazily. Load the
 // subsets a case needs before measuring its text, otherwise glyphs outside the
@@ -189,9 +168,9 @@ const getSvgViewBox = (svg: SVGSVGElement) => {
 
 const getSvgContentRects = (
   svg: SVGSVGElement,
-  source: "mermaid" | "excalidraw"
+  source: "reference" | "excalidraw"
 ) => {
-  if (source === "mermaid") {
+  if (source === "reference") {
     return Array.from(
       svg.querySelectorAll<SVGGraphicsElement>(
         "g, path, rect, circle, ellipse, polygon, polyline, line, foreignObject, text"
@@ -220,7 +199,7 @@ const getSvgContentRects = (
 
 const cropSvgToRenderedContent = (
   svg: SVGSVGElement,
-  source: "mermaid" | "excalidraw",
+  source: "reference" | "excalidraw",
   padding = SVG_EXPORT_PADDING
 ) => {
   const contentRects = getSvgContentRects(svg, source);
@@ -287,6 +266,7 @@ async function renderTestCase(index: number): Promise<void> {
   if (!testcase) {
     throw new Error(`No test case at index ${index}`);
   }
+  const cacheKey = index;
 
   // Bump generation so any in-flight render for a previous case bails out.
   const generation = ++currentRenderGeneration;
@@ -298,7 +278,7 @@ async function renderTestCase(index: number): Promise<void> {
   }
 
   // Check cache first
-  const cached = renderCache.get(index);
+  const cached = renderCache.get(cacheKey);
   if (cached) {
     errorDiv.textContent = cached.errorText;
     mermaidOutput.innerHTML = cached.mermaidHtml;
@@ -313,27 +293,26 @@ async function renderTestCase(index: number): Promise<void> {
   excalidrawOutput.innerHTML = "";
 
   try {
-    // Render mermaid SVG
-    const mermaidSvg = await renderMermaidSvg(
-      `vt-mermaid-${renderCounter++}`,
-      testcase.definition
-    );
+    await preparePeleTextMetrics(testcase.definition);
     if (isStale()) {
       return;
     }
 
-    mermaidOutput.innerHTML = mermaidSvg;
+    // Render Pele's own SVG
+    const referenceSvg = await renderReferenceSvg(testcase.definition);
+    if (isStale()) {
+      return;
+    }
+
+    mermaidOutput.innerHTML = referenceSvg;
 
     const mRenderedSvg = mermaidOutput.querySelector("svg");
     if (mRenderedSvg) {
-      cropSvgToRenderedContent(mRenderedSvg, "mermaid");
+      cropSvgToRenderedContent(mRenderedSvg, "reference");
     }
 
     // Render excalidraw SVG
-    const parsed = await parseMermaid(
-      testcase.definition,
-      HARNESS_MERMAID_CONFIG
-    );
+    const parsed = await parseDiagram(testcase.definition);
     if (isStale()) {
       return;
     }
@@ -376,7 +355,7 @@ async function renderTestCase(index: number): Promise<void> {
     // Let SVGs size naturally — CSS flexbox handles panel alignment.
 
     // Cache the rendered output
-    renderCache.set(index, {
+    renderCache.set(cacheKey, {
       mermaidHtml: mermaidOutput.innerHTML,
       excalidrawHtml: excalidrawOutput.innerHTML,
       errorText: "",
@@ -393,7 +372,7 @@ async function renderTestCase(index: number): Promise<void> {
     }
     errorDiv.textContent = String(err);
     // Cache errors too (e.g. unsupported diagrams)
-    renderCache.set(index, {
+    renderCache.set(cacheKey, {
       mermaidHtml: "",
       excalidrawHtml: "",
       errorText: String(err),
@@ -431,7 +410,7 @@ async function renderAllTestCases(): Promise<void> {
     const toolbar = document.createElement("div");
     toolbar.className = "panel-toolbar";
     const copyMSvg = document.createElement("button");
-    copyMSvg.textContent = "copy mermaid svg";
+    copyMSvg.textContent = "copy pele svg";
     const copyESvg = document.createElement("button");
     copyESvg.textContent = "copy excalidraw svg";
     const copyDef = document.createElement("button");
@@ -476,18 +455,16 @@ async function renderAllTestCases(): Promise<void> {
     allContainer.appendChild(card);
 
     try {
-      const mermaidSvg = await renderMermaidSvg(
-        `vt-all-${renderCounter++}`,
-        tc.definition
-      );
-      mOut.innerHTML = mermaidSvg;
+      await preparePeleTextMetrics(tc.definition);
+      const referenceSvg = await renderReferenceSvg(tc.definition);
+      mOut.innerHTML = referenceSvg;
 
       const mRenderedSvg = mOut.querySelector("svg");
       if (mRenderedSvg) {
-        cropSvgToRenderedContent(mRenderedSvg, "mermaid");
+        cropSvgToRenderedContent(mRenderedSvg, "reference");
       }
 
-      const parsed = await parseMermaid(tc.definition, HARNESS_MERMAID_CONFIG);
+      const parsed = await parseDiagram(tc.definition);
       const { elements, files } = graphToExcalidraw(parsed, {
         fontSize: DEFAULT_FONT_SIZE,
       });

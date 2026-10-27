@@ -121,12 +121,18 @@ body.dark-mode::before {
 }
 
 .playground-hero {
-  position: relative;
+  // Keeps the header in view while scrolling through the examples
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding-block: 8px;
   padding-right: 92px;
+  background: var(--bg);
+  backdrop-filter: blur(16px);
 }
 
 .playground-hero-copy {

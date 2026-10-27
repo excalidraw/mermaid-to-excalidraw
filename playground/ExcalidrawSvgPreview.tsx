@@ -5,7 +5,7 @@ import {
 } from "@excalidraw/excalidraw";
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
-import { parseMermaid } from "../src/parseMermaid";
+import { parseDiagram } from "../src/parseDiagram";
 import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
 
 interface ExcalidrawSvgPreviewProps {
@@ -25,57 +25,46 @@ const runSequentially = <T,>(task: () => Promise<T>) => {
   return run;
 };
 
-const cleanupMermaidTempContainers = () => {
-  document
-    .querySelectorAll<HTMLDivElement>(".mermaid-to-excalidraw-svg-container")
-    .forEach((container) => {
-      container.remove();
-    });
-};
-
 const generateExcalidrawSvg = async (definition: string): Promise<string> => {
-  const cachedSvg = svgCache.get(definition);
+  const cacheKey = definition;
+  const cachedSvg = svgCache.get(cacheKey);
   if (cachedSvg) {
     return cachedSvg;
   }
 
-  const pendingRender = inFlightSvgCache.get(definition);
+  const pendingRender = inFlightSvgCache.get(cacheKey);
   if (pendingRender) {
     return pendingRender;
   }
 
   const renderPromise = runSequentially(async () => {
-    try {
-      const parsedMermaid = await parseMermaid(definition);
-      const { elements, files } = graphToExcalidraw(parsedMermaid, {
-        fontSize: DEFAULT_FONT_SIZE,
-      });
-      await ensureExcalidrawFontsLoaded();
+    const parsedMermaid = await parseDiagram(definition);
+    const { elements, files } = graphToExcalidraw(parsedMermaid, {
+      fontSize: DEFAULT_FONT_SIZE,
+    });
+    await ensureExcalidrawFontsLoaded();
 
-      const svgElement = await exportToSvg({
-        elements: convertToExcalidrawElements(elements),
-        appState: {
-          exportBackground: true,
-          viewBackgroundColor: "#ffffff",
-        },
-        files: files ?? null,
-        exportPadding: 16,
-      });
+    const svgElement = await exportToSvg({
+      elements: convertToExcalidrawElements(elements),
+      appState: {
+        exportBackground: true,
+        viewBackgroundColor: "#ffffff",
+      },
+      files: files ?? null,
+      exportPadding: 16,
+    });
 
-      return svgElement.outerHTML;
-    } finally {
-      cleanupMermaidTempContainers();
-    }
+    return svgElement.outerHTML;
   })
     .then((svg) => {
-      svgCache.set(definition, svg);
+      svgCache.set(cacheKey, svg);
       return svg;
     })
     .finally(() => {
-      inFlightSvgCache.delete(definition);
+      inFlightSvgCache.delete(cacheKey);
     });
 
-  inFlightSvgCache.set(definition, renderPromise);
+  inFlightSvgCache.set(cacheKey, renderPromise);
   return renderPromise;
 };
 

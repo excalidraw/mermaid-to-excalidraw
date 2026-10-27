@@ -1,0 +1,73 @@
+classDiagram
+    direction TB
+
+    class Spacecraft {
+        -String id
+        -String name
+        -String supportedBands
+        +getId() String
+    }
+
+    class GroundComplex {
+        -String complexId
+        -String location
+        +getAntennas() List~Antenna~
+    }
+
+    class Antenna {
+        -String antennaId
+        -String supportedBands
+        -float minElevation
+        -boolean isOperational
+        +isBandSupported(String band) boolean
+    }
+
+    class ContactRequest {
+        -String requestId
+        -int priority
+        -int requestedDurationMinutes
+        -String frequencyBand
+        +getPriority() int
+        +getRequestedDuration() int
+        +getFrequencyBand() String
+    }
+
+    class VisibilityWindow {
+        -String windowId
+        -DateTime startTime
+        -DateTime endTime
+        -float maxElevation
+        +getDuration() int
+    }
+
+    class ScheduledContact {
+        -String contactId
+        -DateTime actualStartTime
+        -DateTime actualEndTime
+        -String status
+        +getStartTime() DateTime
+        +getEndTime() DateTime
+    }
+
+    class Scheduler {
+        +findCompatibleAntennas(ContactRequest request, GroundComplex complex) List~Antenna~
+        +detectConflicts(ScheduledContact newContact, List~ScheduledContact~ existingContacts) boolean
+        +reserveContact(ContactRequest request, VisibilityWindow window, Antenna antenna) ScheduledContact
+    }
+
+    GroundComplex o-- "1..*" Antenna : aggregates
+    Spacecraft "1" <-- "0..*" ContactRequest : requests
+    Spacecraft "1" <-- "0..*" VisibilityWindow : predicts for
+    Antenna "1" <-- "0..*" VisibilityWindow : visible from
+
+    ScheduledContact --> "1" Spacecraft : links
+    ScheduledContact --> "1" Antenna : links
+    ScheduledContact --> "1" VisibilityWindow : links
+    ContactRequest "1" <-- "0..1" ScheduledContact : fulfills
+
+    Scheduler ..> ContactRequest : processes
+    Scheduler ..> ScheduledContact : manages
+    Scheduler ..> VisibilityWindow : evaluates
+    Scheduler ..> GroundComplex : queries
+
+    note for ScheduledContact "Contacts scheduled on the same antenna must not overlap in time"

@@ -1,0 +1,23 @@
+flowchart TD
+    Start([Image Upload]) --> CheckCorrupt{Is File Corrupt?}
+    CheckCorrupt -- Yes --> Discard[/Quarantine Corrupt File/]
+    CheckCorrupt -- No --> PreFilter{Automated Animal Detection}
+
+    PreFilter -- No Animal Detected --> ArchiveEmpty[(Empty Image Archive)]
+    PreFilter -- Animal Detected --> QueueVolunteer[Queue for Volunteer Review]
+
+    QueueVolunteer --> AssignVolunteer[Distribute to Volunteer]
+    AssignVolunteer --> CollectVote[Submit Classification]
+    CollectVote --> CheckVoteCount{Sufficient Votes Reached?}
+
+    CheckVoteCount -- No --> QueueVolunteer
+    CheckVoteCount -- Yes --> EvaluateConsensus{Consensus Threshold Met?}
+
+    EvaluateConsensus -- Yes --> PublishConsensus[(Published Scientific Dataset)]
+    EvaluateConsensus -- No --> RouteExpert[Escalate to Expert Panel]
+
+    RouteExpert --> ExpertReview{Expert Evaluation}
+    ExpertReview -- Conclusive Identification --> PublishExpert[(Published Scientific Dataset)]
+    ExpertReview -- Needs Additional Context --> RequestEvidence[Request Additional Frame Sequences]
+    RequestEvidence --> RouteExpert
+    ExpertReview -- Insufficient Details --> MarkUnknown[(Archived as Unidentifiable)]

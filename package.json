@@ -1,6 +1,6 @@
 {
   "name": "@excalidraw/mermaid-to-excalidraw",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Mermaid to Excalidraw Diagrams",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,16 +24,14 @@
   },
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
-    "@mermaid-js/parser": "^0.6.3",
-    "mermaid": "^11.12.1",
-    "nanoid": "4.0.2"
+    "nanoid": "4.0.2",
+    "pele": "1.8.0"
   },
   "devDependencies": {
     "@babel/core": "7.12.0",
     "@excalidraw/eslint-config": "1.0.3",
     "@excalidraw/excalidraw": "^0.18.0-a9ca16e",
     "@playwright/test": "^1.58.2",
-    "@types/mermaid": "^9.2.0",
     "@types/node": "^20",
     "@types/react": "18.2.14",
     "@types/react-dom": "18.2.4",

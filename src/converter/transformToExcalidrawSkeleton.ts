@@ -116,10 +116,12 @@ export const transformToExcalidrawArrowSkeleton = (arrow: Arrow) => {
       fontSize: 16,
       textAlign: arrow?.label?.textAlign,
       verticalAlign: arrow?.label?.verticalAlign,
+      // Where along the arrow Excalidraw centers the label (where supported)
+      ...(arrow?.label?.labelPosition !== undefined
+        ? { labelPosition: arrow.label.labelPosition }
+        : {}),
     },
-    roundness: {
-      type: 2,
-    },
+    roundness: arrow.roundness === undefined ? { type: 2 } : arrow.roundness,
     start: arrow.start,
     end: arrow.end,
   };

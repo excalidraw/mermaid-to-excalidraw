@@ -6,13 +6,23 @@ import {
   transformToExcalidrawTextSkeleton,
 } from "../transformToExcalidrawSkeleton.js";
 import { GraphConverter } from "../GraphConverter.js";
+import { NODE_BACKGROUND_COLOR } from "../../constants.js";
 
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
-import type { Class } from "../../parser/class.js";
+import type { Class } from "../../interfaces.js";
 
 export const classToExcalidrawSkeletonConvertor = new GraphConverter({
   converter: (chart: Class) => {
     const elements: ExcalidrawElementSkeleton[] = [];
+
+    // relations below the (opaque) classes they connect
+    Object.values(chart.arrows).forEach((arrow) => {
+      if (!arrow) {
+        return;
+      }
+      const excalidrawElement = transformToExcalidrawArrowSkeleton(arrow);
+      elements.push(excalidrawElement);
+    });
 
     chart.nodes.forEach((node) => {
       if (!node || !node.length) {
@@ -28,7 +38,10 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
 
           case "rectangle":
           case "ellipse":
-            excalidrawElement = transformToExcalidrawContainerSkeleton(element);
+            excalidrawElement = transformToExcalidrawContainerSkeleton({
+              ...element,
+              bgColor: element.bgColor ?? NODE_BACKGROUND_COLOR,
+            });
             break;
 
           case "text":
@@ -47,14 +60,6 @@ export const classToExcalidrawSkeletonConvertor = new GraphConverter({
         return;
       }
       elements.push(transformToExcalidrawLineSkeleton(line));
-    });
-
-    Object.values(chart.arrows).forEach((arrow) => {
-      if (!arrow) {
-        return;
-      }
-      const excalidrawElement = transformToExcalidrawArrowSkeleton(arrow);
-      elements.push(excalidrawElement);
     });
 
     Object.values(chart.text).forEach((ele) => {

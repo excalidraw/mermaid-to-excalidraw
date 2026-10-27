@@ -3,7 +3,7 @@ import type {
   ExcalidrawElementSkeleton,
   ValidLinearElement,
 } from "@excalidraw/excalidraw/element/transform";
-import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
+import type { LocalPoint, Radians } from "@excalidraw/excalidraw/math/types";
 
 const localPoint = (x: number, y: number) => [x, y] as LocalPoint;
 
@@ -12,10 +12,16 @@ import {
   computeExcalidrawVertexStyle,
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawArrowType,
+  measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
-import { VERTEX_TYPE } from "../../interfaces.js";
-import { Flowchart } from "../../parser/flowchart.js";
-import { DEFAULT_FONT_SIZE } from "../../constants.js";
+import { VERTEX_TYPE, Flowchart } from "../../interfaces.js";
+import { transformToExcalidrawLineSkeleton } from "../transformToExcalidrawSkeleton.js";
+import {
+  DEFAULT_FONT_SIZE,
+  DEFAULT_TEXT_COLOR,
+  NODE_BACKGROUND_COLOR,
+  TITLE_BAND_STROKE_CLEARANCE,
+} from "../../constants.js";
 
 const SUBGRAPH_LABEL_HORIZONTAL_PADDING = 32;
 const SUBGRAPH_LABEL_WIDTH_RATIO = 0.62;
@@ -23,6 +29,10 @@ const VERTEX_LABEL_HORIZONTAL_PADDING = 12;
 const MIN_VERTEX_LABEL_FONT_SIZE = 12;
 const EXCALIDRAW_LINE_HEIGHT = 1.25;
 const EXCALIDRAW_BOUND_TEXT_PADDING = 5;
+// a subgraph title's band, beyond its text, on either side
+const SUBGRAPH_TITLE_BAND_PADDING = 8;
+// a swimlane's title in a header column on its side reads upwards
+const LANE_TITLE_ANGLE = ((3 * Math.PI) / 2) as Radians;
 
 const estimateLabelWidth = (text: string, fontSize: number) => {
   const longestLineLength = Math.max(
@@ -130,8 +140,10 @@ const computeSubGraphHorizontalLayouts = (graph: Flowchart, fontSize: number) =>
         getText(subGraph),
         fontSize
       );
-      const minWidth =
-        estimatedTextWidth + SUBGRAPH_LABEL_HORIZONTAL_PADDING * 2;
+      // (a swimlane's title is in its header, Pele sized)
+      const minWidth = subGraph.laneHeader
+        ? 0
+        : estimatedTextWidth + SUBGRAPH_LABEL_HORIZONTAL_PADDING * 2;
       const width = Math.max(subGraph.width, minWidth);
       const x = subGraph.x - (width - subGraph.width) / 2;
 
@@ -252,10 +264,9 @@ const computeVerticalExpansions = (graph: Flowchart, fontSize: number) => {
   const expansions: VerticalExpansion[] = [];
 
   graph.subGraphs.forEach((subGraph) => {
-    const requiredHeaderHeight = getSubGraphRequiredHeaderHeight(
-      getText(subGraph),
-      fontSize
-    );
+    const requiredHeaderHeight = subGraph.laneHeader
+      ? 0
+      : getSubGraphRequiredHeaderHeight(getText(subGraph), fontSize);
     if (!requiredHeaderHeight) {
       return;
     }
@@ -317,10 +328,9 @@ const computeSubGraphLayouts = (
     }
 
     const y = subGraph.y + getVerticalOffset(expansions, subGraph.y);
-    const minHeight = getSubGraphRequiredHeaderHeight(
-      getText(subGraph),
-      fontSize
-    );
+    const minHeight = subGraph.laneHeader
+      ? 0
+      : getSubGraphRequiredHeaderHeight(getText(subGraph), fontSize);
     let bottom = y + Math.max(subGraph.height, minHeight);
 
     subGraph.nodeIds.forEach((nodeId) => {
@@ -383,76 +393,97 @@ const computeVertexLabelFontSize = (
   );
 };
 
-const computeGroupIds = (
-  graph: Flowchart
-): {
-  getGroupIds: (elementId: string) => string[];
-  getParentId: (elementId: string) => string | null;
-} => {
-  // Parse the diagram into a tree for rendering and grouping
-  const tree: {
-    [key: string]: {
-      id: string;
-      parent: string | null;
-      isLeaf: boolean; // true = vertex, false = subGraph
-    };
-  } = {};
-  graph.subGraphs.map((subGraph) => {
-    subGraph.nodeIds.forEach((nodeId) => {
-      tree[subGraph.id] = {
-        id: subGraph.id,
-        parent: null,
-        isLeaf: false,
-      };
-      tree[nodeId] = {
-        id: nodeId,
-        parent: subGraph.id,
-        isLeaf: graph.vertices[nodeId] !== undefined,
-      };
+/**
+ * An elbow arrow along an orthogonal route: it stays orthogonal when what it
+ * connects is moved. Excalidraw routes elbow arrows itself, so the route's
+ * middle segments are fixed where they are (the first and last can't be).
+ */
+const getElbowArrowProps = (points: LocalPoint[]) => ({
+  elbowed: true,
+  roundness: null,
+  fixedSegments: points.slice(2, -1).map((end, index) => ({
+    start: points[index + 1],
+    end,
+    index: index + 2,
+  })),
+});
+
+/**
+ * A swimlane's header (Pele lays nothing out in it): its title, reading
+ * upwards in a column on the lane's side or in a row on its top, and the line
+ * between it and the lane's content.
+ */
+const createLaneHeaderElements = (
+  {
+    width: headerWidth,
+    height: headerHeight,
+    vertical,
+  }: NonNullable<Flowchart["subGraphs"][number]["laneHeader"]>,
+  lane: {
+    id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text: string;
+    fontSize: number;
+    containerStyle: ReturnType<typeof computeExcalidrawVertexStyle>;
+    labelStyle: ReturnType<typeof computeExcalidrawVertexLabelStyle>;
+  }
+): ExcalidrawElementSkeleton[] => {
+  const header = vertical
+    ? { x: lane.x, y: lane.y, width: headerWidth, height: lane.height }
+    : { x: lane.x, y: lane.y, width: lane.width, height: headerHeight };
+  const strokeColor = lane.containerStyle.strokeColor ?? DEFAULT_TEXT_COLOR;
+  const elements: ExcalidrawElementSkeleton[] = [
+    transformToExcalidrawLineSkeleton({
+      type: "line",
+      startX: vertical ? header.x + header.width : header.x,
+      startY: vertical ? header.y : header.y + header.height,
+      endX: header.x + header.width,
+      endY: header.y + header.height,
+      strokeColor,
+      strokeWidth: lane.containerStyle.strokeWidth ?? 2,
+      strokeStyle: lane.containerStyle.strokeStyle,
+    }),
+  ];
+  if (lane.text) {
+    // a box reading along the column, turned around its center to it
+    const [width, height] = vertical
+      ? [header.height, header.width]
+      : [header.width, header.height];
+    elements.unshift({
+      id: lane.id,
+      type: "rectangle",
+      x: header.x + (header.width - width) / 2,
+      y: header.y + (header.height - height) / 2,
+      width,
+      height,
+      ...(vertical ? { angle: LANE_TITLE_ANGLE } : {}),
+      strokeColor: "transparent",
+      backgroundColor: "transparent",
+      label: {
+        text: lane.text,
+        fontSize: lane.fontSize,
+        // in the lane's stroke color (the box, which it'd inherit, has none)
+        strokeColor,
+        ...lane.labelStyle,
+        ...(vertical ? { angle: LANE_TITLE_ANGLE } : {}),
+      },
     });
-  });
-  const mapper: {
-    [key: string]: string[];
-  } = {};
-  [...Object.keys(graph.vertices), ...graph.subGraphs.map((c) => c.id)].forEach(
-    (id) => {
-      if (!tree[id]) {
-        return;
-      }
-      let curr = tree[id];
-      const groupIds: string[] = [];
-      if (!curr.isLeaf) {
-        groupIds.push(`subgraph_group_${curr.id}`);
-      }
-
-      while (true) {
-        if (curr.parent) {
-          groupIds.push(`subgraph_group_${curr.parent}`);
-          curr = tree[curr.parent];
-        } else {
-          break;
-        }
-      }
-
-      mapper[id] = groupIds;
-    }
-  );
-
-  return {
-    getGroupIds: (elementId) => {
-      return mapper[elementId] || [];
-    },
-    getParentId: (elementId) => {
-      return tree[elementId] ? tree[elementId].parent : null;
-    },
-  };
+  }
+  return elements;
 };
 
 export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
   converter: (graph: Flowchart, options) => {
-    const elements: ExcalidrawElementSkeleton[] = [];
+    // subgraphs, then edges, then (opaque) vertices above the edges
+    const subGraphElements: ExcalidrawElementSkeleton[] = [];
+    const edgeElements: ExcalidrawElementSkeleton[] = [];
+    const vertexElements: ExcalidrawElementSkeleton[] = [];
+    // subgraphs' titles, above the edges crossing them
+    const titleElements: ExcalidrawElementSkeleton[] = [];
     const fontSize = options.fontSize;
-    const { getGroupIds, getParentId } = computeGroupIds(graph);
     const safeFontSize = fontSize || DEFAULT_FONT_SIZE;
     const verticalExpansions = computeVerticalExpansions(graph, safeFontSize);
     const subGraphLayouts = computeSubGraphLayouts(
@@ -489,7 +520,10 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       .slice()
       .reverse()
       .forEach((subGraph) => {
-        const groupIds = getGroupIds(subGraph.id);
+        // Not grouped with what's in them: Excalidraw keeps a group's elements
+        // together in z-order, which would put the arrows of other subgraphs
+        // above their (opaque) vertices
+        const groupIds: string[] = [];
         const subGraphText = getText(subGraph);
         const subGraphLabelFontSize = safeFontSize;
         const horizontalLayout = subGraphHorizontalLayouts.get(subGraph.id) || {
@@ -516,17 +550,72 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           y: layout.y,
           width,
           height: layout.height,
-          label: {
-            groupIds,
-            text: subGraphText,
-            fontSize: subGraphLabelFontSize,
-            verticalAlign: "top",
-            ...labelStyle,
-          },
           ...containerStyle,
         };
+        subGraphElements.push(containerElement);
 
-        elements.push(containerElement);
+        if (subGraph.laneHeader) {
+          titleElements.push(
+            ...createLaneHeaderElements(subGraph.laneHeader, {
+              id: `${subGraph.id}__title`,
+              x,
+              y: layout.y,
+              width,
+              height: layout.height,
+              text: subGraphText,
+              fontSize: subGraphLabelFontSize,
+              containerStyle,
+              labelStyle,
+            })
+          );
+        }
+        // The title, on an opaque band (in the subgraph's fill) above the
+        // edges, which would otherwise cross it: the subgraph's box is behind
+        // them. Only as wide as the title, so edges entering the subgraph
+        // elsewhere stay whole.
+        else if (subGraphText) {
+          const strokeWidth = containerStyle.strokeWidth ?? 2;
+          const lines = subGraphText.split("\n");
+          const titleWidth = Math.min(
+            width - strokeWidth * 2,
+            Math.max(
+              ...lines.map((line) =>
+                measureLabelLineWidthAtFontSize(line, subGraphLabelFontSize)
+              )
+            ) +
+              (EXCALIDRAW_BOUND_TEXT_PADDING + SUBGRAPH_TITLE_BAND_PADDING) *
+                2 +
+              // leeway for Excalidraw to fit it without wrapping
+              2
+          );
+          titleElements.push({
+            id: `${subGraph.id}__title`,
+            type: "rectangle",
+            groupIds,
+            x: x + (width - titleWidth) / 2,
+            y: layout.y + strokeWidth + TITLE_BAND_STROKE_CLEARANCE,
+            width: Math.max(1, titleWidth),
+            height:
+              lines.length * subGraphLabelFontSize * EXCALIDRAW_LINE_HEIGHT +
+              EXCALIDRAW_BOUND_TEXT_PADDING * 2,
+            strokeColor: "transparent",
+            backgroundColor:
+              containerStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
+            fillStyle: "solid",
+            // a hand-drawn fill wobbles past its bounds, over the subgraph's
+            // stroke
+            roughness: 0,
+            label: {
+              groupIds,
+              text: subGraphText,
+              fontSize: subGraphLabelFontSize,
+              // in the subgraph's stroke color (the band, which it'd
+              // inherit, has none)
+              strokeColor: containerStyle.strokeColor ?? DEFAULT_TEXT_COLOR,
+              ...labelStyle,
+            },
+          });
+        }
       });
 
     // Vertices
@@ -534,7 +623,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       if (!vertex) {
         return;
       }
-      const groupIds = getGroupIds(vertex.id);
+      const groupIds: string[] = [];
       const vertexText = getText(vertex);
       const transformedX = vertex.x + (horizontalOffsets.get(vertex.id) || 0);
       const transformedY =
@@ -561,15 +650,22 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         width: vertex.width,
         height: vertex.height,
         strokeWidth: 2,
-        label: {
-          groupIds,
-          text: vertexText,
-          fontSize: vertexLabelFontSize,
-          ...labelStyle,
-        },
+        // a double circle's label is in its inner circle
+        ...(vertex.type !== VERTEX_TYPE.DOUBLECIRCLE && {
+          label: {
+            groupIds,
+            text: vertexText,
+            fontSize: vertexLabelFontSize,
+            ...labelStyle,
+          },
+        }),
         link: vertex.link || null,
+        backgroundColor: NODE_BACKGROUND_COLOR,
+        fillStyle: "solid",
         ...containerStyle,
       };
+      // drawn above the outer one, which is filled
+      let innerCircle: ExcalidrawElementSkeleton | undefined;
 
       switch (vertex.type) {
         case VERTEX_TYPE.STADIUM: {
@@ -585,7 +681,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
           // Create new groupId for double circle
           groupIds.push(`doublecircle_${vertex.id}}`);
           // Create inner circle element
-          const innerCircle: ExcalidrawElementSkeleton = {
+          innerCircle = {
             type: "ellipse",
             groupIds,
             x: transformedX + CIRCLE_MARGIN,
@@ -602,7 +698,6 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
             },
           };
           containerElement = { ...containerElement, groupIds, type: "ellipse" };
-          elements.push(innerCircle);
           break;
         }
         case VERTEX_TYPE.CIRCLE: {
@@ -615,17 +710,15 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         }
       }
 
-      elements.push(containerElement);
+      vertexElements.push(containerElement);
+      if (innerCircle) {
+        vertexElements.push(innerCircle);
+      }
     });
 
     // Edges
     graph.edges.forEach((edge) => {
-      let groupIds: string[] = [];
-      const startParentId = getParentId(edge.start);
-      const endParentId = getParentId(edge.end);
-      if (startParentId && startParentId === endParentId) {
-        groupIds = getGroupIds(startParentId);
-      }
+      const groupIds: string[] = [];
 
       // Get arrow position data
       const { startX, startY, reflectionPoints } = edge;
@@ -650,8 +743,12 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const arrowType = computeExcalidrawArrowType(edge.type || "arrow_point");
 
       // Bind start and end vertex to arrow
-      const startVertex = elements.find((e) => e.id === edge.start);
-      const endVertex = elements.find((e) => e.id === edge.end);
+      const startVertex = [...vertexElements, ...subGraphElements].find(
+        (e) => e.id === edge.start
+      );
+      const endVertex = [...vertexElements, ...subGraphElements].find(
+        (e) => e.id === edge.end
+      );
       if (!startVertex || !endVertex) {
         return;
       }
@@ -700,11 +797,21 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         strokeStyle: edge.stroke === "dotted" ? "dashed" : undefined,
         points,
         ...(edge.text
-          ? { label: { text: getText(edge), fontSize, groupIds } }
+          ? {
+              label: {
+                text: getText(edge),
+                fontSize,
+                groupIds,
+                // Where along the arrow Excalidraw centers the label (where
+                // supported)
+                ...(edge.labelPosition !== undefined
+                  ? { labelPosition: edge.labelPosition }
+                  : {}),
+              },
+            }
           : {}),
-        roundness: {
-          type: 2,
-        },
+        roundness: { type: 2 },
+        ...(edge.orthogonal ? getElbowArrowProps(points) : {}),
         ...arrowType,
         start: {
           id: startVertex.id || "",
@@ -714,11 +821,16 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
         },
       };
 
-      elements.push(containerElement);
+      edgeElements.push(containerElement);
     });
 
     return {
-      elements,
+      elements: [
+        ...subGraphElements,
+        ...edgeElements,
+        ...titleElements,
+        ...vertexElements,
+      ],
     };
   },
 });

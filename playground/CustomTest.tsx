@@ -98,9 +98,9 @@ const CustomTest = ({
       {isActive && (
         <>
           <section className="custom-preview-card">
-            <div className="preview-badge">{"Live Mermaid SVG"}</div>
+            <div className="preview-badge">{"Live Pele SVG"}</div>
             <div className="diagram-preview-surface custom-diagram-surface">
-              <MermaidDiagram definition={textareaValue} id="custom-diagram" />
+              <MermaidDiagram definition={textareaValue} />
             </div>
           </section>
 
@@ -109,7 +109,7 @@ const CustomTest = ({
             open={isParsedDataExpanded}
             onToggle={handleParsedDataToggle}
           >
-            <summary>{"Parsed data from parseMermaid"}</summary>
+            <summary>{"Parsed data"}</summary>
             {isParsedDataExpanded ? (
               <>
                 <pre id="custom-parsed-data">

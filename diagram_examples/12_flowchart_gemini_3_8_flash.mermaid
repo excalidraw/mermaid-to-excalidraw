@@ -1,0 +1,33 @@
+flowchart TD
+    Start([Housekeeping finds item]) --> LogItem[Record description, location, and storage reference]
+    LogItem --> SecureStorage[Place in secure storage]
+    SecureStorage --> CheckOwnership{Can potential owner be identified?}
+
+    CheckOwnership -- Yes --> ContactGuest[Contact potential owner via phone or email]
+    ContactGuest --> GuestResponse{Guest responds?}
+
+    GuestResponse -- No --> MonitorRetention[Wait in secure storage]
+    GuestResponse -- Yes --> CompareDetails{Verify item details with guest}
+
+    CheckOwnership -- No --> UnidentifiedWait[Hold in secure storage]
+    UnidentifiedWait --> WaitInquiry{Claimant comes forward?}
+
+    WaitInquiry -- No --> MonitorRetention
+    WaitInquiry -- Yes --> CompareDetails
+
+    CompareDetails -- Mismatch --> RejectClaim[Log failed verification]
+    RejectClaim --> MonitorRetention
+
+    CompareDetails -- Match --> FulfillmentMethod{Collection or shipping?}
+
+    FulfillmentMethod -- Collection --> Pickup[Guest collects at reception with ID]
+    FulfillmentMethod -- Shipping --> ArrangeShip[Arrange payment and dispatch courier]
+
+    Pickup --> DocumentHandover[Document handover and close case]
+    ArrangeShip --> DocumentHandover
+    DocumentHandover --> EndClaimed([Item successfully returned])
+
+    MonitorRetention --> CheckDeadline{Retention deadline reached?}
+    CheckDeadline -- No --> MonitorRetention
+    CheckDeadline -- Yes --> FinalDisposition[Dispose, donate, or auction according to policy]
+    FinalDisposition --> EndArchived([Case closed and archived])

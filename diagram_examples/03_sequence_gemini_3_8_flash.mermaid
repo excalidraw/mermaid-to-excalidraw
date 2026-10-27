@@ -1,0 +1,37 @@
+sequenceDiagram
+    autonumber
+    actor Courier
+    participant Locker Controller
+    participant Delivery Platform
+    participant Notification Service
+    actor Recipient
+
+    Courier->>Locker Controller: Request compartment allocation
+    Locker Controller->>Delivery Platform: Check parcel details and find free compartment
+    Delivery Platform-->>Locker Controller: Assign compartment ID
+    Locker Controller-->>Courier: Open assigned compartment door
+    Courier->>Locker Controller: Deposit parcel and close door
+    Locker Controller->>Locker Controller: Lock door and verify sensor closure
+    Locker Controller->>Delivery Platform: Report delivery complete
+
+    Delivery Platform->>Notification Service: Trigger pickup notification
+    note over Notification Service,Recipient: Notifications are processed asynchronously
+    Notification Service-->>Recipient: Send pickup code via SMS/Email
+
+    loop Up to 3 attempts
+        Recipient->>Locker Controller: Enter pickup code
+        Locker Controller->>Delivery Platform: Validate pickup code
+        alt Invalid Code
+            Delivery Platform-->>Locker Controller: Code invalid
+            Locker Controller-->>Recipient: Show error and remaining attempts
+        else Valid Code
+            Delivery Platform-->>Locker Controller: Code validated
+        end
+    end
+
+    Locker Controller->>Locker Controller: Unlock and open compartment door
+    Recipient->>Locker Controller: Retrieve parcel and close door
+    Locker Controller->>Locker Controller: Detect empty compartment and lock door
+    Locker Controller->>Delivery Platform: Confirm parcel collection
+    Delivery Platform->>Delivery Platform: Mark compartment as available
+    Locker Controller-->>Recipient: Display collection confirmation

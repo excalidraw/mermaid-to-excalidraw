@@ -1,19 +1,23 @@
-import { useState, useCallback, useDeferredValue, useEffect, useRef } from "react";
 import {
-  convertToExcalidrawElements,
-} from "@excalidraw/excalidraw";
+  useState,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+} from "react";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import CustomTest from "./CustomTest.tsx";
 import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
-import { parseMermaid } from "../src/parseMermaid.ts";
+import { parseDiagram, type ParsedDiagram } from "../src/parseDiagram.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
 
 import "@excalidraw/excalidraw/index.css";
 
 export interface MermaidData {
   definition: string;
-  output: Awaited<ReturnType<typeof parseMermaid>> | null;
+  output: ParsedDiagram | null;
   error: string | null;
 }
 
@@ -198,7 +202,7 @@ const App = () => {
       try {
         setActiveTestCaseIndex(activeTestCaseIndex);
 
-        const mermaid = await parseMermaid(definition);
+        const mermaid = await parseDiagram(definition);
 
         setMermaidData({
           definition,

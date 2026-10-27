@@ -1,0 +1,29 @@
+erDiagram
+    PODCAST["PODCAST (2 rows)"] {
+        string podcast_id PK
+        string title "City Soundwalks: 62 min; Workshop Stories: 42 min"
+    }
+
+    EPISODE["EPISODE (3 rows)"] {
+        string episode_id PK
+        string podcast_id FK
+        string title "e.g. Trams, bells and bicycles"
+        int duration_minutes "28, 34, 42"
+        date published_date "2025-04-01 to 2025-04-08"
+    }
+
+    APPEARANCE["APPEARANCE (4 rows)"] {
+        string episode_id PK, FK
+        string guest_id PK, FK
+        string role "Interviewee, Field recorder, Demonstrator"
+    }
+
+    GUEST["GUEST (3 rows)"] {
+        string guest_id PK
+        string display_name "Lea, Samir, Inez"
+        string specialty
+    }
+
+    PODCAST ||--o{ EPISODE : "contains"
+    EPISODE ||--o{ APPEARANCE : "features"
+    GUEST ||--o{ APPEARANCE : "participates_in"
