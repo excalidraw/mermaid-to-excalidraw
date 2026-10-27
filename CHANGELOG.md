@@ -1,3 +1,15 @@
+## v3.0.0 (Unreleased)
+
+### Breaking changes
+
+- Diagrams are parsed and laid out by [Pele](https://pele.run) instead of Mermaid, which is no longer a dependency. Layouts differ from v2's.
+- Removed the `engine` and `startOnLoad` config params.
+
+### Features
+
+- Convert `swimlane-beta` diagrams (lanes with their headers, edges as elbow arrows).
+- Keep labels where Pele placed them along their arrows (flowchart edges, state transitions, class and ER relations), with `label.labelPosition`. Excalidraw versions without it for skeleton arrows ([excalidraw/excalidraw#12425](https://github.com/excalidraw/excalidraw/pull/12425)) center them.
+
 ## Unreleased
 
 ### v2.1.0

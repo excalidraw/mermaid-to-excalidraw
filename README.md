@@ -2,6 +2,8 @@
 
 Convert mermaid diagrams to excalidraw
 
+Diagrams are parsed and laid out by [Pele](https://pele.run), which reads Mermaid syntax and lays diagrams out without rendering them in the DOM (since v3; v2 used [Mermaid](https://mermaid.js.org) itself, see [Upgrading from v2](#upgrading-from-v2)).
+
 ## Set up
 
 Install packages:
@@ -28,18 +30,10 @@ yarn build
 parseMermaidToExcalidraw(diagramDefinition: string, config?: MermaidConfig)
 ```
 
-The `diagramDefinition` is the mermaid diagram definition.
-and `config` is the mermaid config. You can use the `config` param when you want to pass some custom config to mermaid.
-
-Currently `mermaid-to-excalidraw` only supports the :point_down: config params
+The `diagramDefinition` is the mermaid diagram definition, and `config` is the mermaid config. `mermaid-to-excalidraw` only supports the :point_down: config params
 
 ```ts
 {
-  /**
-   * Whether to start the diagram automatically when the page loads.
-   * @default false
-   */
-  startOnLoad?: boolean;
   /**
    * The flowchart curve style.
    * @default "linear"
@@ -64,19 +58,12 @@ Currently `mermaid-to-excalidraw` only supports the :point_down: config params
    * @default 50000
    */
   maxTextSize?: number;
-  /**
-   * The engine that parses and lays out the diagram (experimental, see below).
-   * @default "mermaid"
-   */
-  engine?: "mermaid" | "pele";
 }
 ```
 
-### Engines (experimental)
+Flowcharts (including `swimlane-beta` diagrams), sequence, class, ER and state diagrams are converted to Excalidraw elements. Other diagram types Pele supports are inserted as an image.
 
-By default, diagrams are parsed and laid out by [Mermaid](https://mermaid.js.org), rendered in the DOM. With `engine: "pele"`, they're parsed and laid out by [Pele](https://pele.run), which reads the same Mermaid syntax but needs no DOM. Its layout differs from Mermaid's.
-
-Like the Mermaid engine, it converts flowcharts, sequence, class, ER and state diagrams to Excalidraw elements, and inserts other diagram types as an image.
+It needs DOM APIs (e.g. `DOMParser`, so a browser, or jsdom), but nothing is rendered into the document.
 
 Example code:
 
@@ -107,8 +94,15 @@ Try out [here](https://mermaid-to-excalidraw.vercel.app).
 - `yarn test:visual` to run visual tests
 - `yarn test:visual:update` to update visual tests
 - `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
-  - `?engine=pele` (or the `Engine` button / <kbd>e</kbd> / <kbd>Tab</kbd>) switches the engine
-- `VISUAL_TESTS_ENGINES=mermaid,pele yarn test:visual` to also run visual tests with the Pele engine (its snapshots are prefixed with `pele-`)
+
+## Upgrading from v2
+
+- Diagrams are laid out by Pele instead of Mermaid, so they look different (e.g. node sizes and spacing, edge routes), and Mermaid is no longer a dependency. `parseMermaidToExcalidraw` is the same otherwise.
+- The `engine` and `startOnLoad` config params are gone.
+- Diagrams that Mermaid parsed but Pele doesn't now throw a parse error (Pele's errors follow Mermaid's format).
+- Known gap: `<br>` and `\n` in class members are drawn as is (Pele lays members out on one line).
+
+v2 is maintained on the [`release/2.x`](https://github.com/excalidraw/mermaid-to-excalidraw/tree/release/2.x) branch.
 
 ## API
 
