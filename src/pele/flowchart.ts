@@ -1,4 +1,4 @@
-import type { FlowchartModel, ParsedDiagramModel } from "pele";
+import type { FlowchartModel, ParsedDiagramModel } from "pele/lazy";
 
 import {
   ContainerStyle,

@@ -10,7 +10,7 @@ import {
   simplifyRoute,
 } from "../src/pele/svg.js";
 import { parsePeleFlowchart } from "../src/pele/flowchart.js";
-import { parse, render, type FlowchartModel } from "pele";
+import { load, parse, render, type FlowchartModel } from "pele/lazy";
 import type {
   Flowchart,
   Sequence,
@@ -224,10 +224,12 @@ describe("getRoutePosition", () => {
 });
 
 describe("parsePele", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     // jsdom has no canvas (and logs that it doesn't): Pele falls back to its
     // built-in text metrics either way.
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    // for the tests that parse with Pele directly
+    await load("flowchart");
   });
 
   afterAll(() => {

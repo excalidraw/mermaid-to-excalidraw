@@ -1,4 +1,4 @@
-import type { StateModel } from "pele";
+import type { StateModel } from "pele/lazy";
 
 import type { Line, Text } from "../elementSkeleton.js";
 import {

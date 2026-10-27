@@ -1,10 +1,16 @@
+// "pele/lazy" loads each diagram type's code on first use ("pele" bundles all
+// of them). Don't import from "pele" too: its copy of Pele doesn't share state
+// (registered diagram types, `PeleError`, cached text widths) with this one.
 import {
+  detectType,
+  load,
   parse,
   PeleError,
   render,
+  type DiagramType,
   type ParsedDiagramModel,
   type RenderOptions,
-} from "pele";
+} from "pele/lazy";
 
 import { DEFAULT_FONT_SIZE, MERMAID_CONFIG } from "../constants.js";
 import {
@@ -162,8 +168,20 @@ export const pointEndOfInputErrorAtLastLine = (
   return error;
 };
 
+/** Loads the code Pele parses and renders `definition`'s diagram type with. */
+const loadDiagramType = async (definition: string) => {
+  let type: DiagramType | null = null;
+  try {
+    type = detectType(definition);
+  } catch {
+    // `parse` throws it
+  }
+  await load(type);
+};
+
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
   try {
+    await loadDiagramType(definition);
     return await withLineBreakFallback(definition, async (candidate) =>
       parse(candidate, {
         limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
