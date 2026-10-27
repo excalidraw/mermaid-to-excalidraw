@@ -1,4 +1,4 @@
-import type { FlowchartModel } from "pele";
+import type { FlowchartModel, ParsedDiagramModel } from "pele";
 
 import {
   ContainerStyle,
@@ -13,7 +13,7 @@ import {
 import type { Edge, Flowchart } from "../parser/flowchart.js";
 import { isValidCSSColor, parseCSSDeclarations } from "../parser/cssUtils.js";
 import { decodeMermaidText } from "../text.js";
-import { withPeleLineBreaks } from "./elements.js";
+import { hasClass, withPeleLineBreaks } from "./elements.js";
 import {
   Bounds,
   evenOutRoute,
@@ -338,6 +338,13 @@ const parseSubGraph = (
   if (!bounds) {
     return undefined;
   }
+  // A swimlane is drawn as its box, then its header's
+  const header = hasClass(group, "pele-lane")
+    ? Array.from(group.children).filter(
+        (child) => child.tagName.toLowerCase() === "rect"
+      )[1]
+    : undefined;
+  const headerBounds = header && getShapeBounds(header, root);
 
   return {
     id: subGraph.id,
@@ -351,6 +358,15 @@ const parseSubGraph = (
         title?.querySelector(".pele-cluster-label") ||
         null
     ),
+    ...(headerBounds
+      ? {
+          laneHeader: {
+            ...headerBounds,
+            // as tall as the lane: a column on its side
+            vertical: headerBounds.height >= bounds.height - 1,
+          },
+        }
+      : {}),
   };
 };
 
@@ -391,7 +407,8 @@ const parseEdge = (
   group: Element,
   label: Element | undefined,
   root: Element,
-  vertices: Flowchart["vertices"]
+  vertices: Flowchart["vertices"],
+  { inSwimlanes = false } = {}
 ): Edge | undefined => {
   const paths = Array.from(group.querySelectorAll("path"));
   const line = paths.find(
@@ -418,6 +435,15 @@ const parseEdge = (
   if (route.length < 2) {
     return undefined;
   }
+  // Pele routes swimlanes' edges orthogonally (but e.g. a self-loop as a curve)
+  const orthogonal =
+    inSwimlanes &&
+    route.every(
+      (point, index) =>
+        index === 0 ||
+        Math.abs(point.x - route[index - 1].x) < 0.5 ||
+        Math.abs(point.y - route[index - 1].y) < 0.5
+    );
 
   const start = route[0];
   const end = route[route.length - 1];
@@ -439,7 +465,10 @@ const parseEdge = (
     startY: start.y,
     endX: end.x,
     endY: end.y,
-    reflectionPoints: evenOutRoute(route),
+    // (curved through, its points are evened out for Excalidraw not to
+    // overshoot them)
+    reflectionPoints: orthogonal ? route : evenOutRoute(route),
+    ...(orthogonal ? { orthogonal } : {}),
     ...(edge.text && labelBounds
       ? {
           labelPosition: getRoutePosition(route, {
@@ -459,7 +488,8 @@ const parseEdge = (
  * subgraph and what's inside it, which Mermaid doesn't draw either.
  */
 export const parsePeleFlowchart = (
-  model: FlowchartModel,
+  // (e.g. a `swimlane` too, parsed as one)
+  model: FlowchartModel & Partial<Pick<ParsedDiagramModel, "mermaidType">>,
   root: Element,
   options: PeleFlowchartOptions
 ): Flowchart => {
@@ -504,6 +534,7 @@ export const parsePeleFlowchart = (
     return false;
   };
 
+  const inSwimlanes = model.mermaidType === "swimlane";
   const edges = model.edges.flatMap((edge) => {
     if (isInside(edge.start, edge.end) || isInside(edge.end, edge.start)) {
       return [];
@@ -516,7 +547,8 @@ export const parsePeleFlowchart = (
         group,
         edgeLabels.get(edge.id!) ?? undefined,
         root,
-        vertices
+        vertices,
+        { inSwimlanes }
       );
     return parsed ? [parsed] : [];
   });

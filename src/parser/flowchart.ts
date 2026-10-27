@@ -52,6 +52,11 @@ export interface Edge {
    * is centered, if not halfway.
    */
   labelPosition?: number;
+  /**
+   * Routed orthogonally (as Pele routes swimlanes' edges): drawn as an elbow
+   * arrow along its route, not curved through its points.
+   */
+  orthogonal?: boolean;
 }
 
 const applyContainerStyleProperty = (

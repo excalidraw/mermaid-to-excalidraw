@@ -5,7 +5,14 @@ import { ENGINE_LABELS } from "./engine";
 import type { DiagramEngine } from "../src/parseDiagram";
 
 export interface TestCase {
-  type: "class" | "erd" | "flowchart" | "sequence" | "state" | "unsupported";
+  type:
+    | "class"
+    | "erd"
+    | "flowchart"
+    | "sequence"
+    | "state"
+    | "swimlane"
+    | "unsupported";
   name: string;
   definition: string;
 }

@@ -52,6 +52,17 @@ export interface SubGraph {
   height: number;
   containerStyle: ContainerStyle;
   labelStyle: LabelStyle;
+  /**
+   * A swimlane's (`swimlane-beta`) header, its title in it: a column on its
+   * side, the title reading upwards (`vertical`), or a row on its top.
+   */
+  laneHeader?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    vertical: boolean;
+  };
 }
 
 export interface Position {

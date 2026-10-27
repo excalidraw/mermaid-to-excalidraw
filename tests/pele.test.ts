@@ -21,6 +21,7 @@ import type { Class } from "../src/parser/class.js";
 import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class.ts";
 import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er.ts";
 import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
+import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane.ts";
 import type { ERD } from "../src/parser/er.js";
 import type { State } from "../src/parser/state.js";
 
@@ -635,6 +636,126 @@ describe("parsePele", () => {
       ),
       line: 2,
     });
+  });
+});
+
+describe("parsePele swimlanes", () => {
+  beforeAll(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
+  const swimlanes = (direction: string) => `swimlane-beta ${direction}
+  subgraph Customer
+    A[Start] --> B[Browse]
+  end
+  subgraph Sales [Sales team]
+    C[Order]
+  end
+  B --> C`;
+
+  it.each(
+    SWIMLANE_DIAGRAM_TESTCASES.map((testcase) => [testcase.name, testcase])
+  )("%s", async (_, { definition }) => {
+    const flowchart = await parseFlowchart(definition);
+    expect(flowchart.subGraphs.length).toBeGreaterThan(0);
+    flowchart.subGraphs.forEach((lane) => expect(lane.laneHeader).toBeTruthy());
+    expect(graphToExcalidraw(flowchart).elements.length).toBeGreaterThan(0);
+  });
+
+  it("reads lanes' headers: a column on their side, or a row on their top", async () => {
+    const leftToRight = await parseFlowchart(swimlanes("LR"));
+    leftToRight.subGraphs.forEach((lane) => {
+      expect(lane.laneHeader).toEqual({
+        x: lane.x,
+        y: lane.y,
+        width: expect.any(Number),
+        height: lane.height,
+        vertical: true,
+      });
+      expect(lane.laneHeader!.width).toBeLessThan(lane.width / 2);
+    });
+    expect(leftToRight.subGraphs.map(({ text }) => text).sort()).toEqual([
+      "Customer",
+      "Sales team",
+    ]);
+
+    const topToBottom = await parseFlowchart(swimlanes("TB"));
+    topToBottom.subGraphs.forEach((lane) => {
+      expect(lane.laneHeader).toEqual({
+        x: lane.x,
+        y: lane.y,
+        width: lane.width,
+        height: expect.any(Number),
+        vertical: false,
+      });
+      expect(lane.laneHeader!.height).toBeLessThan(lane.height / 2);
+    });
+  });
+
+  it("draws edges as elbow arrows along Pele's (orthogonal) routes", async () => {
+    // (with a route around: "no", back to the start)
+    const flowchart = await parseFlowchart(
+      SWIMLANE_DIAGRAM_TESTCASES[1].definition
+    );
+    const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
+      ({ type }) => type === "arrow"
+    );
+    expect(arrows.length).toBe(flowchart.edges.length);
+    arrows.forEach((arrow) => {
+      const edge = flowchart.edges.find(
+        ({ start, end }) => `${start}_${end}` === arrow.id
+      )!;
+      expect(edge.orthogonal).toBe(true);
+      expect(arrow).toMatchObject({ elbowed: true, roundness: null });
+      // along Pele's route, its middle segments fixed there
+      expect(arrow.points).toHaveLength(edge.reflectionPoints.length);
+      expect(arrow.fixedSegments).toHaveLength(
+        Math.max(0, arrow.points.length - 3)
+      );
+      arrow.fixedSegments.forEach(({ start, end, index }: any) => {
+        expect(start).toEqual(arrow.points[index - 1]);
+        expect(end).toEqual(arrow.points[index]);
+      });
+    });
+    expect(arrows.some(({ fixedSegments }) => fixedSegments.length)).toBe(true);
+    // not flowcharts'
+    const plain = await parseFlowchart("flowchart LR\n  A --> B\n  A --> C");
+    expect(plain.edges.every(({ orthogonal }) => !orthogonal)).toBe(true);
+  });
+
+  it("draws lanes' titles in their header, reading upwards in a column", async () => {
+    const flowchart = await parseFlowchart(swimlanes("LR"));
+    const { elements } = graphToExcalidraw(flowchart) as { elements: any[] };
+    const lane = flowchart.subGraphs.find(({ id }) => id === "Sales")!;
+    const headerWidth = lane.laneHeader!.width;
+    const box = elements.find((element) => element.id === "Sales");
+    const title = elements.find((element) => element.id === "Sales__title");
+
+    // as laid out (not widened for its title, which isn't on its top)
+    expect(box).toMatchObject({ x: lane.x, width: lane.width });
+    expect(box.label).toBeUndefined();
+    // turned around its center to fill the header column
+    expect(title).toMatchObject({
+      angle: (3 * Math.PI) / 2,
+      width: box.height,
+      height: headerWidth,
+      label: { text: "Sales team", angle: (3 * Math.PI) / 2 },
+    });
+    expect(title.x + title.width / 2).toBeCloseTo(box.x + headerWidth / 2);
+    expect(title.y + title.height / 2).toBeCloseTo(box.y + box.height / 2);
+    // and the line between the header and the lane's content
+    expect(elements).toContainEqual(
+      expect.objectContaining({
+        type: "line",
+        x: box.x + headerWidth,
+        y: box.y,
+        height: box.height,
+      })
+    );
   });
 });
 
