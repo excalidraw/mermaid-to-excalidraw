@@ -1,0 +1,47 @@
+stateDiagram-v2
+    [*] --> Queued
+
+    Queued --> Running : Dequeue Job
+    Queued --> Cancelled : Cancel Request
+
+    state Running {
+        [*] --> ForkState
+        state ForkState <<fork>>
+        ForkState --> ImageRendering
+        ForkState --> MetadataPackaging
+
+        state JoinState <<join>>
+        ImageRendering --> JoinState : Render Complete
+        MetadataPackaging --> JoinState : Package Complete
+
+        JoinState --> Uploading
+
+        state Uploading {
+            [*] --> Transferring
+            Transferring --> UploadError : Network Drop or 5xx
+            UploadError --> Transferring : Retry [Attempts < MaxRetries]
+            UploadError --> UploadExhausted : Max Retries Exceeded
+            Transferring --> UploadSuccess : HTTP 200 OK
+            UploadSuccess --> [*]
+        }
+    }
+
+    Running --> Paused : Pause Request [Preserve Context]
+    Paused --> Running : Resume Request [Restore Interrupted Stage]
+
+    Running --> Cancelled : Cancel Request
+    Paused --> Cancelled : Cancel Request
+
+    Uploading --> Failed : UploadExhausted
+    Uploading --> Completed : UploadSuccess
+
+    Completed --> [*]
+    Failed --> [*]
+    Cancelled --> [*]
+
+    note right of Running
+        Retained Artifacts for Retries:
+        - Rendered image binaries on local disk
+        - Packaged EXIF and metadata sidecar files
+        - S3 multipart upload ID and uploaded parts map
+    end note

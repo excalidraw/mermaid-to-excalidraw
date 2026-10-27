@@ -1,0 +1,210 @@
+erDiagram
+    USERS ||--o| CUSTOMER_PROFILES : has
+    USERS ||--o{ ADDRESSES : owns
+    USERS ||--o{ ORDERS : places
+    USERS ||--o| CARTS : owns
+    USERS ||--o{ REVIEWS : writes
+
+    MERCHANTS ||--o{ PRODUCTS : supplies
+
+    CATEGORIES ||--o{ CATEGORIES : parent_of
+    CATEGORIES ||--o{ PRODUCTS : categorizes
+
+    PRODUCTS ||--|{ PRODUCT_VARIANTS : contains
+    PRODUCTS ||--o{ REVIEWS : receives
+
+    PRODUCT_VARIANTS ||--o{ INVENTORIES : tracked_in
+    WAREHOUSES ||--o{ INVENTORIES : stocks
+
+    CARTS ||--o{ CART_ITEMS : includes
+    PRODUCT_VARIANTS ||--o{ CART_ITEMS : referenced_in
+
+    ORDERS ||--|{ ORDER_ITEMS : contains
+    PRODUCT_VARIANTS ||--o{ ORDER_ITEMS : ordered_as
+
+    ADDRESSES ||--o{ ORDERS : shipping_dest
+    ADDRESSES ||--o{ ORDERS : billing_dest
+
+    ORDERS ||--o{ PAYMENTS : paid_by
+    ORDERS ||--o{ SHIPMENTS : dispatched_via
+    CARRIERS ||--o{ SHIPMENTS : handles
+
+    ORDERS ||--o{ ORDER_COUPONS : applies
+    COUPONS ||--o{ ORDER_COUPONS : applied_in
+
+    USERS {
+        int user_id PK
+        string username
+        string email
+        string password_hash
+        string phone_number
+        datetime created_at
+        datetime updated_at
+    }
+
+    CUSTOMER_PROFILES {
+        int profile_id PK
+        int user_id FK
+        string first_name
+        string last_name
+        date date_of_birth
+        string gender
+        int loyalty_points
+    }
+
+    ADDRESSES {
+        int address_id PK
+        int user_id FK
+        string address_line1
+        string address_line2
+        string city
+        string state_province
+        string postal_code
+        string country
+        boolean is_default
+    }
+
+    MERCHANTS {
+        int merchant_id PK
+        string business_name
+        string tax_id
+        string contact_email
+        string status
+        datetime onboarded_at
+    }
+
+    CATEGORIES {
+        int category_id PK
+        int parent_category_id FK
+        string category_name
+        string slug
+        string description
+    }
+
+    PRODUCTS {
+        int product_id PK
+        int merchant_id FK
+        int category_id FK
+        string sku
+        string product_name
+        text description
+        decimal base_price
+        boolean is_active
+        datetime created_at
+    }
+
+    PRODUCT_VARIANTS {
+        int variant_id PK
+        int product_id FK
+        string variant_sku
+        string color
+        string size
+        decimal price_adjustment
+    }
+
+    INVENTORIES {
+        int inventory_id PK
+        int variant_id FK
+        int warehouse_id FK
+        int quantity_on_hand
+        int reserved_quantity
+        datetime last_updated
+    }
+
+    WAREHOUSES {
+        int warehouse_id PK
+        string warehouse_name
+        string location_code
+        string city
+        string country
+    }
+
+    CARTS {
+        int cart_id PK
+        int user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    CART_ITEMS {
+        int cart_item_id PK
+        int cart_id FK
+        int variant_id FK
+        int quantity
+        datetime added_at
+    }
+
+    ORDERS {
+        int order_id PK
+        int user_id FK
+        int shipping_address_id FK
+        int billing_address_id FK
+        datetime order_date
+        string order_status
+        decimal total_amount
+        decimal tax_amount
+        decimal shipping_fee
+    }
+
+    ORDER_ITEMS {
+        int order_item_id PK
+        int order_id FK
+        int variant_id FK
+        int quantity
+        decimal unit_price
+        decimal discount_amount
+        decimal subtotal
+    }
+
+    PAYMENTS {
+        int payment_id PK
+        int order_id FK
+        datetime payment_date
+        decimal amount
+        string payment_method
+        string transaction_reference
+        string payment_status
+    }
+
+    SHIPMENTS {
+        int shipment_id PK
+        int order_id FK
+        int carrier_id FK
+        string tracking_number
+        datetime shipped_date
+        datetime estimated_delivery
+        string shipment_status
+    }
+
+    CARRIERS {
+        int carrier_id PK
+        string carrier_name
+        string service_level
+        string tracking_url_template
+    }
+
+    REVIEWS {
+        int review_id PK
+        int product_id FK
+        int user_id FK
+        int rating
+        string review_title
+        text review_text
+        datetime created_at
+    }
+
+    COUPONS {
+        int coupon_id PK
+        string code
+        string discount_type
+        decimal discount_value
+        date valid_from
+        date valid_until
+        int max_uses
+    }
+
+    ORDER_COUPONS {
+        int order_id PK, FK
+        int coupon_id PK, FK
+        decimal applied_discount
+    }
