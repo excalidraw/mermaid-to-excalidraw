@@ -1,4 +1,4 @@
-import type { ErModel } from "pele";
+import type { ErModel } from "pele/lazy";
 import { nanoid } from "nanoid";
 
 import type {

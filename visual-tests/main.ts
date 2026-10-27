@@ -1,4 +1,4 @@
-import { forgetTextWidths } from "pele";
+import { forgetTextWidths } from "pele/lazy";
 import {
   convertToExcalidrawElements,
   exportToSvg,

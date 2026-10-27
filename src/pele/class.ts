@@ -1,4 +1,4 @@
-import type { ClassModel } from "pele";
+import type { ClassModel } from "pele/lazy";
 import { nanoid } from "nanoid";
 
 import type {

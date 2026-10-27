@@ -1,4 +1,4 @@
-import type { SequenceModel } from "pele";
+import type { SequenceModel } from "pele/lazy";
 import { nanoid } from "nanoid";
 
 import type { Arrow, Container, Line, Node, Text } from "../elementSkeleton.js";
