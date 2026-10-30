@@ -2,23 +2,12 @@ import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
 import { parseDiagram } from "../src/parseDiagram.js";
 import { DEFAULT_FONT_SIZE } from "../src/constants.js";
 import { isValidCSSColor } from "../src/cssUtils.js";
-import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class.ts";
-import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er.ts";
-import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart.ts";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence.ts";
-import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
-import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported.ts";
-import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks.ts";
+import { TESTCASES } from "../testcases/testcases.ts";
 
-const PLAYGROUND_TESTCASES = [
-  ...FLOWCHART_DIAGRAM_TESTCASES,
-  ...SEQUENCE_DIAGRAM_TESTCASES,
-  ...CLASS_DIAGRAM_TESTCASES,
-  ...ERD_DIAGRAM_TESTCASES,
-  ...STATE_DIAGRAM_TESTCASES,
-  ...UNSUPPORTED_DIAGRAM_TESTCASES,
-  ...LINE_BREAK_TESTCASES,
-];
+// swimlanes are Pele only
+const PLAYGROUND_TESTCASES = TESTCASES.filter(
+  ({ type }) => type !== "swimlane"
+);
 
 type ColorEntry = {
   path: string;

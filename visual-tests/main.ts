@@ -13,32 +13,8 @@ import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { parseDiagram } from "../src/parseDiagram";
 import { renderPeleSvg } from "../src/pele/parsePele";
 
-import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
-import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class";
-import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
-import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
-import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
-import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks";
-import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane";
+import { TESTCASES as ALL_TESTCASES } from "../testcases/testcases";
 import { ensureExcalidrawFontsLoaded } from "../playground/loadExcalidrawFonts";
-
-interface TestCase {
-  type: string;
-  name: string;
-  definition: string;
-}
-
-const ALL_TESTCASES: TestCase[] = [
-  ...FLOWCHART_DIAGRAM_TESTCASES,
-  ...SEQUENCE_DIAGRAM_TESTCASES,
-  ...CLASS_DIAGRAM_TESTCASES,
-  ...ERD_DIAGRAM_TESTCASES,
-  ...STATE_DIAGRAM_TESTCASES,
-  ...UNSUPPORTED_DIAGRAM_TESTCASES,
-  ...LINE_BREAK_TESTCASES,
-  ...SWIMLANE_DIAGRAM_TESTCASES,
-];
 
 // Apply Playwright-mode layout before the harness reports ready, so the first
 // render in a page is never measured under the interactive layout.
@@ -261,10 +237,15 @@ if (import.meta.hot) {
   });
 }
 
-async function renderTestCase(index: number): Promise<void> {
+/** Renders a test case by its index in ALL_TESTCASES or its id (file name). */
+async function renderTestCase(ref: number | string): Promise<void> {
+  const index =
+    typeof ref === "number"
+      ? ref
+      : ALL_TESTCASES.findIndex((testcase) => testcase.id === ref);
   const testcase = ALL_TESTCASES[index];
   if (!testcase) {
-    throw new Error(`No test case at index ${index}`);
+    throw new Error(`No test case ${ref}`);
   }
   const cacheKey = index;
 
@@ -274,7 +255,7 @@ async function renderTestCase(index: number): Promise<void> {
 
   const caseLabel = document.getElementById("case-label");
   if (caseLabel) {
-    caseLabel.textContent = `#${index} [${testcase.type}] — ${testcase.name}`;
+    caseLabel.textContent = testcase.id;
   }
 
   // Check cache first
@@ -396,8 +377,8 @@ async function renderAllTestCases(): Promise<void> {
 
     const title = document.createElement("a");
     title.className = "all-card-title";
-    title.href = `?case=${i}`;
-    title.textContent = `#${i} [${tc.type}] — ${tc.name}`;
+    title.href = `?case=${tc.id}`;
+    title.textContent = `#${i} ${tc.id}`;
     title.addEventListener("click", (e) => {
       if (e.ctrlKey || e.metaKey || e.shiftKey) {
         return; // let browser open new tab

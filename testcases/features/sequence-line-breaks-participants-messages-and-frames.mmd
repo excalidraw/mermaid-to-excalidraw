@@ -1,0 +1,15 @@
+sequenceDiagram
+  box Aqua Front<br>end
+    participant A as Alice<br>Smith
+    actor B as Bob\nJones
+  end
+  A->>B: hello\nworld
+  Note over A,B: note<br/>line two
+  loop every<br>minute
+    B-->>A: ping
+  end
+  alt is<br>sick
+    B->>A: not so good
+  else is\nwell
+    B->>A: feeling fresh
+  end

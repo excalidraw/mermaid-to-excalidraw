@@ -1,0 +1,71 @@
+%% model: gemini_3_8_flash
+%% prompt: 4. Online checkout with an authentication challenge (prompts.md)
+sequenceDiagram
+    autonumber
+    actor Shopper
+    participant Browser
+    participant Store Backend
+    participant Payment Provider
+    participant Fulfillment Service
+
+    Shopper->>Browser: Click Checkout
+    activate Browser
+    Browser->>Store Backend: POST /checkout/order
+    activate Store Backend
+    Store Backend->>Payment Provider: Create Payment Intent
+    activate Payment Provider
+    Payment Provider-->>Store Backend: Return Intent (Client Secret, Status)
+    deactivate Payment Provider
+    Store Backend-->>Browser: Return Payment Details & Client Secret
+    deactivate Store Backend
+
+    Browser->>Payment Provider: Confirm Payment (Card Details)
+    activate Payment Provider
+
+    alt 3DS Authentication Required
+        Payment Provider-->>Browser: Challenge Required (Redirect/Modal)
+        Browser->>Shopper: Display 3DS Authentication Challenge
+
+        alt Authentication Successful
+            Shopper->>Browser: Complete Authentication
+            Browser->>Payment Provider: Submit Auth Token
+            Payment Provider-->>Browser: Payment Authorized
+            Browser->>Shopper: Show Processing Screen
+        else Authentication Abandoned
+            Shopper->>Browser: Cancel / Close Challenge
+            Browser->>Payment Provider: Abort Authentication
+            Payment Provider-->>Browser: Challenge Cancelled
+            Browser->>Shopper: Show Abandonment Error & Retry
+        end
+
+    else Payment Declined Directly
+        Payment Provider-->>Browser: Decline Error (Insufficient Funds / Fraud)
+        Browser->>Shopper: Display Payment Declined Message
+    end
+    deactivate Payment Provider
+    deactivate Browser
+
+    opt Authentication Succeeded
+        Payment Provider->>Store Backend: Webhook: payment_intent.succeeded (Event ID evt_101)
+        activate Payment Provider
+        activate Store Backend
+
+        Note over Store Backend: Idempotent Event Handling: Check evt_101 status
+        Store Backend->>Store Backend: Mark Order as Paid
+        Store Backend-->>Payment Provider: 200 OK
+        deactivate Payment Provider
+
+        Store Backend->>Fulfillment Service: POST /shipments (Create Shipment)
+        activate Fulfillment Service
+        Fulfillment Service-->>Store Backend: Shipment Created (Tracking ID)
+        deactivate Fulfillment Service
+        deactivate Store Backend
+
+        Payment Provider->>Store Backend: Webhook: payment_intent.succeeded (Retry: Event ID evt_101)
+        activate Payment Provider
+        activate Store Backend
+        Note over Store Backend: Duplicate Event Detected: evt_101 already processed
+        Store Backend-->>Payment Provider: 200 OK (No Action Taken)
+        deactivate Store Backend
+        deactivate Payment Provider
+    end

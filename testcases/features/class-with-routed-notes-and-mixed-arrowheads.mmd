@@ -1,0 +1,26 @@
+classDiagram
+  class Vehicle {
+    +startEngine() void
+    +stopEngine() void
+  }
+
+  class Car
+  class Motorcycle
+  class Engine
+  class Driver {
+    +drive(Vehicle vehicle) void
+  }
+
+  Vehicle <|-- Car : Inheritance
+  Vehicle <|-- Motorcycle : Inheritance
+  Vehicle *-- Engine : Composition
+  Driver o-- Vehicle : Aggregation
+
+  note for Vehicle "Base class for all transport types"
+  note for Engine "Internal combustion or electric"
+
+  style Vehicle fill:#f9f,stroke:#333,stroke-width:2px
+  style Car fill:#bbf,stroke:#333,stroke-width:1px
+  style Motorcycle fill:#bbf,stroke:#333,stroke-width:1px
+  style Engine fill:#dfd,stroke:#333,stroke-width:1px
+  style Driver fill:#ffd,stroke:#333,stroke-width:1px

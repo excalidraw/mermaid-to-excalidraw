@@ -1,0 +1,8 @@
+stateDiagram-v2
+    classDef movement fill:#f00,color:white,stroke-width:2px,stroke:yellow
+    classDef stopped fill:#fff,stroke:#1f1f1f
+    Still --> Moving
+    Moving --> Still
+    class Moving movement
+    class Still stopped
+    style Still color:#1f1f1f

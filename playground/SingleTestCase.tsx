@@ -1,19 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { MermaidDiagram } from "./MermaidDiagram";
 import { ExcalidrawSvgPreview } from "./ExcalidrawSvgPreview";
+import type { TestCase } from "../testcases/testcases.ts";
 
-export interface TestCase {
-  type:
-    | "class"
-    | "erd"
-    | "flowchart"
-    | "sequence"
-    | "state"
-    | "swimlane"
-    | "unsupported";
-  name: string;
-  definition: string;
-}
+export type { TestCase } from "../testcases/testcases.ts";
 
 export interface SingleTestCaseProps {
   testcase: TestCase;

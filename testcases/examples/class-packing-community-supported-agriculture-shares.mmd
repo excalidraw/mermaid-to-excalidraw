@@ -1,0 +1,98 @@
+%% model: gemini_3_8_flash
+%% prompt: 20. Packing community-supported agriculture shares (prompts.md)
+classDiagram
+    class FARM {
+        uuid farm_id PK
+        string name
+        string location
+        string contact_email
+    }
+
+    class SEASON {
+        uuid season_id PK
+        uuid farm_id FK
+        string season_name
+        date start_date
+        date end_date
+    }
+
+    class SHARE_TYPE {
+        uuid share_type_id PK
+        uuid farm_id FK
+        uuid season_id FK
+        string name
+        string description
+        decimal price
+    }
+
+    class HOUSEHOLD {
+        uuid household_id PK
+        string primary_contact_name
+        string email
+        string phone
+        string address
+    }
+
+    class PICKUP_SITE {
+        uuid pickup_site_id PK
+        string site_name
+        string address
+        string operating_hours
+        string host_contact
+    }
+
+    class SUBSCRIPTION {
+        uuid subscription_id PK
+        uuid household_id FK
+        uuid share_type_id FK
+        uuid pickup_site_id FK
+        date purchase_date
+        string payment_status
+    }
+
+    class HARVEST_BATCH {
+        uuid batch_id PK
+        string crop_name
+        date harvest_date
+        decimal initial_quantity
+        decimal available_quantity
+        string unit
+    }
+
+    class DELIVERY {
+        uuid delivery_id PK
+        uuid subscription_id FK
+        date scheduled_date
+        string execution_state
+        string pickup_status
+    }
+
+    class DELIVERY_ITEM {
+        uuid delivery_item_id PK
+        uuid delivery_id FK
+        uuid batch_id FK
+        string crop_name
+        decimal quantity
+        string unit
+        string packed_state
+    }
+
+    FARM "1" --> "*" SEASON : schedules
+    FARM "1" --> "*" SHARE_TYPE : defines
+    SEASON "1" --> "*" SHARE_TYPE : offered_in
+    SHARE_TYPE "1" --> "*" SUBSCRIPTION : purchased_as
+    HOUSEHOLD "1" --> "*" SUBSCRIPTION : holds
+    PICKUP_SITE "1" --> "*" SUBSCRIPTION : assigned_to
+    SUBSCRIPTION "1" --> "*" DELIVERY : generates
+    DELIVERY "1" --> "*" DELIVERY_ITEM : contains
+    HARVEST_BATCH "1" --> "*" DELIVERY_ITEM : supplies
+
+    style FARM fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724
+    style SEASON fill:#d1ecf1,stroke:#17a2b8,stroke-width:2px,color:#0c5460
+    style SHARE_TYPE fill:#d1ecf1,stroke:#17a2b8,stroke-width:2px,color:#0c5460
+    style HOUSEHOLD fill:#e2e3e5,stroke:#6c757d,stroke-width:2px,color:#383d41
+    style PICKUP_SITE fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#856404
+    style SUBSCRIPTION fill:#d6d8db,stroke:#495057,stroke-width:2px,color:#1b1e21
+    style HARVEST_BATCH fill:#c3e6cb,stroke:#28a745,stroke-width:2px,color:#155724
+    style DELIVERY fill:#ffeeba,stroke:#ffc107,stroke-width:2px,color:#856404
+    style DELIVERY_ITEM fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24

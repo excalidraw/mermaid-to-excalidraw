@@ -1,0 +1,29 @@
+%% model: gpt_6_1
+swimlane-beta LR
+  subgraph Customer
+    Start[Start]
+    Browse[Browse Catalog]
+    Cart[Add to Cart]
+    Checkout[Proceed to Checkout]
+    Pay[Make Payment]
+    Receive[Receive Order]
+  end
+  subgraph Sales
+    Order[Create Order]
+    Invoice[Generate Invoice]
+  end
+  subgraph Warehouse
+    Check[Check Inventory]
+    Pack[Pack Items]
+    Ship[Ship Package]
+  end
+  Start --> Browse
+  Browse --> Cart
+  Cart --> Checkout
+  Checkout --> Order
+  Order --> Invoice
+  Invoice --> Pay
+  Order --> Check
+  Check --> Pack
+  Pack --> Ship
+  Ship --> Receive

@@ -18,14 +18,7 @@ import type {
   ERD,
   State,
 } from "../src/interfaces.js";
-import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart.ts";
-import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks.ts";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence.ts";
-import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported.ts";
-import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class.ts";
-import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er.ts";
-import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state.ts";
-import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane.ts";
+import { getTestCase, testcasesOfType } from "../testcases/testcases.ts";
 
 const parseFlowchart = async (definition: string) => {
   const graph = await parsePele(definition);
@@ -237,12 +230,9 @@ describe("parsePele", () => {
   });
 
   describe("flowchart playground examples", () => {
-    const testcases = [
-      ...FLOWCHART_DIAGRAM_TESTCASES,
-      ...LINE_BREAK_TESTCASES.filter(({ type }) => type === "flowchart"),
-    ];
+    const testcases = testcasesOfType("flowchart");
 
-    it.each(testcases.map((testcase) => [testcase.name, testcase]))(
+    it.each(testcases.map((testcase) => [testcase.id, testcase]))(
       "%s",
       async (_, { definition }) => {
         const flowchart = await parseFlowchart(definition);
@@ -585,7 +575,9 @@ describe("parsePele", () => {
   });
 
   it("returns other diagram types as an SVG image", async () => {
-    const graph = await parsePele(UNSUPPORTED_DIAGRAM_TESTCASES[0].definition);
+    const graph = await parsePele(
+      getTestCase("unsupported-gantt-diagram").definition
+    );
 
     expect(graph).toMatchObject({
       type: "graphImage",
@@ -662,7 +654,7 @@ describe("parsePele swimlanes", () => {
   B --> C`;
 
   it.each(
-    SWIMLANE_DIAGRAM_TESTCASES.map((testcase) => [testcase.name, testcase])
+    testcasesOfType("swimlane").map((testcase) => [testcase.id, testcase])
   )("%s", async (_, { definition }) => {
     const flowchart = await parseFlowchart(definition);
     expect(flowchart.subGraphs.length).toBeGreaterThan(0);
@@ -703,7 +695,7 @@ describe("parsePele swimlanes", () => {
   it("draws edges as elbow arrows along Pele's (orthogonal) routes", async () => {
     // (with a route around: "no", back to the start)
     const flowchart = await parseFlowchart(
-      SWIMLANE_DIAGRAM_TESTCASES[1].definition
+      getTestCase("swimlane-top-to-bottom-with-titles").definition
     );
     const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
       ({ type }) => type === "arrow"
@@ -815,10 +807,7 @@ describe("parsePele sequence diagrams", () => {
   });
 
   it.each(
-    [
-      ...SEQUENCE_DIAGRAM_TESTCASES,
-      ...LINE_BREAK_TESTCASES.filter(({ type }) => type === "sequence"),
-    ].map((testcase) => [testcase.name, testcase])
+    testcasesOfType("sequence").map((testcase) => [testcase.id, testcase])
   )("%s", async (_, { definition }) => {
     const sequence = await parseSequence(definition);
 
@@ -965,27 +954,25 @@ describe("parsePele class diagrams", () => {
     return graph as Class;
   };
 
-  it.each(
-    [
-      ...CLASS_DIAGRAM_TESTCASES,
-      ...LINE_BREAK_TESTCASES.filter(({ type }) => type === "class"),
-    ].map((testcase) => [testcase.name, testcase])
-  )("%s", async (_, { definition }) => {
-    const diagram = await parseClassDiagram(definition);
-    const [classes] = diagram.nodes;
+  it.each(testcasesOfType("class").map((testcase) => [testcase.id, testcase]))(
+    "%s",
+    async (_, { definition }) => {
+      const diagram = await parseClassDiagram(definition);
+      const [classes] = diagram.nodes;
 
-    expect(classes.length).toBeGreaterThan(0);
-    [...diagram.nodes.flat(), ...diagram.text].forEach((node) => {
-      if ("x" in node) {
-        expect(Number.isFinite(node.x)).toBe(true);
-        expect(Number.isFinite(node.y)).toBe(true);
-      }
-    });
-    diagram.arrows.forEach((arrow) => {
-      expect(arrow.points!.length).toBeGreaterThanOrEqual(2);
-    });
-    expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
-  });
+      expect(classes.length).toBeGreaterThan(0);
+      [...diagram.nodes.flat(), ...diagram.text].forEach((node) => {
+        if ("x" in node) {
+          expect(Number.isFinite(node.x)).toBe(true);
+          expect(Number.isFinite(node.y)).toBe(true);
+        }
+      });
+      diagram.arrows.forEach((arrow) => {
+        expect(arrow.points!.length).toBeGreaterThanOrEqual(2);
+      });
+      expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
+    }
+  );
 
   it("groups a class's box, dividers, members and methods", async () => {
     const diagram = await parseClassDiagram(`classDiagram
@@ -1126,20 +1113,18 @@ describe("parsePele ER diagrams", () => {
     return graph as ERD;
   };
 
-  it.each(
-    [
-      ...ERD_DIAGRAM_TESTCASES,
-      ...LINE_BREAK_TESTCASES.filter(({ type }) => type === "erd"),
-    ].map((testcase) => [testcase.name, testcase])
-  )("%s", async (_, { definition }) => {
-    const diagram = await parseERD(definition);
+  it.each(testcasesOfType("erd").map((testcase) => [testcase.id, testcase]))(
+    "%s",
+    async (_, { definition }) => {
+      const diagram = await parseERD(definition);
 
-    expect(diagram.nodes[0].length).toBeGreaterThan(0);
-    diagram.arrows.forEach((arrow) => {
-      expect(arrow.points!.length).toBeGreaterThanOrEqual(2);
-    });
-    expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
-  });
+      expect(diagram.nodes[0].length).toBeGreaterThan(0);
+      diagram.arrows.forEach((arrow) => {
+        expect(arrow.points!.length).toBeGreaterThanOrEqual(2);
+      });
+      expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
+    }
+  );
 
   it("reads entities with their attributes, and relationships with their cardinalities", async () => {
     const diagram = await parseERD(`erDiagram
@@ -1220,23 +1205,21 @@ describe("parsePele state diagrams", () => {
     return graph as State;
   };
 
-  it.each(
-    [
-      ...STATE_DIAGRAM_TESTCASES,
-      ...LINE_BREAK_TESTCASES.filter(({ type }) => type === "state"),
-    ].map((testcase) => [testcase.name, testcase])
-  )("%s", async (_, { definition }) => {
-    const diagram = await parseState(definition);
-    const ids = new Set(diagram.nodes.map(({ id }) => id));
+  it.each(testcasesOfType("state").map((testcase) => [testcase.id, testcase]))(
+    "%s",
+    async (_, { definition }) => {
+      const diagram = await parseState(definition);
+      const ids = new Set(diagram.nodes.map(({ id }) => id));
 
-    expect(diagram.nodes.length).toBeGreaterThan(0);
-    diagram.edges.forEach((edge) => {
-      expect(ids.has(edge.start)).toBe(true);
-      expect(ids.has(edge.end)).toBe(true);
-      expect(edge.reflectionPoints.length).toBeGreaterThanOrEqual(2);
-    });
-    expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
-  });
+      expect(diagram.nodes.length).toBeGreaterThan(0);
+      diagram.edges.forEach((edge) => {
+        expect(ids.has(edge.start)).toBe(true);
+        expect(ids.has(edge.end)).toBe(true);
+        expect(edge.reflectionPoints.length).toBeGreaterThanOrEqual(2);
+      });
+      expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
+    }
+  );
 
   it("reads states, pseudo-states, composites and notes", async () => {
     const diagram = await parseState(`stateDiagram-v2

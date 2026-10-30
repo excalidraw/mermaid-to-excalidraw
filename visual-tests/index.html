@@ -264,7 +264,7 @@
       cases.forEach((tc, i) => {
         const opt = document.createElement("option");
         opt.value = i;
-        opt.textContent = `#${i} [${tc.type}] ${tc.name}`;
+        opt.textContent = `#${i} ${tc.id}`;
         picker.appendChild(opt);
       });
 
@@ -278,10 +278,16 @@
       let darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const darkBtn = document.getElementById("dark-btn");
 
+      // ?case= takes a test case id (file name), or an index
+      const caseIndex = (param) => {
+        const index = cases.findIndex((tc) => tc.id === param);
+        return index >= 0 ? index : Math.max(0, +(param ?? 0) || 0);
+      };
+
       const updateUrl = ({ push = false } = {}) => {
         if (isPw) return;
         const params = new URLSearchParams();
-        params.set("case", picker.value);
+        params.set("case", cases[+picker.value]?.id ?? picker.value);
         if (showingAll) params.set("all", "");
         if (overlapping) params.set("overlap", "");
         if (darkMode) params.set("dark", "");
@@ -438,7 +444,7 @@
         const wantAll = p.has("all");
         const wantOverlap = p.has("overlap");
         const wantDark = p.has("dark");
-        const wantCase = +(p.get("case") ?? 0);
+        const wantCase = caseIndex(p.get("case"));
 
         overlapping = wantOverlap;
         syncOverlapState();
@@ -468,7 +474,7 @@
       if (isPw) {
         const initialParams = new URLSearchParams(location.search);
         if (initialParams.has("case")) {
-          go(+(initialParams.get("case") ?? 0));
+          go(caseIndex(initialParams.get("case")));
         }
       } else {
         restoreFromUrl();

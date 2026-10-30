@@ -1,0 +1,5 @@
+flowchart TD
+  A[User's<br>profile] -->|tag<br/>break| B(Escaped\nnewline)
+  B -- long edge\nlabel --> C([Stadium<br />node])
+  C --> D["`**Markdown**\nstring`"]
+  C --> E[Literal \\n stays]

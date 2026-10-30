@@ -1,0 +1,8 @@
+stateDiagram-v2
+  state "Waiting<br>for input" as Waiting
+  [*] --> Waiting
+  Waiting --> Moving : go\nnow
+  note right of Moving
+    first\nsecond
+  end note
+  Moving --> [*]

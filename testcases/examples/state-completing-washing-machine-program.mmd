@@ -1,0 +1,40 @@
+%% model: gemini_3_8_flash
+%% prompt: 25. Completing a washing-machine program (prompts.md)
+stateDiagram-v2
+    [*] --> Idle
+
+    Idle --> DoorLocked: Start [Door Closed]
+    DoorLocked --> Running: Lock Engaged
+
+    state Running {
+        [*] --> Filling
+
+        Filling --> Washing: Water Level Reached
+        Filling --> Fault: Fill Timeout
+
+        Washing --> Draining: Wash Timer Expired
+
+        Draining --> Rinsing: Water Empty
+
+        Rinsing --> Draining: Rinse Complete / Increment Counter [Rinse Counter < Target]
+        Rinsing --> Spinning: Rinse Complete [Rinse Counter >= Target]
+
+        Spinning --> Redistributing: Imbalance Detected
+        Redistributing --> Spinning: Load Balanced
+
+        Spinning --> [*]: Spin Timer Expired
+    }
+
+    Running --> PausedDraining: Pause [Water Present]
+    Running --> PausedReadyToUnlock: Pause [No Water Present]
+    Running --> Fault: System Error
+
+    PausedDraining --> PausedReadyToUnlock: Water Empty
+    PausedReadyToUnlock --> DoorLocked: Resume [Door Closed]
+    PausedReadyToUnlock --> Idle: Door Unlocked
+
+    Running --> Completed: Cycle Finished
+    Completed --> Idle: Door Opened
+
+    Fault --> Idle: Reset / Cleared
+    Fault --> [*]

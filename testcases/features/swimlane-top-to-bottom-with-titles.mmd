@@ -1,0 +1,13 @@
+swimlane-beta TB
+  subgraph Customer [Customer and their very long role description]
+    A[Start] --> B[Browse]
+  end
+  subgraph Sales [Sales team]
+    C{Approve?}
+  end
+  subgraph Warehouse
+    D[Ship]
+  end
+  B --> C
+  C -->|yes| D
+  C -->|no| A

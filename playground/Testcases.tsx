@@ -1,13 +1,9 @@
-import { FLOWCHART_DIAGRAM_TESTCASES } from "./testcases/flowchart";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "./testcases/sequence.ts";
-import { CLASS_DIAGRAM_TESTCASES } from "./testcases/class.ts";
-import { ERD_DIAGRAM_TESTCASES } from "./testcases/er.ts";
-import { STATE_DIAGRAM_TESTCASES } from "./testcases/state.ts";
-import { UNSUPPORTED_DIAGRAM_TESTCASES } from "./testcases/unsupported.ts";
-import { LINE_BREAK_TESTCASES } from "./testcases/lineBreaks.ts";
-import { SWIMLANE_DIAGRAM_TESTCASES } from "./testcases/swimlane.ts";
-
-import SingleTestCase, { TestCase } from "./SingleTestCase.tsx";
+import {
+  testcasesOfType,
+  type TestCase,
+  type TestCaseType,
+} from "../testcases/testcases.ts";
+import SingleTestCase from "./SingleTestCase.tsx";
 import type { ActiveTestCaseIndex, MermaidData } from "./index.tsx";
 import { usePersistedSectionState } from "./usePersistedSectionState.ts";
 
@@ -78,7 +74,7 @@ const TestcaseSection = ({
 
             return (
               <SingleTestCase
-                key={`${testcase.type}-${index}`}
+                key={testcase.id}
                 onChange={(definition) => {
                   onChange(definition, testcaseIndex);
                 }}
@@ -93,55 +89,55 @@ const TestcaseSection = ({
   );
 };
 
+// one per test case type, in the order of TESTCASES (which the indexes count in)
+const SECTIONS: {
+  type: TestCaseType;
+  name: string;
+  documentationHref: string;
+}[] = [
+  {
+    type: "flowchart",
+    name: "Flowchart",
+    documentationHref: "https://mermaid.js.org/syntax/flowchart.html",
+  },
+  {
+    type: "sequence",
+    name: "Sequence",
+    documentationHref: "https://mermaid.js.org/syntax/sequenceDiagram.html",
+  },
+  {
+    type: "class",
+    name: "Class",
+    documentationHref: "https://mermaid.js.org/syntax/classDiagram.html",
+  },
+  {
+    type: "erd",
+    name: "ERD",
+    documentationHref:
+      "https://mermaid.js.org/syntax/entityRelationshipDiagram.html",
+  },
+  {
+    type: "state",
+    name: "State",
+    documentationHref: "https://mermaid.js.org/syntax/stateDiagram.html",
+  },
+  {
+    type: "unsupported",
+    name: "Unsupported",
+    documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
+  },
+  {
+    type: "swimlane",
+    name: "Swimlane (Pele only)",
+    documentationHref: "https://pele.run",
+  },
+];
+
 const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
-  const testcaseTypes: {
-    name: string;
-    testcases: TestCase[];
-    documentationHref: string;
-    startIndex: number;
-  }[] = [
-    {
-      name: "Flowchart",
-      testcases: FLOWCHART_DIAGRAM_TESTCASES,
-      documentationHref: "https://mermaid.js.org/syntax/flowchart.html",
-    },
-    {
-      name: "Sequence",
-      testcases: SEQUENCE_DIAGRAM_TESTCASES,
-      documentationHref: "https://mermaid.js.org/syntax/sequenceDiagram.html",
-    },
-    {
-      name: "Class",
-      testcases: CLASS_DIAGRAM_TESTCASES,
-      documentationHref: "https://mermaid.js.org/syntax/classDiagram.html",
-    },
-    {
-      name: "ERD",
-      testcases: ERD_DIAGRAM_TESTCASES,
-      documentationHref:
-        "https://mermaid.js.org/syntax/entityRelationshipDiagram.html",
-    },
-    {
-      name: "State",
-      testcases: STATE_DIAGRAM_TESTCASES,
-      documentationHref: "https://mermaid.js.org/syntax/stateDiagram.html",
-    },
-    {
-      name: "Unsupported",
-      testcases: UNSUPPORTED_DIAGRAM_TESTCASES,
-      documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
-    },
-    {
-      name: "Line Breaks",
-      testcases: LINE_BREAK_TESTCASES,
-      documentationHref: "https://mermaid.js.org/intro/syntax-reference.html",
-    },
-    {
-      name: "Swimlane (Pele only)",
-      testcases: SWIMLANE_DIAGRAM_TESTCASES,
-      documentationHref: "https://pele.run",
-    },
-  ].map((section, index, sections) => ({
+  const testcaseTypes = SECTIONS.map(({ type, ...section }) => ({
+    ...section,
+    testcases: testcasesOfType(type),
+  })).map((section, index, sections) => ({
     ...section,
     startIndex: sections
       .slice(0, index)

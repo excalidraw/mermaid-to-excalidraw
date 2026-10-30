@@ -1,0 +1,7 @@
+erDiagram
+  CUSTOMER["Customer<br>account"] {
+    string name PK "the<br>comment"
+    int id FK
+    string email UK "login\naddress"
+  }
+  CUSTOMER ||--o{ ORDER : "places\nmany"

@@ -1,39 +1,14 @@
 import { test, expect, Page } from "@playwright/test";
-import { FLOWCHART_DIAGRAM_TESTCASES } from "../playground/testcases/flowchart";
-import { SEQUENCE_DIAGRAM_TESTCASES } from "../playground/testcases/sequence";
-import { CLASS_DIAGRAM_TESTCASES } from "../playground/testcases/class";
-import { ERD_DIAGRAM_TESTCASES } from "../playground/testcases/er";
-import { STATE_DIAGRAM_TESTCASES } from "../playground/testcases/state";
-import { UNSUPPORTED_DIAGRAM_TESTCASES } from "../playground/testcases/unsupported";
-import { LINE_BREAK_TESTCASES } from "../playground/testcases/lineBreaks";
-import { SWIMLANE_DIAGRAM_TESTCASES } from "../playground/testcases/swimlane";
+import { readdirSync } from "node:fs";
 
-const ALL_TESTCASES = [
-  ...FLOWCHART_DIAGRAM_TESTCASES.map((tc) => ({
-    ...tc,
-    chartType: "flowchart",
-  })),
-  ...SEQUENCE_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "sequence" })),
-  ...CLASS_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "class" })),
-  ...ERD_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "erd" })),
-  ...STATE_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "state" })),
-  ...UNSUPPORTED_DIAGRAM_TESTCASES.map((tc) => ({
-    ...tc,
-    chartType: "unsupported",
-  })),
-  ...LINE_BREAK_TESTCASES.map((tc) => ({
-    ...tc,
-    chartType: "line-breaks",
-  })),
-  ...SWIMLANE_DIAGRAM_TESTCASES.map((tc) => ({ ...tc, chartType: "swimlane" })),
-];
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+// The feature test cases (testcases/testcases.ts), by id: Playwright runs in
+// Node, without Vite's import.meta.glob. A snapshot per file, named after it.
+const TESTCASE_IDS = readdirSync(
+  new URL("../testcases/features", import.meta.url)
+)
+  .filter((file) => file.endsWith(".mmd"))
+  .map((file) => file.replace(/\.mmd$/, ""))
+  .sort();
 
 // One page per worker, reused across that worker's tests (no reload between
 // cases). Tests run in parallel and in no fixed order, so each render must not
@@ -58,9 +33,9 @@ test.afterAll(async () => {
   await sharedPage.close();
 });
 
-ALL_TESTCASES.forEach((tc, index) => {
-  test(`#${index} ${tc.name}`, async () => {
-    await sharedPage.evaluate((i) => (window as any).renderTestCase(i), index);
+TESTCASE_IDS.forEach((id) => {
+  test(id, async () => {
+    await sharedPage.evaluate((id) => (window as any).renderTestCase(id), id);
 
     // Wait for both panels to have SVG content (or error for unsupported)
     await sharedPage.waitForFunction(
@@ -74,8 +49,6 @@ ALL_TESTCASES.forEach((tc, index) => {
     );
 
     const container = sharedPage.locator("#container");
-    await expect(container).toHaveScreenshot(
-      `${index}-${tc.chartType}-${slugify(tc.name)}.png`
-    );
+    await expect(container).toHaveScreenshot(`${id}.png`);
   });
 });

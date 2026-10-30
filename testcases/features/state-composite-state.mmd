@@ -1,0 +1,7 @@
+stateDiagram-v2
+    [*] --> Session
+    state Session {
+      [*] --> Ready
+      Ready --> Busy
+      Busy --> Ready
+    }

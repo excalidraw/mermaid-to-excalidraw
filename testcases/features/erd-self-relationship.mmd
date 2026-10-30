@@ -1,0 +1,7 @@
+erDiagram
+  CATEGORY ||--o{ CATEGORY : parent_of
+  CATEGORY {
+    integer id PK
+    integer parent_id FK
+    string display_name
+  }

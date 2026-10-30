@@ -1,0 +1,10 @@
+stateDiagram-v2
+    direction LR
+    [*] --> A
+    A --> B
+    %% nested states may set their own direction
+    state B {
+      direction LR
+      a --> b
+    }
+    B --> D

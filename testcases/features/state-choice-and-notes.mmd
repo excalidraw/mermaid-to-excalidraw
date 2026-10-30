@@ -1,0 +1,7 @@
+stateDiagram-v2
+    state Decision <<choice>>
+    [*] --> Input
+    Input --> Decision
+    note right of Input: Capture payload
+    Decision --> Accept: valid
+    Decision --> Reject: invalid

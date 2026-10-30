@@ -95,6 +95,11 @@ Try out [here](https://mermaid-to-excalidraw.vercel.app).
 - `yarn test:visual:update` to update visual tests
 - `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
 
+Test cases are Mermaid files in [`testcases/`](testcases/testcases.ts), named `<type>-<name>.mmd` (`flowchart`, `sequence`, `class`, `erd`, `state`, `unsupported`, `swimlane`):
+
+- `testcases/features/`: one syntax feature each. The playground lists them, the visual tests snapshot each one (named after the file), and the unit tests parse them. Add a case as a new file; renaming one renames its snapshot.
+- `testcases/examples/`: whole diagrams models wrote for the prompts in [`prompts.md`](testcases/examples/prompts.md), with the model and prompt in `%%` comments at the top.
+
 ## Upgrading from v2
 
 - Diagrams are laid out by Pele instead of Mermaid, so they look different (e.g. node sizes and spacing, edge routes), and Mermaid is no longer a dependency. `parseMermaidToExcalidraw` is the same otherwise.

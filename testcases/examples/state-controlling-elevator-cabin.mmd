@@ -1,0 +1,38 @@
+%% model: gemini_3_8_flash
+%% prompt: 23. Controlling an elevator cabin (prompts.md)
+stateDiagram-v2
+    [*] --> Operational
+
+    state Operational {
+        [*] --> Idle
+
+        Idle --> CheckDirection: New floor request received
+
+        state CheckDirection <<choice>>
+        CheckDirection --> MovingUp: Requested floor > Current floor [Doors closed]
+        CheckDirection --> MovingDown: Requested floor < Current floor [Doors closed]
+        CheckDirection --> DoorOpening: Requested floor == Current floor
+
+        MovingUp --> MovingUp: Passing intermediate floors
+        MovingUp --> DoorOpening: Arrived at destination floor
+
+        MovingDown --> MovingDown: Passing intermediate floors
+        MovingDown --> DoorOpening: Arrived at destination floor
+
+        DoorOpening --> DoorOpen: Door fully opened
+        DoorOpen --> DoorClosing: Dwell timer expired
+
+        DoorClosing --> DoorOpen: Obstruction detected
+        DoorClosing --> DoorOpening: Door open button pressed
+        DoorClosing --> Idle: Door fully closed [No pending requests]
+        DoorClosing --> CheckDirection: Door fully closed [Pending requests]
+
+        note right of CheckDirection
+            Movement permitted only
+            when doors are confirmed closed
+        end note
+    }
+
+    Operational --> OutOfService: Emergency stop triggered / Fault detected
+    OutOfService --> Operational: Maintenance reset performed
+    OutOfService --> [*]
