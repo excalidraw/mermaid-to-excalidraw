@@ -8,7 +8,7 @@ import type {
   SupportedArrowhead,
   Text,
 } from "../elementSkeleton.js";
-import type { Class } from "../interfaces.js";
+import type { Class, ClassNamespace } from "../interfaces.js";
 import { decodeMermaidText } from "../text.js";
 import {
   getLabelPosition,
@@ -27,6 +27,7 @@ import {
   getShapeBounds,
   getStyleColor,
   getStyleValue,
+  getTextBlock,
   getTextLines,
   simplifyRoute,
 } from "./svg.js";
@@ -256,10 +257,40 @@ const parseNotes = (
   return { notes, connectors };
 };
 
+/** Namespaces, as the boxes Pele drew around their classes, and their titles. */
+const parseNamespaces = (root: Element, options: PeleClassOptions) => {
+  // Pele draws some titles apart from their boxes (above the relations)
+  const titles = getElementsByDataId(root, "g.pele-cluster-title[data-id]");
+  return Array.from(
+    root.querySelectorAll("g.pele-cluster.pele-namespace[data-id]")
+  ).flatMap((group): ClassNamespace[] => {
+    const bounds = getShapeBounds(group, root);
+    if (!bounds) {
+      return [];
+    }
+    const id = group.getAttribute("data-id")!;
+    const label =
+      group.querySelector(".pele-cluster-label") ||
+      titles.get(id)?.querySelector(".pele-cluster-label");
+    const title = label && getTextBlock(label, root, options.fontSize);
+    return [
+      {
+        id,
+        text: title?.text || id,
+        fontSize: title?.fontSize ?? options.fontSize,
+        // Pele draws it on the left, clear of the relations entering the
+        // namespace from above, which mostly do so in its middle
+        titleX: title?.textAlign === "center" ? title.x : undefined,
+        ...bounds,
+      },
+    ];
+  });
+};
+
 /**
- * Reads a class diagram from Pele's parsed model (relations, notes,
- * namespaces) and the SVG Pele rendered it to (positions, sizes, the text of
- * members and methods, styles).
+ * Reads a class diagram from Pele's parsed model (relations, notes) and the
+ * SVG Pele rendered it to (positions, sizes, the text of members and methods,
+ * styles, namespaces).
  */
 export const parsePeleClass = (
   model: ClassModel,
@@ -302,10 +333,6 @@ export const parsePeleClass = (
     lines,
     arrows: [...arrows, ...connectors],
     text,
-    // The converter frames each namespace's classes
-    namespaces: Array.from(model.namespaces.values()).map((namespace) => ({
-      id: namespace.id,
-      classes: Object.fromEntries(namespace.classes),
-    })),
+    namespaces: parseNamespaces(root, options),
   };
 };

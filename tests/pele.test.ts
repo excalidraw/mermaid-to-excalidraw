@@ -1085,8 +1085,20 @@ describe("parsePele class diagrams", () => {
       start: { id: diagram.nodes[1][0].id },
       end: { id: "Customer" },
     });
-    expect(diagram.namespaces.map(({ id }) => id)).toEqual(["Shapes"]);
-    expect(Object.keys(diagram.namespaces[0].classes)).toEqual(["Square"]);
+    // where Pele drew it, around its class
+    const square = diagram.nodes[0].find(({ id }) => id === "Square")!;
+    expect(diagram.namespaces).toEqual([
+      expect.objectContaining({ id: "Shapes", text: "Shapes" }),
+    ]);
+    const [namespace] = diagram.namespaces;
+    expect(namespace.x).toBeLessThan(square.x);
+    expect(namespace.y).toBeLessThan(square.y);
+    expect(namespace.x + namespace.width).toBeGreaterThan(
+      square.x + square.width!
+    );
+    expect(namespace.y + namespace.height).toBeGreaterThan(
+      square.y + square.height!
+    );
   });
 
   it("puts a self-relation's label next to its loop", async () => {
@@ -1437,5 +1449,106 @@ describe("z-order and fills", () => {
         lastArrow(elements)
       );
     });
+  });
+
+  it("keeps namespaces' ids apart from their classes'", async () => {
+    const elements = await convert(`classDiagram
+  namespace Foo {
+    class Foo__namespace
+    class Foo__namespace_title
+  }
+  X --> Foo__namespace`);
+    const ids = elements.map(({ id }) => id).filter(Boolean);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    // the relation still binds to the class
+    const arrow = elements.find((element) => element.type === "arrow");
+    const end = elements.find((element) => element.id === arrow.end.id);
+    expect(end.label?.text).toBe("Foo__namespace");
+    expect(
+      elements.filter(
+        (element) =>
+          element.type === "rectangle" &&
+          element.backgroundColor === NODE_BACKGROUND_COLOR &&
+          element.strokeColor === "transparent"
+      )
+    ).toEqual([
+      expect.objectContaining({
+        label: expect.objectContaining({ text: "Foo" }),
+      }),
+    ]);
+  });
+
+  it("reads namespaces' titles Pele draws apart from their boxes", async () => {
+    // Pele draws this title in its own group, above the relations
+    const diagram = (await parsePele(`classDiagram
+  namespace Foo["Group of things"] {
+    class A
+    class B
+    class C
+  }
+  X --> A
+  Y --> B
+  Z --> C`)) as Class;
+    const [namespace] = diagram.namespaces;
+
+    expect(namespace).toMatchObject({ id: "Foo", text: "Group of things" });
+    // where Pele drew it, on the left
+    expect(namespace.titleX).toBeLessThan(namespace.x + namespace.width / 2);
+  });
+
+  it("draws namespaces like subgraphs, around their classes only", async () => {
+    const elements = await convert(
+      getTestCase("class-namespaces-with-relations").definition
+    );
+    const byId = (id: string) => elements.find((element) => element.id === id);
+    const contains = (outer: any, inner: any) =>
+      outer.x <= inner.x &&
+      outer.y <= inner.y &&
+      outer.x + outer.width >= inner.x + inner.width &&
+      outer.y + outer.height >= inner.y + inner.height;
+
+    expect(elements.some((element) => element.type === "frame")).toBe(false);
+    const shapes = byId("Shapes__namespace");
+    const drawing = byId("Drawing__namespace");
+    // the namespaces' boxes behind the relations, their titles above them
+    [shapes, drawing].forEach((namespace) => {
+      expect(namespace).toMatchObject({ type: "rectangle" });
+      expect(namespace.label).toBeUndefined();
+      expect(namespace.groupIds ?? []).toEqual([]);
+      expect(elements.indexOf(namespace)).toBeLessThan(firstArrow(elements));
+    });
+    ["Shapes", "Drawing"].forEach((id) => {
+      const title = byId(`${id}__namespace_title`);
+      expect(title).toMatchObject({
+        label: { text: id },
+        backgroundColor: NODE_BACKGROUND_COLOR,
+        strokeColor: "transparent",
+      });
+      expect(elements.indexOf(title)).toBeGreaterThan(lastArrow(elements));
+      expect(contains(byId(`${id}__namespace`), title)).toBe(true);
+    });
+
+    // where Pele drew it, on the left, clear of the relation entering from
+    // above, in the middle
+    const draws = elements.find(
+      (element) => element.type === "arrow" && element.label?.text === "draws"
+    );
+    const shapesTitle = byId("Shapes__namespace_title");
+    expect(shapesTitle.x).toBeGreaterThan(shapes.x);
+    expect(shapesTitle.x + shapesTitle.width / 2).toBeLessThan(draws.x);
+
+    expect(contains(shapes, byId("Shape"))).toBe(true);
+    expect(contains(shapes, byId("Circle"))).toBe(true);
+    expect(contains(shapes, byId("Canvas"))).toBe(false);
+    expect(contains(drawing, byId("Canvas"))).toBe(true);
+    expect(contains(drawing, byId("Shape"))).toBe(false);
+
+    // relations bind to their classes, not to the namespaces
+    const arrows = elements.filter((element) => element.type === "arrow");
+    expect(arrows).toHaveLength(2);
+    expect(
+      arrows.map(({ start, end }) => [start?.id, end?.id]).flat()
+    ).not.toEqual(expect.arrayContaining([expect.stringMatching(/namespace/)]));
   });
 });

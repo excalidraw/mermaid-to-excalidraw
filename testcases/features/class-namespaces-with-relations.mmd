@@ -1,0 +1,16 @@
+classDiagram
+  namespace Shapes {
+    class Shape {
+      +area() double
+    }
+    class Circle {
+      double radius
+    }
+  }
+  namespace Drawing {
+    class Canvas {
+      +draw(Shape shape)
+    }
+  }
+  Shape <|-- Circle
+  Canvas --> Shape : draws

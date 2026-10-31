@@ -1,5 +1,11 @@
 import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
 import type { Arrowhead } from "@excalidraw/excalidraw/element/types";
+import type { ValidContainer } from "@excalidraw/excalidraw/element/transform";
+import {
+  DEFAULT_TEXT_COLOR,
+  NODE_BACKGROUND_COLOR,
+  TITLE_BAND_STROKE_CLEARANCE,
+} from "../constants.js";
 import {
   ContainerStyle,
   CONTAINER_STYLE_PROPERTY,
@@ -170,4 +176,72 @@ export const computeExcalidrawVertexLabelStyle = (
     }
   });
   return excalidrawProperty;
+};
+
+const EXCALIDRAW_BOUND_TEXT_PADDING = 5;
+const EXCALIDRAW_LINE_HEIGHT = 1.25;
+// a title's band, beyond its text, on either side
+const TITLE_BAND_PADDING = 8;
+
+/**
+ * A box's (subgraph's, namespace's) title, on its top (centered on `centerX`,
+ * or on the box), on an opaque band (in the box's fill) above the arrows,
+ * which would otherwise cross it: the box is behind them. Only as wide as the
+ * title, so arrows entering the box elsewhere stay whole.
+ */
+export const createTitleBandElement = ({
+  id,
+  box,
+  centerX = box.x + box.width / 2,
+  text,
+  fontSize,
+  containerStyle,
+  labelStyle = {},
+}: {
+  id: string;
+  box: { x: number; y: number; width: number };
+  centerX?: number;
+  text: string;
+  fontSize: number;
+  containerStyle: Partial<Mutable<ExcalidrawVertexElement>>;
+  labelStyle?: Partial<Mutable<ExcalidrawTextElement>>;
+}): ValidContainer => {
+  const strokeWidth = containerStyle.strokeWidth ?? 2;
+  const lines = text.split("\n");
+  const width = Math.min(
+    box.width - strokeWidth * 2,
+    Math.max(
+      ...lines.map((line) => measureLabelLineWidthAtFontSize(line, fontSize))
+    ) +
+      (EXCALIDRAW_BOUND_TEXT_PADDING + TITLE_BAND_PADDING) * 2 +
+      // leeway for Excalidraw to fit it without wrapping
+      2
+  );
+
+  return {
+    id,
+    type: "rectangle",
+    // within the box's stroke
+    x: Math.max(
+      box.x + strokeWidth,
+      Math.min(centerX - width / 2, box.x + box.width - strokeWidth - width)
+    ),
+    y: box.y + strokeWidth + TITLE_BAND_STROKE_CLEARANCE,
+    width: Math.max(1, width),
+    height:
+      lines.length * fontSize * EXCALIDRAW_LINE_HEIGHT +
+      EXCALIDRAW_BOUND_TEXT_PADDING * 2,
+    strokeColor: "transparent",
+    backgroundColor: containerStyle.backgroundColor ?? NODE_BACKGROUND_COLOR,
+    fillStyle: "solid",
+    // a hand-drawn fill wobbles past its bounds, over the box's stroke
+    roughness: 0,
+    label: {
+      text,
+      fontSize,
+      // in the box's stroke color (the band, which it'd inherit, has none)
+      strokeColor: containerStyle.strokeColor ?? DEFAULT_TEXT_COLOR,
+      ...labelStyle,
+    },
+  };
 };
