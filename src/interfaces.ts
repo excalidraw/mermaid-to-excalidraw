@@ -128,10 +128,17 @@ export interface Sequence {
   groups: Group[];
 }
 
-/** A class diagram's namespace, framing its classes (by id) */
+/** A class diagram's namespace: a box around its classes, titled */
 export interface ClassNamespace {
   id: string;
-  classes: { [classId: string]: unknown };
+  text: string;
+  fontSize: number;
+  /** The center of the title, if known. Otherwise, it's centered. */
+  titleX?: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface Class {
