@@ -2,6 +2,12 @@
 
 ### Improvements
 
+- Draw class diagram namespaces like flowchart subgraphs, as boxes around their classes with their titles where Pele draws them, instead of as frames.
+
+## v3.1.0
+
+### Improvements
+
 - Load Pele's code for each diagram type on first use (`pele/lazy`) instead of for all of them up front: e.g. converting a first flowchart downloads ~66 KiB (brotli) instead of ~217 KiB. Bundlers emit the per-diagram code as separate chunks.
 
 ## v3.0.0
