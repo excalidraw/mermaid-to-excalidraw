@@ -45,11 +45,11 @@ export interface PeleFlowchartOptions {
   /** Width of a line of label text in Excalidraw, if it can be measured. */
   measureText?: (text: string) => number | null;
   /**
-   * The curve Pele was asked to draw edges with (see `getFlowchartCurve`),
+   * Whether Pele steps the edges by its config (see `isSteppedDefinition`),
    * for when their drawing doesn't tell: straight edges are drawn as elbow
-   * arrows too when it's stepped.
+   * arrows too if so.
    */
-  curve?: string;
+  stepped?: boolean;
 }
 
 // Pele's own colors are CSS variables, which Excalidraw can't use.
@@ -634,7 +634,7 @@ export const parsePeleFlowchart = (
           ]
         : [];
     }),
-    options.curve
+    !!options.stepped
   );
   // Pele routes swimlanes' edges orthogonally
   const isStepped = (edge: PeleEdge) => {

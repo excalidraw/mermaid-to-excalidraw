@@ -176,179 +176,51 @@ export const renderPeleSvg = async (
   return render(model, getModelRenderOptions(model, config)).svg;
 };
 
-type FlowchartSection = { curve?: string };
+// What Pele reads a definition's config from: its front matter (at its very
+// start), and its directives, wherever they are (in comments too)
+const FRONT_MATTER = /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
+const DIRECTIVE = /%%\{[\s\S]*?\}%%/g;
 
-// A config directive. Pele reads them wherever they are (in comments too).
-const DIRECTIVE = /%%\{\s*init(?:ialize)?\s*:([\s\S]*?)\}%%/g;
-
-/**
- * A directive's `flowchart` config (just its curve). Pele reads directives as
- * JSON (with single quotes too), and ignores invalid ones.
- */
-const readDirectiveFlowchart = (
-  directive: string
-): FlowchartSection | undefined => {
-  try {
-    const flowchart = JSON.parse(directive.replace(/'/g, '"'))?.flowchart;
-    return flowchart && typeof flowchart === "object"
-      ? {
-          curve:
-            typeof flowchart.curve === "string" ? flowchart.curve : undefined,
-        }
-      : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-type YamlValue = string | YamlValue[] | { [key: string]: YamlValue };
-
-const unquote = (text: string) => text.trim().replace(/^(["'])(.*)\1$/, "$2");
+// Edges that Pele draws with a bend, so stepped with rounded corners
+const STEP_PROBE = "flowchart TD\n  a --> b\n  a --> c";
 
 /**
- * Parses a YAML flow value (`{curve: step}`, `[a, b]`, a scalar) at `start`
- * of `text`, and returns it with the index after it.
+ * Whether Pele steps a definition's flowchart edges (and state transitions)
+ * by its config: by `curve`, the caller's, unless the definition's front
+ * matter or directives set it, or replace the caller's whole `flowchart`
+ * config. Pele doesn't tell which curve it used (and draws straight edges the
+ * same with any curve), so it's asked to draw a probe under the definition's
+ * config, which it reads and merges itself. Needs Pele's flowchart diagram
+ * type loaded.
  */
-const parseYamlFlow = (text: string, start: number): [YamlValue, number] => {
-  let index = start;
-  const skipSpace = () => {
-    while (/\s/.test(text[index] ?? "")) {
-      index++;
-    }
-  };
-  skipSpace();
-  const opening = text[index];
-  if (opening === "{" || opening === "[") {
-    const closing = opening === "{" ? "}" : "]";
-    const map: { [key: string]: YamlValue } = {};
-    const list: YamlValue[] = [];
-    index++;
-    for (skipSpace(); index < text.length && text[index] !== closing; ) {
-      if (opening === "{") {
-        const [key, afterKey] = parseYamlFlow(text, index);
-        index = afterKey;
-        skipSpace();
-        if (text[index] === ":") {
-          const [value, afterValue] = parseYamlFlow(text, index + 1);
-          map[String(key)] = value;
-          index = afterValue;
-        }
-      } else {
-        const [value, afterValue] = parseYamlFlow(text, index);
-        list.push(value);
-        index = afterValue;
-      }
-      skipSpace();
-      if (text[index] === ",") {
-        index++;
-      }
-      skipSpace();
-    }
-    return [opening === "{" ? map : list, index + 1];
-  }
-  if (opening === '"' || opening === "'") {
-    const end = text.indexOf(opening, index + 1);
-    const close = end === -1 ? text.length : end;
-    return [text.slice(index + 1, close), close + 1];
-  }
-  // a plain scalar, up to the flow's punctuation (a key, up to its `: `)
-  const end = text.slice(index).search(/[,\]}]|:(?=\s)/);
-  const close = end === -1 ? text.length : index + end;
-  return [text.slice(index, close).trim(), close];
-};
-
-/**
- * Parses YAML front matter: block mappings (by indentation) of scalars and
- * flow collections, which may run over several lines. Enough to read Pele's
- * config from, not YAML at large.
- */
-const parseYaml = (yaml: string) => {
-  const root: { [key: string]: YamlValue } = {};
-  const parents = [{ indent: -1, map: root }];
-  const lines = yaml
-    .split(/\r?\n/)
-    .map((line) => line.replace(/(^|\s)#.*$/, ""));
-  for (let index = 0; index < lines.length; index++) {
-    const match = lines[index].match(
-      /^(\s*)("[^"]*"|'[^']*'|[^\s"'#][^:]*?)\s*:(?:\s+(.*?))?\s*$/
-    );
-    if (!match) {
-      continue;
-    }
-    const [, space, key, rest = ""] = match;
-    while (parents[parents.length - 1].indent >= space.length) {
-      parents.pop();
-    }
-    const { map } = parents[parents.length - 1];
-    if (!rest) {
-      const child = {};
-      map[unquote(key)] = child;
-      parents.push({ indent: space.length, map: child });
-      continue;
-    }
-    if (rest.startsWith("{") || rest.startsWith("[")) {
-      // up to where its brackets close
-      let flow = rest;
-      const isOpen = () =>
-        (flow.match(/[{[]/g)?.length ?? 0) >
-        (flow.match(/[}\]]/g)?.length ?? 0);
-      while (isOpen() && index + 1 < lines.length) {
-        flow += `\n${lines[++index]}`;
-      }
-      map[unquote(key)] = parseYamlFlow(flow, 0)[0];
-      continue;
-    }
-    map[unquote(key)] = unquote(rest);
-  }
-  return root;
-};
-
-const isYamlMap = (
-  value: YamlValue | undefined
-): value is { [key: string]: YamlValue } =>
-  !!value && typeof value === "object" && !Array.isArray(value);
-
-/** The front matter's `config.flowchart` (just its curve). */
-const readFrontMatterFlowchart = (
-  definition: string
-): FlowchartSection | undefined => {
-  const yaml = definition.match(
-    /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/
-  )?.[1];
-  const config = yaml === undefined ? undefined : parseYaml(yaml).config;
-  const flowchart = isYamlMap(config) ? config.flowchart : undefined;
-  return isYamlMap(flowchart)
-    ? {
-        curve:
-          typeof flowchart.curve === "string" ? flowchart.curve : undefined,
-      }
-    : undefined;
-};
-
-/**
- * The curve Pele draws a definition's flowchart edges (and state transitions)
- * with, as it merges configs: the definition's own `flowchart` config, its
- * directives (the last one first) over its front matter, or else `curve`, the
- * caller's. A definition's `flowchart` config replaces the caller's whole.
- * Pele doesn't tell which it used (and draws straight edges the same with any
- * curve).
- */
-export const getFlowchartCurve = (
+export const isSteppedDefinition = (
   definition: string,
   curve: string | undefined
 ) => {
-  const sections = [
-    readFrontMatterFlowchart(definition),
-    ...Array.from(definition.matchAll(DIRECTIVE), ([, directive]) =>
-      readDirectiveFlowchart(directive)
-    ),
-  ].filter((section): section is FlowchartSection => !!section);
-  return sections.length
-    ? sections.reduce<string | undefined>(
-        (resolved, section) => section.curve ?? resolved,
-        undefined
-      )
-    : curve;
+  const header = [
+    definition.match(FRONT_MATTER)?.[0] ?? "",
+    ...(definition.match(DIRECTIVE) ?? []).map((directive) => `${directive}\n`),
+  ].join("");
+  const config: RenderOptions["config"] =
+    curve === undefined ? {} : { flowchart: { curve } };
+  try {
+    const { svg } = render(parse(`${header}${STEP_PROBE}`, { config }), {
+      config,
+      responsive: false,
+      autoDirection: false,
+    });
+    return Array.from(
+      svg.matchAll(/class="pele-edge"[^>]*><path d="([^"]*)"/g)
+    ).some(([, path]) => /q/i.test(path));
+  } catch {
+    // (e.g. a definition Pele can't parse either)
+    return false;
+  }
+};
+
+const isSteppedConfig = async (definition: string, config: PeleConfig) => {
+  await load("flowchart");
+  return isSteppedDefinition(definition, getPeleConfig(config).flowchart.curve);
 };
 
 /**
@@ -363,8 +235,6 @@ export const parsePele = async (
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
   const model = await parsePeleModel(definition, config);
-  // (the default curve isn't stepped)
-  const curve = getFlowchartCurve(definition, config.curve);
 
   try {
     switch (model.type) {
@@ -374,7 +244,7 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
-          curve,
+          stepped: await isSteppedConfig(definition, config),
         });
       }
       case "sequence": {
@@ -400,7 +270,7 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
-          curve,
+          stepped: await isSteppedConfig(definition, config),
         });
       }
     }

@@ -1,13 +1,12 @@
 import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
 import {
-  getFlowchartCurve,
+  isSteppedDefinition,
   parsePele,
   renderPeleSvg,
 } from "../src/pele/parsePele.js";
 import {
   evenOutRoute,
-  isSteppedCurve,
   getRoutePosition,
   lengthenRouteEnds,
   parsePath,
@@ -441,6 +440,12 @@ describe("parsePele", () => {
           undefined,
           true,
         ],
+        [
+          `---\nconfig: {themeCSS: " #foo {}", flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [`---\nmetadata: [owner: Alice]\n---\n${straight}`, "step", true],
         // the definition's curve wins
         [
           `%%{init: {"flowchart": {"curve": "linear"}}}%%\n${straight}`,
@@ -457,7 +462,7 @@ describe("parsePele", () => {
       }
     });
 
-    it("resolves the curve as Pele merges its configs", async () => {
+    it("tells whether Pele steps edges by its config, as it merges them", async () => {
       const bent = "flowchart TD\nA --> B\nA --> C";
       const frontMatter = (yaml: string) => `---\nconfig:\n${yaml}\n---\n`;
       const init = (json: string) => `%%{init: ${json}}%%\n`;
@@ -512,6 +517,16 @@ describe("parsePele", () => {
           "---\ntitle: x\nconfig:\n    flowchart:\n        curve: step # why\n---\n",
           undefined,
         ],
+        // YAML that's no config, or quoted
+        ["---\nmetadata: [owner: Alice]\n---\n", "step"],
+        [
+          '---\nconfig: {themeCSS: " #foo {}", flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
+        [
+          '---\nconfig: {themeCSS: ".a { content: \\"x\\" }", flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
         // not a mapping without the space
         [frontMatter("  flowchart:\n    curve:step"), undefined],
         ["---\nconfig: {flowchart: {nodeSpacing: 10}}\n---\n", "step"],
@@ -525,10 +540,10 @@ describe("parsePele", () => {
       for (const [head, curve] of cases) {
         const definition = head.includes(bent) ? head : head + bent;
         const svg = await renderPeleSvg(definition, { curve });
-        expect([
+        expect([definition, isSteppedDefinition(definition, curve)]).toEqual([
           definition,
-          isSteppedCurve(getFlowchartCurve(definition, curve)),
-        ]).toEqual([definition, /Q\d/.test(svg)]);
+          /Q\d/.test(svg),
+        ]);
       }
     });
 
