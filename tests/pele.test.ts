@@ -436,6 +436,11 @@ describe("parsePele", () => {
           undefined,
           true,
         ],
+        [
+          `---\nconfig: {flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
         // the definition's curve wins
         [
           `%%{init: {"flowchart": {"curve": "linear"}}}%%\n${straight}`,
@@ -487,6 +492,29 @@ describe("parsePele", () => {
         ],
         ["%%{init: {'flowchart': {'curve': 'step'}}}%%\n", undefined],
         ['%%{initialize: {"flowchart": {"curve": "step"}}}%%\n', undefined],
+        // JSON only (unquoted keys are ignored)
+        ["%%{init: {flowchart: {curve: step}}}%%\n", undefined],
+        [
+          '%%{init: {\n  "flowchart": {\n    "curve": "step"\n  }\n}}%%\n',
+          undefined,
+        ],
+        // YAML flow mappings, over lines too, quoted keys, any indentation
+        ["---\nconfig: {flowchart: {curve: step}}\n---\n", undefined],
+        ['---\nconfig: {"flowchart": {"curve": "step"}}\n---\n', undefined],
+        ["---\nconfig: {\n  flowchart: {curve: step}\n}\n---\n", undefined],
+        [frontMatter("  flowchart: {curve: step}"), undefined],
+        [
+          "---\nconfig: {theme: dark, themeCSS: [a, b], flowchart: {nodeSpacing: 10, curve: step}}\n---\n",
+          undefined,
+        ],
+        ['---\nconfig:\n  "flowchart":\n    "curve": "step"\n---\n', undefined],
+        [
+          "---\ntitle: x\nconfig:\n    flowchart:\n        curve: step # why\n---\n",
+          undefined,
+        ],
+        // not a mapping without the space
+        [frontMatter("  flowchart:\n    curve:step"), undefined],
+        ["---\nconfig: {flowchart: {nodeSpacing: 10}}\n---\n", "step"],
         // only under `flowchart`
         [frontMatter("  curve: step"), undefined],
         // replacing the caller's whole `flowchart` config

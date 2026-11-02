@@ -181,9 +181,10 @@ type FlowchartSection = { curve?: string };
 // A config directive. Pele reads them wherever they are (in comments too).
 const DIRECTIVE = /%%\{\s*init(?:ialize)?\s*:([\s\S]*?)\}%%/g;
 
-const CURVE = /["']?\bcurve["']?\s*:\s*["']?([A-Za-z]+)/;
-
-/** A directive's `flowchart` config (just its curve). */
+/**
+ * A directive's `flowchart` config (just its curve). Pele reads directives as
+ * JSON (with single quotes too), and ignores invalid ones.
+ */
 const readDirectiveFlowchart = (
   directive: string
 ): FlowchartSection | undefined => {
@@ -196,49 +197,132 @@ const readDirectiveFlowchart = (
         }
       : undefined;
   } catch {
-    // e.g. unquoted keys
-    return /["']?\bflowchart["']?\s*:/.test(directive)
-      ? { curve: directive.match(CURVE)?.[1] }
-      : undefined;
+    return undefined;
   }
 };
 
+type YamlValue = string | YamlValue[] | { [key: string]: YamlValue };
+
+const unquote = (text: string) => text.trim().replace(/^(["'])(.*)\1$/, "$2");
+
 /**
- * The front matter's `config.flowchart` (just its curve), read as a YAML block
- * mapping, by indentation, without its comments.
+ * Parses a YAML flow value (`{curve: step}`, `[a, b]`, a scalar) at `start`
+ * of `text`, and returns it with the index after it.
  */
+const parseYamlFlow = (text: string, start: number): [YamlValue, number] => {
+  let index = start;
+  const skipSpace = () => {
+    while (/\s/.test(text[index] ?? "")) {
+      index++;
+    }
+  };
+  skipSpace();
+  const opening = text[index];
+  if (opening === "{" || opening === "[") {
+    const closing = opening === "{" ? "}" : "]";
+    const map: { [key: string]: YamlValue } = {};
+    const list: YamlValue[] = [];
+    index++;
+    for (skipSpace(); index < text.length && text[index] !== closing; ) {
+      if (opening === "{") {
+        const [key, afterKey] = parseYamlFlow(text, index);
+        index = afterKey;
+        skipSpace();
+        if (text[index] === ":") {
+          const [value, afterValue] = parseYamlFlow(text, index + 1);
+          map[String(key)] = value;
+          index = afterValue;
+        }
+      } else {
+        const [value, afterValue] = parseYamlFlow(text, index);
+        list.push(value);
+        index = afterValue;
+      }
+      skipSpace();
+      if (text[index] === ",") {
+        index++;
+      }
+      skipSpace();
+    }
+    return [opening === "{" ? map : list, index + 1];
+  }
+  if (opening === '"' || opening === "'") {
+    const end = text.indexOf(opening, index + 1);
+    const close = end === -1 ? text.length : end;
+    return [text.slice(index + 1, close), close + 1];
+  }
+  // a plain scalar, up to the flow's punctuation (a key, up to its `: `)
+  const end = text.slice(index).search(/[,\]}]|:(?=\s)/);
+  const close = end === -1 ? text.length : index + end;
+  return [text.slice(index, close).trim(), close];
+};
+
+/**
+ * Parses YAML front matter: block mappings (by indentation) of scalars and
+ * flow collections, which may run over several lines. Enough to read Pele's
+ * config from, not YAML at large.
+ */
+const parseYaml = (yaml: string) => {
+  const root: { [key: string]: YamlValue } = {};
+  const parents = [{ indent: -1, map: root }];
+  const lines = yaml
+    .split(/\r?\n/)
+    .map((line) => line.replace(/(^|\s)#.*$/, ""));
+  for (let index = 0; index < lines.length; index++) {
+    const match = lines[index].match(
+      /^(\s*)("[^"]*"|'[^']*'|[^\s"'#][^:]*?)\s*:(?:\s+(.*?))?\s*$/
+    );
+    if (!match) {
+      continue;
+    }
+    const [, space, key, rest = ""] = match;
+    while (parents[parents.length - 1].indent >= space.length) {
+      parents.pop();
+    }
+    const { map } = parents[parents.length - 1];
+    if (!rest) {
+      const child = {};
+      map[unquote(key)] = child;
+      parents.push({ indent: space.length, map: child });
+      continue;
+    }
+    if (rest.startsWith("{") || rest.startsWith("[")) {
+      // up to where its brackets close
+      let flow = rest;
+      const isOpen = () =>
+        (flow.match(/[{[]/g)?.length ?? 0) >
+        (flow.match(/[}\]]/g)?.length ?? 0);
+      while (isOpen() && index + 1 < lines.length) {
+        flow += `\n${lines[++index]}`;
+      }
+      map[unquote(key)] = parseYamlFlow(flow, 0)[0];
+      continue;
+    }
+    map[unquote(key)] = unquote(rest);
+  }
+  return root;
+};
+
+const isYamlMap = (
+  value: YamlValue | undefined
+): value is { [key: string]: YamlValue } =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+
+/** The front matter's `config.flowchart` (just its curve). */
 const readFrontMatterFlowchart = (
   definition: string
 ): FlowchartSection | undefined => {
   const yaml = definition.match(
     /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/
   )?.[1];
-  if (yaml === undefined) {
-    return undefined;
-  }
-  let flowchart: FlowchartSection | undefined;
-  const path: { indent: number; key: string }[] = [];
-  for (const line of yaml.split(/\r?\n/)) {
-    const match = line
-      .replace(/(^|\s)#.*$/, "")
-      .match(/^(\s*)["']?([\w-]+)["']?\s*:\s*(.*?)\s*$/);
-    if (!match) {
-      continue;
-    }
-    const [, space, key, value] = match;
-    while (path.length && path[path.length - 1].indent >= space.length) {
-      path.pop();
-    }
-    const keys = [...path.map((entry) => entry.key), key].join(".");
-    if (keys === "config.flowchart") {
-      // (or inline: `flowchart: { curve: step }`)
-      flowchart = { curve: value.match(CURVE)?.[1] };
-    } else if (keys === "config.flowchart.curve" && flowchart) {
-      flowchart.curve = value.replace(/^["']|["']$/g, "") || undefined;
-    }
-    path.push({ indent: space.length, key });
-  }
-  return flowchart;
+  const config = yaml === undefined ? undefined : parseYaml(yaml).config;
+  const flowchart = isYamlMap(config) ? config.flowchart : undefined;
+  return isYamlMap(flowchart)
+    ? {
+        curve:
+          typeof flowchart.curve === "string" ? flowchart.curve : undefined,
+      }
+    : undefined;
 };
 
 /**
