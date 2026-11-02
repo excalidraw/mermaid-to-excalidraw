@@ -23,17 +23,18 @@ import {
   getStyleColor,
   getStyleValue,
   getTextLines,
+  isDrawnStepped,
   isOrthogonalRoute,
-  isSteppedPath,
 } from "./svg.js";
 
 export interface PeleStateOptions {
   fontSize: number;
   /**
-   * Pele was asked to step the transitions (see `isSteppedCurve`): straight
-   * ones are drawn as elbow arrows too.
+   * The curve Pele was asked to draw transitions with (see
+   * `getFlowchartCurve`), for when their drawing doesn't tell: straight ones
+   * are drawn as elbow arrows too when it's stepped.
    */
-  stepped?: boolean;
+  curve?: string;
 }
 
 // Pele's node classes, and the Mermaid state shapes they're drawn as
@@ -195,26 +196,31 @@ export const parsePeleState = (
 
   const labels = getElementsByDataId(root, "g.pele-edge-label[data-id]");
   const texts: Text[] = [];
-  const readEdges = Array.from(
+  const transitions = Array.from(
     root.querySelectorAll("g.pele-edges > g.pele-edge[data-id]")
-  ).map((group) => ({ group, edge: readEdge(group, root) }));
-  const stepped =
-    !!options.stepped ||
-    readEdges.some(({ edge }) => isSteppedPath(edge?.line));
-  const edges = readEdges.flatMap(({ group, edge }): StateEdge[] => {
-    const id = group.getAttribute("data-id")!;
+  ).flatMap((group) => {
+    const edge = readEdge(group, root);
     if (!edge || edge.route.length < 2) {
       return [];
     }
     const route = lengthenRouteEnds(edge.route);
+    const start = findNodeAt(route[0], allNodes);
+    const end = findNodeAt(route[route.length - 1], allNodes);
+    return start && end ? [{ group, line: edge.line, route, start, end }] : [];
+  });
+  const stepped = isDrawnStepped(
+    transitions.map(({ line, route, start, end }) => ({
+      line,
+      route,
+      isLoop: start === end,
+    })),
+    options.curve
+  );
+  const edges = transitions.map(({ group, route, start, end }): StateEdge => {
+    const id = group.getAttribute("data-id")!;
     // Stepped routes stay orthogonal (but e.g. a self-transition is still a
     // curve)
     const orthogonal = stepped && isOrthogonalRoute(route);
-    const start = findNodeAt(route[0], allNodes);
-    const end = findNodeAt(route[route.length - 1], allNodes);
-    if (!start || !end) {
-      return [];
-    }
 
     const label = labels.get(id)?.querySelector("text");
     // A self-transition is a small loop, which its label would cover: the
@@ -229,33 +235,31 @@ export const parsePeleState = (
     const labelBounds =
       label && !isSelfTransition ? getShapeBounds(labels.get(id)!, root) : null;
 
-    return [
-      {
-        id,
-        start: start.id,
-        end: end.id,
-        text: label && !isSelfTransition ? getTextLines(label).join("\n") : "",
-        startX: first.x,
-        startY: first.y,
-        endX: last.x,
-        endY: last.y,
-        // (curved through, its points are evened out for Excalidraw not to
-        // overshoot them)
-        reflectionPoints: orthogonal ? route : evenOutRoute(route),
-        ...(orthogonal ? { orthogonal } : {}),
-        strokeColor: getStyleColor(group, "stroke"),
-        strokeStyle: isNoteEdge ? "dashed" : undefined,
-        isNoteEdge,
-        ...(labelBounds
-          ? {
-              labelPosition: getRoutePosition(route, {
-                x: labelBounds.x + labelBounds.width / 2,
-                y: labelBounds.y + labelBounds.height / 2,
-              }),
-            }
-          : {}),
-      },
-    ];
+    return {
+      id,
+      start: start.id,
+      end: end.id,
+      text: label && !isSelfTransition ? getTextLines(label).join("\n") : "",
+      startX: first.x,
+      startY: first.y,
+      endX: last.x,
+      endY: last.y,
+      // (curved through, its points are evened out for Excalidraw not to
+      // overshoot them)
+      reflectionPoints: orthogonal ? route : evenOutRoute(route),
+      ...(orthogonal ? { orthogonal } : {}),
+      strokeColor: getStyleColor(group, "stroke"),
+      strokeStyle: isNoteEdge ? "dashed" : undefined,
+      isNoteEdge,
+      ...(labelBounds
+        ? {
+            labelPosition: getRoutePosition(route, {
+              x: labelBounds.x + labelBounds.width / 2,
+              y: labelBounds.y + labelBounds.height / 2,
+            }),
+          }
+        : {}),
+    };
   });
 
   // The separators between concurrent regions of a composite state

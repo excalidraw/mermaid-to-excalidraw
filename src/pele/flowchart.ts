@@ -24,8 +24,9 @@ import {
   getRoutePosition,
   getShapeBounds,
   getTextLines,
+  isDrawnStepped,
   isOrthogonalRoute,
-  isSteppedPath,
+  isSteppedCurve,
   simplifyRoute,
 } from "./svg.js";
 
@@ -44,10 +45,11 @@ export interface PeleFlowchartOptions {
   /** Width of a line of label text in Excalidraw, if it can be measured. */
   measureText?: (text: string) => number | null;
   /**
-   * Pele was asked to step the edges (see `isSteppedCurve`): straight ones
-   * are drawn as elbow arrows too.
+   * The curve Pele was asked to draw edges with (see `getFlowchartCurve`),
+   * for when their drawing doesn't tell: straight edges are drawn as elbow
+   * arrows too when it's stepped.
    */
-  stepped?: boolean;
+  curve?: string;
 }
 
 // Pele's own colors are CSS variables, which Excalidraw can't use.
@@ -612,14 +614,36 @@ export const parsePeleFlowchart = (
     return false;
   };
 
-  // Pele routes swimlanes' edges orthogonally too, and may step some edges
-  // only (`linkStyle … interpolate step`)
-  const stepped =
-    !!options.stepped ||
-    model.mermaidType === "swimlane" ||
-    Array.from(edgeGroups.values()).some((group) =>
-      isSteppedPath(getEdgeLine(group))
+  // An edge's own curve (`linkStyle … interpolate`), as Pele picks it
+  const getOwnCurve = (edge: PeleEdge) =>
+    edge.interpolate || model.defaultInterpolate || undefined;
+  const isDiagramStepped = isDrawnStepped(
+    model.edges.flatMap((edge) => {
+      const group =
+        edge.id !== undefined && !getOwnCurve(edge)
+          ? edgeGroups.get(edge.id)
+          : undefined;
+      const line = group && getEdgeLine(group);
+      return line
+        ? [
+            {
+              line,
+              route: simplifyRoute(getPathRoute(line, root)),
+              isLoop: edge.start === edge.end,
+            },
+          ]
+        : [];
+    }),
+    options.curve
+  );
+  // Pele routes swimlanes' edges orthogonally
+  const isStepped = (edge: PeleEdge) => {
+    const ownCurve = getOwnCurve(edge);
+    return (
+      model.mermaidType === "swimlane" ||
+      (ownCurve ? isSteppedCurve(ownCurve) : isDiagramStepped)
     );
+  };
   const edges = model.edges.flatMap((edge) => {
     if (isInside(edge.start, edge.end) || isInside(edge.end, edge.start)) {
       return [];
@@ -633,7 +657,7 @@ export const parsePeleFlowchart = (
         edgeLabels.get(edge.id!) ?? undefined,
         root,
         vertices,
-        { stepped }
+        { stepped: isStepped(edge) }
       );
     return parsed ? [parsed] : [];
   });

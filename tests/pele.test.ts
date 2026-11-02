@@ -1,8 +1,13 @@
 import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
-import { parsePele } from "../src/pele/parsePele.js";
+import {
+  getFlowchartCurve,
+  parsePele,
+  renderPeleSvg,
+} from "../src/pele/parsePele.js";
 import {
   evenOutRoute,
+  isSteppedCurve,
   getRoutePosition,
   lengthenRouteEnds,
   parsePath,
@@ -445,6 +450,107 @@ describe("parsePele", () => {
           expect(!!edge.orthogonal).toBe(orthogonal)
         );
       }
+    });
+
+    it("resolves the curve as Pele merges its configs", async () => {
+      const bent = "flowchart TD\nA --> B\nA --> C";
+      const frontMatter = (yaml: string) => `---\nconfig:\n${yaml}\n---\n`;
+      const init = (json: string) => `%%{init: ${json}}%%\n`;
+      const step = '{"flowchart": {"curve": "step"}}';
+      const linear = '{"flowchart": {"curve": "linear"}}';
+      const cases: [string, string | undefined][] = [
+        [frontMatter("  flowchart:\n    curve: step"), undefined],
+        // directives over front matter, the last one first
+        [
+          frontMatter("  flowchart:\n    curve: linear") + init(step),
+          undefined,
+        ],
+        [
+          frontMatter("  flowchart:\n    curve: step") + init(linear),
+          undefined,
+        ],
+        [init(step) + init(linear), undefined],
+        [init(linear) + init(step), undefined],
+        // merged with each other
+        [
+          frontMatter("  flowchart:\n    curve: step") +
+            init('{"flowchart": {"nodeSpacing": 10}}'),
+          undefined,
+        ],
+        // read in comments, and after the diagram
+        [`%% ${init(step)}`, undefined],
+        [`${bent}\n${init(step)}`, undefined],
+        // but not YAML comments
+        [
+          frontMatter("  flowchart:\n    # curve: step\n    nodeSpacing: 10"),
+          undefined,
+        ],
+        ["%%{init: {'flowchart': {'curve': 'step'}}}%%\n", undefined],
+        ['%%{initialize: {"flowchart": {"curve": "step"}}}%%\n', undefined],
+        // only under `flowchart`
+        [frontMatter("  curve: step"), undefined],
+        // replacing the caller's whole `flowchart` config
+        [frontMatter("  flowchart:\n    nodeSpacing: 10"), "step"],
+        [frontMatter("  theme: neutral"), "step"],
+        ["", "step"],
+      ];
+      for (const [head, curve] of cases) {
+        const definition = head.includes(bent) ? head : head + bent;
+        const svg = await renderPeleSvg(definition, { curve });
+        expect([
+          definition,
+          isSteppedCurve(getFlowchartCurve(definition, curve)),
+        ]).toEqual([definition, /Q\d/.test(svg)]);
+      }
+    });
+
+    it("steps edges by their own curve (`linkStyle … interpolate`)", async () => {
+      const own = (await parsePele(
+        "flowchart LR\nA --> B --> C\nlinkStyle 0 interpolate step"
+      )) as Flowchart;
+      expect(own.edges.map(({ orthogonal }) => !!orthogonal)).toEqual([
+        true,
+        false,
+      ]);
+
+      // a stepped edge doesn't make the others stepped
+      const bentOwn = (await parsePele(
+        "flowchart TD\nA --> B\nA --> C\nD --> E\nlinkStyle 0,1 interpolate step"
+      )) as Flowchart;
+      expect(bentOwn.edges.map(({ orthogonal }) => !!orthogonal)).toEqual([
+        true,
+        true,
+        false,
+      ]);
+    });
+
+    it("keeps elbow arrows orthogonal around a subgraph widened for its title", async () => {
+      const flowchart = (await parsePele(
+        `flowchart TD
+  A --> B
+  C --> A
+  A --> X
+  subgraph grp[Title line one<br>line two]
+    B --> C
+  end`,
+        { curve: "step" }
+      )) as Flowchart;
+      const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
+        ({ type }) => type === "arrow"
+      );
+      expect(arrows).toHaveLength(4);
+      arrows.forEach((arrow) => {
+        expect(arrow.elbowed).toBe(true);
+        (arrow.points as [number, number][])
+          .slice(1)
+          .forEach((point, index) => {
+            const previous = arrow.points[index];
+            expect(
+              Math.abs(point[0] - previous[0]) < 0.5 ||
+                Math.abs(point[1] - previous[1]) < 0.5
+            ).toBe(true);
+          });
+      });
     });
 
     it("curves an edge into a shape enlarged past its route's first corner", () => {

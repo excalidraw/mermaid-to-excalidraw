@@ -176,24 +176,95 @@ export const renderPeleSvg = async (
   return render(model, getModelRenderOptions(model, config)).svg;
 };
 
+type FlowchartSection = { curve?: string };
+
+// A config directive. Pele reads them wherever they are (in comments too).
+const DIRECTIVE = /%%\{\s*init(?:ialize)?\s*:([\s\S]*?)\}%%/g;
+
+const CURVE = /["']?\bcurve["']?\s*:\s*["']?([A-Za-z]+)/;
+
+/** A directive's `flowchart` config (just its curve). */
+const readDirectiveFlowchart = (
+  directive: string
+): FlowchartSection | undefined => {
+  try {
+    const flowchart = JSON.parse(directive.replace(/'/g, '"'))?.flowchart;
+    return flowchart && typeof flowchart === "object"
+      ? {
+          curve:
+            typeof flowchart.curve === "string" ? flowchart.curve : undefined,
+        }
+      : undefined;
+  } catch {
+    // e.g. unquoted keys
+    return /["']?\bflowchart["']?\s*:/.test(directive)
+      ? { curve: directive.match(CURVE)?.[1] }
+      : undefined;
+  }
+};
+
 /**
- * Whether Pele steps a definition's edges (and a state diagram's transitions):
- * by the curve set in its front matter or `%%{init}%%` directive, which Pele
- * uses over the config's, or else by the config's. Pele draws straight edges
- * the same with any curve, so in a diagram of only straight edges, they can't
- * tell the parsers to draw them as elbow arrows.
+ * The front matter's `config.flowchart` (just its curve), read as a YAML block
+ * mapping, by indentation, without its comments.
  */
-export const isSteppedCurve = (
+const readFrontMatterFlowchart = (
+  definition: string
+): FlowchartSection | undefined => {
+  const yaml = definition.match(
+    /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/
+  )?.[1];
+  if (yaml === undefined) {
+    return undefined;
+  }
+  let flowchart: FlowchartSection | undefined;
+  const path: { indent: number; key: string }[] = [];
+  for (const line of yaml.split(/\r?\n/)) {
+    const match = line
+      .replace(/(^|\s)#.*$/, "")
+      .match(/^(\s*)["']?([\w-]+)["']?\s*:\s*(.*?)\s*$/);
+    if (!match) {
+      continue;
+    }
+    const [, space, key, value] = match;
+    while (path.length && path[path.length - 1].indent >= space.length) {
+      path.pop();
+    }
+    const keys = [...path.map((entry) => entry.key), key].join(".");
+    if (keys === "config.flowchart") {
+      // (or inline: `flowchart: { curve: step }`)
+      flowchart = { curve: value.match(CURVE)?.[1] };
+    } else if (keys === "config.flowchart.curve" && flowchart) {
+      flowchart.curve = value.replace(/^["']|["']$/g, "") || undefined;
+    }
+    path.push({ indent: space.length, key });
+  }
+  return flowchart;
+};
+
+/**
+ * The curve Pele draws a definition's flowchart edges (and state transitions)
+ * with, as it merges configs: the definition's own `flowchart` config, its
+ * directives (the last one first) over its front matter, or else `curve`, the
+ * caller's. A definition's `flowchart` config replaces the caller's whole.
+ * Pele doesn't tell which it used (and draws straight edges the same with any
+ * curve).
+ */
+export const getFlowchartCurve = (
   definition: string,
   curve: string | undefined
 ) => {
-  const frontMatter =
-    definition.match(/^\s*---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";
-  const directives = definition.match(/%%\{[\s\S]*?\}%%/g) ?? [];
-  const definitionCurve = [frontMatter, ...directives]
-    .join("\n")
-    .match(/\bcurve["']?\s*:\s*["']?([A-Za-z]+)/)?.[1];
-  return /^step/.test(definitionCurve ?? curve ?? "");
+  const sections = [
+    readFrontMatterFlowchart(definition),
+    ...Array.from(definition.matchAll(DIRECTIVE), ([, directive]) =>
+      readDirectiveFlowchart(directive)
+    ),
+  ].filter((section): section is FlowchartSection => !!section);
+  return sections.length
+    ? sections.reduce<string | undefined>(
+        (resolved, section) => section.curve ?? resolved,
+        undefined
+      )
+    : curve;
 };
 
 /**
@@ -208,7 +279,8 @@ export const parsePele = async (
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
   const model = await parsePeleModel(definition, config);
-  const stepped = isSteppedCurve(definition, config.curve);
+  // (the default curve isn't stepped)
+  const curve = getFlowchartCurve(definition, config.curve);
 
   try {
     switch (model.type) {
@@ -218,7 +290,7 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
-          stepped,
+          curve,
         });
       }
       case "sequence": {
@@ -244,7 +316,7 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
-          stepped,
+          curve,
         });
       }
     }

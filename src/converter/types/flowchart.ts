@@ -16,6 +16,7 @@ import {
   getElbowArrowProps,
 } from "../helpers.js";
 import { VERTEX_TYPE, Flowchart } from "../../interfaces.js";
+import { isOrthogonalRoute } from "../../pele/svg.js";
 import { transformToExcalidrawLineSkeleton } from "../transformToExcalidrawSkeleton.js";
 import {
   DEFAULT_FONT_SIZE,
@@ -129,6 +130,99 @@ const attachRouteToElement = (
   ];
 
   return endpoint === "start" ? adjustedPoints : adjustedPoints.reverse();
+};
+
+/**
+ * `attachRouteToElement` for an orthogonal route, keeping it orthogonal: its
+ * end leg is run on, or cut short, along its axis to the element's side.
+ * Undefined if the leg misses the element, or would have to turn back to
+ * reach it (the element grew past the leg's corner).
+ */
+const attachOrthogonalRouteToElement = (
+  routePoints: RoutePoint[],
+  element: ExcalidrawElementSkeleton,
+  endpoint: "start" | "end"
+) => {
+  const orderedPoints =
+    endpoint === "start" ? routePoints : routePoints.slice().reverse();
+  const [end, next] = orderedPoints;
+  const { x, y, width, height } = getElementBounds(element);
+  const vertical = Math.abs(end.x - next.x) < 0.5;
+  const [acrossMin, acrossMax] = vertical ? [x, x + width] : [y, y + height];
+  const [alongMin, alongMax] = vertical ? [y, y + height] : [x, x + width];
+  const across = vertical ? end.x : end.y;
+  const nextAlong = vertical ? next.y : next.x;
+  if (across < acrossMin || across > acrossMax) {
+    return undefined;
+  }
+  const along =
+    nextAlong <= alongMin
+      ? alongMin
+      : nextAlong >= alongMax
+      ? alongMax
+      : undefined;
+  if (along === undefined) {
+    return undefined;
+  }
+
+  const adjustedPoints = [
+    vertical ? { ...end, y: along } : { ...end, x: along },
+    ...orderedPoints.slice(1),
+  ];
+  return endpoint === "start" ? adjustedPoints : adjustedPoints.reverse();
+};
+
+/**
+ * An orthogonal route's points moved right by `startOffset` at its start and
+ * `endOffset` at its end, keeping it orthogonal: the points up to its longest
+ * horizontal segment move with its start, the rest with its end, and that
+ * segment takes up the difference. A route without one gets a horizontal jog
+ * halfway along its longest segment.
+ */
+const offsetOrthogonalRoute = (
+  routePoints: RoutePoint[],
+  startOffset: number,
+  endOffset: number
+) => {
+  let points = routePoints;
+  const getLongestSegment = (horizontal: boolean) => {
+    let longest = -1;
+    for (let index = 0; index < points.length - 1; index++) {
+      const [from, to] = [points[index], points[index + 1]];
+      const isHorizontal = Math.abs(from.y - to.y) < 0.5;
+      if (
+        (!horizontal || isHorizontal) &&
+        (longest === -1 ||
+          Math.hypot(to.x - from.x, to.y - from.y) >
+            Math.hypot(
+              points[longest + 1].x - points[longest].x,
+              points[longest + 1].y - points[longest].y
+            ))
+      ) {
+        longest = index;
+      }
+    }
+    return longest;
+  };
+
+  let split =
+    startOffset === endOffset ? points.length : getLongestSegment(true);
+  if (split === -1) {
+    const index = getLongestSegment(false);
+    const [from, to] = [points[index], points[index + 1]];
+    const middle = (from.y + to.y) / 2;
+    points = [
+      ...points.slice(0, index + 1),
+      { x: from.x, y: middle },
+      { x: to.x, y: middle },
+      ...points.slice(index + 1),
+    ];
+    split = index + 1;
+  }
+  return points.map((point, index) => ({
+    ...point,
+    x: point.x + (index <= split ? startOffset : endOffset),
+  }));
 };
 
 const computeSubGraphHorizontalLayouts = (graph: Flowchart, fontSize: number) =>
@@ -673,20 +767,33 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       const { startX, startY, reflectionPoints } = edge;
       const startHorizontalOffset = horizontalOffsets.get(edge.start) || 0;
       const endHorizontalOffset = horizontalOffsets.get(edge.end) || 0;
-      let transformedReflectionPoints = reflectionPoints.map((point, index) => {
-        const progress =
-          reflectionPoints.length > 1
-            ? index / (reflectionPoints.length - 1)
-            : 0;
-        return {
-          ...point,
-          x:
-            point.x +
-            startHorizontalOffset +
-            (endHorizontalOffset - startHorizontalOffset) * progress,
-          y: point.y + getVerticalOffset(verticalExpansions, point.y),
-        };
-      });
+      // (vertical offsets keep a route orthogonal: they're the same for
+      // points at the same height)
+      let orthogonal = !!edge.orthogonal;
+      let transformedReflectionPoints = (
+        orthogonal
+          ? offsetOrthogonalRoute(
+              reflectionPoints,
+              startHorizontalOffset,
+              endHorizontalOffset
+            )
+          : reflectionPoints.map((point, index) => {
+              const progress =
+                reflectionPoints.length > 1
+                  ? index / (reflectionPoints.length - 1)
+                  : 0;
+              return {
+                ...point,
+                x:
+                  point.x +
+                  startHorizontalOffset +
+                  (endHorizontalOffset - startHorizontalOffset) * progress,
+              };
+            })
+      ).map((point) => ({
+        ...point,
+        y: point.y + getVerticalOffset(verticalExpansions, point.y),
+      }));
 
       // Get supported arrow type
       const arrowType = computeExcalidrawArrowType(edge.type || "arrow_point");
@@ -703,22 +810,34 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
       }
 
       const startsAtSubGraph = subGraphIds.has(edge.start);
-      if (resizedSubGraphIds.has(edge.start)) {
+      for (const [endpoint, element, other] of [
+        ["start", startVertex, endVertex],
+        ["end", endVertex, startVertex],
+      ] as const) {
+        if (!resizedSubGraphIds.has(element.id ?? "")) {
+          continue;
+        }
+        const attached =
+          orthogonal &&
+          attachOrthogonalRouteToElement(
+            transformedReflectionPoints,
+            element,
+            endpoint
+          );
+        if (attached) {
+          transformedReflectionPoints = attached;
+          continue;
+        }
+        orthogonal = false;
         transformedReflectionPoints = attachRouteToElement(
           transformedReflectionPoints,
-          startVertex,
-          "start",
-          getElementCenter(endVertex)
+          element,
+          endpoint,
+          getElementCenter(other)
         );
       }
-      if (resizedSubGraphIds.has(edge.end)) {
-        transformedReflectionPoints = attachRouteToElement(
-          transformedReflectionPoints,
-          endVertex,
-          "end",
-          getElementCenter(startVertex)
-        );
-      }
+      // (as a safety net: Excalidraw rejects elbow arrows that aren't)
+      orthogonal = orthogonal && isOrthogonalRoute(transformedReflectionPoints);
 
       // Calculate Excalidraw arrow's points
       const points = transformedReflectionPoints.map((point) =>
@@ -760,7 +879,7 @@ export const FlowchartToExcalidrawSkeletonConverter = new GraphConverter({
             }
           : {}),
         roundness: { type: 2 },
-        ...(edge.orthogonal ? getElbowArrowProps(points) : {}),
+        ...(orthogonal ? getElbowArrowProps(points) : {}),
         ...arrowType,
         start: {
           id: startVertex.id || "",
