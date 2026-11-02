@@ -13,6 +13,7 @@ import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawArrowType,
   createTitleBandElement,
+  getElbowArrowProps,
 } from "../helpers.js";
 import { VERTEX_TYPE, Flowchart } from "../../interfaces.js";
 import { transformToExcalidrawLineSkeleton } from "../transformToExcalidrawSkeleton.js";
@@ -389,21 +390,6 @@ const computeVertexLabelFontSize = (
     )
   );
 };
-
-/**
- * An elbow arrow along an orthogonal route: it stays orthogonal when what it
- * connects is moved. Excalidraw routes elbow arrows itself, so the route's
- * middle segments are fixed where they are (the first and last can't be).
- */
-const getElbowArrowProps = (points: LocalPoint[]) => ({
-  elbowed: true,
-  roundness: null,
-  fixedSegments: points.slice(2, -1).map((end, index) => ({
-    start: points[index + 1],
-    end,
-    index: index + 2,
-  })),
-});
 
 /**
  * A swimlane's header (Pele lays nothing out in it): its title, reading

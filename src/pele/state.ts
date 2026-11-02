@@ -23,10 +23,17 @@ import {
   getStyleColor,
   getStyleValue,
   getTextLines,
+  isOrthogonalRoute,
+  isSteppedPath,
 } from "./svg.js";
 
 export interface PeleStateOptions {
   fontSize: number;
+  /**
+   * Pele was asked to step the transitions (see `isSteppedCurve`): straight
+   * ones are drawn as elbow arrows too.
+   */
+  stepped?: boolean;
 }
 
 // Pele's node classes, and the Mermaid state shapes they're drawn as
@@ -188,15 +195,21 @@ export const parsePeleState = (
 
   const labels = getElementsByDataId(root, "g.pele-edge-label[data-id]");
   const texts: Text[] = [];
-  const edges = Array.from(
+  const readEdges = Array.from(
     root.querySelectorAll("g.pele-edges > g.pele-edge[data-id]")
-  ).flatMap((group): StateEdge[] => {
+  ).map((group) => ({ group, edge: readEdge(group, root) }));
+  const stepped =
+    !!options.stepped ||
+    readEdges.some(({ edge }) => isSteppedPath(edge?.line));
+  const edges = readEdges.flatMap(({ group, edge }): StateEdge[] => {
     const id = group.getAttribute("data-id")!;
-    const edge = readEdge(group, root);
     if (!edge || edge.route.length < 2) {
       return [];
     }
     const route = lengthenRouteEnds(edge.route);
+    // Stepped routes stay orthogonal (but e.g. a self-transition is still a
+    // curve)
+    const orthogonal = stepped && isOrthogonalRoute(route);
     const start = findNodeAt(route[0], allNodes);
     const end = findNodeAt(route[route.length - 1], allNodes);
     if (!start || !end) {
@@ -226,7 +239,10 @@ export const parsePeleState = (
         startY: first.y,
         endX: last.x,
         endY: last.y,
-        reflectionPoints: evenOutRoute(route),
+        // (curved through, its points are evened out for Excalidraw not to
+        // overshoot them)
+        reflectionPoints: orthogonal ? route : evenOutRoute(route),
+        ...(orthogonal ? { orthogonal } : {}),
         strokeColor: getStyleColor(group, "stroke"),
         strokeStyle: isNoteEdge ? "dashed" : undefined,
         isNoteEdge,

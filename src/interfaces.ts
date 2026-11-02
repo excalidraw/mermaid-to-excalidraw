@@ -99,7 +99,7 @@ export interface Edge {
    */
   labelPosition?: number;
   /**
-   * Routed orthogonally (as Pele routes swimlanes' edges): drawn as an elbow
+   * Routed orthogonally (as Pele routes swimlanes' and stepped edges): drawn as an elbow
    * arrow along its route, not curved through its points.
    */
   orthogonal?: boolean;
@@ -217,6 +217,11 @@ export interface StateEdge {
    * is centered, if not halfway.
    */
   labelPosition?: number;
+  /**
+   * Routed orthogonally (stepped): drawn as an elbow arrow along its route,
+   * not curved through its points.
+   */
+  orthogonal?: boolean;
 }
 
 export interface State {
@@ -243,11 +248,13 @@ export interface GraphImage {
  */
 export interface MermaidConfig {
   /**
-   * The flowchart curve style.
+   * The flowchart curve style, which state diagrams' transitions follow too.
+   * `"step"` draws them as elbow arrows. A curve set in the definition (front
+   * matter, `%%{init}%%`) wins.
    * @default "linear"
    */
   flowchart?: {
-    curve?: "linear" | "basis";
+    curve?: "linear" | "basis" | "step";
   };
   /**
    * Theme variables

@@ -434,6 +434,23 @@ const lengthenRouteEnd = (route: Position[], minLength: number) => {
   });
 };
 
+/** Whether every segment of a route is horizontal or vertical. */
+export const isOrthogonalRoute = (route: Position[]) =>
+  route.every(
+    (point, index) =>
+      index === 0 ||
+      Math.abs(point.x - route[index - 1].x) < 0.5 ||
+      Math.abs(point.y - route[index - 1].y) < 0.5
+  );
+
+/**
+ * Whether Pele drew an edge path stepped (e.g. with `curve: "step"`, set in a
+ * definition too): stepped routes are the only ones it rounds the corners of,
+ * with quadratic curves.
+ */
+export const isSteppedPath = (path: Element | undefined) =>
+  /q/i.test(path?.getAttribute("d") || "");
+
 /**
  * Pele ends routes in short straight stubs, room for its small arrowheads:
  * Excalidraw's bigger ones would reach into the bends after them. The bends

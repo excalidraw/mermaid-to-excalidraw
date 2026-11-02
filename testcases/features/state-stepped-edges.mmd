@@ -1,0 +1,14 @@
+%%{init: {"flowchart": {"curve": "step"}}}%%
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Loading: fetch
+  Idle --> Error: invalid
+  Loading --> Ready: done
+  Loading --> Error: failed
+  Error --> Idle: retry
+  Ready --> Loading: refresh
+  state check <<choice>>
+  Ready --> check
+  check --> [*]: closed
+  check --> Idle: open
+  note right of Error: shown to the user

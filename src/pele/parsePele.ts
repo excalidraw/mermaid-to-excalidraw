@@ -5,7 +5,6 @@ import {
   detectType,
   load,
   parse,
-  PeleError,
   render,
   type DiagramType,
   type ParsedDiagramModel,
@@ -126,48 +125,6 @@ const getModelRenderOptions = (
     ? { ...getRenderOptions(config), fontFamily: EXCALIFONT_FONT_FAMILY }
     : getRenderOptions(config);
 
-/**
- * Pele reports syntax errors at the end of a definition (e.g. a missing `end`)
- * on the line after its last one, with an empty excerpt. They're moved to the
- * end of its last non-empty line instead, as Mermaid reports them: that's the
- * line Excalidraw highlights, shows and tries fixing.
- *
- * Lines are numbered as Pele (and Mermaid) parse them, i.e. without e.g. the
- * comments before them, but trailing (blank) lines are always kept.
- */
-export const pointEndOfInputErrorAtLastLine = (
-  error: unknown,
-  definition: string
-) => {
-  if (
-    !(error instanceof PeleError) ||
-    error.code !== "syntax" ||
-    // not at the end
-    error.snippet.split("\n")[0].trim()
-  ) {
-    return error;
-  }
-  const lines = definition.split(/\r?\n/);
-  let lastIndex = lines.length - 1;
-  while (lastIndex >= 0 && !lines[lastIndex].trim()) {
-    lastIndex--;
-  }
-  const line = error.line - 1 - (lines.length - 1 - lastIndex);
-  if (lastIndex < 0 || line < 1) {
-    return error;
-  }
-
-  const lastLine = lines[lastIndex];
-  const snippet = `${lastLine}\n${"-".repeat(lastLine.length)}^`;
-  error.message = error.message
-    .replace(`on line ${error.line}`, `on line ${line}`)
-    .replace(error.snippet, snippet);
-  error.line = line;
-  error.column = lastLine.length + 1;
-  error.snippet = snippet;
-  return error;
-};
-
 /** Loads the code Pele parses and renders `definition`'s diagram type with. */
 const loadDiagramType = async (definition: string) => {
   let type: DiagramType | null = null;
@@ -180,18 +137,14 @@ const loadDiagramType = async (definition: string) => {
 };
 
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
-  try {
-    await loadDiagramType(definition);
-    return await withLineBreakFallback(definition, async (candidate) =>
-      parse(candidate, {
-        limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
-        maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
-        config: getPeleConfig(config),
-      })
-    );
-  } catch (error) {
-    throw pointEndOfInputErrorAtLastLine(error, definition);
-  }
+  await loadDiagramType(definition);
+  return withLineBreakFallback(definition, async (candidate) =>
+    parse(candidate, {
+      limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
+      maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
+      config: getPeleConfig(config),
+    })
+  );
 };
 
 const renderGraphImage = (
@@ -224,6 +177,26 @@ export const renderPeleSvg = async (
 };
 
 /**
+ * Whether Pele steps a definition's edges (and a state diagram's transitions):
+ * by the curve set in its front matter or `%%{init}%%` directive, which Pele
+ * uses over the config's, or else by the config's. Pele draws straight edges
+ * the same with any curve, so in a diagram of only straight edges, they can't
+ * tell the parsers to draw them as elbow arrows.
+ */
+export const isSteppedCurve = (
+  definition: string,
+  curve: string | undefined
+) => {
+  const frontMatter =
+    definition.match(/^\s*---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";
+  const directives = definition.match(/%%\{[\s\S]*?\}%%/g) ?? [];
+  const definitionCurve = [frontMatter, ...directives]
+    .join("\n")
+    .match(/\bcurve["']?\s*:\s*["']?([A-Za-z]+)/)?.[1];
+  return /^step/.test(definitionCurve ?? curve ?? "");
+};
+
+/**
  * Parses a Mermaid definition with Pele, a Mermaid renderer that lays diagrams
  * out without a DOM.
  *
@@ -235,6 +208,7 @@ export const parsePele = async (
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
   const model = await parsePeleModel(definition, config);
+  const stepped = isSteppedCurve(definition, config.curve);
 
   try {
     switch (model.type) {
@@ -244,6 +218,7 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
+          stepped,
         });
       }
       case "sequence": {
@@ -269,6 +244,7 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
+          stepped,
         });
       }
     }

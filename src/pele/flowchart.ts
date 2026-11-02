@@ -24,6 +24,8 @@ import {
   getRoutePosition,
   getShapeBounds,
   getTextLines,
+  isOrthogonalRoute,
+  isSteppedPath,
   simplifyRoute,
 } from "./svg.js";
 
@@ -41,6 +43,11 @@ export interface PeleFlowchartOptions {
   fontSize: number;
   /** Width of a line of label text in Excalidraw, if it can be measured. */
   measureText?: (text: string) => number | null;
+  /**
+   * Pele was asked to step the edges (see `isSteppedCurve`): straight ones
+   * are drawn as elbow arrows too.
+   */
+  stepped?: boolean;
 }
 
 // Pele's own colors are CSS variables, which Excalidraw can't use.
@@ -133,10 +140,18 @@ const getEllipseDistance = (ellipse: Bounds, point: Position) =>
 // holding the label
 const DOUBLE_CIRCLE_MARGIN = 5;
 
+// How far from a diamond's center its outline is along an axis (in half
+// sizes), `offset` (in half sizes) from its center across it
+const getDiamondReach = (offset: number) => 1 - offset;
+
+// The same for an ellipse
+const getEllipseReach = (offset: number) => Math.sqrt(1 - offset ** 2);
+
 /**
  * Shapes Excalidraw fits a label in the rectangle inscribed in (`ratio` times
- * smaller than the shape, less `inset`), and how far a point is from their
- * center (1 on the outline).
+ * smaller than the shape, less `inset`), how far a point is from their center
+ * (1 on the outline), and how far their outline is from their center along an
+ * axis (see `getDiamondReach`).
  */
 const INSCRIBED_LABEL_SHAPES: Partial<
   Record<
@@ -145,6 +160,7 @@ const INSCRIBED_LABEL_SHAPES: Partial<
       ratio: number;
       inset: number;
       getDistance: (shape: Bounds, point: Position) => number;
+      getReach: (offset: number) => number;
     }
   >
 > = {
@@ -152,16 +168,19 @@ const INSCRIBED_LABEL_SHAPES: Partial<
     ratio: 2,
     inset: 0,
     getDistance: getDiamondDistance,
+    getReach: getDiamondReach,
   },
   [VERTEX_TYPE.CIRCLE]: {
     ratio: Math.SQRT2,
     inset: 0,
     getDistance: getEllipseDistance,
+    getReach: getEllipseReach,
   },
   [VERTEX_TYPE.DOUBLECIRCLE]: {
     ratio: Math.SQRT2,
     inset: DOUBLE_CIRCLE_MARGIN * 2,
     getDistance: getEllipseDistance,
+    getReach: getEllipseReach,
   },
 };
 
@@ -172,7 +191,7 @@ const MAX_UNORPHANED_DIAMOND_SCALE = 1.35;
 const DIAMOND_SCALE_STEP = 0.02;
 // A wrapped label's last line narrower than this (of the width it's wrapped
 // at) is an orphan, e.g. the "1" of "Decision 1"
-const ORPHAN_WIDTH_RATIO = 1 / 4;
+const ORPHAN_WIDTH_RATIO = 1 / 3;
 
 /**
  * The widths of the lines Excalidraw wraps each line of `text` in at
@@ -403,48 +422,106 @@ const attachRouteStartToShape = (route: Position[], vertex: Vertex) => {
   ];
 };
 
+/**
+ * `attachRouteStartToShape` for an orthogonal route, keeping it orthogonal:
+ * its first leg is run on, or cut short, along its axis to where it meets the
+ * shape's outline (so edges Pele spread apart on a side stay apart). Undefined
+ * if the leg misses the outline, or would turn back to reach it (e.g. into a
+ * shape enlarged to fit its label past the leg's corner).
+ */
+const attachOrthogonalRouteStartToShape = (
+  route: Position[],
+  vertex: Vertex
+): Position[] | undefined => {
+  const shape = INSCRIBED_LABEL_SHAPES[vertex.type];
+  if (!shape) {
+    return route;
+  }
+  const [start, next] = route;
+  const vertical = Math.abs(start.x - next.x) < 0.5;
+  const [across, along] = vertical
+    ? (["x", "y"] as const)
+    : (["y", "x"] as const);
+  const center = {
+    x: vertex.x + vertex.width / 2,
+    y: vertex.y + vertex.height / 2,
+  };
+  const half = { x: vertex.width / 2, y: vertex.height / 2 };
+  const offset = Math.abs(start[across] - center[across]) / half[across];
+  const side = Math.sign(next[along] - center[along]);
+  if (!(offset < 1) || !side) {
+    return undefined;
+  }
+  const onOutline = center[along] + side * half[along] * shape.getReach(offset);
+  // (a pixel of leg left at least)
+  if ((next[along] - onOutline) * side < 1) {
+    return undefined;
+  }
+  return [
+    vertical ? { x: start.x, y: onOutline } : { x: onOutline, y: start.y },
+    ...route.slice(1),
+  ];
+};
+
+// An edge's line (its arrowheads are drawn as separate shapes)
+const getEdgeLine = (group: Element) =>
+  Array.from(group.querySelectorAll("path")).find(
+    (path) => !path.getAttribute("class")?.includes("pele-marker")
+  );
+
 const parseEdge = (
   edge: PeleEdge,
   group: Element,
   label: Element | undefined,
   root: Element,
   vertices: Flowchart["vertices"],
-  { inSwimlanes = false } = {}
+  { stepped = false } = {}
 ): Edge | undefined => {
-  const paths = Array.from(group.querySelectorAll("path"));
-  const line = paths.find(
-    (path) => !path.getAttribute("class")?.includes("pele-marker")
-  );
+  const line = getEdgeLine(group);
   if (!line) {
     return undefined;
   }
 
-  let route = extendRouteToMarkers(
+  const startVertex = vertices[edge.start];
+  const endVertex = vertices[edge.end];
+  const pathRoute = extendRouteToMarkers(
     getPathRoute(line, root),
     Array.from(group.querySelectorAll(".pele-marker")),
     root
   );
-  const startVertex = vertices[edge.start];
-  if (startVertex) {
-    route = attachRouteStartToShape(route, startVertex);
+  // Stepped routes stay orthogonal (but e.g. a self-loop is still a curve)
+  let orthogonalRoute: Position[] | undefined = simplifyRoute(pathRoute);
+  if (!stepped || !isOrthogonalRoute(orthogonalRoute)) {
+    orthogonalRoute = undefined;
   }
-  const endVertex = vertices[edge.end];
-  if (endVertex) {
-    route = attachRouteStartToShape(route.reverse(), endVertex).reverse();
+  if (orthogonalRoute && startVertex) {
+    orthogonalRoute = attachOrthogonalRouteStartToShape(
+      orthogonalRoute,
+      startVertex
+    );
+  }
+  if (orthogonalRoute && endVertex) {
+    orthogonalRoute = attachOrthogonalRouteStartToShape(
+      orthogonalRoute.reverse(),
+      endVertex
+    )?.reverse();
+  }
+
+  let route = orthogonalRoute;
+  if (!route) {
+    route = pathRoute;
+    if (startVertex) {
+      route = attachRouteStartToShape(route, startVertex);
+    }
+    if (endVertex) {
+      route = attachRouteStartToShape(route.reverse(), endVertex).reverse();
+    }
   }
   route = simplifyRoute(route);
   if (route.length < 2) {
     return undefined;
   }
-  // Pele routes swimlanes' edges orthogonally (but e.g. a self-loop as a curve)
-  const orthogonal =
-    inSwimlanes &&
-    route.every(
-      (point, index) =>
-        index === 0 ||
-        Math.abs(point.x - route[index - 1].x) < 0.5 ||
-        Math.abs(point.y - route[index - 1].y) < 0.5
-    );
+  const orthogonal = !!orthogonalRoute;
 
   const start = route[0];
   const end = route[route.length - 1];
@@ -535,7 +612,14 @@ export const parsePeleFlowchart = (
     return false;
   };
 
-  const inSwimlanes = model.mermaidType === "swimlane";
+  // Pele routes swimlanes' edges orthogonally too, and may step some edges
+  // only (`linkStyle … interpolate step`)
+  const stepped =
+    !!options.stepped ||
+    model.mermaidType === "swimlane" ||
+    Array.from(edgeGroups.values()).some((group) =>
+      isSteppedPath(getEdgeLine(group))
+    );
   const edges = model.edges.flatMap((edge) => {
     if (isInside(edge.start, edge.end) || isInside(edge.end, edge.start)) {
       return [];
@@ -549,7 +633,7 @@ export const parsePeleFlowchart = (
         edgeLabels.get(edge.id!) ?? undefined,
         root,
         vertices,
-        { inSwimlanes }
+        { stepped }
       );
     return parsed ? [parsed] : [];
   });

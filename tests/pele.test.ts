@@ -351,6 +351,131 @@ describe("parsePele", () => {
       });
   });
 
+  describe("stepped edges", () => {
+    const definition = `flowchart TD
+  A[Start] --> B{Ok?}
+  B -->|yes| C[Do]
+  B -->|no| D((End))
+  C --> D
+  A --> E[Side]`;
+    // 1 on the outline
+    const getDistance = (vertex: Flowchart["vertices"][string], point: any) =>
+      vertex!.type === "diamond"
+        ? Math.abs(point.x - (vertex!.x + vertex!.width / 2)) /
+            (vertex!.width / 2) +
+          Math.abs(point.y - (vertex!.y + vertex!.height / 2)) /
+            (vertex!.height / 2)
+        : Math.hypot(
+            (point.x - (vertex!.x + vertex!.width / 2)) / (vertex!.width / 2),
+            (point.y - (vertex!.y + vertex!.height / 2)) / (vertex!.height / 2)
+          );
+
+    it("draws them as elbow arrows along Pele's routes, onto diamonds' and circles' outline", async () => {
+      const flowchart = (await parsePele(definition, {
+        curve: "step",
+      })) as Flowchart;
+
+      expect(flowchart.edges).toHaveLength(5);
+      flowchart.edges.forEach(
+        ({ start, end, reflectionPoints, orthogonal }) => {
+          expect(orthogonal).toBe(true);
+          // turning at every point, not split
+          reflectionPoints.slice(1).forEach((point, index) => {
+            const previous = reflectionPoints[index];
+            const vertical = Math.abs(point.x - previous.x) < 0.5;
+            expect(vertical || Math.abs(point.y - previous.y) < 0.5).toBe(true);
+            const next = reflectionPoints[index + 2];
+            if (next) {
+              expect(Math.abs(next.x - point.x) < 0.5).toBe(!vertical);
+            }
+          });
+          [
+            [start, reflectionPoints[0]],
+            [end, reflectionPoints[reflectionPoints.length - 1]],
+          ].forEach(([id, point]) => {
+            const vertex = flowchart.vertices[id as string]!;
+            if (vertex.type === "diamond" || vertex.type === "circle") {
+              expect(getDistance(vertex, point)).toBeCloseTo(1, 2);
+            }
+          });
+        }
+      );
+
+      const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
+        ({ type }) => type === "arrow"
+      );
+      expect(arrows).toHaveLength(5);
+      arrows.forEach((arrow) =>
+        expect(arrow).toMatchObject({ elbowed: true, roundness: null })
+      );
+    });
+
+    it("draws them so when the definition asks for them", async () => {
+      const flowchart = await parseFlowchart(
+        `%%{init: {"flowchart": {"curve": "step"}}}%%\n${definition}`
+      );
+      expect(flowchart.edges.every(({ orthogonal }) => orthogonal)).toBe(true);
+    });
+
+    it("draws them so when they're all straight (with no corners to tell)", async () => {
+      const straight = "flowchart LR\nA -- text --> B -- text2 --> C";
+      for (const [definition, curve, orthogonal] of [
+        [straight, "step", true],
+        [
+          `%%{init: {"flowchart": {"curve": "step"}}}%%\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `---\nconfig:\n  flowchart:\n    curve: step\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        // the definition's curve wins
+        [
+          `%%{init: {"flowchart": {"curve": "linear"}}}%%\n${straight}`,
+          "step",
+          false,
+        ],
+        [straight, undefined, false],
+      ] as const) {
+        const flowchart = (await parsePele(definition, { curve })) as Flowchart;
+        expect(flowchart.edges).toHaveLength(2);
+        flowchart.edges.forEach((edge) =>
+          expect(!!edge.orthogonal).toBe(orthogonal)
+        );
+      }
+    });
+
+    it("curves an edge into a shape enlarged past its route's first corner", () => {
+      const config = { flowchart: { curve: "step" } };
+      const model = parse(
+        "flowchart TD\n  A --> B\n  A --> C((Some long label))",
+        { config }
+      ) as FlowchartModel;
+      const root = parseSvg(
+        render(model, {
+          responsive: false,
+          autoDirection: false,
+          fontSize: 20,
+          config,
+        }).svg
+      );
+      const flowchart = parsePeleFlowchart(model, root, {
+        fontSize: 20,
+        // past the corner above it, short of A
+        measureText: (text) => text.length * 11,
+      });
+
+      const [ab, ac] = flowchart.edges;
+      expect(ab.orthogonal).toBe(true);
+      expect(ac.orthogonal).toBeUndefined();
+      expect(
+        getDistance(flowchart.vertices.C, { x: ac.endX, y: ac.endY })
+      ).toBeCloseTo(1, 2);
+    });
+  });
+
   it("bounds cylinders by their caps, where their edges end", async () => {
     const flowchart = await parseFlowchart(
       "flowchart TD\n  A --> B[(Database)]"
@@ -612,16 +737,16 @@ describe("parsePele", () => {
         column: 19,
       });
     }
-    // numbered as Pele (and Mermaid) parse it, without its comments
+    // on the definition's own line, counting its comments (Mermaid doesn't)
     await expect(
       parsePele(
         `%% a comment\n%% another\nclassDiagram\n  class Animal {\n    +int age\n  Animal <|-- Duck\n`
       )
     ).rejects.toMatchObject({
       message: expect.stringMatching(
-        /^Parse error on line 4:\n {2}Animal <\|-- Duck\n-{18}\^\n/
+        /^Parse error on line 6:\n {2}Animal <\|-- Duck\n-{18}\^\n/
       ),
-      line: 4,
+      line: 6,
     });
     // errors elsewhere are kept as they are
     await expect(
@@ -1232,6 +1357,54 @@ describe("parsePele state diagrams", () => {
       expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
     }
   );
+
+  it("draws stepped transitions as elbow arrows along Pele's routes", async () => {
+    const definition = getTestCase("state-stepped-edges").definition;
+    const stepped = await parseState(definition);
+
+    expect(stepped.edges.length).toBeGreaterThan(5);
+    stepped.edges.forEach(({ reflectionPoints, orthogonal }) => {
+      expect(orthogonal).toBe(true);
+      reflectionPoints.slice(1).forEach((point, index) => {
+        const previous = reflectionPoints[index];
+        expect(
+          Math.abs(point.x - previous.x) < 0.5 ||
+            Math.abs(point.y - previous.y) < 0.5
+        ).toBe(true);
+      });
+    });
+    const arrows = (graphToExcalidraw(stepped).elements as any[]).filter(
+      ({ type }) => type === "arrow"
+    );
+    expect(arrows.length).toBeGreaterThan(5);
+    arrows.forEach((arrow) =>
+      expect(arrow).toMatchObject({ elbowed: true, roundness: null })
+    );
+
+    // not without the curve
+    const curved = await parseState(definition.replace(/^%%\{init.*\n/, ""));
+    expect(curved.edges.some(({ orthogonal }) => orthogonal)).toBe(false);
+  });
+
+  it("draws stepped transitions so when they're all straight", async () => {
+    const definition = `stateDiagram-v2
+    [*] --> Session
+    state Session {
+      [*] --> Ready
+      Ready --> Busy
+      Busy --> Ready
+    }`;
+    const stepped = (await parsePele(definition, { curve: "step" })) as State;
+    expect(stepped.edges).toHaveLength(4);
+    stepped.edges.forEach(({ orthogonal }) => expect(orthogonal).toBe(true));
+    const arrows = (graphToExcalidraw(stepped).elements as any[]).filter(
+      ({ type }) => type === "arrow"
+    );
+    arrows.forEach((arrow) => expect(arrow.elbowed).toBe(true));
+
+    const curved = await parseState(definition);
+    expect(curved.edges.some(({ orthogonal }) => orthogonal)).toBe(false);
+  });
 
   it("reads states, pseudo-states, composites and notes", async () => {
     const diagram = await parseState(`stateDiagram-v2
