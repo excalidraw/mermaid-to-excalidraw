@@ -446,6 +446,16 @@ describe("parsePele", () => {
           true,
         ],
         [`---\nmetadata: [owner: Alice]\n---\n${straight}`, "step", true],
+        [
+          `---\n# %%{init: {"flowchart": {"curve": "linear"}}}%%\nconfig: {flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `  ---\n  config:\n    flowchart:\n      curve: step\n  ---\n${straight}`,
+          undefined,
+          true,
+        ],
         // the definition's curve wins
         [
           `%%{init: {"flowchart": {"curve": "linear"}}}%%\n${straight}`,
@@ -517,6 +527,16 @@ describe("parsePele", () => {
           "---\ntitle: x\nconfig:\n    flowchart:\n        curve: step # why\n---\n",
           undefined,
         ],
+        // a directive in a YAML comment is no directive
+        [
+          '---\n# %%{init: {"flowchart": {"curve": "linear"}}}%%\nconfig: {flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
+        // indented front matter
+        [
+          "  ---\n  config:\n    flowchart:\n      curve: step\n  ---\n",
+          undefined,
+        ],
         // YAML that's no config, or quoted
         ["---\nmetadata: [owner: Alice]\n---\n", "step"],
         [
@@ -540,9 +560,37 @@ describe("parsePele", () => {
       for (const [head, curve] of cases) {
         const definition = head.includes(bent) ? head : head + bent;
         const svg = await renderPeleSvg(definition, { curve });
-        expect([definition, isSteppedDefinition(definition, curve)]).toEqual([
+        // (as `parsePele` asks, its default curve being "linear")
+        const config = { flowchart: { curve: curve ?? "linear" } };
+        expect([definition, isSteppedDefinition(definition, config)]).toEqual([
           definition,
           /Q\d/.test(svg),
+        ]);
+      }
+    });
+
+    it("asks Pele about its config only when the drawing doesn't tell", () => {
+      const config = { flowchart: { curve: "step" } };
+      for (const [definition, isAsked] of [
+        // stepped corners
+        ["flowchart TD\nA --> B\nA --> C", false],
+        // straight edges
+        ["flowchart LR\nA --> B --> C", true],
+        // edges with their own curve only
+        [
+          "flowchart LR\nA --> B --> C\nlinkStyle default interpolate step",
+          false,
+        ],
+      ] as const) {
+        const model = parse(definition, { config }) as FlowchartModel;
+        const root = parseSvg(
+          render(model, { responsive: false, autoDirection: false, config }).svg
+        );
+        const stepped = vi.fn(() => true);
+        parsePeleFlowchart(model, root, { fontSize: 20, stepped });
+        expect([definition, stepped.mock.calls.length]).toEqual([
+          definition,
+          isAsked ? 1 : 0,
         ]);
       }
     });

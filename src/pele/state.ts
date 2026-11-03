@@ -31,10 +31,10 @@ export interface PeleStateOptions {
   fontSize: number;
   /**
    * Whether Pele steps the transitions by its config (see
-   * `isSteppedDefinition`), for when their drawing doesn't tell: straight
-   * ones are drawn as elbow arrows too if so.
+   * `isSteppedDefinition`), asked only when their drawing doesn't tell:
+   * straight ones are drawn as elbow arrows too if so.
    */
-  stepped?: boolean;
+  stepped?: () => boolean;
 }
 
 // Pele's node classes, and the Mermaid state shapes they're drawn as
@@ -214,7 +214,7 @@ export const parsePeleState = (
       route,
       isLoop: start === end,
     })),
-    !!options.stepped
+    () => !!options.stepped?.()
   );
   const edges = transitions.map(({ group, route, start, end }): StateEdge => {
     const id = group.getAttribute("data-id")!;

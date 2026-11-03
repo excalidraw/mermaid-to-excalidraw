@@ -176,51 +176,49 @@ export const renderPeleSvg = async (
   return render(model, getModelRenderOptions(model, config)).svg;
 };
 
-// What Pele reads a definition's config from: its front matter (at its very
-// start), and its directives, wherever they are (in comments too)
-const FRONT_MATTER = /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
-const DIRECTIVE = /%%\{[\s\S]*?\}%%/g;
-
-// Edges that Pele draws with a bend, so stepped with rounded corners
-const STEP_PROBE = "flowchart TD\n  a --> b\n  a --> c";
+// Edges that Pele draws with a bend, so stepped with rounded corners, between
+// nodes whose ids a definition's own are unlikely to clash with
+const PROBE_ID = "peleStepProbe";
+const STEP_PROBE = `${PROBE_ID}A --> ${PROBE_ID}B\n${PROBE_ID}A --> ${PROBE_ID}C`;
 
 /**
- * Whether Pele steps a definition's flowchart edges (and state transitions)
- * by its config: by `curve`, the caller's, unless the definition's front
- * matter or directives set it, or replace the caller's whole `flowchart`
- * config. Pele doesn't tell which curve it used (and draws straight edges the
- * same with any curve), so it's asked to draw a probe under the definition's
- * config, which it reads and merges itself. Needs Pele's flowchart diagram
- * type loaded.
+ * Whether Pele steps a flowchart's edges (or a state diagram's transitions) by
+ * its config: by the caller's `config`, unless the definition's front matter
+ * or directives set the curve, or replace the caller's whole `flowchart`
+ * config. Pele doesn't tell which curve it used, and draws straight edges the
+ * same with any curve, so it's asked to draw the definition with probe edges
+ * with a bend appended: it reads and merges the configs as it does for the
+ * definition alone. As costly as laying the definition out again, so for when
+ * its drawing doesn't tell. Needs its diagram type loaded.
  */
 export const isSteppedDefinition = (
   definition: string,
-  curve: string | undefined
+  config?: RenderOptions["config"]
 ) => {
-  const header = [
-    definition.match(FRONT_MATTER)?.[0] ?? "",
-    ...(definition.match(DIRECTIVE) ?? []).map((directive) => `${directive}\n`),
-  ].join("");
-  const config: RenderOptions["config"] =
-    curve === undefined ? {} : { flowchart: { curve } };
   try {
-    const { svg } = render(parse(`${header}${STEP_PROBE}`, { config }), {
+    const model = parse(`${definition}\n${STEP_PROBE}\n`, {
+      config,
+      limit: Infinity,
+      maxEdges: Infinity,
+    });
+    const { svg } = render(model, {
       config,
       responsive: false,
       autoDirection: false,
     });
     return Array.from(
-      svg.matchAll(/class="pele-edge"[^>]*><path d="([^"]*)"/g)
-    ).some(([, path]) => /q/i.test(path));
+      svg.matchAll(
+        /class="pele-edge[^"]*"[^>]*data-id="([^"]*)"[^>]*><path d="([^"]*)"/g
+      )
+    ).some(
+      ([, id, path]) =>
+        // (a flowchart's other edges may have their own curve)
+        (model.type !== "flowchart" || id.includes(PROBE_ID)) && /q/i.test(path)
+    );
   } catch {
     // (e.g. a definition Pele can't parse either)
     return false;
   }
-};
-
-const isSteppedConfig = async (definition: string, config: PeleConfig) => {
-  await load("flowchart");
-  return isSteppedDefinition(definition, getPeleConfig(config).flowchart.curve);
 };
 
 /**
@@ -244,7 +242,7 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
-          stepped: await isSteppedConfig(definition, config),
+          stepped: () => isSteppedDefinition(definition, getPeleConfig(config)),
         });
       }
       case "sequence": {
@@ -270,7 +268,7 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
-          stepped: await isSteppedConfig(definition, config),
+          stepped: () => isSteppedDefinition(definition, getPeleConfig(config)),
         });
       }
     }

@@ -458,12 +458,12 @@ export const isSteppedPath = (path: Element | undefined) =>
 /**
  * Whether Pele drew the edges that follow a diagram's curve stepped: by their
  * drawing where it tells (stepped corners, or a slanted or curved edge that
- * isn't a loop), or else whether it steps them by its config (`stepped`), as
- * straight edges look the same with any curve.
+ * isn't a loop), or else whether it steps them by its config (`stepped`, as
+ * straight edges look the same with any curve; not asked without edges).
  */
 export const isDrawnStepped = (
   edges: { line: Element | undefined; route: Position[]; isLoop: boolean }[],
-  stepped: boolean
+  stepped: () => boolean
 ) => {
   if (edges.some(({ line }) => isSteppedPath(line))) {
     return true;
@@ -471,7 +471,7 @@ export const isDrawnStepped = (
   if (edges.some(({ route, isLoop }) => !isLoop && !isOrthogonalRoute(route))) {
     return false;
   }
-  return stepped;
+  return edges.length > 0 && stepped();
 };
 
 /**
