@@ -17,6 +17,5 @@ export const parseDiagram = (
       parseInt(config.themeVariables?.fontSize ?? "") || DEFAULT_FONT_SIZE,
     maxEdges: config.maxEdges,
     maxTextSize: config.maxTextSize,
-    curve: config.flowchart?.curve,
     elbow: config.elbow,
   });

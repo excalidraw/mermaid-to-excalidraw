@@ -36,21 +36,12 @@ The `diagramDefinition` is the mermaid diagram definition, and `config` is the m
 {
   /**
    * Whether flowchart edges and state transitions are drawn as elbow arrows
-   * (routed orthogonally): for both, or per diagram type. Where set, it
-   * overrides `flowchart.curve`. A curve set in the definition (front matter,
-   * `%%{init}%%`) wins. Swimlanes' edges are always elbow arrows.
+   * (routed orthogonally): for both, or per diagram type. A curve set in the
+   * definition (front matter, `%%{init}%%`) wins. Swimlanes' edges are always
+   * elbow arrows.
    * @default false
    */
   elbow?: boolean | { flowchart?: boolean; state?: boolean };
-  /**
-   * The flowchart curve style, which state diagrams' transitions follow too
-   * (unless `elbow` sets them). `"step"` draws them as elbow arrows, like
-   * `elbow`. A curve set in the definition (front matter, `%%{init}%%`) wins.
-   * @default "linear"
-   */
-  flowchart?: {
-    curve?: "linear" | "basis" | "step";
-  };
   /**
    * Theme variables
    * @default { fontSize: "20px" }

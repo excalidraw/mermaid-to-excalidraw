@@ -1967,17 +1967,6 @@ describe("the elbow option", () => {
     expect(await getElbowed(STATE, stateOnly)).toBe(true);
   });
 
-  it("overrides the curve where set", async () => {
-    const curve = { flowchart: { curve: "step" as const } };
-    expect(await getElbowed(FLOWCHART, { ...curve, elbow: false })).toBe(false);
-    expect(
-      await getElbowed(STATE, { ...curve, elbow: { flowchart: false } })
-    ).toBe(true);
-    expect(await getElbowed(STATE, { ...curve, elbow: { state: false } })).toBe(
-      false
-    );
-  });
-
   it("gives way to a curve set in the definition", async () => {
     const steppedState = `%%{init: {"flowchart": {"curve": "step"}}}%%\n${STATE}`;
     expect(await getElbowed(steppedState, { elbow: false })).toBe(true);

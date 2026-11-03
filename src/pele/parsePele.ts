@@ -26,7 +26,7 @@ import { parsePeleSequence } from "./sequence.js";
 import { parsePeleClass } from "./class.js";
 import { parsePeleERD } from "./er.js";
 import { parsePeleState } from "./state.js";
-import { isSteppedCurve, parseSvg, svgToDataURL } from "./svg.js";
+import { parseSvg, svgToDataURL } from "./svg.js";
 
 /**
  * The font family Excalidraw draws Excalifont (its default font) with. Pele
@@ -41,6 +41,11 @@ export interface PeleConfig {
   maxEdges?: number;
   /** Maximum number of characters in the definition. */
   maxTextSize?: number;
+  /**
+   * Pele's flowchart curve, which it steps state diagrams by too: "step"
+   * draws their edges as elbow arrows.
+   * @default "linear"
+   */
   curve?: string;
   /** Overrides `curve` where set (see `MermaidConfig.elbow`). */
   elbow?: MermaidConfig["elbow"];
@@ -86,7 +91,7 @@ const spacing = (nodeSpacing: number, rankSpacing: number) => ({
 // Diagrams' own config (front matter, `%%{init}%%`) takes precedence
 const getPeleConfig = (config: PeleConfig) => ({
   flowchart: {
-    curve: config.curve ?? MERMAID_CONFIG.flowchart.curve,
+    curve: config.curve ?? "linear",
     ...spacing(40, 48),
   },
   class: spacing(40, 56),
@@ -149,14 +154,7 @@ const resolveElbow = (definition: string, config: PeleConfig): PeleConfig => {
         ? config.elbow[type]
         : undefined
       : config.elbow;
-  const curve =
-    elbow === undefined
-      ? config.curve
-      : elbow
-      ? "step"
-      : config.curve && !isSteppedCurve(config.curve)
-      ? config.curve
-      : undefined;
+  const curve = elbow === undefined ? config.curve : elbow ? "step" : undefined;
   return { ...config, curve, elbow: undefined };
 };
 
