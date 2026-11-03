@@ -136,15 +136,17 @@ const loadDiagramType = async (definition: string) => {
   await load(type);
 };
 
+/** The model, and the definition it was parsed from (see `withLineBreakFallback`). */
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
   await loadDiagramType(definition);
-  return withLineBreakFallback(definition, async (candidate) =>
-    parse(candidate, {
+  return withLineBreakFallback(definition, async (candidate) => ({
+    model: parse(candidate, {
       limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
       maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
       config: getPeleConfig(config),
-    })
-  );
+    }),
+    parsedDefinition: candidate,
+  }));
 };
 
 const renderGraphImage = (
@@ -172,7 +174,7 @@ export const renderPeleSvg = async (
   definition: string,
   config: PeleConfig = {}
 ) => {
-  const model = await parsePeleModel(definition, config);
+  const { model } = await parsePeleModel(definition, config);
   return render(model, getModelRenderOptions(model, config)).svg;
 };
 
@@ -189,7 +191,8 @@ const STEP_PROBE = `${PROBE_ID}A --> ${PROBE_ID}B\n${PROBE_ID}A --> ${PROBE_ID}C
  * same with any curve, so it's asked to draw the definition with probe edges
  * with a bend appended: it reads and merges the configs as it does for the
  * definition alone. As costly as laying the definition out again, so for when
- * its drawing doesn't tell. Needs its diagram type loaded.
+ * its drawing doesn't tell. Needs its diagram type loaded, and the definition
+ * as Pele parsed it (e.g. after `withLineBreakFallback`).
  */
 export const isSteppedDefinition = (
   definition: string,
@@ -232,7 +235,7 @@ export const parsePele = async (
   definition: string,
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
-  const model = await parsePeleModel(definition, config);
+  const { model, parsedDefinition } = await parsePeleModel(definition, config);
 
   try {
     switch (model.type) {
@@ -242,7 +245,8 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
-          stepped: () => isSteppedDefinition(definition, getPeleConfig(config)),
+          stepped: () =>
+            isSteppedDefinition(parsedDefinition, getPeleConfig(config)),
         });
       }
       case "sequence": {
@@ -268,7 +272,8 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
-          stepped: () => isSteppedDefinition(definition, getPeleConfig(config)),
+          stepped: () =>
+            isSteppedDefinition(parsedDefinition, getPeleConfig(config)),
         });
       }
     }

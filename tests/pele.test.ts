@@ -569,6 +569,14 @@ describe("parsePele", () => {
       }
     });
 
+    it("asks Pele about the definition as it parsed it (with `<br>` replaced)", async () => {
+      const flowchart = (await parsePele(
+        '%%{init: {"flowchart": {"curve": "step"}}}%%\nflowchart LR\nWeb<br>app --> API'
+      )) as Flowchart;
+      expect(flowchart.edges).toHaveLength(1);
+      expect(flowchart.edges[0].orthogonal).toBe(true);
+    });
+
     it("asks Pele about its config only when the drawing doesn't tell", () => {
       const config = { flowchart: { curve: "step" } };
       for (const [definition, isAsked] of [
