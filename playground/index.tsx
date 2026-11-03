@@ -3,6 +3,7 @@ import {
   useCallback,
   useDeferredValue,
   useEffect,
+  useMemo,
   useRef,
 } from "react";
 import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
@@ -12,6 +13,12 @@ import ExcalidrawWrapper from "./ExcalidrawWrapper.tsx";
 import Testcases from "./Testcases.tsx";
 import { parseDiagram, type ParsedDiagram } from "../src/parseDiagram.ts";
 import GitHubCorner from "./GitHubCorner.tsx";
+import {
+  getMermaidConfig,
+  MermaidConfigContext,
+  readSteppedEdges,
+  writeSteppedEdges,
+} from "./mermaidConfig.ts";
 
 import "@excalidraw/excalidraw/index.css";
 
@@ -95,6 +102,11 @@ const App = () => {
       isUserPreference: false,
     };
   });
+  const [steppedEdges, setSteppedEdges] = useState(readSteppedEdges);
+  const mermaidConfig = useMemo(
+    () => getMermaidConfig(steppedEdges),
+    [steppedEdges]
+  );
   const isDarkMode = themeState.mode === "dark";
   const deferredMermaidData = useDeferredValue(mermaidData);
 
@@ -202,7 +214,7 @@ const App = () => {
       try {
         setActiveTestCaseIndex(activeTestCaseIndex);
 
-        const mermaid = await parseDiagram(definition);
+        const mermaid = await parseDiagram(definition, mermaidConfig);
 
         setMermaidData({
           definition,
@@ -225,11 +237,21 @@ const App = () => {
         });
       }
     },
-    []
+    [mermaidConfig]
   );
 
+  // The rendered diagram is parsed again with a changed config
+  const renderedRef = useRef({ mermaidData, activeTestCaseIndex });
+  renderedRef.current = { mermaidData, activeTestCaseIndex };
+  useEffect(() => {
+    const { mermaidData, activeTestCaseIndex } = renderedRef.current;
+    if (mermaidData.definition) {
+      handleOnChange(mermaidData.definition, activeTestCaseIndex);
+    }
+  }, [handleOnChange]);
+
   return (
-    <>
+    <MermaidConfigContext.Provider value={mermaidConfig}>
       <button
         className="playground-button"
         id="dark-mode-toggle"
@@ -248,6 +270,23 @@ const App = () => {
           <div className="playground-hero-copy">
             <p className="playground-kicker">{"Mermaid to Excalidraw"}</p>
           </div>
+          <label
+            className="playground-toggle"
+            title={
+              'Lays flowcharts and state diagrams out with curve: "step", their edges drawn as elbow arrows (a curve set in the definition wins)'
+            }
+          >
+            <input
+              type="checkbox"
+              id="stepped-edges-toggle"
+              checked={steppedEdges}
+              onChange={(event) => {
+                setSteppedEdges(event.target.checked);
+                writeSteppedEdges(event.target.checked);
+              }}
+            />
+            {"Stepped edges"}
+          </label>
           <a
             className="playground-doc-link"
             target="_blank"
@@ -288,7 +327,7 @@ const App = () => {
           apiRef={excalidrawAPIRef}
         />
       </div>
-    </>
+    </MermaidConfigContext.Provider>
   );
 };
 

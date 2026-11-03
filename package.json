@@ -25,7 +25,7 @@
   "dependencies": {
     "@excalidraw/markdown-to-text": "0.1.2",
     "nanoid": "4.0.2",
-    "pele": "1.8.0"
+    "pele": "1.13.0"
   },
   "devDependencies": {
     "@babel/core": "7.12.0",

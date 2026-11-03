@@ -5,7 +5,6 @@ import {
   detectType,
   load,
   parse,
-  PeleError,
   render,
   type DiagramType,
   type ParsedDiagramModel,
@@ -126,48 +125,6 @@ const getModelRenderOptions = (
     ? { ...getRenderOptions(config), fontFamily: EXCALIFONT_FONT_FAMILY }
     : getRenderOptions(config);
 
-/**
- * Pele reports syntax errors at the end of a definition (e.g. a missing `end`)
- * on the line after its last one, with an empty excerpt. They're moved to the
- * end of its last non-empty line instead, as Mermaid reports them: that's the
- * line Excalidraw highlights, shows and tries fixing.
- *
- * Lines are numbered as Pele (and Mermaid) parse them, i.e. without e.g. the
- * comments before them, but trailing (blank) lines are always kept.
- */
-export const pointEndOfInputErrorAtLastLine = (
-  error: unknown,
-  definition: string
-) => {
-  if (
-    !(error instanceof PeleError) ||
-    error.code !== "syntax" ||
-    // not at the end
-    error.snippet.split("\n")[0].trim()
-  ) {
-    return error;
-  }
-  const lines = definition.split(/\r?\n/);
-  let lastIndex = lines.length - 1;
-  while (lastIndex >= 0 && !lines[lastIndex].trim()) {
-    lastIndex--;
-  }
-  const line = error.line - 1 - (lines.length - 1 - lastIndex);
-  if (lastIndex < 0 || line < 1) {
-    return error;
-  }
-
-  const lastLine = lines[lastIndex];
-  const snippet = `${lastLine}\n${"-".repeat(lastLine.length)}^`;
-  error.message = error.message
-    .replace(`on line ${error.line}`, `on line ${line}`)
-    .replace(error.snippet, snippet);
-  error.line = line;
-  error.column = lastLine.length + 1;
-  error.snippet = snippet;
-  return error;
-};
-
 /** Loads the code Pele parses and renders `definition`'s diagram type with. */
 const loadDiagramType = async (definition: string) => {
   let type: DiagramType | null = null;
@@ -179,19 +136,17 @@ const loadDiagramType = async (definition: string) => {
   await load(type);
 };
 
+/** The model, and the definition it was parsed from (see `withLineBreakFallback`). */
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
-  try {
-    await loadDiagramType(definition);
-    return await withLineBreakFallback(definition, async (candidate) =>
-      parse(candidate, {
-        limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
-        maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
-        config: getPeleConfig(config),
-      })
-    );
-  } catch (error) {
-    throw pointEndOfInputErrorAtLastLine(error, definition);
-  }
+  await loadDiagramType(definition);
+  return withLineBreakFallback(definition, async (candidate) => ({
+    model: parse(candidate, {
+      limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
+      maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
+      config: getPeleConfig(config),
+    }),
+    parsedDefinition: candidate,
+  }));
 };
 
 const renderGraphImage = (
@@ -219,8 +174,54 @@ export const renderPeleSvg = async (
   definition: string,
   config: PeleConfig = {}
 ) => {
-  const model = await parsePeleModel(definition, config);
+  const { model } = await parsePeleModel(definition, config);
   return render(model, getModelRenderOptions(model, config)).svg;
+};
+
+// Edges that Pele draws with a bend, so stepped with rounded corners, between
+// nodes whose ids a definition's own are unlikely to clash with
+const PROBE_ID = "peleStepProbe";
+const STEP_PROBE = `${PROBE_ID}A --> ${PROBE_ID}B\n${PROBE_ID}A --> ${PROBE_ID}C`;
+
+/**
+ * Whether Pele steps a flowchart's edges (or a state diagram's transitions) by
+ * its config: by the caller's `config`, unless the definition's front matter
+ * or directives set the curve, or replace the caller's whole `flowchart`
+ * config. Pele doesn't tell which curve it used, and draws straight edges the
+ * same with any curve, so it's asked to draw the definition with probe edges
+ * with a bend appended: it reads and merges the configs as it does for the
+ * definition alone. As costly as laying the definition out again, so for when
+ * its drawing doesn't tell. Needs its diagram type loaded, and the definition
+ * as Pele parsed it (e.g. after `withLineBreakFallback`).
+ */
+export const isSteppedDefinition = (
+  definition: string,
+  config?: RenderOptions["config"]
+) => {
+  try {
+    const model = parse(`${definition}\n${STEP_PROBE}\n`, {
+      config,
+      limit: Infinity,
+      maxEdges: Infinity,
+    });
+    const { svg } = render(model, {
+      config,
+      responsive: false,
+      autoDirection: false,
+    });
+    return Array.from(
+      svg.matchAll(
+        /class="pele-edge[^"]*"[^>]*data-id="([^"]*)"[^>]*><path d="([^"]*)"/g
+      )
+    ).some(
+      ([, id, path]) =>
+        // (a flowchart's other edges may have their own curve)
+        (model.type !== "flowchart" || id.includes(PROBE_ID)) && /q/i.test(path)
+    );
+  } catch {
+    // (e.g. a definition Pele can't parse either)
+    return false;
+  }
 };
 
 /**
@@ -234,7 +235,7 @@ export const parsePele = async (
   definition: string,
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
-  const model = await parsePeleModel(definition, config);
+  const { model, parsedDefinition } = await parsePeleModel(definition, config);
 
   try {
     switch (model.type) {
@@ -244,6 +245,8 @@ export const parsePele = async (
         return parsePeleFlowchart(model, parseSvg(svg), {
           fontSize,
           measureText: (text) => measureExcalifontText(text, fontSize),
+          stepped: () =>
+            isSteppedDefinition(parsedDefinition, getPeleConfig(config)),
         });
       }
       case "sequence": {
@@ -269,6 +272,8 @@ export const parsePele = async (
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
+          stepped: () =>
+            isSteppedDefinition(parsedDefinition, getPeleConfig(config)),
         });
       }
     }

@@ -1,0 +1,12 @@
+%%{init: {"flowchart": {"curve": "step"}}}%%
+flowchart TD
+  A[Start] --> B{Is the request valid?}
+  B -->|yes| C[Process it]
+  B -->|no| D((Reject))
+  B -->|maybe| F[Ask again]
+  C --> G{Done?}
+  G -->|yes| H((End))
+  G -->|no| C
+  F --> B
+  D --> H
+  A --> E[Log]

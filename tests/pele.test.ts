@@ -1,6 +1,10 @@
 import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
-import { parsePele } from "../src/pele/parsePele.js";
+import {
+  isSteppedDefinition,
+  parsePele,
+  renderPeleSvg,
+} from "../src/pele/parsePele.js";
 import {
   evenOutRoute,
   getRoutePosition,
@@ -351,6 +355,332 @@ describe("parsePele", () => {
       });
   });
 
+  describe("stepped edges", () => {
+    const definition = `flowchart TD
+  A[Start] --> B{Ok?}
+  B -->|yes| C[Do]
+  B -->|no| D((End))
+  C --> D
+  A --> E[Side]`;
+    // 1 on the outline
+    const getDistance = (vertex: Flowchart["vertices"][string], point: any) =>
+      vertex!.type === "diamond"
+        ? Math.abs(point.x - (vertex!.x + vertex!.width / 2)) /
+            (vertex!.width / 2) +
+          Math.abs(point.y - (vertex!.y + vertex!.height / 2)) /
+            (vertex!.height / 2)
+        : Math.hypot(
+            (point.x - (vertex!.x + vertex!.width / 2)) / (vertex!.width / 2),
+            (point.y - (vertex!.y + vertex!.height / 2)) / (vertex!.height / 2)
+          );
+
+    it("draws them as elbow arrows along Pele's routes, onto diamonds' and circles' outline", async () => {
+      const flowchart = (await parsePele(definition, {
+        curve: "step",
+      })) as Flowchart;
+
+      expect(flowchart.edges).toHaveLength(5);
+      flowchart.edges.forEach(
+        ({ start, end, reflectionPoints, orthogonal }) => {
+          expect(orthogonal).toBe(true);
+          // turning at every point, not split
+          reflectionPoints.slice(1).forEach((point, index) => {
+            const previous = reflectionPoints[index];
+            const vertical = Math.abs(point.x - previous.x) < 0.5;
+            expect(vertical || Math.abs(point.y - previous.y) < 0.5).toBe(true);
+            const next = reflectionPoints[index + 2];
+            if (next) {
+              expect(Math.abs(next.x - point.x) < 0.5).toBe(!vertical);
+            }
+          });
+          [
+            [start, reflectionPoints[0]],
+            [end, reflectionPoints[reflectionPoints.length - 1]],
+          ].forEach(([id, point]) => {
+            const vertex = flowchart.vertices[id as string]!;
+            if (vertex.type === "diamond" || vertex.type === "circle") {
+              expect(getDistance(vertex, point)).toBeCloseTo(1, 2);
+            }
+          });
+        }
+      );
+
+      const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
+        ({ type }) => type === "arrow"
+      );
+      expect(arrows).toHaveLength(5);
+      arrows.forEach((arrow) =>
+        expect(arrow).toMatchObject({ elbowed: true, roundness: null })
+      );
+    });
+
+    it("draws them so when the definition asks for them", async () => {
+      const flowchart = await parseFlowchart(
+        `%%{init: {"flowchart": {"curve": "step"}}}%%\n${definition}`
+      );
+      expect(flowchart.edges.every(({ orthogonal }) => orthogonal)).toBe(true);
+    });
+
+    it("draws them so when they're all straight (with no corners to tell)", async () => {
+      const straight = "flowchart LR\nA -- text --> B -- text2 --> C";
+      for (const [definition, curve, orthogonal] of [
+        [straight, "step", true],
+        [
+          `%%{init: {"flowchart": {"curve": "step"}}}%%\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `---\nconfig:\n  flowchart:\n    curve: step\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `---\nconfig: {flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `---\nconfig: {themeCSS: " #foo {}", flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [`---\nmetadata: [owner: Alice]\n---\n${straight}`, "step", true],
+        [
+          `---\n# %%{init: {"flowchart": {"curve": "linear"}}}%%\nconfig: {flowchart: {curve: step}}\n---\n${straight}`,
+          undefined,
+          true,
+        ],
+        [
+          `  ---\n  config:\n    flowchart:\n      curve: step\n  ---\n${straight}`,
+          undefined,
+          true,
+        ],
+        // the definition's curve wins
+        [
+          `%%{init: {"flowchart": {"curve": "linear"}}}%%\n${straight}`,
+          "step",
+          false,
+        ],
+        [straight, undefined, false],
+      ] as const) {
+        const flowchart = (await parsePele(definition, { curve })) as Flowchart;
+        expect(flowchart.edges).toHaveLength(2);
+        flowchart.edges.forEach((edge) =>
+          expect(!!edge.orthogonal).toBe(orthogonal)
+        );
+      }
+    });
+
+    it("tells whether Pele steps edges by its config, as it merges them", async () => {
+      const bent = "flowchart TD\nA --> B\nA --> C";
+      const frontMatter = (yaml: string) => `---\nconfig:\n${yaml}\n---\n`;
+      const init = (json: string) => `%%{init: ${json}}%%\n`;
+      const step = '{"flowchart": {"curve": "step"}}';
+      const linear = '{"flowchart": {"curve": "linear"}}';
+      const cases: [string, string | undefined][] = [
+        [frontMatter("  flowchart:\n    curve: step"), undefined],
+        // directives over front matter, the last one first
+        [
+          frontMatter("  flowchart:\n    curve: linear") + init(step),
+          undefined,
+        ],
+        [
+          frontMatter("  flowchart:\n    curve: step") + init(linear),
+          undefined,
+        ],
+        [init(step) + init(linear), undefined],
+        [init(linear) + init(step), undefined],
+        // merged with each other
+        [
+          frontMatter("  flowchart:\n    curve: step") +
+            init('{"flowchart": {"nodeSpacing": 10}}'),
+          undefined,
+        ],
+        // read in comments, and after the diagram
+        [`%% ${init(step)}`, undefined],
+        [`${bent}\n${init(step)}`, undefined],
+        // but not YAML comments
+        [
+          frontMatter("  flowchart:\n    # curve: step\n    nodeSpacing: 10"),
+          undefined,
+        ],
+        ["%%{init: {'flowchart': {'curve': 'step'}}}%%\n", undefined],
+        ['%%{initialize: {"flowchart": {"curve": "step"}}}%%\n', undefined],
+        // JSON only (unquoted keys are ignored)
+        ["%%{init: {flowchart: {curve: step}}}%%\n", undefined],
+        [
+          '%%{init: {\n  "flowchart": {\n    "curve": "step"\n  }\n}}%%\n',
+          undefined,
+        ],
+        // YAML flow mappings, over lines too, quoted keys, any indentation
+        ["---\nconfig: {flowchart: {curve: step}}\n---\n", undefined],
+        ['---\nconfig: {"flowchart": {"curve": "step"}}\n---\n', undefined],
+        ["---\nconfig: {\n  flowchart: {curve: step}\n}\n---\n", undefined],
+        [frontMatter("  flowchart: {curve: step}"), undefined],
+        [
+          "---\nconfig: {theme: dark, themeCSS: [a, b], flowchart: {nodeSpacing: 10, curve: step}}\n---\n",
+          undefined,
+        ],
+        ['---\nconfig:\n  "flowchart":\n    "curve": "step"\n---\n', undefined],
+        [
+          "---\ntitle: x\nconfig:\n    flowchart:\n        curve: step # why\n---\n",
+          undefined,
+        ],
+        // a directive in a YAML comment is no directive
+        [
+          '---\n# %%{init: {"flowchart": {"curve": "linear"}}}%%\nconfig: {flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
+        // indented front matter
+        [
+          "  ---\n  config:\n    flowchart:\n      curve: step\n  ---\n",
+          undefined,
+        ],
+        // YAML that's no config, or quoted
+        ["---\nmetadata: [owner: Alice]\n---\n", "step"],
+        [
+          '---\nconfig: {themeCSS: " #foo {}", flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
+        [
+          '---\nconfig: {themeCSS: ".a { content: \\"x\\" }", flowchart: {curve: step}}\n---\n',
+          undefined,
+        ],
+        // not a mapping without the space
+        [frontMatter("  flowchart:\n    curve:step"), undefined],
+        ["---\nconfig: {flowchart: {nodeSpacing: 10}}\n---\n", "step"],
+        // only under `flowchart`
+        [frontMatter("  curve: step"), undefined],
+        // replacing the caller's whole `flowchart` config
+        [frontMatter("  flowchart:\n    nodeSpacing: 10"), "step"],
+        [frontMatter("  theme: neutral"), "step"],
+        ["", "step"],
+      ];
+      for (const [head, curve] of cases) {
+        const definition = head.includes(bent) ? head : head + bent;
+        const svg = await renderPeleSvg(definition, { curve });
+        // (as `parsePele` asks, its default curve being "linear")
+        const config = { flowchart: { curve: curve ?? "linear" } };
+        expect([definition, isSteppedDefinition(definition, config)]).toEqual([
+          definition,
+          /Q\d/.test(svg),
+        ]);
+      }
+    });
+
+    it("asks Pele about the definition as it parsed it (with `<br>` replaced)", async () => {
+      const flowchart = (await parsePele(
+        '%%{init: {"flowchart": {"curve": "step"}}}%%\nflowchart LR\nWeb<br>app --> API'
+      )) as Flowchart;
+      expect(flowchart.edges).toHaveLength(1);
+      expect(flowchart.edges[0].orthogonal).toBe(true);
+    });
+
+    it("asks Pele about its config only when the drawing doesn't tell", () => {
+      const config = { flowchart: { curve: "step" } };
+      for (const [definition, isAsked] of [
+        // stepped corners
+        ["flowchart TD\nA --> B\nA --> C", false],
+        // straight edges
+        ["flowchart LR\nA --> B --> C", true],
+        // edges with their own curve only
+        [
+          "flowchart LR\nA --> B --> C\nlinkStyle default interpolate step",
+          false,
+        ],
+      ] as const) {
+        const model = parse(definition, { config }) as FlowchartModel;
+        const root = parseSvg(
+          render(model, { responsive: false, autoDirection: false, config }).svg
+        );
+        const stepped = vi.fn(() => true);
+        parsePeleFlowchart(model, root, { fontSize: 20, stepped });
+        expect([definition, stepped.mock.calls.length]).toEqual([
+          definition,
+          isAsked ? 1 : 0,
+        ]);
+      }
+    });
+
+    it("steps edges by their own curve (`linkStyle … interpolate`)", async () => {
+      const own = (await parsePele(
+        "flowchart LR\nA --> B --> C\nlinkStyle 0 interpolate step"
+      )) as Flowchart;
+      expect(own.edges.map(({ orthogonal }) => !!orthogonal)).toEqual([
+        true,
+        false,
+      ]);
+
+      // a stepped edge doesn't make the others stepped
+      const bentOwn = (await parsePele(
+        "flowchart TD\nA --> B\nA --> C\nD --> E\nlinkStyle 0,1 interpolate step"
+      )) as Flowchart;
+      expect(bentOwn.edges.map(({ orthogonal }) => !!orthogonal)).toEqual([
+        true,
+        true,
+        false,
+      ]);
+    });
+
+    it("keeps elbow arrows orthogonal around a subgraph widened for its title", async () => {
+      const flowchart = (await parsePele(
+        `flowchart TD
+  A --> B
+  C --> A
+  A --> X
+  subgraph grp[Title line one<br>line two]
+    B --> C
+  end`,
+        { curve: "step" }
+      )) as Flowchart;
+      const arrows = (graphToExcalidraw(flowchart).elements as any[]).filter(
+        ({ type }) => type === "arrow"
+      );
+      expect(arrows).toHaveLength(4);
+      arrows.forEach((arrow) => {
+        expect(arrow.elbowed).toBe(true);
+        (arrow.points as [number, number][])
+          .slice(1)
+          .forEach((point, index) => {
+            const previous = arrow.points[index];
+            expect(
+              Math.abs(point[0] - previous[0]) < 0.5 ||
+                Math.abs(point[1] - previous[1]) < 0.5
+            ).toBe(true);
+          });
+      });
+    });
+
+    it("curves an edge into a shape enlarged past its route's first corner", () => {
+      const config = { flowchart: { curve: "step" } };
+      const model = parse(
+        "flowchart TD\n  A --> B\n  A --> C((Some long label))",
+        { config }
+      ) as FlowchartModel;
+      const root = parseSvg(
+        render(model, {
+          responsive: false,
+          autoDirection: false,
+          fontSize: 20,
+          config,
+        }).svg
+      );
+      const flowchart = parsePeleFlowchart(model, root, {
+        fontSize: 20,
+        // past the corner above it, short of A
+        measureText: (text) => text.length * 11,
+      });
+
+      const [ab, ac] = flowchart.edges;
+      expect(ab.orthogonal).toBe(true);
+      expect(ac.orthogonal).toBeUndefined();
+      expect(
+        getDistance(flowchart.vertices.C, { x: ac.endX, y: ac.endY })
+      ).toBeCloseTo(1, 2);
+    });
+  });
+
   it("bounds cylinders by their caps, where their edges end", async () => {
     const flowchart = await parseFlowchart(
       "flowchart TD\n  A --> B[(Database)]"
@@ -612,16 +942,16 @@ describe("parsePele", () => {
         column: 19,
       });
     }
-    // numbered as Pele (and Mermaid) parse it, without its comments
+    // on the definition's own line, counting its comments (Mermaid doesn't)
     await expect(
       parsePele(
         `%% a comment\n%% another\nclassDiagram\n  class Animal {\n    +int age\n  Animal <|-- Duck\n`
       )
     ).rejects.toMatchObject({
       message: expect.stringMatching(
-        /^Parse error on line 4:\n {2}Animal <\|-- Duck\n-{18}\^\n/
+        /^Parse error on line 6:\n {2}Animal <\|-- Duck\n-{18}\^\n/
       ),
-      line: 4,
+      line: 6,
     });
     // errors elsewhere are kept as they are
     await expect(
@@ -1232,6 +1562,54 @@ describe("parsePele state diagrams", () => {
       expect(graphToExcalidraw(diagram).elements.length).toBeGreaterThan(0);
     }
   );
+
+  it("draws stepped transitions as elbow arrows along Pele's routes", async () => {
+    const definition = getTestCase("state-stepped-edges").definition;
+    const stepped = await parseState(definition);
+
+    expect(stepped.edges.length).toBeGreaterThan(5);
+    stepped.edges.forEach(({ reflectionPoints, orthogonal }) => {
+      expect(orthogonal).toBe(true);
+      reflectionPoints.slice(1).forEach((point, index) => {
+        const previous = reflectionPoints[index];
+        expect(
+          Math.abs(point.x - previous.x) < 0.5 ||
+            Math.abs(point.y - previous.y) < 0.5
+        ).toBe(true);
+      });
+    });
+    const arrows = (graphToExcalidraw(stepped).elements as any[]).filter(
+      ({ type }) => type === "arrow"
+    );
+    expect(arrows.length).toBeGreaterThan(5);
+    arrows.forEach((arrow) =>
+      expect(arrow).toMatchObject({ elbowed: true, roundness: null })
+    );
+
+    // not without the curve
+    const curved = await parseState(definition.replace(/^%%\{init.*\n/, ""));
+    expect(curved.edges.some(({ orthogonal }) => orthogonal)).toBe(false);
+  });
+
+  it("draws stepped transitions so when they're all straight", async () => {
+    const definition = `stateDiagram-v2
+    [*] --> Session
+    state Session {
+      [*] --> Ready
+      Ready --> Busy
+      Busy --> Ready
+    }`;
+    const stepped = (await parsePele(definition, { curve: "step" })) as State;
+    expect(stepped.edges).toHaveLength(4);
+    stepped.edges.forEach(({ orthogonal }) => expect(orthogonal).toBe(true));
+    const arrows = (graphToExcalidraw(stepped).elements as any[]).filter(
+      ({ type }) => type === "arrow"
+    );
+    arrows.forEach((arrow) => expect(arrow.elbowed).toBe(true));
+
+    const curved = await parseState(definition);
+    expect(curved.edges.some(({ orthogonal }) => orthogonal)).toBe(false);
+  });
 
   it("reads states, pseudo-states, composites and notes", async () => {
     const diagram = await parseState(`stateDiagram-v2

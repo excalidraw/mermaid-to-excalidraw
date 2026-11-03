@@ -434,6 +434,46 @@ const lengthenRouteEnd = (route: Position[], minLength: number) => {
   });
 };
 
+/** Whether every segment of a route is horizontal or vertical. */
+export const isOrthogonalRoute = (route: Position[]) =>
+  route.every(
+    (point, index) =>
+      index === 0 ||
+      Math.abs(point.x - route[index - 1].x) < 0.5 ||
+      Math.abs(point.y - route[index - 1].y) < 0.5
+  );
+
+/** Pele's stepped curves (it draws `stepBefore` and `stepAfter` as `step`). */
+export const isSteppedCurve = (curve: string | undefined) =>
+  /^step/.test(curve ?? "");
+
+/**
+ * Whether Pele drew an edge path stepped (e.g. with `curve: "step"`, set in a
+ * definition too): stepped routes are the only ones it rounds the corners of,
+ * with quadratic curves.
+ */
+export const isSteppedPath = (path: Element | undefined) =>
+  /q/i.test(path?.getAttribute("d") || "");
+
+/**
+ * Whether Pele drew the edges that follow a diagram's curve stepped: by their
+ * drawing where it tells (stepped corners, or a slanted or curved edge that
+ * isn't a loop), or else whether it steps them by its config (`stepped`, as
+ * straight edges look the same with any curve; not asked without edges).
+ */
+export const isDrawnStepped = (
+  edges: { line: Element | undefined; route: Position[]; isLoop: boolean }[],
+  stepped: () => boolean
+) => {
+  if (edges.some(({ line }) => isSteppedPath(line))) {
+    return true;
+  }
+  if (edges.some(({ route, isLoop }) => !isLoop && !isOrthogonalRoute(route))) {
+    return false;
+  }
+  return edges.length > 0 && stepped();
+};
+
 /**
  * Pele ends routes in short straight stubs, room for its small arrowheads:
  * Excalidraw's bigger ones would reach into the bends after them. The bends

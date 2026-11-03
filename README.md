@@ -35,11 +35,13 @@ The `diagramDefinition` is the mermaid diagram definition, and `config` is the m
 ```ts
 {
   /**
-   * The flowchart curve style.
+   * The flowchart curve style, which state diagrams' transitions follow too.
+   * `"step"` draws them as elbow arrows. A curve set in the definition (front
+   * matter, `%%{init}%%`) wins.
    * @default "linear"
    */
   flowchart?: {
-    curve?: "linear" | "basis";
+    curve?: "linear" | "basis" | "step";
   };
   /**
    * Theme variables

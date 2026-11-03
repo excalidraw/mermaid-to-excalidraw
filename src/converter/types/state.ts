@@ -14,6 +14,7 @@ import {
 import {
   computeExcalidrawVertexLabelStyle,
   computeExcalidrawVertexStyle,
+  getElbowArrowProps,
   measureLabelLineWidthAtFontSize,
 } from "../helpers.js";
 import {
@@ -438,6 +439,7 @@ const createArrowElement = (edge: StateEdge): ValidLinearElement => {
     strokeStyle: edge.strokeStyle || "solid",
     endArrowhead: edge.isNoteEdge ? null : "triangle",
     roundness: { type: 2 },
+    ...(edge.orthogonal ? getElbowArrowProps(points) : {}),
     start: { id: edge.start },
     end: { id: edge.end },
     ...(edge.text

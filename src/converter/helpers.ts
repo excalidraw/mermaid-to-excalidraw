@@ -1,6 +1,7 @@
 import type { ExcalidrawTextElement } from "@excalidraw/excalidraw/element/types";
 import type { Arrowhead } from "@excalidraw/excalidraw/element/types";
 import type { ValidContainer } from "@excalidraw/excalidraw/element/transform";
+import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import {
   DEFAULT_TEXT_COLOR,
   NODE_BACKGROUND_COLOR,
@@ -245,3 +246,18 @@ export const createTitleBandElement = ({
     },
   };
 };
+
+/**
+ * An elbow arrow along an orthogonal route: it stays orthogonal when what it
+ * connects is moved. Excalidraw routes elbow arrows itself, so the route's
+ * middle segments are fixed where they are (the first and last can't be).
+ */
+export const getElbowArrowProps = (points: LocalPoint[]) => ({
+  elbowed: true,
+  roundness: null,
+  fixedSegments: points.slice(2, -1).map((end, index) => ({
+    start: points[index + 1],
+    end,
+    index: index + 2,
+  })),
+});

@@ -23,10 +23,18 @@ import {
   getStyleColor,
   getStyleValue,
   getTextLines,
+  isDrawnStepped,
+  isOrthogonalRoute,
 } from "./svg.js";
 
 export interface PeleStateOptions {
   fontSize: number;
+  /**
+   * Whether Pele steps the transitions by its config (see
+   * `isSteppedDefinition`), asked only when their drawing doesn't tell:
+   * straight ones are drawn as elbow arrows too if so.
+   */
+  stepped?: () => boolean;
 }
 
 // Pele's node classes, and the Mermaid state shapes they're drawn as
@@ -188,10 +196,9 @@ export const parsePeleState = (
 
   const labels = getElementsByDataId(root, "g.pele-edge-label[data-id]");
   const texts: Text[] = [];
-  const edges = Array.from(
+  const transitions = Array.from(
     root.querySelectorAll("g.pele-edges > g.pele-edge[data-id]")
-  ).flatMap((group): StateEdge[] => {
-    const id = group.getAttribute("data-id")!;
+  ).flatMap((group) => {
     const edge = readEdge(group, root);
     if (!edge || edge.route.length < 2) {
       return [];
@@ -199,9 +206,21 @@ export const parsePeleState = (
     const route = lengthenRouteEnds(edge.route);
     const start = findNodeAt(route[0], allNodes);
     const end = findNodeAt(route[route.length - 1], allNodes);
-    if (!start || !end) {
-      return [];
-    }
+    return start && end ? [{ group, line: edge.line, route, start, end }] : [];
+  });
+  const stepped = isDrawnStepped(
+    transitions.map(({ line, route, start, end }) => ({
+      line,
+      route,
+      isLoop: start === end,
+    })),
+    () => !!options.stepped?.()
+  );
+  const edges = transitions.map(({ group, route, start, end }): StateEdge => {
+    const id = group.getAttribute("data-id")!;
+    // Stepped routes stay orthogonal (but e.g. a self-transition is still a
+    // curve)
+    const orthogonal = stepped && isOrthogonalRoute(route);
 
     const label = labels.get(id)?.querySelector("text");
     // A self-transition is a small loop, which its label would cover: the
@@ -216,30 +235,31 @@ export const parsePeleState = (
     const labelBounds =
       label && !isSelfTransition ? getShapeBounds(labels.get(id)!, root) : null;
 
-    return [
-      {
-        id,
-        start: start.id,
-        end: end.id,
-        text: label && !isSelfTransition ? getTextLines(label).join("\n") : "",
-        startX: first.x,
-        startY: first.y,
-        endX: last.x,
-        endY: last.y,
-        reflectionPoints: evenOutRoute(route),
-        strokeColor: getStyleColor(group, "stroke"),
-        strokeStyle: isNoteEdge ? "dashed" : undefined,
-        isNoteEdge,
-        ...(labelBounds
-          ? {
-              labelPosition: getRoutePosition(route, {
-                x: labelBounds.x + labelBounds.width / 2,
-                y: labelBounds.y + labelBounds.height / 2,
-              }),
-            }
-          : {}),
-      },
-    ];
+    return {
+      id,
+      start: start.id,
+      end: end.id,
+      text: label && !isSelfTransition ? getTextLines(label).join("\n") : "",
+      startX: first.x,
+      startY: first.y,
+      endX: last.x,
+      endY: last.y,
+      // (curved through, its points are evened out for Excalidraw not to
+      // overshoot them)
+      reflectionPoints: orthogonal ? route : evenOutRoute(route),
+      ...(orthogonal ? { orthogonal } : {}),
+      strokeColor: getStyleColor(group, "stroke"),
+      strokeStyle: isNoteEdge ? "dashed" : undefined,
+      isNoteEdge,
+      ...(labelBounds
+        ? {
+            labelPosition: getRoutePosition(route, {
+              x: labelBounds.x + labelBounds.width / 2,
+              y: labelBounds.y + labelBounds.height / 2,
+            }),
+          }
+        : {}),
+    };
   });
 
   // The separators between concurrent regions of a composite state

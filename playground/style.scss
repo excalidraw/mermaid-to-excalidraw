@@ -801,3 +801,23 @@ body.dark-mode .diagram-preview-panel {
     padding: 18px;
   }
 }
+
+.playground-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.playground-toggle:hover {
+  border-color: var(--panel-border-strong);
+}

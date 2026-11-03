@@ -6,7 +6,9 @@ import {
 import { DEFAULT_FONT_SIZE } from "../src/constants";
 import { graphToExcalidraw } from "../src/graphToExcalidraw";
 import { parseDiagram } from "../src/parseDiagram";
+import type { MermaidConfig } from "../src/interfaces";
 import { ensureExcalidrawFontsLoaded } from "./loadExcalidrawFonts";
+import { useMermaidConfig } from "./mermaidConfig";
 
 interface ExcalidrawSvgPreviewProps {
   definition: string;
@@ -25,8 +27,11 @@ const runSequentially = <T,>(task: () => Promise<T>) => {
   return run;
 };
 
-const generateExcalidrawSvg = async (definition: string): Promise<string> => {
-  const cacheKey = definition;
+const generateExcalidrawSvg = async (
+  definition: string,
+  config: MermaidConfig
+): Promise<string> => {
+  const cacheKey = `${JSON.stringify(config)}\n${definition}`;
   const cachedSvg = svgCache.get(cacheKey);
   if (cachedSvg) {
     return cachedSvg;
@@ -38,7 +43,7 @@ const generateExcalidrawSvg = async (definition: string): Promise<string> => {
   }
 
   const renderPromise = runSequentially(async () => {
-    const parsedMermaid = await parseDiagram(definition);
+    const parsedMermaid = await parseDiagram(definition, config);
     const { elements, files } = graphToExcalidraw(parsedMermaid, {
       fontSize: DEFAULT_FONT_SIZE,
     });
@@ -74,6 +79,7 @@ export const ExcalidrawSvgPreview = ({
   const [svg, setSvg] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const config = useMermaidConfig();
 
   useEffect(() => {
     let isCancelled = false;
@@ -81,7 +87,7 @@ export const ExcalidrawSvgPreview = ({
     setIsLoading(true);
     setError(null);
 
-    generateExcalidrawSvg(definition)
+    generateExcalidrawSvg(definition, config)
       .then((renderedSvg) => {
         if (!isCancelled) {
           setSvg(renderedSvg);
@@ -102,7 +108,7 @@ export const ExcalidrawSvgPreview = ({
     return () => {
       isCancelled = true;
     };
-  }, [definition]);
+  }, [definition, config]);
 
   if (error) {
     return <div className="preview-error">{error}</div>;
