@@ -273,7 +273,7 @@ const App = () => {
           <label
             className="playground-toggle"
             title={
-              'Lays flowcharts and state diagrams out with curve: "step", their edges drawn as elbow arrows (a curve set in the definition wins)'
+              "Draws flowchart edges and state transitions as elbow arrows (elbow: true; a curve set in the definition wins)"
             }
           >
             <input

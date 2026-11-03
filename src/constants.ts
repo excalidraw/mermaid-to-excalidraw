@@ -15,7 +15,6 @@ export const DEFAULT_TEXT_COLOR = "#1e1e1e";
 
 // The defaults of the Mermaid config options supported (see `MermaidConfig`)
 export const MERMAID_CONFIG = {
-  flowchart: { curve: "linear" },
   maxEdges: 500,
   maxTextSize: 50000,
 } as const;

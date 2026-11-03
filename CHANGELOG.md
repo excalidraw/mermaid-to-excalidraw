@@ -1,5 +1,13 @@
 ## Unreleased
 
+### Features
+
+- Add the `elbow` config option, which draws flowchart edges and state transitions as elbow arrows, for both (`elbow: true`) or per diagram type (`elbow: { flowchart: true }`).
+
+### Changes
+
+- Removed the `flowchart.curve` config option: use `elbow` instead of `curve: "step"`. Other curves only nudged Pele's layout (edges that aren't elbow arrows are drawn curved either way). A curve set in the definition (front matter, `%%{init}%%`) still applies.
+
 ### Improvements
 
 - Draw class diagram namespaces like flowchart subgraphs, as boxes around their classes with their titles where Pele draws them, instead of as frames.

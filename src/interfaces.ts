@@ -248,14 +248,13 @@ export interface GraphImage {
  */
 export interface MermaidConfig {
   /**
-   * The flowchart curve style, which state diagrams' transitions follow too.
-   * `"step"` draws them as elbow arrows. A curve set in the definition (front
-   * matter, `%%{init}%%`) wins.
-   * @default "linear"
+   * Whether flowchart edges and state transitions are drawn as elbow arrows
+   * (routed orthogonally): for both, or per diagram type. A curve set in the
+   * definition (front matter, `%%{init}%%`) wins. Swimlanes' edges are always
+   * elbow arrows.
+   * @default false
    */
-  flowchart?: {
-    curve?: "linear" | "basis" | "step";
-  };
+  elbow?: boolean | { flowchart?: boolean; state?: boolean };
   /**
    * Theme variables
    * @default { fontSize: "20px" }

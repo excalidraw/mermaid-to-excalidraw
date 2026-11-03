@@ -21,12 +21,11 @@ export const writeSteppedEdges = (steppedEdges: boolean) => {
 
 /**
  * The config the playground parses and renders diagrams with. Stepped edges
- * (Pele's `curve: "step"`) apply to flowcharts and state diagrams, which
- * Pele routes with the flowchart's curve. Swimlanes are stepped anyway, and
- * Pele ignores the curve for class and ER diagrams.
+ * (elbow arrows) apply to flowcharts and state diagrams. Swimlanes are stepped
+ * anyway, and class and ER diagrams never are.
  */
 export const getMermaidConfig = (steppedEdges: boolean): MermaidConfig =>
-  steppedEdges ? { flowchart: { curve: "step" } } : {};
+  steppedEdges ? { elbow: true } : {};
 
 export const MermaidConfigContext = createContext<MermaidConfig>({});
 
