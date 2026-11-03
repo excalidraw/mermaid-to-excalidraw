@@ -6,7 +6,6 @@ import {
   load,
   parse,
   render,
-  type DiagramType,
   type ParsedDiagramModel,
   type RenderOptions,
 } from "pele/lazy";
@@ -19,6 +18,7 @@ import {
   Class,
   ERD,
   State,
+  type MermaidConfig,
 } from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
 import { parsePeleFlowchart } from "./flowchart.js";
@@ -26,7 +26,7 @@ import { parsePeleSequence } from "./sequence.js";
 import { parsePeleClass } from "./class.js";
 import { parsePeleERD } from "./er.js";
 import { parsePeleState } from "./state.js";
-import { parseSvg, svgToDataURL } from "./svg.js";
+import { isSteppedCurve, parseSvg, svgToDataURL } from "./svg.js";
 
 /**
  * The font family Excalidraw draws Excalifont (its default font) with. Pele
@@ -42,6 +42,8 @@ export interface PeleConfig {
   /** Maximum number of characters in the definition. */
   maxTextSize?: number;
   curve?: string;
+  /** Overrides `curve` where set (see `MermaidConfig.elbow`). */
+  elbow?: MermaidConfig["elbow"];
 }
 
 let canvasContext:
@@ -125,20 +127,43 @@ const getModelRenderOptions = (
     ? { ...getRenderOptions(config), fontFamily: EXCALIFONT_FONT_FAMILY }
     : getRenderOptions(config);
 
-/** Loads the code Pele parses and renders `definition`'s diagram type with. */
-const loadDiagramType = async (definition: string) => {
-  let type: DiagramType | null = null;
+const detectDiagramType = (definition: string) => {
   try {
-    type = detectType(definition);
+    return detectType(definition);
   } catch {
     // `parse` throws it
+    return null;
   }
-  await load(type);
+};
+
+/**
+ * `config` with its `elbow` resolved to the curve Pele lays `definition`'s
+ * diagram type out with: Pele steps flowcharts and state diagrams by the
+ * flowchart curve.
+ */
+const resolveElbow = (definition: string, config: PeleConfig): PeleConfig => {
+  const type = detectDiagramType(definition);
+  const elbow =
+    typeof config.elbow === "object"
+      ? type === "flowchart" || type === "state"
+        ? config.elbow[type]
+        : undefined
+      : config.elbow;
+  const curve =
+    elbow === undefined
+      ? config.curve
+      : elbow
+      ? "step"
+      : config.curve && !isSteppedCurve(config.curve)
+      ? config.curve
+      : undefined;
+  return { ...config, curve, elbow: undefined };
 };
 
 /** The model, and the definition it was parsed from (see `withLineBreakFallback`). */
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
-  await loadDiagramType(definition);
+  // Loads the code Pele parses and renders the diagram type with
+  await load(detectDiagramType(definition));
   return withLineBreakFallback(definition, async (candidate) => ({
     model: parse(candidate, {
       limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
@@ -174,6 +199,7 @@ export const renderPeleSvg = async (
   definition: string,
   config: PeleConfig = {}
 ) => {
+  config = resolveElbow(definition, config);
   const { model } = await parsePeleModel(definition, config);
   return render(model, getModelRenderOptions(model, config)).svg;
 };
@@ -235,6 +261,7 @@ export const parsePele = async (
   definition: string,
   config: PeleConfig = {}
 ): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
+  config = resolveElbow(definition, config);
   const { model, parsedDefinition } = await parsePeleModel(definition, config);
 
   try {

@@ -18,4 +18,5 @@ export const parseDiagram = (
     maxEdges: config.maxEdges,
     maxTextSize: config.maxTextSize,
     curve: config.flowchart?.curve,
+    elbow: config.elbow,
   });

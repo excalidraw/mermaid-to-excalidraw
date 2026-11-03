@@ -1,5 +1,6 @@
 import { NODE_BACKGROUND_COLOR } from "../src/constants.js";
 import { graphToExcalidraw } from "../src/graphToExcalidraw.js";
+import { parseDiagram } from "../src/parseDiagram.js";
 import {
   isSteppedDefinition,
   parsePele,
@@ -17,6 +18,7 @@ import { parsePeleFlowchart } from "../src/pele/flowchart.js";
 import { load, parse, render, type FlowchartModel } from "pele/lazy";
 import type {
   Flowchart,
+  MermaidConfig,
   Sequence,
   Class,
   ERD,
@@ -1928,5 +1930,63 @@ describe("z-order and fills", () => {
     expect(
       arrows.map(({ start, end }) => [start?.id, end?.id]).flat()
     ).not.toEqual(expect.arrayContaining([expect.stringMatching(/namespace/)]));
+  });
+});
+
+describe("the elbow option", () => {
+  const FLOWCHART = `flowchart LR
+  A --> B --> C`;
+  const STATE = `stateDiagram-v2
+  [*] --> Ready
+  Ready --> Busy
+  Busy --> Ready`;
+
+  // Whether all edges are drawn as elbow arrows (or none)
+  const getElbowed = async (definition: string, config: MermaidConfig) => {
+    const graph = (await parseDiagram(definition, config)) as Flowchart | State;
+    expect(graph.edges.length).toBeGreaterThan(1);
+    const elbowed = graph.edges.map(({ orthogonal }) => !!orthogonal);
+    expect(new Set(elbowed).size).toBe(1);
+    return elbowed[0];
+  };
+
+  it("draws flowcharts' edges and state transitions as elbow arrows", async () => {
+    expect(await getElbowed(FLOWCHART, { elbow: true })).toBe(true);
+    expect(await getElbowed(STATE, { elbow: true })).toBe(true);
+    expect(await getElbowed(FLOWCHART, {})).toBe(false);
+    expect(await getElbowed(STATE, {})).toBe(false);
+  });
+
+  it("sets them per diagram type", async () => {
+    const flowchartOnly = { elbow: { flowchart: true } };
+    expect(await getElbowed(FLOWCHART, flowchartOnly)).toBe(true);
+    expect(await getElbowed(STATE, flowchartOnly)).toBe(false);
+
+    const stateOnly = { elbow: { state: true } };
+    expect(await getElbowed(FLOWCHART, stateOnly)).toBe(false);
+    expect(await getElbowed(STATE, stateOnly)).toBe(true);
+  });
+
+  it("overrides the curve where set", async () => {
+    const curve = { flowchart: { curve: "step" as const } };
+    expect(await getElbowed(FLOWCHART, { ...curve, elbow: false })).toBe(false);
+    expect(
+      await getElbowed(STATE, { ...curve, elbow: { flowchart: false } })
+    ).toBe(true);
+    expect(await getElbowed(STATE, { ...curve, elbow: { state: false } })).toBe(
+      false
+    );
+  });
+
+  it("gives way to a curve set in the definition", async () => {
+    const steppedState = `%%{init: {"flowchart": {"curve": "step"}}}%%\n${STATE}`;
+    expect(await getElbowed(steppedState, { elbow: false })).toBe(true);
+    const curvedFlowchart = `---
+config:
+  flowchart:
+    curve: basis
+---
+${FLOWCHART}`;
+    expect(await getElbowed(curvedFlowchart, { elbow: true })).toBe(false);
   });
 });

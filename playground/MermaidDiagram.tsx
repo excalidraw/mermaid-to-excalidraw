@@ -10,7 +10,9 @@ interface MermaidProps {
 /** The diagram as Pele lays it out for conversion. */
 export const MermaidDiagram = ({ definition }: MermaidProps) => {
   const [svg, setSvg] = useState("");
-  const curve = useMermaidConfig().flowchart?.curve;
+  const config = useMermaidConfig();
+  const curve = config.flowchart?.curve;
+  const elbow = config.elbow;
 
   useEffect(() => {
     let isCancelled = false;
@@ -20,7 +22,7 @@ export const MermaidDiagram = ({ definition }: MermaidProps) => {
       return;
     }
 
-    renderPeleSvg(definition, { fontSize: DEFAULT_FONT_SIZE, curve })
+    renderPeleSvg(definition, { fontSize: DEFAULT_FONT_SIZE, curve, elbow })
       .then((renderedSvg) => {
         if (!isCancelled) {
           setSvg(renderedSvg);
@@ -35,7 +37,7 @@ export const MermaidDiagram = ({ definition }: MermaidProps) => {
     return () => {
       isCancelled = true;
     };
-  }, [definition, curve]);
+  }, [definition, curve, elbow]);
 
   return <div className="mermaid" dangerouslySetInnerHTML={{ __html: svg }} />;
 };
