@@ -24,14 +24,7 @@ import {
   type MermaidConfig,
 } from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
-import { parsePeleFlowchart } from "./flowchart.js";
-import { parsePeleSequence } from "./sequence.js";
-import { parsePeleClass } from "./class.js";
-import { parsePeleERD } from "./er.js";
-import { parsePeleState } from "./state.js";
-import { hasOverlappingTasks, parsePeleGantt } from "./gantt.js";
-import { countOverlaps, parsePeleQuadrant } from "./quadrant.js";
-import { parsePeleTimeline } from "./timeline.js";
+import { isConvertedDiagramType, loadDiagramType } from "../diagrams/index.js";
 import { parseSvg, svgToDataURL } from "./svg.js";
 
 /**
@@ -122,25 +115,13 @@ const getRenderOptions = (config: PeleConfig): RenderOptions => ({
   config: getPeleConfig(config),
 });
 
-/** Diagram types converted to Excalidraw elements (others become images). */
-const CONVERTED_DIAGRAM_TYPES = new Set<ParsedDiagramModel["type"]>([
-  "flowchart",
-  "sequence",
-  "class",
-  "er",
-  "state",
-  "gantt",
-  "quadrantChart",
-  "timeline",
-]);
-
 // Converted diagrams are measured with Excalifont, the font their labels are
 // drawn with in Excalidraw.
 const getModelRenderOptions = (
   model: ParsedDiagramModel,
   config: PeleConfig
 ): RenderOptions =>
-  CONVERTED_DIAGRAM_TYPES.has(model.type)
+  isConvertedDiagramType(model.type)
     ? { ...getRenderOptions(config), fontFamily: EXCALIFONT_FONT_FAMILY }
     : getRenderOptions(config);
 
@@ -178,8 +159,13 @@ const getParseOptions = (config: PeleConfig) => ({
 
 /** The model, and the definition it was parsed from (see `withLineBreakFallback`). */
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
-  // Loads the code Pele parses and renders the diagram type with
-  await load(detectDiagramType(definition));
+  // Loads the code Pele parses and renders the diagram type with, and the
+  // code that reads and converts it
+  const type = detectDiagramType(definition);
+  await Promise.all([
+    load(type),
+    isConvertedDiagramType(type) ? loadDiagramType(type) : null,
+  ]);
   return withLineBreakFallback(definition, async (candidate) => ({
     model: parse(candidate, getParseOptions(config)),
     parsedDefinition: candidate,
@@ -208,10 +194,13 @@ const renderGraphImage = (
  * run into the bars and names after them: such charts are laid out with a row
  * per task instead.
  */
-const layOutGantt = (
+const layOutGantt = async (
   model: Extract<ParsedDiagramModel, { type: "gantt" }>,
   config: PeleConfig
 ) => {
+  const { hasOverlappingTasks, parsePeleGantt } = await loadDiagramType(
+    "gantt"
+  );
   const layOut = () => {
     const { svg } = render(model, getModelRenderOptions(model, config));
     const chart = parsePeleGantt(parseSvg(svg), {
@@ -258,11 +247,14 @@ const withQuadrantSize = (
  * laid out bigger (the points spread out, their names don't grow), at the
  * smallest size without overlaps, or else with the fewest.
  */
-const layOutQuadrant = (
+const layOutQuadrant = async (
   model: Extract<ParsedDiagramModel, { type: "quadrantChart" }>,
   parsedDefinition: string,
   config: PeleConfig
 ) => {
+  const { countOverlaps, parsePeleQuadrant } = await loadDiagramType(
+    "quadrantChart"
+  );
   const fontSize = config.fontSize ?? DEFAULT_FONT_SIZE;
   const layOut = (model: ParsedDiagramModel) => {
     const { svg, width, height } = render(
@@ -319,10 +311,10 @@ export const renderPeleSvg = async (
   config = resolveElbow(definition, config);
   const { model, parsedDefinition } = await parsePeleModel(definition, config);
   if (model.type === "gantt") {
-    return layOutGantt(model, config).svg;
+    return (await layOutGantt(model, config)).svg;
   }
   if (model.type === "quadrantChart") {
-    return layOutQuadrant(model, parsedDefinition, config).svg;
+    return (await layOutQuadrant(model, parsedDefinition, config)).svg;
   }
   return render(model, getModelRenderOptions(model, config)).svg;
 };
@@ -401,6 +393,7 @@ export const parsePele = async (
   try {
     switch (model.type) {
       case "flowchart": {
+        const { parsePeleFlowchart } = await loadDiagramType("flowchart");
         const { svg } = render(model, getModelRenderOptions(model, config));
         const fontSize = config.fontSize ?? DEFAULT_FONT_SIZE;
         return parsePeleFlowchart(model, parseSvg(svg), {
@@ -411,6 +404,7 @@ export const parsePele = async (
         });
       }
       case "sequence": {
+        const { parsePeleSequence } = await loadDiagramType("sequence");
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleSequence(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
@@ -418,18 +412,21 @@ export const parsePele = async (
         });
       }
       case "class": {
+        const { parsePeleClass } = await loadDiagramType("class");
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleClass(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
         });
       }
       case "er": {
+        const { parsePeleERD } = await loadDiagramType("er");
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleERD(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
         });
       }
       case "state": {
+        const { parsePeleState } = await loadDiagramType("state");
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleState(model, parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
@@ -438,12 +435,13 @@ export const parsePele = async (
         });
       }
       case "gantt": {
-        return layOutGantt(model, config).chart;
+        return (await layOutGantt(model, config)).chart;
       }
       case "quadrantChart": {
-        return layOutQuadrant(model, parsedDefinition, config).chart;
+        return (await layOutQuadrant(model, parsedDefinition, config)).chart;
       }
       case "timeline": {
+        const { parsePeleTimeline } = await loadDiagramType("timeline");
         const { svg } = render(model, getModelRenderOptions(model, config));
         return parsePeleTimeline(parseSvg(svg), {
           fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
