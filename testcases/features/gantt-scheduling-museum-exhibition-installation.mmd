@@ -1,0 +1,26 @@
+%% model: sonnet_5_5
+%% prompt: 53. Scheduling a museum exhibition installation from a task list (prompts.md)
+gantt
+    title Temporary Museum Exhibition Installation
+    dateFormat YYYY-MM-DD
+    excludes weekends, 2025-02-17, 2025-03-03
+
+    section Loans
+    Confirm incoming loans :done, crit, lend, 2025-02-03, 8d
+    Arrange couriers :done, cour, after lend, 4d
+
+    section Build
+    Build display cases :active, case, 2025-02-10, 10d
+    Paint and light walls :wall, after case, 6d
+
+    section Install
+    Receive shipments :crit, ship, after cour, 3d
+    Condition reports :crit, cond, after ship, 2d
+    Install objects :crit, inst, after cond wall, 5d
+    Mount labels :lab, after inst, 2d
+
+    section Opening
+    Press preview :milestone, pv, after lab, 0d
+    Public opening :milestone, crit, open, after pv, 0d
+
+    click open href "https://example.org/exhibitions/tides"

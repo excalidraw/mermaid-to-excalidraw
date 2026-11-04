@@ -1,0 +1,14 @@
+gantt
+    title Sprint with weekends off
+    dateFormat YYYY-MM-DD
+    excludes weekends
+    topAxis
+    todayMarker off
+    section Sprint
+        Planning     :plan, 2024-05-06, 1d
+        Implement    :impl, after plan, 8d
+        Code freeze  :vert, freeze, 2024-05-16, 0d
+        Demo         :milestone, demo, after impl, 0d
+    section Docs
+        Changelog    :log, 2024-05-13, 3d
+    click impl href "https://example.com/sprint"

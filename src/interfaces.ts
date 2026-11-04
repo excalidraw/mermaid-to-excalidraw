@@ -234,6 +234,52 @@ export interface State {
   texts?: Text[];
 }
 
+/** A rectangle's bounds. */
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** A Gantt task: a bar (or a milestone's diamond) and its name. */
+export interface GanttTask {
+  id: string;
+  /** Not drawn for tasks without dates (`undefined`), only labeled. */
+  shape?: "bar" | "milestone";
+  /** The bar's (or diamond's) bounds. */
+  box?: Box;
+  status?: "active" | "done";
+  crit: boolean;
+  /** Where Pele drew the name: in the bar, or next to it. */
+  label: { inside: boolean; text: Text };
+  /** The link set by `click <id> href`. */
+  link?: string;
+}
+
+/** A Gantt chart, its parts listed in the order they're drawn (back to front). */
+export interface Gantt {
+  type: "gantt";
+  /** The (filled, every other) sections' background bands. */
+  sections: Box[];
+  /** Days excluded by `excludes` (e.g. weekends). */
+  excluded: Box[];
+  /** The ticks' (dotted) lines across the chart. */
+  gridLines: Line[];
+  /** The time axis' lines, below the chart (and above it, with `topAxis`). */
+  axisLines: Line[];
+  /** `vert` tasks' (dashed) lines across the chart. */
+  verticals: Line[];
+  /** The line marking today (unless `todayMarker off`), styled as set. */
+  today?: Line & { opacity?: number };
+  tasks: GanttTask[];
+  /** Sections', ticks' and `vert` tasks' labels, and the title. */
+  sectionLabels: Text[];
+  axisLabels: Text[];
+  verticalLabels: Text[];
+  title?: Text;
+}
+
 export interface GraphImage {
   type: "graphImage";
   mimeType: string;

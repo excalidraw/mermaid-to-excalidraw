@@ -1,0 +1,37 @@
+%% model: sonnet_5_5
+%% prompt: 51. Renovating a small café kitchen (prompts.md)
+gantt
+    title Café Kitchen Renovation
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+    excludes weekends
+
+    section Permits
+    Submit permit application      :done, permit1, 2025-06-02, 3d
+    Council review                 :done, permit2, after permit1, 5d
+    Building permit issued         :done, milestone, m1, after permit2, 0d
+
+    section Demolition
+    Strip old fixtures and equipment :active, demo1, after m1, 4d
+    Remove walls and old flooring    :demo2, after demo1, 3d
+    Haul away debris                 :demo3, after demo2, 2d
+
+    section Rough-in
+    Plumbing rough-in              :crit, plumb, after demo3, 8d
+    Electrical rough-in            :crit, elec, after demo3, 7d
+    Ventilation and hood ducting   :crit, vent, after demo3, 9d
+    Rough-in inspection            :crit, milestone, m2, after plumb elec vent, 0d
+
+    section Fit-out
+    Drywall and wall finishes      :fit1, after m2, 5d
+    Flooring and wall tiling       :crit, fit2, after fit1, 5d
+    Install cabinets and counters  :fit3, after fit1, 6d
+    Install kitchen equipment      :crit, fit4, after fit2 fit3, 4d
+    Final connections and testing  :crit, fit5, after fit4, 3d
+    Deep clean                     :crit, fit6, after fit5, 2d
+    Health inspection              :crit, milestone, m3, after fit6, 0d
+
+    section Handover
+    Staff training                 :hand1, after m3, 3d
+    Snag list fixes                :hand2, after m3, 3d
+    Handover to café owner         :milestone, m4, after hand1 hand2, 0d

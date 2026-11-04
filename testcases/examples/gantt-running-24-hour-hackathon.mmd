@@ -1,0 +1,37 @@
+%% model: gemini_3_8_flash
+%% prompt: 54. Running a 24-hour hackathon (prompts.md)
+gantt
+    title 24-Hour Student Hackathon (Oct 18–19, 2025)
+    dateFormat YYYY-MM-DD HH:mm
+    axisFormat %H:%M
+    tickInterval 2hour
+    todayMarker off
+
+    section Organizers
+    Check-in & Registration              :2025-10-18 10:00, 2025-10-18 10:30
+    Opening Remarks                      :2025-10-18 10:30, 2025-10-18 11:00
+    Kick-off                             :milestone, m1, 2025-10-18 11:00, 0m
+    Lunch Served                         :2025-10-18 12:30, 2025-10-18 13:30
+    Workshop: APIs & Rapid Prototyping   :2025-10-18 14:00, 2025-10-18 15:30
+    Workshop: Pitching & Storytelling    :2025-10-18 17:30, 2025-10-18 18:30
+    Dinner Served                        :2025-10-18 19:30, 2025-10-18 21:00
+    Midnight Snack & Games               :2025-10-18 23:30, 2025-10-19 00:30
+    Breakfast Served                     :2025-10-19 08:00, 2025-10-19 09:30
+    Lunch Served                         :2025-10-19 12:00, 2025-10-19 13:00
+    Awards Ceremony                      :2025-10-19 15:15, 2025-10-19 16:00
+    Winners Announcement                 :milestone, m3, 2025-10-19 15:45, 0m
+
+    section Teams
+    Team Formation                       :2025-10-18 11:00, 2025-10-18 12:00
+    24-Hour Hacking Block                :2025-10-18 12:00, 2025-10-19 12:00
+    Code Freeze                          :milestone, crit, m2, 2025-10-19 12:00, 0m
+    Project Demos                        :crit, demo_t, 2025-10-19 13:00, 2025-10-19 14:30
+
+    section Mentors
+    Office Hours: Architecture & Setup   :2025-10-18 15:30, 2025-10-18 17:30
+    Office Hours: Debugging & Integration:2025-10-18 21:00, 2025-10-18 23:30
+    Office Hours: Final Polish & Prep    :2025-10-19 09:30, 2025-10-19 11:30
+
+    section Judging
+    Demo Evaluations                     :crit, demo_j, 2025-10-19 13:00, 2025-10-19 14:30
+    Judges Deliberation                  :2025-10-19 14:30, 2025-10-19 15:15
