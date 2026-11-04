@@ -11,6 +11,7 @@ import {
   State,
   Gantt,
   QuadrantChart,
+  Timeline,
 } from "./interfaces.js";
 import { SequenceToExcalidrawSkeletonConvertor } from "./converter/types/sequence.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
@@ -18,6 +19,7 @@ import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
 import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
 import { ganttToExcalidrawSkeletonConvertor } from "./converter/types/gantt.js";
 import { quadrantToExcalidrawSkeletonConvertor } from "./converter/types/quadrant.js";
+import { timelineToExcalidrawSkeletonConvertor } from "./converter/types/timeline.js";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";
 
@@ -58,7 +60,8 @@ export const graphToExcalidraw = (
     | ERD
     | State
     | Gantt
-    | QuadrantChart,
+    | QuadrantChart
+    | Timeline,
   options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   const result = (() => {
@@ -93,6 +96,10 @@ export const graphToExcalidraw = (
 
       case "quadrant": {
         return quadrantToExcalidrawSkeletonConvertor.convert(graph, options);
+      }
+
+      case "timeline": {
+        return timelineToExcalidrawSkeletonConvertor.convert(graph, options);
       }
 
       default: {

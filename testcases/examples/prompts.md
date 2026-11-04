@@ -236,6 +236,28 @@ Create a Mermaid `quadrantChart` for an engineering manager planning a team's le
 
 Create a Mermaid `quadrantChart` positioning ten fictional note-taking apps by learning curve (x-axis, easy to steep) and flexibility (y-axis, rigid to fully customizable). Only label the y-axis at both ends; give the x-axis a single label. Leave one quadrant unnamed. Style a few apps with `classDef` classes (e.g. open source vs. commercial), and give one app a custom `radius` and `color` on the point itself.
 
+## Timelines
+
+### 61. Releases of an open-source photo editor
+
+Create a Mermaid `timeline` for the release history of a fictional open-source photo editor, from its first public release in 2014 to 2025. Give it a title, and group the releases into sections by era (for example, Hobby project, Community growth, and Professional tools). Use years as the time periods, and give some years several events (releases or milestones), at least one of them written on its own line below the period.
+
+### 62. Building a city's tram network
+
+Create a Mermaid `timeline` laid out top to bottom (`timeline TD`) for the history of a fictional city's tram network, from horse-drawn trams in the 1880s to a new light-rail line in the 2020s. Use a section per era and decades as the time periods. Write the events as full sentences, some long enough to wrap, and break at least one of them into two lines with `<br>`.
+
+### 63. Planning a semester of evening classes
+
+Create a Mermaid `timeline` for a working adult's semester of evening classes, with months from September to January as the time periods and a few events each (classes starting, assignments, exams, the final project). Don't use sections. Set the periods' colors in front matter config with the `cScale0`, `cScale1`, … theme variables, using a calm palette of your choice.
+
+### 64. Evolution of a neighborhood bakery
+
+Create a Mermaid `timeline` for a neighborhood bakery's first decade. Start with a couple of periods before the first section (the idea and the market stall), then sections for the first shop and for expanding to a second shop. Include at least one period without any events, and one section whose periods each have three or more events.
+
+### 65. Milestones of a research expedition
+
+Create a Mermaid `timeline` for a year-long polar research expedition, from funding approval to publishing the results, with sections for preparation, fieldwork, and analysis. Use months or seasons as the time periods. Draw the whole timeline in a single color by turning off multicolor (`disableMulticolor`) in the config.
+
 ## Prompts with embedded data
 
 All datasets below are fictional. Include the dataset when copying a prompt. Each diagram should display the requested values from its dataset; preserve units and identifiers, and calculate any requested totals from the supplied rows.
