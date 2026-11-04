@@ -305,6 +305,52 @@ export interface QuadrantChart {
   title?: Text;
 }
 
+/**
+ * A timeline's color, as Pele colors sections (or, without sections, periods)
+ * in turn: one of its series' colors, or its muted color.
+ */
+export interface TimelineColor {
+  /**
+   * The series' index (from 0; Pele has 8 colors, then repeats them), or
+   * `undefined` for the muted color, of periods before the first section.
+   */
+  series?: number;
+  /** The series' color as themed (`cScale0` to `cScale7`), if set. */
+  fill?: string;
+  /** The color Pele picked for text on a themed `fill`. */
+  text?: string;
+}
+
+/** A timeline's box: a section's, a period's or an event's, and its text. */
+export interface TimelineBox {
+  box: Box;
+  label?: Text;
+}
+
+/** A time period, its events below it (or next to it, `timeline TD`). */
+export interface TimelinePeriod extends TimelineBox {
+  color: TimelineColor;
+  /** The dot marking the period on the axis. */
+  dot?: Position & { radius: number };
+  events: TimelineBox[];
+}
+
+/** A timeline, its parts listed in the order they're drawn (back to front). */
+export interface Timeline {
+  type: "timeline";
+  /**
+   * `LR`: periods in a row, their events below them; `TD` (`timeline TD`):
+   * periods in a column, their events next to them.
+   */
+  direction: "LR" | "TD";
+  /** The arrow periods are placed along, if there are periods. */
+  axis?: { start: Position; end: Position };
+  /** Sections' headers, above their periods (or `timeline TD`, before them). */
+  sections: (TimelineBox & { color: TimelineColor })[];
+  periods: TimelinePeriod[];
+  title?: Text;
+}
+
 export interface GraphImage {
   type: "graphImage";
   mimeType: string;

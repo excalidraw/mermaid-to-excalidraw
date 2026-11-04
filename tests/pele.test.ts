@@ -29,6 +29,8 @@ import type {
   GanttTask,
   QuadrantChart,
   QuadrantPoint,
+  Timeline,
+  Box,
 } from "../src/interfaces.js";
 import { getTestCase, testcasesOfType } from "../testcases/testcases.ts";
 
@@ -2364,6 +2366,318 @@ describe("parsePele quadrant charts", () => {
         .filter(({ angle }) => angle)
         .forEach(({ x }) => expect(x).toBeGreaterThan(right));
     });
+  });
+});
+
+describe("parsePele timelines", () => {
+  beforeAll(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
+  const parseTimeline = async (definition: string) => {
+    const graph = await parsePele(definition);
+    expect(graph.type).toBe("timeline");
+    return graph as Timeline;
+  };
+
+  const contains = (outer: Box, inner: Box) =>
+    inner.x >= outer.x - 0.5 &&
+    inner.y >= outer.y - 0.5 &&
+    inner.x + inner.width <= outer.x + outer.width + 0.5 &&
+    inner.y + inner.height <= outer.y + outer.height + 0.5;
+
+  it.each(
+    testcasesOfType("timeline").map((testcase) => [testcase.id, testcase])
+  )("%s", async (_, { definition }) => {
+    const timeline = await parseTimeline(definition);
+
+    expect(timeline.periods.length).toBeGreaterThan(0);
+    expect(timeline.axis).toBeDefined();
+    [
+      ...timeline.sections,
+      ...timeline.periods,
+      ...timeline.periods.flatMap(({ events }) => events),
+    ].forEach(({ box }) => expect(isFiniteBox(box)).toBe(true));
+    expect(graphToExcalidraw(timeline).elements.length).toBeGreaterThan(0);
+  });
+
+  const TIMELINE = `timeline
+    title Social media
+    section Early
+      2002 : LinkedIn
+      2004 : Facebook : Google
+    section Later
+      2006 : Twitter`;
+
+  it("reads sections, periods and their events, in order", async () => {
+    const { sections, periods, title } = await parseTimeline(TIMELINE);
+
+    expect(title?.text).toBe("Social media");
+    expect(sections.map(({ label }) => label?.text)).toEqual([
+      "Early",
+      "Later",
+    ]);
+    expect(periods.map(({ label }) => label?.text)).toEqual([
+      "2002",
+      "2004",
+      "2006",
+    ]);
+    expect(
+      periods.map(({ events }) => events.map(({ label }) => label?.text))
+    ).toEqual([["LinkedIn"], ["Facebook", "Google"], ["Twitter"]]);
+    // events at 0.875 of the font size
+    expect(periods[0].events[0].label?.fontSize).toBe(18);
+    expect(periods[0].label?.fontSize).toBe(20);
+  });
+
+  it("lays periods out along the axis, events below them", async () => {
+    const { axis, periods, sections } = await parseTimeline(TIMELINE);
+    const [linkedIn, facebook] = periods;
+
+    expect(axis!.end.x).toBeGreaterThan(axis!.start.x);
+    expect(axis!.end.y).toBe(axis!.start.y);
+    expect(facebook.box.x).toBeGreaterThan(linkedIn.box.x);
+    periods.forEach(({ box, dot, events }) => {
+      expect(box.y + box.height).toBeLessThan(axis!.start.y);
+      expect(dot?.y).toBe(axis!.start.y);
+      expect(dot?.x).toBeCloseTo(box.x + box.width / 2);
+      events.forEach((event) =>
+        expect(event.box.y).toBeGreaterThan(axis!.start.y)
+      );
+    });
+    const [google] = facebook.events.slice(1);
+    expect(google.box.y).toBeGreaterThan(facebook.events[0].box.y);
+    // a section's header spans its periods, above them
+    expect(sections[0].box.x).toBe(linkedIn.box.x);
+    expect(sections[0].box.x + sections[0].box.width).toBe(
+      facebook.box.x + facebook.box.width
+    );
+    expect(sections[0].box.y + sections[0].box.height).toBeLessThan(
+      linkedIn.box.y
+    );
+  });
+
+  it("lays periods out down the axis, events next to them, with `timeline TD`", async () => {
+    const { axis, periods, direction } = await parseTimeline(
+      TIMELINE.replace("timeline", "timeline TD")
+    );
+
+    expect(direction).toBe("TD");
+    expect(axis!.end.y).toBeGreaterThan(axis!.start.y);
+    expect(axis!.end.x).toBe(axis!.start.x);
+    expect(periods[1].box.y).toBeGreaterThan(periods[0].box.y);
+    periods.forEach(({ box, dot, events }) => {
+      expect(box.x + box.width).toBeLessThan(axis!.start.x);
+      expect(dot?.x).toBe(axis!.start.x);
+      events.forEach((event) =>
+        expect(event.box.x).toBeGreaterThan(axis!.start.x)
+      );
+    });
+  });
+
+  it("colors sections in turn, and periods outside them muted", async () => {
+    const { sections, periods } = await parseTimeline(
+      getTestCase("timeline-periods-outside-sections-and-without-events")
+        .definition
+    );
+
+    expect(sections.map(({ color }) => color.series)).toEqual([0, 1, 2]);
+    expect(periods.map(({ color }) => color.series)).toEqual([
+      undefined,
+      0,
+      0,
+      2,
+      2,
+    ]);
+    expect(periods.find(({ label }) => label?.text === "2021")?.events).toEqual(
+      []
+    );
+  });
+
+  it("colors periods in turn without sections, or all alike if `disableMulticolor`", async () => {
+    const colors = async (definition: string) =>
+      (await parseTimeline(definition)).periods.map(
+        ({ color }) => color.series
+      );
+
+    expect(await colors(getTestCase("timeline-basic").definition)).toEqual([
+      0, 1, 2, 3,
+    ]);
+    expect(
+      await colors(getTestCase("timeline-single-color").definition)
+    ).toEqual([0, 0, 0]);
+  });
+
+  it("reads colors set by `cScale` theme variables", async () => {
+    const timeline = await parseTimeline(
+      getTestCase("timeline-custom-colors").definition
+    );
+    const { periods } = timeline;
+    const { elements } = graphToExcalidraw(timeline);
+    const box = (text: string) =>
+      elements.find(
+        (element) =>
+          element.type === "rectangle" && element.label?.text === text
+      )!;
+
+    expect(periods.map(({ color }) => color)).toEqual([
+      // white text on dark blue, as Pele picks it
+      { series: 0, fill: "#1864ab", text: "#fff" },
+      { series: 1, fill: "#ffe066", text: "#1f1f1f" },
+      { series: 2, fill: "rebeccapurple", text: "#fff" },
+      // not themed
+      { series: 3 },
+    ]);
+    expect(box("2002")).toMatchObject({
+      backgroundColor: "#1864ab",
+      label: { strokeColor: "#fff" },
+    });
+    // events as Pele draws them, at 16% opacity, over white
+    expect(box("LinkedIn")).toMatchObject({
+      backgroundColor: "#dae6f2",
+      strokeColor: "#1864ab",
+      label: { strokeColor: "#1e1e1e" },
+    });
+    // (named colors, without a canvas to read them with, aren't lightened)
+    expect(box("YouTube").backgroundColor).toBe("#ffffff");
+    expect(box("2006").backgroundColor).toBe("#ffc9c9");
+  });
+
+  it.each([
+    ["hex", "'#663399'"],
+    ["rgb()", "'rgb(102, 51, 153)'"],
+    ["rgb() with spaces", "'rgb(102 51 153 / 100%)'"],
+    ["hsl()", "'hsl(270 50% 40%)'"],
+    ["hsla()", "'hsla(270deg, 50%, 40%, 1)'"],
+  ])("lightens a themed %s color for events alike", async (_, color) => {
+    const { elements } = graphToExcalidraw(
+      await parseTimeline(`%%{init: {'themeVariables': {'cScale0': ${color}}}}%%
+timeline
+    2002 : LinkedIn`)
+    );
+    const event = elements.find(
+      (element) =>
+        element.type === "rectangle" && element.label?.text === "LinkedIn"
+    );
+
+    expect(event?.backgroundColor).toBe("#e7deef");
+  });
+
+  it("converts boxes with bound names, grouping each period with its events", async () => {
+    const timeline = await parseTimeline(TIMELINE);
+    const { elements } = graphToExcalidraw(timeline);
+    const box = (text: string) =>
+      elements.find(
+        (element) =>
+          element.type === "rectangle" && element.label?.text === text
+      )!;
+    const [axis, ...links] = elements.filter(({ type }) => type === "arrow");
+    const dots = elements.filter(({ type }) => type === "ellipse");
+    const linked = (link: (typeof links)[number]) =>
+      [link.start, link.end].map(
+        (end) =>
+          elements.find(
+            (element) => element.id === (end as { id?: string } | undefined)?.id
+          )?.label?.text
+      );
+
+    expect(axis).toMatchObject({ endArrowhead: "triangle" });
+    // the axis is drawn behind everything else
+    expect(elements.indexOf(axis)).toBe(0);
+    expect(dots.length).toBe(3);
+    // nothing grouped
+    elements.forEach((element) => expect(element.groupIds ?? []).toEqual([]));
+    // a period's events, connected down from it, one to the next
+    expect(links.map(linked)).toEqual([
+      ["2002", "LinkedIn"],
+      ["2004", "Facebook"],
+      ["Facebook", "Google"],
+      ["2006", "Twitter"],
+    ]);
+    links.forEach((link) =>
+      expect(link).toMatchObject({
+        elbowed: true,
+        startArrowhead: null,
+        endArrowhead: null,
+      })
+    );
+    expect(box("2002").label).toMatchObject({
+      textAlign: "center",
+      verticalAlign: "middle",
+      fontSize: 20,
+    });
+    // Excalidraw's colors for Pele's: blue, then orange
+    expect(box("2002")).toMatchObject({
+      backgroundColor: "#a5d8ff",
+      strokeColor: "#1971c2",
+    });
+    expect(box("Early").backgroundColor).toBe("#4dabf7");
+    expect(box("LinkedIn").backgroundColor).toBe("#e7f5ff");
+    expect(box("Later").backgroundColor).toBe("#ffa94d");
+    // events stay within the chart (e.g. not growing out of their boxes)
+    const [linkedIn] = timeline.periods[0].events;
+    expect(contains(box("LinkedIn") as Box, linkedIn.box)).toBe(true);
+  });
+
+  it("connects each event to its period along a bracket, with `timeline TD`", async () => {
+    const { elements } = graphToExcalidraw(
+      await parseTimeline(TIMELINE.replace("timeline", "timeline TD"))
+    );
+    const id = (text: string) =>
+      elements.find(
+        (element) =>
+          element.type === "rectangle" && element.label?.text === text
+      )?.id;
+    const linksFrom = (text: string) =>
+      elements.filter(
+        (element) =>
+          element.type === "arrow" &&
+          (element.start as { id?: string } | undefined)?.id === id(text)
+      );
+    const [toFacebook, toGoogle] = linksFrom("2004");
+
+    expect(linksFrom("2004").length).toBe(2);
+    expect(toFacebook.end).toEqual({ id: id("Facebook") });
+    expect(toGoogle.end).toEqual({ id: id("Google") });
+    // across to the first event, level with the period; down to the next
+    expect(toFacebook.points?.length).toBe(2);
+    expect(toGoogle.points?.length).toBe(4);
+    expect(toGoogle).toMatchObject({ elbowed: true, fixedSegments: [{}] });
+  });
+
+  it("connects periods without events to their dot on the axis", async () => {
+    const { elements } = graphToExcalidraw(
+      await parseTimeline(
+        getTestCase("timeline-periods-outside-sections-and-without-events")
+          .definition
+      )
+    );
+    const period = elements.find(
+      (element) =>
+        element.type === "rectangle" && element.label?.text === "2021"
+    );
+    const [link] = elements.filter(
+      (element) =>
+        element.type === "arrow" &&
+        (element.start as { id?: string } | undefined)?.id === period?.id
+    );
+    const end = elements.find(
+      (element) => element.id === (link?.end as { id?: string })?.id
+    );
+
+    expect(end?.type).toBe("ellipse");
+  });
+
+  it("keeps line breaks and wrapped lines in names", async () => {
+    const { periods } = await parseTimeline(`timeline
+    A long period name that wraps : First line<br>second line`);
+
+    expect(periods[0].label?.text.split("\n").length).toBeGreaterThan(1);
+    expect(periods[0].events[0].label?.text).toBe("First line\nsecond line");
   });
 });
 

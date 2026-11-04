@@ -62,7 +62,7 @@ The `diagramDefinition` is the mermaid diagram definition, and `config` is the m
 }
 ```
 
-Flowcharts (including `swimlane-beta` diagrams), sequence, class, ER and state diagrams, Gantt charts and quadrant charts are converted to Excalidraw elements. Other diagram types Pele supports are inserted as an image.
+Flowcharts (including `swimlane-beta` diagrams), sequence, class, ER and state diagrams, Gantt charts, quadrant charts and timelines are converted to Excalidraw elements. Other diagram types Pele supports are inserted as an image.
 
 It needs DOM APIs (e.g. `DOMParser`, so a browser, or jsdom), but nothing is rendered into the document.
 
@@ -96,7 +96,7 @@ Try out [here](https://mermaid-to-excalidraw.vercel.app).
 - `yarn test:visual:update` to update visual tests
 - `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
 
-Test cases are Mermaid files in [`testcases/`](testcases/testcases.ts), named `<type>-<name>.mmd` (`flowchart`, `sequence`, `class`, `erd`, `state`, `unsupported`, `swimlane`, `gantt`, `quadrant`):
+Test cases are Mermaid files in [`testcases/`](testcases/testcases.ts), named `<type>-<name>.mmd` (`flowchart`, `sequence`, `class`, `erd`, `state`, `unsupported`, `swimlane`, `gantt`, `quadrant`, `timeline`):
 
 - `testcases/features/`: one syntax feature each. The playground lists them, the visual tests snapshot each one (named after the file), and the unit tests parse them. Add a case as a new file; renaming one renames its snapshot.
 - `testcases/examples/`: whole diagrams models wrote for the prompts in [`prompts.md`](testcases/examples/prompts.md), with the model and prompt in `%%` comments at the top.

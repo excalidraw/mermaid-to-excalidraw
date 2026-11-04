@@ -20,6 +20,7 @@ import {
   State,
   Gantt,
   QuadrantChart,
+  Timeline,
   type MermaidConfig,
 } from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
@@ -30,6 +31,7 @@ import { parsePeleERD } from "./er.js";
 import { parsePeleState } from "./state.js";
 import { hasOverlappingTasks, parsePeleGantt } from "./gantt.js";
 import { countOverlaps, parsePeleQuadrant } from "./quadrant.js";
+import { parsePeleTimeline } from "./timeline.js";
 import { parseSvg, svgToDataURL } from "./svg.js";
 
 /**
@@ -129,6 +131,7 @@ const CONVERTED_DIAGRAM_TYPES = new Set<ParsedDiagramModel["type"]>([
   "state",
   "gantt",
   "quadrantChart",
+  "timeline",
 ]);
 
 // Converted diagrams are measured with Excalifont, the font their labels are
@@ -374,9 +377,9 @@ export const isSteppedDefinition = (
  * Parses a Mermaid definition with Pele, a Mermaid renderer that lays diagrams
  * out without a DOM.
  *
- * Flowcharts, sequence, class, ER and state diagrams, Gantt charts and
- * quadrant charts are converted to Excalidraw elements; other diagram types
- * are returned as an image.
+ * Flowcharts, sequence, class, ER and state diagrams, Gantt charts, quadrant
+ * charts and timelines are converted to Excalidraw elements; other diagram
+ * types are returned as an image.
  */
 export const parsePele = async (
   definition: string,
@@ -389,6 +392,7 @@ export const parsePele = async (
   | State
   | Gantt
   | QuadrantChart
+  | Timeline
   | GraphImage
 > => {
   config = resolveElbow(definition, config);
@@ -438,6 +442,12 @@ export const parsePele = async (
       }
       case "quadrantChart": {
         return layOutQuadrant(model, parsedDefinition, config).chart;
+      }
+      case "timeline": {
+        const { svg } = render(model, getModelRenderOptions(model, config));
+        return parsePeleTimeline(parseSvg(svg), {
+          fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
+        });
       }
     }
   } catch (error) {

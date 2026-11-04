@@ -141,6 +141,11 @@ const SECTIONS: {
     name: "Quadrant",
     documentationHref: "https://mermaid.js.org/syntax/quadrantChart.html",
   },
+  {
+    type: "timeline",
+    name: "Timeline",
+    documentationHref: "https://mermaid.js.org/syntax/timeline.html",
+  },
 ];
 
 const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {
