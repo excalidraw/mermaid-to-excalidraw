@@ -1,3 +1,7 @@
+import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
+
+import type { MermaidToExcalidrawResult } from "./interfaces.js";
+
 // Pele (like Mermaid) encodes the entity codes in labels, e.g. "#quot;" as
 // "ﬂ°quot¶ß", for them not to be parsed as syntax
 const decodeEntities = (text: string): string =>
@@ -46,4 +50,33 @@ export const dedupeConsecutivePoints = <T extends [number, number]>(
   });
 
   return dedupedPoints;
+};
+
+/** The result with consecutive duplicate points of its linear elements dropped */
+export const normalizeLinearElementPoints = (
+  result: MermaidToExcalidrawResult
+): MermaidToExcalidrawResult => {
+  return {
+    ...result,
+    elements: result.elements.map((element) => {
+      if (!("points" in element) || !Array.isArray(element.points)) {
+        return element;
+      }
+
+      const points = element.points as readonly LocalPoint[];
+      if (points.length < 2) {
+        return element;
+      }
+
+      const dedupedPoints = dedupeConsecutivePoints(points);
+      if (dedupedPoints.length === points.length) {
+        return element;
+      }
+
+      return {
+        ...element,
+        points: dedupedPoints,
+      };
+    }),
+  };
 };

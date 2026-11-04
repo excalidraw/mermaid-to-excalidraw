@@ -20,37 +20,12 @@ import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
 import { ganttToExcalidrawSkeletonConvertor } from "./converter/types/gantt.js";
 import { quadrantToExcalidrawSkeletonConvertor } from "./converter/types/quadrant.js";
 import { timelineToExcalidrawSkeletonConvertor } from "./converter/types/timeline.js";
-import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
-import { dedupeConsecutivePoints } from "./utils.js";
+import { normalizeLinearElementPoints } from "./utils.js";
 
-const normalizeLinearElementPoints = (
-  result: MermaidToExcalidrawResult
-): MermaidToExcalidrawResult => {
-  return {
-    ...result,
-    elements: result.elements.map((element) => {
-      if (!("points" in element) || !Array.isArray(element.points)) {
-        return element;
-      }
-
-      const points = element.points as readonly LocalPoint[];
-      if (points.length < 2) {
-        return element;
-      }
-
-      const dedupedPoints = dedupeConsecutivePoints(points);
-      if (dedupedPoints.length === points.length) {
-        return element;
-      }
-
-      return {
-        ...element,
-        points: dedupedPoints,
-      };
-    }),
-  };
-};
-
+/**
+ * Converts a graph with the converters of all diagram types, synchronously
+ * (`parseMermaidToExcalidraw` loads each diagram type's on first use).
+ */
 export const graphToExcalidraw = (
   graph:
     | Flowchart

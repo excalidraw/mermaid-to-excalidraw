@@ -13,6 +13,7 @@
 
 ### Improvements
 
+- Load each diagram type's code (reading it from Pele's layout and converting it) on first use, alongside Pele's, instead of all of them with `parseMermaidToExcalidraw`: bundlers emit a chunk per diagram type, so new diagram types don't add to the code other types download. E.g. a first flowchart downloads ~28 KiB (brotli) of mermaid-to-excalidraw instead of ~36 KiB, a Gantt chart ~24 KiB. `graphToExcalidraw` and the per-type parsers (`dist/pele/<type>.js`) still convert every type synchronously.
 - Draw class diagram namespaces like flowchart subgraphs, as boxes around their classes with their titles where Pele draws them, instead of as frames.
 
 ## v3.1.0
