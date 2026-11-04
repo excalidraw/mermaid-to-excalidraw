@@ -2,6 +2,7 @@
 
 ### Features
 
+- Convert quadrant charts to Excalidraw elements instead of an image: quadrants as rectangles with their names bound to them, points as circles (sized, colored and outlined as styled on the point or by `classDef`) grouped with their names, the axes' labels (the y axis' turned) and the title, laid out as Pele lays them out. Busy charts, where Pele places points' names over other names or points, are laid out bigger (up to twice their size) until they don't overlap.
 - Convert Gantt charts to Excalidraw elements instead of an image: tasks as bars (names in them, or next to them where they don't fit), milestones as diamonds, `done`/`active`/`crit` statuses as colors, sections, the time axis and grid, excluded days, `vert` markers, the today marker and `click … href` links, laid out as Pele lays them out (including `displayMode: compact` and `topAxis`). Compact charts get a row per task instead where names drawn next to short bars would run into the next task in their row.
 - Add the `elbow` config option, which draws flowchart edges and state transitions as elbow arrows, for both (`elbow: true`) or per diagram type (`elbow: { flowchart: true }`).
 

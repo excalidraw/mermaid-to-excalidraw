@@ -43,7 +43,6 @@ body.dark-mode {
   --shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.42);
   --shadow-md: 0 18px 45px rgba(0, 0, 0, 0.28);
   --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.18);
-
 }
 
 @keyframes rise-in {
@@ -215,8 +214,9 @@ a {
 }
 
 .testcase-section summary {
+  // Below the sticky header (see `--hero-height` in index.tsx)
   position: sticky;
-  top: 0;
+  top: var(--hero-height, 0px);
   z-index: 4;
   background: var(--testcase-section);
   border-top-left-radius: var(--radius-lg);
@@ -548,7 +548,6 @@ body.dark-mode .details-summary-meta {
   flex-direction: column;
   gap: 14px;
   padding: 0 10px;
-
 }
 
 .testcase-card {

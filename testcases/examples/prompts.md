@@ -200,6 +200,42 @@ Create a Mermaid `gantt` chart for a 24-hour student hackathon that starts on Sa
 
 Create a Mermaid `gantt` chart for the final year of a doctoral thesis, from 2025-01-06 to the defense in January 2026. Use a section for each chapter (Introduction, Literature review, Methods, Results, Discussion) plus one for Submission and defense. Use `after` for tasks that depend on others, and `until` for at least one task that runs until another starts. Assume today is 2025-05-15: mark finished work as done and current work as active. Mark the submission deadline and the defense as critical milestones. Show the axis on top as well as at the bottom, with monthly ticks, and add a link from the defense milestone to `https://example.org/defense`.
 
+## Quadrant charts
+
+### 56. Prioritizing a product backlog from a scoring sheet
+
+Create a Mermaid `quadrantChart` from this CSV of backlog items scored by a product team. Plot effort on the x-axis and impact on the y-axis, both scored 1–10: map a score `s` to `(s - 1) / 9` so they fit Mermaid's 0–1 range. Name the quadrants Quick wins, Big bets, Fill-ins, and Money pits, placed where they belong. Color the points by owning team with one `classDef` per team, and make items marked `committed=yes` larger than the others.
+
+```csv
+item,team,effort,impact,committed
+SSO login,Platform,7,9,yes
+Dark mode,Web,3,5,no
+CSV export,Data,2,6,yes
+Offline sync,Mobile,9,8,no
+Onboarding tour,Web,4,8,yes
+Audit log,Platform,6,4,no
+Push reminders,Mobile,3,3,no
+Usage dashboard,Data,5,7,no
+Custom fields,Platform,8,6,no
+Keyboard shortcuts,Web,2,3,no
+```
+
+### 57. Comparing neighborhood coffee shops
+
+Create a Mermaid `quadrantChart` comparing eight coffee shops in one neighborhood by price (x-axis, cheap to expensive) and coffee quality (y-axis, from average to excellent). Give the chart a title, label both ends of both axes, and name all four quadrants (for example, Hidden gems for cheap and excellent). Highlight "Our café" with its own color and a bigger point, styled directly on the point rather than with a class, and place a couple of shops close together near the center.
+
+### 58. Assessing project risks
+
+Create a Mermaid `quadrantChart` risk matrix for launching a mobile banking app, with likelihood on the x-axis and impact on the y-axis. Include at least ten risks (security, regulatory, vendor, staffing, and performance risks among them). Name the quadrants Monitor, Mitigate now, Accept, and Contingency plan, placed where they belong. Use `classDef` classes to color the risks by category, and give the risks with both high likelihood and high impact a thick outline (`stroke-color` and `stroke-width`).
+
+### 59. Mapping a team's skills for a learning plan
+
+Create a Mermaid `quadrantChart` for an engineering manager planning a team's learning budget. Plot about a dozen skills (e.g. Kubernetes, accessibility, SQL tuning, incident response, technical writing) by how proficient the team is today (x-axis) and how important each skill will be next year (y-axis). Name the quadrants so they suggest an action (e.g. train, maintain, deprioritize, share knowledge). Make the chart wider than it is tall with front matter config (`chartWidth`, `chartHeight`), and use short, multi-word point names.
+
+### 60. Positioning note-taking apps
+
+Create a Mermaid `quadrantChart` positioning ten fictional note-taking apps by learning curve (x-axis, easy to steep) and flexibility (y-axis, rigid to fully customizable). Only label the y-axis at both ends; give the x-axis a single label. Leave one quadrant unnamed. Style a few apps with `classDef` classes (e.g. open source vs. commercial), and give one app a custom `radius` and `color` on the point itself.
+
 ## Prompts with embedded data
 
 All datasets below are fictional. Include the dataset when copying a prompt. Each diagram should display the requested values from its dataset; preserve units and identifiers, and calculate any requested totals from the supplied rows.

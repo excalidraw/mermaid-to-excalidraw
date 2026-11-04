@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 
 import type { ExcalidrawElementSkeleton } from "@excalidraw/excalidraw/element/transform";
 
-import { DEFAULT_TEXT_COLOR } from "../../constants.js";
+import { DEFAULT_TEXT_COLOR, MUTED_TEXT_COLOR } from "../../constants.js";
 import type { Line, Text } from "../../elementSkeleton.js";
 import type { Box, Gantt, GanttTask } from "../../interfaces.js";
 import { GraphConverter } from "../GraphConverter.js";
@@ -17,7 +17,6 @@ const SECTION_COLOR = "#f1f3f5";
 const EXCLUDED_COLOR = "#dee2e6";
 const GRID_COLOR = "#adb5bd";
 const AXIS_COLOR = "#868e96";
-const MUTED_TEXT_COLOR = "#495057";
 const TODAY_COLOR = "#e03131";
 
 const TASK_COLORS = {

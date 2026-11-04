@@ -280,6 +280,31 @@ export interface Gantt {
   title?: Text;
 }
 
+/** A quadrant chart's point: a circle, and its name next to it. */
+export interface QuadrantPoint {
+  /** The circle's center. */
+  x: number;
+  y: number;
+  radius: number;
+  /** As styled (`color`, by `classDef` or on the point), if set. */
+  fill?: string;
+  /** The outline, drawn only if `stroke-width` is set. */
+  stroke?: { color?: string; width: number };
+  label?: Text;
+}
+
+/** A quadrant chart, its parts listed in the order they're drawn (back to front). */
+export interface QuadrantChart {
+  type: "quadrant";
+  /** `quadrant-1` (top right) to `quadrant-4` (bottom right). */
+  quadrants: { box: Box; label?: Text }[];
+  /** The axes' labels, the y axis' ones turned (`angle`, in radians). */
+  axisLabels: (Text & { angle?: number })[];
+  /** In the order Pele draws them: last to first (the first one on top). */
+  points: QuadrantPoint[];
+  title?: Text;
+}
+
 export interface GraphImage {
   type: "graphImage";
   mimeType: string;

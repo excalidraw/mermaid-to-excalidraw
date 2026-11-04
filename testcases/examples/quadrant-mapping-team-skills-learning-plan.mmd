@@ -1,0 +1,29 @@
+---
+config:
+  quadrantChart:
+    chartWidth: 700
+    chartHeight: 450
+---
+%% model: gemini_3_8_flash
+%% prompt: 59. Mapping a team's skills for a learning plan (prompts.md)
+quadrantChart
+    title Engineering Skills Learning Allocation
+    x-axis Low Current Proficiency --> High Current Proficiency
+    y-axis Low Future Importance --> High Future Importance
+    quadrant-1 Maintain & Scale
+    quadrant-2 Priority Training
+    quadrant-3 Deprioritize Budget
+    quadrant-4 Share Knowledge
+    Kubernetes Ops: [0.22, 0.88]
+    Cloud Security: [0.28, 0.82]
+    Incident Response: [0.35, 0.76]
+    System Architecture: [0.38, 0.65]
+    API Design: [0.78, 0.84]
+    SQL Tuning: [0.68, 0.74]
+    CI-CD Workflows: [0.72, 0.70]
+    Automated Testing: [0.85, 0.62]
+    Mobile Development: [0.18, 0.25]
+    GraphQL Tooling: [0.32, 0.38]
+    Web Accessibility: [0.65, 0.42]
+    Technical Writing: [0.74, 0.35]
+    Legacy Maintenance: [0.82, 0.18]

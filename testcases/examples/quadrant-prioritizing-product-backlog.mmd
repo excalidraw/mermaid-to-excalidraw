@@ -1,0 +1,25 @@
+%% model: sonnet_5_5
+%% prompt: 56. Prioritizing a product backlog from a scoring sheet (prompts.md)
+%% edited: `[1.0, 0.778]` to `[1, 0.778]`, as quadrant charts only accept `1` or `0.x` coordinates
+quadrantChart
+    title Backlog: effort vs impact
+    x-axis Low effort --> High effort
+    y-axis Low impact --> High impact
+    quadrant-1 Big bets
+    quadrant-2 Quick wins
+    quadrant-3 Fill-ins
+    quadrant-4 Money pits
+    SSO login:::platform: [0.667, 0.889] radius: 10
+    Dark mode:::web: [0.222, 0.444] radius: 5
+    CSV export:::data: [0.111, 0.556] radius: 10
+    Offline sync:::mobile: [1, 0.778] radius: 5
+    Onboarding tour:::web: [0.333, 0.778] radius: 10
+    Audit log:::platform: [0.556, 0.333] radius: 5
+    Push reminders:::mobile: [0.222, 0.222] radius: 5
+    Usage dashboard:::data: [0.444, 0.667] radius: 5
+    Custom fields:::platform: [0.778, 0.556] radius: 5
+    Keyboard shortcuts:::web: [0.111, 0.222] radius: 5
+    classDef platform color: #2563eb, stroke-color: #1e3a8a
+    classDef web color: #16a34a, stroke-color: #14532d
+    classDef data color: #f59e0b, stroke-color: #92400e
+    classDef mobile color: #dc2626, stroke-color: #7f1d1d

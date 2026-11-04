@@ -80,6 +80,24 @@ const writeStoredThemeMode = (mode: ThemeMode) => {
 const App = () => {
   const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
+  // Expanded sections' headings stick below the (sticky) header, as tall as
+  // it is (e.g. when it wraps)
+  const heroRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--hero-height",
+        `${hero.offsetHeight}px`
+      );
+    });
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
   const [mermaidData, setMermaidData] = useState<MermaidData>({
     definition: "",
     error: null,
@@ -266,7 +284,7 @@ const App = () => {
       </button>
 
       <div className="left-side">
-        <header className="playground-hero">
+        <header className="playground-hero" ref={heroRef}>
           <div className="playground-hero-copy">
             <p className="playground-kicker">{"Mermaid to Excalidraw"}</p>
           </div>

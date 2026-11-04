@@ -24,6 +24,7 @@ export const TESTCASE_TYPES = [
   "unsupported",
   "swimlane",
   "gantt",
+  "quadrant",
 ] as const;
 
 export type TestCaseType = (typeof TESTCASE_TYPES)[number];

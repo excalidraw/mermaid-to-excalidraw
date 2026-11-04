@@ -1,0 +1,24 @@
+%% model: gemini_3_8_flash
+%% prompt: 60. Positioning note-taking apps (prompts.md)
+%% edited: `classDef` styles from flowchart syntax (`fill`, `stroke`, `color`) to quadrant chart syntax (`color`, `stroke-color`), dropping the text color, which quadrant charts don't support
+quadrantChart
+    title Note-Taking Apps: Learning Curve vs Flexibility
+    x-axis Learning Curve
+    y-axis Rigid --> Fully Customizable
+    quadrant-1 Extensible Powerhouses
+    quadrant-2 Intuitive Adaptables
+    quadrant-3 Out-of-the-Box Essentials
+
+    classDef openSource color: #3b82f6, stroke-color: #1d4ed8
+    classDef commercial color: #10b981, stroke-color: #047857
+
+    QuickJot: [0.15, 0.20]
+    PaperLite:::commercial: [0.25, 0.35]
+    BreezeNotes: [0.32, 0.42]
+    FluidPad:::openSource: [0.22, 0.82]
+    ZenCanvas: [0.35, 0.70]
+    FlexiBrain:::commercial: [0.42, 0.85]
+    CortexWeave:::openSource: [0.85, 0.92]
+    SynapseOS: [0.78, 0.76] radius: 9, color: #f43f5e
+    StrictForm: [0.72, 0.24]
+    LegacyVault:::commercial: [0.88, 0.16]

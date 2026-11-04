@@ -16,6 +16,7 @@ import {
 } from "../src/pele/svg.js";
 import { parsePeleFlowchart } from "../src/pele/flowchart.js";
 import { hasOverlappingTasks, parsePeleGantt } from "../src/pele/gantt.js";
+import { countOverlaps } from "../src/pele/quadrant.js";
 import { load, parse, render, type FlowchartModel } from "pele/lazy";
 import type {
   Flowchart,
@@ -26,6 +27,8 @@ import type {
   State,
   Gantt,
   GanttTask,
+  QuadrantChart,
+  QuadrantPoint,
 } from "../src/interfaces.js";
 import { getTestCase, testcasesOfType } from "../testcases/testcases.ts";
 
@@ -2055,6 +2058,312 @@ ${CHART}`);
     expect(bar).toMatchObject({ height: 20 });
     expect(bar?.label).toBeUndefined();
     expect(name?.groupIds).toEqual(bar?.groupIds);
+  });
+});
+
+describe("parsePele quadrant charts", () => {
+  beforeAll(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
+  const parseQuadrant = async (definition: string) => {
+    const graph = await parsePele(definition);
+    expect(graph.type).toBe("quadrant");
+    return graph as QuadrantChart;
+  };
+
+  it.each(
+    testcasesOfType("quadrant").map((testcase) => [testcase.id, testcase])
+  )("%s", async (_, { definition }) => {
+    const chart = await parseQuadrant(definition);
+
+    expect(chart.quadrants.length).toBe(4);
+    chart.quadrants.forEach(({ box }) => expect(isFiniteBox(box)).toBe(true));
+    expect(graphToExcalidraw(chart).elements.length).toBeGreaterThan(0);
+  });
+
+  const CHART = `quadrantChart
+  title Campaigns
+  x-axis Low Reach --> High Reach
+  y-axis Low Engagement --> High Engagement
+  quadrant-1 Expand
+  quadrant-2 Promote
+  quadrant-3 Re-evaluate
+  quadrant-4 Improve
+  Campaign A: [0.3, 0.6]
+  Campaign B: [0.8, 0.2] radius: 10, color: #ff0000, stroke-color: #00ff00, stroke-width: 3px
+  Campaign C:::warm: [0.6, 0.9]
+  classDef warm color: #f08c00`;
+
+  it("reads the quadrants in order, top right first, labeled", async () => {
+    const { quadrants, title } = await parseQuadrant(CHART);
+    const [q1, q2, q3, q4] = quadrants.map(({ box }) => box);
+
+    expect(quadrants.map(({ label }) => label?.text)).toEqual([
+      "Expand",
+      "Promote",
+      "Re-evaluate",
+      "Improve",
+    ]);
+    expect(q1.x).toBeGreaterThan(q2.x);
+    expect(q1.y).toBe(q2.y);
+    expect(q3.y).toBeGreaterThan(q2.y);
+    expect(q4.x).toBe(q1.x);
+    expect(title?.text).toBe("Campaigns");
+  });
+
+  it("reads points where they're plotted, styled, with their names", async () => {
+    const { quadrants, points } = await parseQuadrant(CHART);
+    const [q1, , q3] = quadrants.map(({ box }) => box);
+    const left = q3.x;
+    const width = q1.x + q1.width - left;
+    const top = q1.y;
+    const height = q3.y + q3.height - top;
+    const point = (name: string) =>
+      points.find(({ label }) => label?.text === name)!;
+
+    // drawn last to first, as Pele draws them
+    expect(points.map(({ label }) => label?.text)).toEqual([
+      "Campaign C",
+      "Campaign B",
+      "Campaign A",
+    ]);
+    expect(point("Campaign A").x).toBeCloseTo(left + 0.3 * width, 1);
+    expect(point("Campaign A").y).toBeCloseTo(top + 0.4 * height, 1);
+    expect(point("Campaign A")).toMatchObject({
+      radius: 5,
+      fill: undefined,
+      stroke: undefined,
+    });
+    expect(point("Campaign B")).toMatchObject({
+      radius: 10,
+      fill: "#ff0000",
+      stroke: { color: "#00ff00", width: 3 },
+    });
+    expect(point("Campaign C").fill).toBe("#f08c00");
+    // a name is next to its point
+    points.forEach(({ x, y, label }) => {
+      expect(Math.abs(label!.x - x)).toBeLessThan(100);
+      expect(Math.abs(label!.y - y)).toBeLessThan(50);
+    });
+  });
+
+  it("turns the y axis' labels, centered where Pele drew them", async () => {
+    const chart = await parseQuadrant(CHART);
+    const [q1, , q3] = chart.quadrants.map(({ box }) => box);
+    const label = (text: string) =>
+      chart.axisLabels.find((candidate) => candidate.text === text)!;
+
+    expect(label("Low Reach").angle).toBeUndefined();
+    expect(label("Low Reach").y).toBeGreaterThan(q3.y + q3.height);
+    ["Low Engagement", "High Engagement"].forEach((text) => {
+      expect(label(text).angle).toBeCloseTo((3 * Math.PI) / 2);
+      expect(label(text).textAlign).toBe("center");
+      expect(label(text).x).toBeLessThan(q3.x);
+    });
+    const middle = (text: string) =>
+      label(text).y + (label(text).height ?? 0) / 2;
+    // (on the half of the axis, which takes in the gap between quadrants)
+    expect(
+      Math.abs(middle("High Engagement") - (q1.y + q1.height / 2))
+    ).toBeLessThan(3);
+    expect(
+      Math.abs(middle("Low Engagement") - (q3.y + q3.height / 2))
+    ).toBeLessThan(3);
+  });
+
+  it("converts quadrants with bound names, and groups points with theirs", async () => {
+    const { elements } = graphToExcalidraw(await parseQuadrant(CHART));
+    const quadrants = elements.filter(({ type }) => type === "rectangle");
+    const ellipses = elements.filter(({ type }) => type === "ellipse");
+    const name = (text: string) =>
+      elements.find(
+        (element) => element.type === "text" && element.text === text
+      );
+
+    expect(quadrants.map((element) => element.label?.text)).toEqual([
+      "Expand",
+      "Promote",
+      "Re-evaluate",
+      "Improve",
+    ]);
+    quadrants.forEach((element) =>
+      expect(element.label?.verticalAlign).toBe("top")
+    );
+    expect(ellipses.length).toBe(3);
+    const styled = ellipses.find(
+      (element) => element.backgroundColor === "#ff0000"
+    );
+    expect(styled).toMatchObject({ strokeColor: "#00ff00", strokeWidth: 3 });
+    expect(name("Campaign B")?.groupIds).toEqual(styled?.groupIds);
+    expect(styled?.groupIds?.length).toBe(1);
+    expect(name("Low Engagement")).toMatchObject({
+      angle: expect.closeTo((3 * Math.PI) / 2),
+    });
+    // names above all points
+    expect(elements.indexOf(name("Campaign A")!)).toBeGreaterThan(
+      elements.indexOf(ellipses[ellipses.length - 1])
+    );
+  });
+
+  it("centers quadrants' names when there are no points", async () => {
+    const { elements } = graphToExcalidraw(
+      await parseQuadrant(getTestCase("quadrant-without-points").definition)
+    );
+    elements
+      .filter(({ type }) => type === "rectangle")
+      .forEach((element) =>
+        expect(element.label?.verticalAlign).toBe("middle")
+      );
+  });
+
+  it.each([
+    ["blank", " "],
+    // (drawn by Pele, as a non-breaking space)
+    ["a non-breaking space", "&nbsp;"],
+  ])("keeps other points' names when a point's name is %s", async (_, name) => {
+    const chart = await parseQuadrant(`quadrantChart
+  Named A: [0.2, 0.3]
+  "${name}": [0.8, 0.7]
+  Named B: [0.5, 0.5]`);
+    const nameAt = (x: number) =>
+      chart.points.find((point) => Math.abs(point.x - x) < 1)?.label?.text;
+    const [b, blank, a] = chart.points;
+
+    expect(chart.points.length).toBe(3);
+    expect(nameAt(a.x)).toBe("Named A");
+    expect(nameAt(b.x)).toBe("Named B");
+    expect(blank.label).toBeUndefined();
+    // names next to their points
+    [a, b].forEach(({ x, label }) => expect(label?.x).toBeCloseTo(x, 0));
+  });
+
+  it("keeps the y axis' labels' font size, set on their group", async () => {
+    const label = async (definition: string) =>
+      (await parseQuadrant(definition)).axisLabels.find(
+        ({ text }) => text === "High"
+      );
+    const definition = `quadrantChart
+  y-axis Low --> High
+  A: [0.5, 0.5]`;
+
+    // 0.875 of the font size (20)
+    expect((await label(definition))?.fontSize).toBe(18);
+    expect(
+      (
+        await label(
+          `%%{init: {"quadrantChart": {"yAxisLabelFontSize": 40}}}%%\n${definition}`
+        )
+      )?.fontSize
+    ).toBe(40);
+  });
+
+  it("draws only the names of points without a radius", async () => {
+    const { elements } = graphToExcalidraw(
+      await parseQuadrant(`quadrantChart
+  Dot: [0.2, 0.3]
+  Nothing: [0.7, 0.6] radius: 0`)
+    );
+    const name = elements.find(
+      (element) => element.type === "text" && element.text === "Nothing"
+    );
+
+    expect(elements.filter(({ type }) => type === "ellipse").length).toBe(1);
+    expect(name).toBeDefined();
+    expect(name?.groupIds ?? []).toEqual([]);
+  });
+
+  describe("busy charts", () => {
+    const svgSize = async (definition: string) => {
+      const [, width, height] = (await renderPeleSvg(definition)).match(
+        /width="([\d.]+)" height="([\d.]+)"/
+      )!;
+      return { width: Number(width), height: Number(height) };
+    };
+    const noMeasure = () => null;
+
+    it("counts names running into names, points and quadrants' names", () => {
+      const label = (text: string, x: number, y: number) => ({
+        type: "text" as const,
+        text,
+        x,
+        y,
+        height: 18.75,
+        fontSize: 15,
+        textAlign: "center" as const,
+      });
+      const point = (x: number, y: number, name?: string) => ({
+        x,
+        y,
+        radius: 5,
+        label: name ? label(name, x, y + 10) : undefined,
+      });
+      const chart = (...points: QuadrantPoint[]): QuadrantChart => ({
+        type: "quadrant",
+        quadrants: [
+          {
+            box: { x: 0, y: 0, width: 200, height: 200 },
+            label: label("Quadrant", 100, 5),
+          },
+        ],
+        axisLabels: [],
+        points,
+      });
+
+      expect(
+        countOverlaps(
+          chart(point(50, 100, "A"), point(150, 150, "B")),
+          noMeasure
+        )
+      ).toBe(0);
+      // names over each other
+      expect(
+        countOverlaps(
+          chart(point(50, 100, "A"), point(55, 100, "B")),
+          noMeasure
+        )
+      ).toBeGreaterThan(0);
+      // a point over a quadrant's name
+      expect(countOverlaps(chart(point(100, 15)), noMeasure)).toBe(1);
+    });
+
+    it("lays busy charts out bigger, until names don't overlap", async () => {
+      const { definition } = getTestCase("quadrant-assessing-project-risks");
+      const chart = await parseQuadrant(definition);
+
+      expect((await svgSize(definition)).width).toBeGreaterThan(500);
+      expect(countOverlaps(chart, noMeasure)).toBe(0);
+    });
+
+    it("keeps charts whose names don't overlap at their size", async () => {
+      expect(await svgSize(getTestCase("quadrant-basic").definition)).toEqual({
+        width: 500,
+        height: 500,
+      });
+    });
+
+    it("scales charts that set their own size, keeping the rest of their config", async () => {
+      const { definition } = getTestCase(
+        "quadrant-axis-positions-and-partial-labels"
+      );
+      const { width, height } = await svgSize(definition);
+      const chart = await parseQuadrant(definition);
+      const right = Math.max(
+        ...chart.quadrants.map(({ box }) => box.x + box.width)
+      );
+
+      // 600x400, scaled
+      expect(width / height).toBeCloseTo(1.5);
+      expect(width).toBeGreaterThan(600);
+      // `yAxisPosition: right`
+      chart.axisLabels
+        .filter(({ angle }) => angle)
+        .forEach(({ x }) => expect(x).toBeGreaterThan(right));
+    });
   });
 });
 

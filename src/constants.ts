@@ -13,6 +13,9 @@ export const TITLE_BAND_STROKE_CLEARANCE = 4;
 // Excalidraw's default stroke (and so text) color
 export const DEFAULT_TEXT_COLOR = "#1e1e1e";
 
+// Secondary text (e.g. charts' axis labels), from Excalidraw's palette
+export const MUTED_TEXT_COLOR = "#495057";
+
 // The defaults of the Mermaid config options supported (see `MermaidConfig`)
 export const MERMAID_CONFIG = {
   maxEdges: 500,
