@@ -136,6 +136,11 @@ const SECTIONS: {
     name: "Gantt",
     documentationHref: "https://mermaid.js.org/syntax/gantt.html",
   },
+  {
+    type: "quadrant",
+    name: "Quadrant",
+    documentationHref: "https://mermaid.js.org/syntax/quadrantChart.html",
+  },
 ];
 
 const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {

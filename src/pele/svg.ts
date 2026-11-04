@@ -58,6 +58,26 @@ export const getOffset = (element: Element, root: Element): Position => {
   return offset;
 };
 
+const ROTATE = /rotate\(\s*([^\s,)]+)/;
+
+/**
+ * The nearest ancestor of `element` (or itself), below `root`, turned by a
+ * `rotate()` transform (about its local origin), and the angle (in degrees).
+ */
+export const getRotatedAncestor = (element: Element, root: Element) => {
+  for (
+    let node: Element | null = element;
+    node && node !== root;
+    node = node.parentElement
+  ) {
+    const degrees = Number(node.getAttribute("transform")?.match(ROTATE)?.[1]);
+    if (degrees) {
+      return { node, degrees };
+    }
+  }
+  return undefined;
+};
+
 const numberAttr = (element: Element, name: string) =>
   Number(element.getAttribute(name)) || 0;
 

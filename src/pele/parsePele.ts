@@ -19,6 +19,7 @@ import {
   ERD,
   State,
   Gantt,
+  QuadrantChart,
   type MermaidConfig,
 } from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
@@ -28,6 +29,7 @@ import { parsePeleClass } from "./class.js";
 import { parsePeleERD } from "./er.js";
 import { parsePeleState } from "./state.js";
 import { hasOverlappingTasks, parsePeleGantt } from "./gantt.js";
+import { countOverlaps, parsePeleQuadrant } from "./quadrant.js";
 import { parseSvg, svgToDataURL } from "./svg.js";
 
 /**
@@ -90,7 +92,10 @@ const spacing = (nodeSpacing: number, rankSpacing: number) => ({
   rankSpacing: rankSpacing * SPACING_SCALE,
 });
 
-// Diagrams' own config (front matter, `%%{init}%%`) takes precedence
+// Diagrams' own config (front matter, `%%{init}%%`) takes precedence: any key
+// of a section replaces the whole section here. No `quadrantChart` section, as
+// busy quadrant charts are laid out bigger by a directive (`withQuadrantSize`),
+// which would drop it.
 const getPeleConfig = (config: PeleConfig) => ({
   flowchart: {
     curve: config.curve ?? "linear",
@@ -123,6 +128,7 @@ const CONVERTED_DIAGRAM_TYPES = new Set<ParsedDiagramModel["type"]>([
   "er",
   "state",
   "gantt",
+  "quadrantChart",
 ]);
 
 // Converted diagrams are measured with Excalifont, the font their labels are
@@ -161,16 +167,18 @@ const resolveElbow = (definition: string, config: PeleConfig): PeleConfig => {
   return { ...config, curve, elbow: undefined };
 };
 
+const getParseOptions = (config: PeleConfig) => ({
+  limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
+  maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
+  config: getPeleConfig(config),
+});
+
 /** The model, and the definition it was parsed from (see `withLineBreakFallback`). */
 const parsePeleModel = async (definition: string, config: PeleConfig) => {
   // Loads the code Pele parses and renders the diagram type with
   await load(detectDiagramType(definition));
   return withLineBreakFallback(definition, async (candidate) => ({
-    model: parse(candidate, {
-      limit: config.maxTextSize ?? MERMAID_CONFIG.maxTextSize,
-      maxEdges: config.maxEdges ?? MERMAID_CONFIG.maxEdges,
-      config: getPeleConfig(config),
-    }),
+    model: parse(candidate, getParseOptions(config)),
     parsedDefinition: candidate,
   }));
 };
@@ -216,6 +224,86 @@ const layOutGantt = (
   return layOut();
 };
 
+// The scales a busy quadrant chart is laid out again at, in turn, while its
+// points' names run into each other (or into points, or quadrants' names)
+const QUADRANT_SCALES = [1.25, 1.5, 1.75, 2];
+
+/**
+ * The definition with a directive setting the chart's size before its
+ * `quadrantChart` line: after its own config (front matter, directives), which
+ * Pele merges it with, so that it wins (a caller's config doesn't, as a
+ * definition's own `quadrantChart` config replaces it).
+ */
+const withQuadrantSize = (
+  definition: string,
+  chartWidth: number,
+  chartHeight: number
+) =>
+  definition.replace(
+    // (not the `quadrantChart:` key of front matter config)
+    /^[ \t]*quadrantChart\b(?![ \t]*:)/m,
+    (line) =>
+      `%%{init: ${JSON.stringify({
+        quadrantChart: { chartWidth, chartHeight },
+      })}}%%\n${line}`
+  );
+
+/**
+ * Lays a quadrant chart out, and reads it from its SVG. Pele places points'
+ * names where they don't run into anything, but in busy charts it doesn't
+ * always find room, and places them over whatever is there: such charts are
+ * laid out bigger (the points spread out, their names don't grow), at the
+ * smallest size without overlaps, or else with the fewest.
+ */
+const layOutQuadrant = (
+  model: Extract<ParsedDiagramModel, { type: "quadrantChart" }>,
+  parsedDefinition: string,
+  config: PeleConfig
+) => {
+  const fontSize = config.fontSize ?? DEFAULT_FONT_SIZE;
+  const layOut = (model: ParsedDiagramModel) => {
+    const { svg, width, height } = render(
+      model,
+      getModelRenderOptions(model, config)
+    );
+    const chart = parsePeleQuadrant(parseSvg(svg), { fontSize });
+    return {
+      svg,
+      width,
+      height,
+      chart,
+      overlaps: countOverlaps(chart, measureExcalifontText),
+    };
+  };
+  let best = layOut(model);
+  const { width, height } = best;
+  for (const scale of QUADRANT_SCALES) {
+    if (best.overlaps === 0) {
+      break;
+    }
+    let scaled;
+    try {
+      scaled = layOut(
+        parse(
+          withQuadrantSize(
+            parsedDefinition,
+            Math.round(width * scale),
+            Math.round(height * scale)
+          ),
+          getParseOptions(config)
+        )
+      );
+    } catch (error) {
+      console.error("Error laying out a quadrant chart bigger:", error);
+      break;
+    }
+    if (scaled.overlaps < best.overlaps) {
+      best = scaled;
+    }
+  }
+  return best;
+};
+
 /**
  * Renders a Mermaid definition to the SVG `parsePele` reads it from (or, for
  * diagram types it doesn't convert, returns as an image), e.g. to compare it
@@ -226,9 +314,12 @@ export const renderPeleSvg = async (
   config: PeleConfig = {}
 ) => {
   config = resolveElbow(definition, config);
-  const { model } = await parsePeleModel(definition, config);
+  const { model, parsedDefinition } = await parsePeleModel(definition, config);
   if (model.type === "gantt") {
     return layOutGantt(model, config).svg;
+  }
+  if (model.type === "quadrantChart") {
+    return layOutQuadrant(model, parsedDefinition, config).svg;
   }
   return render(model, getModelRenderOptions(model, config)).svg;
 };
@@ -283,14 +374,23 @@ export const isSteppedDefinition = (
  * Parses a Mermaid definition with Pele, a Mermaid renderer that lays diagrams
  * out without a DOM.
  *
- * Flowcharts, sequence, class, ER and state diagrams, and Gantt charts are
- * converted to Excalidraw elements; other diagram types are returned as an
- * image.
+ * Flowcharts, sequence, class, ER and state diagrams, Gantt charts and
+ * quadrant charts are converted to Excalidraw elements; other diagram types
+ * are returned as an image.
  */
 export const parsePele = async (
   definition: string,
   config: PeleConfig = {}
-): Promise<Flowchart | Sequence | Class | ERD | State | Gantt | GraphImage> => {
+): Promise<
+  | Flowchart
+  | Sequence
+  | Class
+  | ERD
+  | State
+  | Gantt
+  | QuadrantChart
+  | GraphImage
+> => {
   config = resolveElbow(definition, config);
   const { model, parsedDefinition } = await parsePeleModel(definition, config);
 
@@ -335,6 +435,9 @@ export const parsePele = async (
       }
       case "gantt": {
         return layOutGantt(model, config).chart;
+      }
+      case "quadrantChart": {
+        return layOutQuadrant(model, parsedDefinition, config).chart;
       }
     }
   } catch (error) {

@@ -1,0 +1,33 @@
+%% model: sonnet_5_5
+%% prompt: 58. Assessing project risks (prompts.md)
+quadrantChart
+    title Mobile Banking App Launch Risk Matrix
+    x-axis Low likelihood --> High likelihood
+    y-axis Low impact --> High impact
+    quadrant-1 Mitigate now
+    quadrant-2 Contingency plan
+    quadrant-3 Accept
+    quadrant-4 Monitor
+    Data breach:::securityHot: [0.72, 0.95]
+    Account takeover fraud:::securityHot: [0.82, 0.85]
+    Weak API authentication:::security: [0.30, 0.80]
+    Mobile malware exposure:::security: [0.18, 0.62]
+    PSD2 non-compliance:::regulatoryHot: [0.62, 0.90]
+    AML and KYC gaps:::regulatory: [0.38, 0.72]
+    Privacy fines:::regulatory: [0.20, 0.55]
+    Cloud provider outage:::vendor: [0.25, 0.88]
+    KYC vendor delays:::vendor: [0.70, 0.35]
+    SDK licensing change:::vendor: [0.12, 0.20]
+    Key engineer attrition:::staffing: [0.68, 0.42]
+    Compliance staff shortage:::staffing: [0.35, 0.25]
+    Peak load slowdowns:::performanceHot: [0.86, 0.70]
+    Crashes on old Android:::performance: [0.80, 0.28]
+    Slow biometric login:::performance: [0.22, 0.35]
+    classDef security color: #e03131, radius: 7
+    classDef regulatory color: #1971c2, radius: 7
+    classDef vendor color: #f08c00, radius: 7
+    classDef staffing color: #2f9e44, radius: 7
+    classDef performance color: #9c36b5, radius: 7
+    classDef securityHot color: #e03131, radius: 9, stroke-color: #7a0b0b, stroke-width: 4px
+    classDef regulatoryHot color: #1971c2, radius: 9, stroke-color: #0b3a66, stroke-width: 4px
+    classDef performanceHot color: #9c36b5, radius: 9, stroke-color: #4a1559, stroke-width: 4px
