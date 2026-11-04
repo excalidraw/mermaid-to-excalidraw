@@ -1,0 +1,44 @@
+%% model: gemini_3_8_flash
+%% prompt: 55. Writing a doctoral thesis (prompts.md)
+%% edited: dropped the tooltip ("View defense details") after `click … href`, which gantt charts don't support
+%%{init: {
+  'gantt': {
+    'topAxis': true,
+    'axisFormat': '%b %Y',
+    'tickInterval': '1month'
+  }
+}}%%
+gantt
+    title Doctoral Thesis - Final Year Schedule (2025 - 2026)
+    dateFormat YYYY-MM-DD
+    axisFormat %b %Y
+    tickInterval 1month
+
+    section Introduction
+    Initial outline & research questions :done, intro_out, 2025-01-06, 2025-02-14
+    Write full Introduction chapter     :intro_full, after disc_limit, 2025-11-20
+
+    section Literature review
+    Comprehensive state-of-the-art synthesis :done, lit_synth, 2025-01-13, 2025-04-25
+    Continuous literature tracking           :active, lit_track, 2025-04-26, until sub_deadline
+
+    section Methods
+    Draft experimental & analytical methods  :done, meth_draft, 2025-01-06, 2025-03-21
+    Protocol formalization & appendices      :done, meth_app, after meth_draft, 2025-05-09
+
+    section Results
+    Data processing & model validation       :done, res_proc, 2025-02-17, 2025-05-02
+    Results chapter drafting & figures       :active, res_draft, after res_proc, 2025-07-18
+
+    section Discussion
+    Cross-chapter synthesis & interpretation :disc_synth, after res_draft, 2025-09-19
+    Limitations & future directions          :disc_limit, after disc_synth, 2025-10-24
+
+    section Submission and defense
+    Full manuscript compilation & proofreading :compilation, after intro_full, 2025-12-05
+    Committee pre-submission review            :review, after compilation, 2025-12-18
+    Formal Thesis Submission Deadline          :crit, milestone, sub_deadline, 2025-12-19, 0d
+    Defense slide deck & rehearsal             :prep, after sub_deadline, 2026-01-16
+    Doctoral Defense                           :crit, milestone, def_milestone, 2026-01-23, 0d
+
+    click def_milestone href "https://example.org/defense"

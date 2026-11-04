@@ -15,6 +15,7 @@ import {
   simplifyRoute,
 } from "../src/pele/svg.js";
 import { parsePeleFlowchart } from "../src/pele/flowchart.js";
+import { hasOverlappingTasks, parsePeleGantt } from "../src/pele/gantt.js";
 import { load, parse, render, type FlowchartModel } from "pele/lazy";
 import type {
   Flowchart,
@@ -23,6 +24,8 @@ import type {
   Class,
   ERD,
   State,
+  Gantt,
+  GanttTask,
 } from "../src/interfaces.js";
 import { getTestCase, testcasesOfType } from "../testcases/testcases.ts";
 
@@ -908,7 +911,7 @@ describe("parsePele", () => {
 
   it("returns other diagram types as an SVG image", async () => {
     const graph = await parsePele(
-      getTestCase("unsupported-gantt-diagram").definition
+      getTestCase("unsupported-pie-chart").definition
     );
 
     expect(graph).toMatchObject({
@@ -1692,6 +1695,366 @@ describe("parsePele state diagrams", () => {
   [*] --> Idle`);
 
     expect(diagram.nodes.find(({ id }) => id === "Idle")?.fontSize).toBe(20);
+  });
+});
+
+describe("parsePele gantt charts", () => {
+  beforeAll(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
+  const parseGantt = async (definition: string) => {
+    const graph = await parsePele(definition);
+    expect(graph.type).toBe("gantt");
+    return graph as Gantt;
+  };
+
+  it.each(testcasesOfType("gantt").map((testcase) => [testcase.id, testcase]))(
+    "%s",
+    async (_, { definition }) => {
+      const chart = await parseGantt(definition);
+
+      expect(chart.tasks.length).toBeGreaterThan(0);
+      chart.tasks.forEach(({ box }) => {
+        expect(box && box.width > 0 && box.height > 0).toBe(true);
+      });
+      expect(graphToExcalidraw(chart).elements.length).toBeGreaterThan(0);
+    }
+  );
+
+  const CHART = `gantt
+  title Release
+  dateFormat YYYY-MM-DD
+  todayMarker off
+  section Build
+    Implement the feature :impl, 2024-05-06, 20d
+    Docs :done, crit, docs, 2024-05-20, 1d
+    Review :active, review, after impl, 3d
+  section Ship
+    Shipped :milestone, shipped, after review, 0d
+  click impl href "https://example.com/impl"`;
+
+  it("reads tasks' bars, statuses, names (in or next to their bar) and links", async () => {
+    const chart = await parseGantt(CHART);
+    const tasks = new Map(chart.tasks.map((task) => [task.id, task]));
+
+    expect(chart.title?.text).toBe("Release");
+    expect(chart.sectionLabels.map(({ text }) => text)).toEqual([
+      "Build",
+      "Ship",
+    ]);
+    expect(tasks.get("impl")).toMatchObject({
+      shape: "bar",
+      crit: false,
+      label: { inside: true, text: { text: "Implement the feature" } },
+      link: "https://example.com/impl",
+    });
+    expect(tasks.get("docs")).toMatchObject({
+      shape: "bar",
+      status: "done",
+      crit: true,
+      // a day is too short for its name
+      label: { inside: false, text: { text: "Docs" } },
+    });
+    expect(tasks.get("review")).toMatchObject({ status: "active" });
+    expect(tasks.get("shipped")).toMatchObject({
+      shape: "milestone",
+      label: { inside: false, text: { text: "Shipped" } },
+    });
+
+    // on the same time scale: review starts where impl ends
+    const impl = tasks.get("impl")!.box!;
+    const review = tasks.get("review")!.box!;
+    expect(review.x).toBeCloseTo(impl.x + impl.width, 0);
+    expect(review.y).toBeGreaterThan(impl.y);
+    expect(chart.axisLabels.length).toBeGreaterThan(1);
+    expect(chart.axisLines.length).toBe(1);
+  });
+
+  it("binds names to the bars they fit in, and groups the others with theirs", async () => {
+    const chart = await parseGantt(CHART);
+    const { elements } = graphToExcalidraw(chart);
+    const shapes = elements.filter(
+      (element) => element.type === "rectangle" || element.type === "diamond"
+    );
+
+    const impl = shapes.find(
+      (element) =>
+        element.type === "rectangle" &&
+        element.label?.text === "Implement the feature"
+    );
+    expect(impl).toMatchObject({ link: "https://example.com/impl" });
+
+    const docs = elements.find(
+      (element) => element.type === "text" && element.text === "Docs"
+    );
+    const docsBar = shapes.find(
+      (element) =>
+        element.groupIds?.length &&
+        element.groupIds[0] === (docs as { groupIds?: string[] }).groupIds?.[0]
+    );
+    expect(docsBar).toMatchObject({
+      type: "rectangle",
+      strokeColor: "#e03131",
+    });
+
+    const milestone = shapes.find((element) => element.type === "diamond");
+    expect(milestone?.width).toBe(milestone?.height);
+  });
+
+  it("links only the right one of a task's shape and the name next to it", async () => {
+    const linked = (elements: readonly { link?: string | null }[]) =>
+      elements.filter(({ link }) => link);
+
+    // the opening milestone's name is on its left
+    const museum = graphToExcalidraw(
+      await parseGantt(
+        getTestCase("gantt-scheduling-museum-exhibition-installation")
+          .definition
+      )
+    ).elements;
+    expect(linked(museum)).toEqual([
+      expect.objectContaining({
+        type: "diamond",
+        link: "https://example.org/exhibitions/tides",
+      }),
+    ]);
+
+    // a day's bar is too short for its name, which is on its right
+    const short = graphToExcalidraw(
+      await parseGantt(`gantt
+  dateFormat YYYY-MM-DD
+  todayMarker off
+  section A
+    Long :long, 2024-05-06, 20d
+    Short :short, 2024-05-06, 1d
+  click short href "https://example.com/short"`)
+    ).elements;
+    expect(linked(short)).toEqual([
+      expect.objectContaining({
+        type: "text",
+        text: "Short",
+        link: "https://example.com/short",
+      }),
+    ]);
+  });
+
+  describe("displayMode: compact", () => {
+    const getRows = (chart: Gantt) =>
+      new Set(chart.tasks.map(({ box }) => Math.round(box!.y))).size;
+
+    it("keeps tasks sharing rows where they fit", async () => {
+      const chart = await parseGantt(
+        getTestCase("gantt-compact-mode").definition
+      );
+
+      expect(getRows(chart)).toBeLessThan(chart.tasks.length);
+      expect(hasOverlappingTasks(chart)).toBe(false);
+    });
+
+    it("gives every task its row where names next to bars would overlap", async () => {
+      const definition = getTestCase(
+        "gantt-organizing-community-music-festival"
+      ).definition;
+      const chart = await parseGantt(definition);
+
+      expect(getRows(chart)).toBe(chart.tasks.length);
+      // the reference SVG is laid out the same way
+      const reference = parsePeleGantt(
+        parseSvg(await renderPeleSvg(definition)),
+        { fontSize: 20 }
+      );
+      expect(getRows(reference)).toBe(reference.tasks.length);
+    });
+
+    it("tells names next to bars running into the next task in their row", () => {
+      const task = (
+        id: string,
+        x: number,
+        width: number,
+        labelX?: number
+      ): GanttTask => ({
+        id,
+        shape: "bar",
+        box: { x, y: 0, width, height: 30 },
+        crit: false,
+        label: {
+          inside: labelX === undefined,
+          text: {
+            type: "text",
+            text: id,
+            x: labelX ?? x + width / 2,
+            y: 5,
+            fontSize: 16,
+          },
+        },
+      });
+      const chart = (...tasks: GanttTask[]) =>
+        ({ type: "gantt", tasks } as unknown as Gantt);
+
+      // bars touching
+      expect(
+        hasOverlappingTasks(chart(task("a", 0, 50), task("b", 50, 50)))
+      ).toBe(false);
+      // a's name, 40 wide, spans 58 to 98 (and its gap to 106)
+      expect(
+        hasOverlappingTasks(chart(task("a", 0, 50, 78), task("b", 120, 50)))
+      ).toBe(false);
+      expect(
+        hasOverlappingTasks(chart(task("a", 0, 50, 78), task("b", 100, 50)))
+      ).toBe(true);
+      // b's name on its left, spanning 52 to 92
+      expect(
+        hasOverlappingTasks(chart(task("a", 0, 50), task("b", 100, 50, 72)))
+      ).toBe(true);
+      // in other rows
+      const below = task("b", 60, 50);
+      below.box!.y = 40;
+      expect(hasOverlappingTasks(chart(task("a", 0, 50, 78), below))).toBe(
+        false
+      );
+    });
+  });
+
+  it("draws sections and grid lines behind tasks, and labels above them", async () => {
+    const { elements } = graphToExcalidraw(await parseGantt(CHART));
+    const firstTask = elements.findIndex(
+      (element) => element.type === "rectangle" && element.label
+    );
+    const lastIndex = (
+      matches: (element: (typeof elements)[number]) => boolean
+    ) => elements.length - 1 - [...elements].reverse().findIndex(matches);
+    const lastBand = lastIndex(
+      (element) =>
+        element.type === "rectangle" && element.strokeColor === "transparent"
+    );
+    const lastLine = lastIndex(({ type }) => type === "line");
+    const firstSectionLabel = elements.findIndex(
+      (element) => element.type === "text" && element.text === "Build"
+    );
+
+    expect(lastBand).toBeGreaterThanOrEqual(0);
+    expect(lastBand).toBeLessThan(lastLine);
+    expect(lastLine).toBeLessThan(firstTask);
+    expect(firstTask).toBeLessThan(firstSectionLabel);
+  });
+
+  it("reads excluded days, vertical markers and the top axis", async () => {
+    const chart = await parseGantt(
+      getTestCase("gantt-excludes-markers-and-links").definition
+    );
+
+    // the sprint's weekend
+    expect(chart.excluded.length).toBe(1);
+    expect(chart.verticals.length).toBe(1);
+    expect(chart.verticalLabels.map(({ text }) => text)).toEqual([
+      "Code freeze",
+    ]);
+    expect(chart.axisLines.length).toBe(2);
+    expect(chart.today).toBeUndefined();
+  });
+
+  it("marks today, unless todayMarker is off", async () => {
+    const span = `gantt
+  dateFormat YYYY-MM-DD
+  section All
+    Century :c, 2000-01-01, 2100-01-01`;
+
+    const marked = await parseGantt(span);
+    expect(marked.today).toBeDefined();
+    expect(marked.today!.startX).toBe(marked.today!.endX);
+
+    const unmarked = await parseGantt(
+      span.replace("gantt", "gantt\n  todayMarker off")
+    );
+    expect(unmarked.today).toBeUndefined();
+  });
+
+  it("keeps the today marker's style, if set", async () => {
+    const span = `gantt
+  dateFormat YYYY-MM-DD
+  section All
+    Century :c, 2000-01-01, 2100-01-01`;
+    const today = (chart: Gantt) =>
+      graphToExcalidraw(chart).elements.find(
+        (element) =>
+          element.type === "line" && element.x === chart.today?.startX
+      );
+
+    expect(today(await parseGantt(span))).toMatchObject({
+      strokeColor: "#e03131",
+      strokeWidth: 2,
+    });
+    const styled = await parseGantt(
+      span.replace(
+        "gantt",
+        "gantt\n  todayMarker stroke-width:5px,stroke:#00ff00,opacity:0.5"
+      )
+    );
+    expect(today(styled)).toMatchObject({
+      strokeColor: "#00ff00",
+      strokeWidth: 5,
+      opacity: 50,
+    });
+
+    // styled to be invisible
+    for (const style of [
+      "stroke:none",
+      "stroke:transparent",
+      "stroke-width:0px",
+      "opacity:0",
+      "stroke-opacity:0",
+    ]) {
+      const hidden = await parseGantt(
+        span.replace("gantt", `gantt\n  todayMarker ${style}`)
+      );
+      expect(hidden.today, style).toBeUndefined();
+    }
+    const faint = await parseGantt(
+      span.replace(
+        "gantt",
+        "gantt\n  todayMarker opacity:0.5,stroke-opacity:0.5"
+      )
+    );
+    expect(today(faint)).toMatchObject({ opacity: 25 });
+    const percent = await parseGantt(
+      span.replace(
+        "gantt",
+        "gantt\n  todayMarker opacity:50%,stroke-opacity:50%"
+      )
+    );
+    expect(today(percent)).toMatchObject({ opacity: 25 });
+    const hiddenPercent = await parseGantt(
+      span.replace("gantt", "gantt\n  todayMarker opacity:0%")
+    );
+    expect(hiddenPercent.today).toBeUndefined();
+  });
+
+  it("draws names over bars too thin to bind them to", async () => {
+    const chart = await parseGantt(`---
+config:
+  gantt:
+    barHeight: 20
+    barGap: 4
+---
+${CHART}`);
+    const { elements } = graphToExcalidraw(chart);
+    const bar = elements.find(
+      (element) => element.type === "rectangle" && element.groupIds?.length
+    );
+    const name = elements.find(
+      (element) =>
+        element.type === "text" && element.text === "Implement the feature"
+    );
+
+    expect(chart.tasks[0].label.inside).toBe(true);
+    expect(bar).toMatchObject({ height: 20 });
+    expect(bar?.label).toBeUndefined();
+    expect(name?.groupIds).toEqual(bar?.groupIds);
   });
 });
 

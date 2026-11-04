@@ -18,6 +18,7 @@ import {
   Class,
   ERD,
   State,
+  Gantt,
   type MermaidConfig,
 } from "../interfaces.js";
 import { withLineBreakFallback } from "../text.js";
@@ -26,6 +27,7 @@ import { parsePeleSequence } from "./sequence.js";
 import { parsePeleClass } from "./class.js";
 import { parsePeleERD } from "./er.js";
 import { parsePeleState } from "./state.js";
+import { hasOverlappingTasks, parsePeleGantt } from "./gantt.js";
 import { parseSvg, svgToDataURL } from "./svg.js";
 
 /**
@@ -120,6 +122,7 @@ const CONVERTED_DIAGRAM_TYPES = new Set<ParsedDiagramModel["type"]>([
   "class",
   "er",
   "state",
+  "gantt",
 ]);
 
 // Converted diagrams are measured with Excalifont, the font their labels are
@@ -189,6 +192,31 @@ const renderGraphImage = (
 };
 
 /**
+ * Lays a Gantt chart out, and reads it from its SVG. `displayMode: compact`
+ * packs tasks into rows by their bars alone, so names drawn next to short bars
+ * run into the bars and names after them: such charts are laid out with a row
+ * per task instead.
+ */
+const layOutGantt = (
+  model: Extract<ParsedDiagramModel, { type: "gantt" }>,
+  config: PeleConfig
+) => {
+  const layOut = () => {
+    const { svg } = render(model, getModelRenderOptions(model, config));
+    const chart = parsePeleGantt(parseSvg(svg), {
+      fontSize: config.fontSize ?? DEFAULT_FONT_SIZE,
+    });
+    return { svg, chart };
+  };
+  const compact = layOut();
+  if (model.displayMode !== "compact" || !hasOverlappingTasks(compact.chart)) {
+    return compact;
+  }
+  model.displayMode = "";
+  return layOut();
+};
+
+/**
  * Renders a Mermaid definition to the SVG `parsePele` reads it from (or, for
  * diagram types it doesn't convert, returns as an image), e.g. to compare it
  * with the conversion.
@@ -199,6 +227,9 @@ export const renderPeleSvg = async (
 ) => {
   config = resolveElbow(definition, config);
   const { model } = await parsePeleModel(definition, config);
+  if (model.type === "gantt") {
+    return layOutGantt(model, config).svg;
+  }
   return render(model, getModelRenderOptions(model, config)).svg;
 };
 
@@ -252,13 +283,14 @@ export const isSteppedDefinition = (
  * Parses a Mermaid definition with Pele, a Mermaid renderer that lays diagrams
  * out without a DOM.
  *
- * Flowcharts, sequence, class, ER and state diagrams are converted to
- * Excalidraw elements; other diagram types are returned as an image.
+ * Flowcharts, sequence, class, ER and state diagrams, and Gantt charts are
+ * converted to Excalidraw elements; other diagram types are returned as an
+ * image.
  */
 export const parsePele = async (
   definition: string,
   config: PeleConfig = {}
-): Promise<Flowchart | Sequence | Class | ERD | State | GraphImage> => {
+): Promise<Flowchart | Sequence | Class | ERD | State | Gantt | GraphImage> => {
   config = resolveElbow(definition, config);
   const { model, parsedDefinition } = await parsePeleModel(definition, config);
 
@@ -300,6 +332,9 @@ export const parsePele = async (
           stepped: () =>
             isSteppedDefinition(parsedDefinition, getPeleConfig(config)),
         });
+      }
+      case "gantt": {
+        return layOutGantt(model, config).chart;
       }
     }
   } catch (error) {

@@ -1,0 +1,41 @@
+%% model: gemini_3_8_flash
+%% prompt: make a gantt chart
+gantt
+    title Software Development Project Plan
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+
+    section Planning
+    Project Inception          :done,    p1, 2024-01-01, 2024-01-10
+    Stakeholder Interviews     :done,    p2, 2024-01-08, 2024-01-18
+    Requirements Gathering     :done,    p3, 2024-01-15, 2024-01-26
+    Feasibility Study          :done,    p4, 2024-01-22, 2024-01-31
+    Project Roadmap Signoff    :done,    p5, 2024-01-29, 2024-02-02
+
+    section Design
+    System Architecture Design :active,  d1, 2024-02-05, 2024-02-20
+    Database Schema Modeling   :active,  d2, 2024-02-12, 2024-02-23
+    UI/UX Wireframing          :         d3, 2024-02-15, 2024-02-28
+    Design System Definition   :         d4, 2024-02-22, 2024-03-05
+    Prototype Review           :crit,    d5, 2024-03-04, 2024-03-08
+
+    section Development
+    Environment Setup          :         dev1, after d5, 5d
+    Core Backend API           :crit,    dev2, after dev1, 25d
+    Frontend User Interface    :         dev3, after dev1, 20d
+    Authentication Integration :         dev4, after dev2, 10d
+    Third-party Services Hook  :         dev5, after dev4, 12d
+    Feature Integration        :         dev6, after dev3, 15d
+
+    section Testing
+    Unit Testing               :         t1, 2024-04-10, 2024-04-24
+    System Integration Testing :crit,    t2, after dev6, 12d
+    User Acceptance Testing    :         t3, after t2, 10d
+    Security Audit             :crit,    t4, after t2, 7d
+    Performance Optimization   :         t5, after t3, 8d
+
+    section Deployment
+    Staging Environment Deploy :         dep1, after t4, 4d
+    Data Migration             :         dep2, after dep1, 3d
+    Production Launch          :milestone, crit, m1, after dep2, 0d
+    Post-Launch Monitoring     :         dep3, after m1, 14d

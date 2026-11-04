@@ -156,6 +156,50 @@ Create a Mermaid `stateDiagram-v2` for a photo export job with Queued, Running, 
 
 Create a Mermaid `stateDiagram-v2` for a field-survey submission that works without network access. Include Draft, Validating, ReadyToSync, Syncing, Conflict, Synced, and Archived states. Failed validation returns to Draft; a valid submission waits in ReadyToSync while offline. During Syncing, model concurrent answer-upload and attachment-upload regions, with success requiring both to finish. A network failure returns to ReadyToSync without discarding completed uploads. A server version conflict leads to Conflict, where the user can merge changes or accept the server version. Label events, guards, and retry behavior clearly.
 
+## Gantt charts
+
+### 51. Renovating a small café kitchen
+
+Create a Mermaid `gantt` chart for renovating a small café's kitchen over about ten weeks, starting on 2025-06-02. Use sections for Permits, Demolition, Rough-in (plumbing, electrical, ventilation), Fit-out, and Handover. Chain tasks with `after` dependencies instead of fixed dates wherever one task must wait for another, and let plumbing, electrical and ventilation rough-in run in parallel. Contractors don't work weekends, so exclude them. Add milestones for the building permit, the rough-in inspection, and the health inspection, and mark the tasks leading to the inspections as critical. Assume the permit work is done and demolition is in progress.
+
+### 52. Organizing a community music festival
+
+Create a Mermaid `gantt` chart for a volunteer team preparing a one-day neighborhood music festival on 2025-09-13, planned from 2025-05-05. Use sections for Booking, Permits, Volunteers, Marketing, and Festival week, with several overlapping tasks in each. Use `displayMode: compact` front matter so parallel tasks within a section share rows where they don't overlap. Mark the ticket-sales launch as a vertical marker (`vert`) across the chart, the line-up announcement and the festival day as milestones, and the permits as critical. Use a weekly tick interval and a short axis date format.
+
+### 53. Scheduling a museum exhibition installation from a task list
+
+Create a Mermaid `gantt` chart from this CSV task list for installing a temporary museum exhibition. Use the `phase` column for sections, task ids as Mermaid task ids, and the `depends_on` column for `after` dependencies (start tasks without dependencies on their `start` date). Durations are in working days: exclude weekends and the listed holidays. Map the `status` column to `done`, `active`, or no status, and `critical=yes` to `crit`; zero-duration rows are milestones. Add a link on the opening milestone to `https://example.org/exhibitions/tides`.
+
+```csv
+id,phase,task,start,duration_days,depends_on,status,critical
+lend,Loans,Confirm incoming loans,2025-02-03,8,,done,yes
+cour,Loans,Arrange couriers,,4,lend,done,no
+case,Build,Build display cases,2025-02-10,10,,active,no
+wall,Build,Paint and light walls,,6,case,,no
+ship,Install,Receive shipments,,3,cour,,yes
+cond,Install,Condition reports,,2,ship,,yes
+inst,Install,Install objects,,5,cond wall,,yes
+lab,Install,Mount labels,,2,inst,,no
+pv,Opening,Press preview,,0,lab,,no
+open,Opening,Public opening,,0,pv,,yes
+```
+
+Holidays:
+
+```csv
+date,name
+2025-02-17,Staff training day
+2025-03-03,Building maintenance
+```
+
+### 54. Running a 24-hour hackathon
+
+Create a Mermaid `gantt` chart for a 24-hour student hackathon that starts on Saturday 2025-10-18 at 10:00 and ends with the awards on Sunday afternoon. Use times as well as dates. Include sections for Organizers, Teams, Mentors, and Judging. Show the opening, team formation, the hacking block, workshops and meals scheduled during it, mentor office hours, the code freeze, demos, judging, and awards. Make the kick-off, the code freeze, and the winners' announcement milestones, and mark the code freeze and demos as critical. Use a two-hour tick interval with an hour-and-minute axis format, and turn off the today marker.
+
+### 55. Writing a doctoral thesis
+
+Create a Mermaid `gantt` chart for the final year of a doctoral thesis, from 2025-01-06 to the defense in January 2026. Use a section for each chapter (Introduction, Literature review, Methods, Results, Discussion) plus one for Submission and defense. Use `after` for tasks that depend on others, and `until` for at least one task that runs until another starts. Assume today is 2025-05-15: mark finished work as done and current work as active. Mark the submission deadline and the defense as critical milestones. Show the axis on top as well as at the bottom, with monthly ticks, and add a link from the defense milestone to `https://example.org/defense`.
+
 ## Prompts with embedded data
 
 All datasets below are fictional. Include the dataset when copying a prompt. Each diagram should display the requested values from its dataset; preserve units and identifiers, and calculate any requested totals from the supplied rows.

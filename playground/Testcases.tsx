@@ -131,6 +131,11 @@ const SECTIONS: {
     name: "Swimlane (Pele only)",
     documentationHref: "https://pele.run",
   },
+  {
+    type: "gantt",
+    name: "Gantt",
+    documentationHref: "https://mermaid.js.org/syntax/gantt.html",
+  },
 ];
 
 const Testcases = ({ onChange, onInsertMermaidSvg }: TestcasesProps) => {

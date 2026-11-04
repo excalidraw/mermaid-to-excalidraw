@@ -9,11 +9,13 @@ import {
   Class,
   ERD,
   State,
+  Gantt,
 } from "./interfaces.js";
 import { SequenceToExcalidrawSkeletonConvertor } from "./converter/types/sequence.js";
 import { classToExcalidrawSkeletonConvertor } from "./converter/types/class.js";
 import { erToExcalidrawSkeletonConvertor } from "./converter/types/er.js";
 import { stateToExcalidrawSkeletonConvertor } from "./converter/types/state.js";
+import { ganttToExcalidrawSkeletonConvertor } from "./converter/types/gantt.js";
 import type { LocalPoint } from "@excalidraw/excalidraw/math/types";
 import { dedupeConsecutivePoints } from "./utils.js";
 
@@ -46,7 +48,7 @@ const normalizeLinearElementPoints = (
 };
 
 export const graphToExcalidraw = (
-  graph: Flowchart | GraphImage | Sequence | Class | ERD | State,
+  graph: Flowchart | GraphImage | Sequence | Class | ERD | State | Gantt,
   options: ExcalidrawConfig = {}
 ): MermaidToExcalidrawResult => {
   const result = (() => {
@@ -73,6 +75,10 @@ export const graphToExcalidraw = (
 
       case "state": {
         return stateToExcalidrawSkeletonConvertor.convert(graph, options);
+      }
+
+      case "gantt": {
+        return ganttToExcalidrawSkeletonConvertor.convert(graph, options);
       }
 
       default: {

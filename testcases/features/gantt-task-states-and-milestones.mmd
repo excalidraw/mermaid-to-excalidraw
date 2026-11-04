@@ -1,0 +1,14 @@
+gantt
+    dateFormat HH:mm
+    axisFormat %H:%M
+    title Release day
+    todayMarker off
+    section Prepare
+        Freeze code              :done, freeze, 09:00, 1h
+        Run the test suite       :done, crit, tests, after freeze, 2h
+        Write the release notes  :active, notes, 10:00, 3h
+    section Ship
+        Build                    :crit, build, after tests, 1h
+        Deploy                   :crit, active, deploy, after build, 30m
+        Released                 :milestone, released, after deploy, 0m
+        Tell                     :tell, after released, 20m

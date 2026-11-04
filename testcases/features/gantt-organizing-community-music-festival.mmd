@@ -1,0 +1,48 @@
+---
+displayMode: compact
+---
+%% model: sonnet_5_5
+%% prompt: 52. Organizing a community music festival (prompts.md)
+gantt
+    title Neighborhood Music Festival Preparation
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+    tickInterval 1week
+    todayMarker off
+
+    section Booking
+    Shortlist bands            :book1, 2025-05-05, 14d
+    Contact agents             :book2, 2025-05-12, 21d
+    Negotiate fees             :book3, after book2, 14d
+    Sign contracts             :book4, after book3, 10d
+    Line-up announcement       :milestone, m1, 2025-07-14, 0d
+    Book sound and stage crew  :book5, 2025-06-09, 28d
+
+    section Permits
+    Street closure application :crit, perm1, 2025-05-12, 28d
+    Noise permit               :crit, perm2, 2025-06-02, 21d
+    Insurance and liability    :crit, perm3, 2025-06-16, 21d
+    Food vendor licenses       :crit, perm4, 2025-07-07, 28d
+
+    section Volunteers
+    Recruitment drive          :vol1, 2025-05-19, 35d
+    Orientation sessions       :vol2, 2025-07-07, 14d
+    Role assignments           :vol3, 2025-07-28, 14d
+    First-aid training         :vol4, 2025-08-04, 10d
+    Shift scheduling           :vol5, 2025-08-11, 21d
+
+    section Marketing
+    Branding and poster design :mkt1, 2025-05-19, 21d
+    Website and social pages   :mkt2, 2025-06-09, 28d
+    Ticket sales launch        :vert, v1, 2025-07-21, 0d
+    Ticket sales campaign      :mkt3, 2025-07-21, 45d
+    Local press outreach       :mkt4, 2025-08-04, 28d
+    Poster distribution        :mkt5, 2025-08-18, 21d
+
+    section Festival week
+    Equipment rental pickup    :fw1, 2025-09-08, 3d
+    Stage and tent setup       :fw2, 2025-09-10, 3d
+    Sound check                :fw3, 2025-09-12, 1d
+    Volunteer briefing         :fw4, 2025-09-12, 1d
+    Festival day               :milestone, m2, 2025-09-13, 0d
+    Teardown and cleanup       :fw5, 2025-09-13, 2d
