@@ -1,119 +1,85 @@
-# mermaid-to-excalidraw
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.png">
+    <img alt="Mermaid to Excalidraw: turn Mermaid diagrams into shapes, arrows and text you can keep editing" src=".github/assets/banner-light.png" width="100%">
+  </picture>
+</p>
 
-Convert mermaid diagrams to excalidraw
+<p align="center">
+  <a href="https://plus.excalidraw.com/docs/mermaid-to-excalidraw"><b>Documentation</b></a> ·
+  <a href="https://mermaid-to-excalidraw.vercel.app">Playground</a> ·
+  <a href="https://www.npmjs.com/package/@excalidraw/mermaid-to-excalidraw">npm</a> ·
+  <a href="https://plus.excalidraw.com">Excalidraw+</a> ·
+  <a href="https://excalidraw.com">Excalidraw</a>
+</p>
 
-Diagrams are parsed and laid out by [Pele](https://pele.run), which reads Mermaid syntax and lays diagrams out without rendering them in the DOM (since v3; v2 used [Mermaid](https://mermaid.js.org) itself, see [Upgrading from v2](#upgrading-from-v2)).
+<p align="center">
+  <a href="https://www.npmjs.com/package/@excalidraw/mermaid-to-excalidraw"><img alt="npm" src="https://img.shields.io/npm/v/@excalidraw/mermaid-to-excalidraw"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@excalidraw/mermaid-to-excalidraw"></a>
+</p>
 
-## Set up
+Convert [Mermaid](https://mermaid.js.org) diagram definitions into Excalidraw elements: shapes, arrows and text you can keep editing, not a picture of the diagram. It's what [excalidraw.com](https://excalidraw.com) runs when you paste a Mermaid definition onto the canvas.
 
-Install packages:
+## Features
 
-```
-yarn
-```
+- ✏️ **Editable result**: nodes become shapes, edges become arrows bound to them, labels stay where the layout put them.
+- 📊 **Many diagram types**: flowcharts (including `swimlane-beta`), sequence, class, ER and state diagrams, Gantt charts, quadrant charts and timelines. Other types are inserted as an image.
+- 🎨 **Styles carry over**: `style`, `classDef` and `class` colors, `click` links, and edges as elbow arrows on request.
+- ⚡ **No Mermaid runtime**: [Pele](https://pele.run) parses and lays diagrams out without rendering them into the page, and each diagram type's code loads on first use.
 
-Start development playground:
+## Install
 
-```
-yarn start
-```
-
-Build command:
-
-```
-yarn build
-```
-
-## Get started
-
-```ts
-parseMermaidToExcalidraw(diagramDefinition: string, config?: MermaidConfig)
-```
-
-The `diagramDefinition` is the mermaid diagram definition, and `config` is the mermaid config. `mermaid-to-excalidraw` only supports the :point_down: config params
-
-```ts
-{
-  /**
-   * Whether flowchart edges and state transitions are drawn as elbow arrows
-   * (routed orthogonally): for both, or per diagram type. A curve set in the
-   * definition (front matter, `%%{init}%%`) wins. Swimlanes' edges are always
-   * elbow arrows.
-   * @default false
-   */
-  elbow?: boolean | { flowchart?: boolean; state?: boolean };
-  /**
-   * Theme variables
-   * @default { fontSize: "20px" }
-   */
-  themeVariables?: {
-    fontSize?: string;
-  };
-  /**
-   * Maximum number of edges to be rendered.
-   * @default 500
-   */
-  maxEdges?: number;
-  /**
-   * Maximum number of characters to be rendered.
-   * @default 50000
-   */
-  maxTextSize?: number;
-}
+```bash
+npm install @excalidraw/mermaid-to-excalidraw @excalidraw/excalidraw
 ```
 
-Flowcharts (including `swimlane-beta` diagrams), sequence, class, ER and state diagrams, Gantt charts, quadrant charts and timelines are converted to Excalidraw elements. Other diagram types Pele supports are inserted as an image.
+It needs DOM APIs (`DOMParser`), so run it in a browser or with [jsdom](https://github.com/jsdom/jsdom).
 
-It needs DOM APIs (e.g. `DOMParser`, so a browser, or jsdom), but nothing is rendered into the document.
-
-Example code:
+## Quick start
 
 ```ts
 import { parseMermaidToExcalidraw } from "@excalidraw/mermaid-to-excalidraw";
+import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
+
+const definition = `flowchart LR
+  A[Write the definition] --> B{Valid?}
+  B -->|yes| C[Excalidraw elements]
+  B -->|no| D[Parse error]`;
 
 try {
-  const { elements, files } = await parseMermaidToExcalidraw(
-    diagramDefinition,
-    {
-      themeVariables: {
-        fontSize: "25px",
-      },
-    }
-  );
-  // Render elements and files on Excalidraw
-} catch (e) {
-  // Parse error, displaying error message to users
+  const { elements, files } = await parseMermaidToExcalidraw(definition, {
+    elbow: true, // optional: draw edges as elbow arrows
+  });
+
+  excalidrawAPI.updateScene({
+    elements: convertToExcalidrawElements(elements),
+  });
+  if (files) {
+    excalidrawAPI.addFiles(Object.values(files));
+  }
+} catch (error) {
+  // Not valid Mermaid syntax: show the error to the user
 }
 ```
 
-## Playground
+No code needed? The [Excalidraw CLI](https://github.com/excalidraw/cli) runs it from your terminal: `npx @excalidraw/cli mermaid flow.mmd --out flow.excalidraw`.
 
-Try out [here](https://mermaid-to-excalidraw.vercel.app).
+## Documentation
 
-## Development
+📚 **[plus.excalidraw.com/docs/mermaid-to-excalidraw](https://plus.excalidraw.com/docs/mermaid-to-excalidraw)**
 
-- `yarn test:visual` to run visual tests
-- `yarn test:visual:update` to update visual tests
-- `yarn test:visual:dev` to run visual test dev server (usually better to use this over the playground)
+- [Getting started](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/getting-started)
+- [API and config options](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/api)
+- [Supported diagrams](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/supported-diagrams)
+- [Upgrading from v2](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/upgrading-from-v2) (v2 is maintained on the [`release/2.x`](https://github.com/excalidraw/mermaid-to-excalidraw/tree/release/2.x) branch)
+- [How it works](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/how-it-works) and [adding a diagram type](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/adding-a-diagram-type)
 
-Test cases are Mermaid files in [`testcases/`](testcases/testcases.ts), named `<type>-<name>.mmd` (`flowchart`, `sequence`, `class`, `erd`, `state`, `unsupported`, `swimlane`, `gantt`, `quadrant`, `timeline`):
+What changed in each release is in the [changelog](CHANGELOG.md).
 
-- `testcases/features/`: one syntax feature each. The playground lists them, the visual tests snapshot each one (named after the file), and the unit tests parse them. Add a case as a new file; renaming one renames its snapshot.
-- `testcases/examples/`: whole diagrams models wrote for the prompts in [`prompts.md`](testcases/examples/prompts.md), with the model and prompt in `%%` comments at the top.
+## Contributing
 
-## Upgrading from v2
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running the playground and the tests.
 
-- Diagrams are laid out by Pele instead of Mermaid, so they look different (e.g. node sizes and spacing, edge routes), and Mermaid is no longer a dependency. `parseMermaidToExcalidraw` is the same otherwise.
-- The `engine` and `startOnLoad` config params are gone.
-- Diagrams that Mermaid parsed but Pele doesn't now throw a parse error (Pele's errors follow Mermaid's format).
-- Known gap: `<br>` and `\n` in class members are drawn as is (Pele lays members out on one line).
+## License
 
-v2 is maintained on the [`release/2.x`](https://github.com/excalidraw/mermaid-to-excalidraw/tree/release/2.x) branch.
-
-## API
-
-Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/api).
-
-## Support new Diagram type
-
-Head over to the [docs](https://docs.excalidraw.com/docs/@excalidraw/mermaid-to-excalidraw/codebase/new-diagram-type).
+[MIT](LICENSE)
