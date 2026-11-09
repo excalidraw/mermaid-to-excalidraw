@@ -1,0 +1,9 @@
+flowchart LR
+  A["Idea"]:::in --> B{"Diagram?"}:::ask
+  B -->|yes| C["Mermaid"]:::in
+  B -->|no| D["Sketch"]:::in
+  C --> E(["Excalidraw"]):::out
+  D --> E
+  classDef in fill:#a5d8ff,stroke:#1971c2,color:#1e1e1e
+  classDef ask fill:#ffec99,stroke:#f08c00,color:#1e1e1e
+  classDef out fill:#d0bfff,stroke:#6965db,color:#1e1e1e
